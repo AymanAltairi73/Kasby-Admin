@@ -22,6 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Pre-fill username if remembered
+    if (_authController.rememberMe.value) {
+      _usernameController.text = _authController.savedUsername.value;
+    }
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
@@ -137,18 +146,43 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Forgot Password
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Get.toNamed('/forgot-password');
-                      },
-                      child: const Text(
-                        'نسيت كلمة المرور؟',
-                        style: TextStyle(color: KasbyColors.primaryGold),
+                  // Remember Me & Forgot Password
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Obx(
+                            () => Checkbox(
+                              value: _authController.rememberMe.value,
+                              onChanged: (value) => _authController
+                                  .toggleRememberMe(value ?? false),
+                              activeColor: KasbyColors.primaryGold,
+                              checkColor: Colors.black,
+                              side: const BorderSide(
+                                color: KasbyColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          const Text(
+                            'تذكرني',
+                            style: TextStyle(
+                              color: KasbyColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      TextButton(
+                        onPressed: () {
+                          Get.toNamed('/forgot-password');
+                        },
+                        child: const Text(
+                          'نسيت كلمة المرور؟',
+                          style: TextStyle(color: KasbyColors.primaryGold),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 

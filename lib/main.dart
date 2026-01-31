@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme/kasby_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/screens/login_screen.dart';
@@ -15,7 +16,13 @@ import 'features/notifications/screens/notifications_screen.dart';
 import 'features/gamification/screens/rewards_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Date Formatting
+  await initializeDateFormatting('ar', null);
+  await initializeDateFormatting('en', null);
+
   // Initialize GetX Controllers
   Get.put(AuthController());
 

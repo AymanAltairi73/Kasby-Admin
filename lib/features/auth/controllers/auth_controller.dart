@@ -11,12 +11,15 @@ class AuthController extends GetxController {
   final userRole = ''.obs; // Super Admin, Admin, Viewer
   final generatedOtp = ''.obs;
   final isBiometricAvailable = false.obs;
+  final rememberMe = false.obs;
+  final savedUsername = ''.obs;
   final LocalAuthentication _localAuth = LocalAuthentication();
 
   @override
   void onInit() {
     super.onInit();
     _checkLoginStatus();
+    _loadRememberedCredentials();
   }
 
   /// Check if user is already logged in
@@ -34,6 +37,25 @@ class AuthController extends GetxController {
     isBiometricAvailable.value =
         await _localAuth.canCheckBiometrics ||
         await _localAuth.isDeviceSupported();
+  }
+
+  /// Load remembered credentials from SharedPreferences
+  Future<void> _loadRememberedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    rememberMe.value = prefs.getBool('remember_me') ?? false;
+    if (rememberMe.value) {
+      savedUsername.value = prefs.getString('saved_username') ?? '';
+    }
+  }
+
+  /// Update remember me state
+  Future<void> toggleRememberMe(bool value) async {
+    rememberMe.value = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remember_me', value);
+    if (!value) {
+      await prefs.remove('saved_username');
+    }
   }
 
   /// Authenticate with Biometrics
@@ -68,6 +90,13 @@ class AuthController extends GetxController {
 
     // Mock authentication
     if (username == 'admin' && password == 'admin123') {
+      // Save credentials if remember me is on
+      if (rememberMe.value) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_username', username);
+        savedUsername.value = username;
+      }
+
       // Generate OTP
       generatedOtp.value = _generateOtp();
       isLoading.value = false;

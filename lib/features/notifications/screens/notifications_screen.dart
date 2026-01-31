@@ -16,6 +16,8 @@ class NotificationsScreen extends StatelessWidget {
     final titleController = TextEditingController();
     final messageController = TextEditingController();
     final selectedTarget = 'all'.obs;
+    final notificationTitle = ''.obs;
+    final notificationMessage = ''.obs;
 
     return Scaffold(
       appBar: AppBar(title: const Text('إرسال إشعار')),
@@ -83,6 +85,7 @@ class NotificationsScreen extends StatelessWidget {
               controller: titleController,
               hintText: 'عنوان الإشعار',
               prefixIcon: Icons.title,
+              onChanged: (value) => notificationTitle.value = value,
             ),
             const SizedBox(height: 12),
             KasbyTextField(
@@ -90,6 +93,7 @@ class NotificationsScreen extends StatelessWidget {
               hintText: 'نص الإشعار',
               maxLines: 5,
               prefixIcon: Icons.message,
+              onChanged: (value) => notificationMessage.value = value,
             ),
             const SizedBox(height: 24),
 
@@ -150,9 +154,9 @@ class NotificationsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      titleController.text.isEmpty
+                      notificationTitle.value.isEmpty
                           ? 'عنوان الإشعار'
-                          : titleController.text,
+                          : notificationTitle.value,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -161,9 +165,9 @@ class NotificationsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      messageController.text.isEmpty
+                      notificationMessage.value.isEmpty
                           ? 'نص الإشعار سيظهر هنا'
-                          : messageController.text,
+                          : notificationMessage.value,
                       style: const TextStyle(
                         fontSize: 14,
                         color: KasbyColors.textBody,
