@@ -1,0 +1,113 @@
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Authentication Controller
+/// Manages login, OTP verification, and session state
+class AuthController extends GetxController {
+  // Observable state
+  final isLoading = false.obs;
+  final isLoggedIn = false.obs;
+  final userRole = ''.obs; // Super Admin, Admin, Viewer
+  final generatedOtp = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _checkLoginStatus();
+  }
+
+  /// Check if user is already logged in
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    final role = prefs.getString('user_role');
+
+    if (token != null && token.isNotEmpty) {
+      isLoggedIn.value = true;
+      userRole.value = role ?? 'Admin';
+    }
+  }
+
+  /// Login with username and password
+  Future<bool> login(String username, String password) async {
+    isLoading.value = true;
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Mock authentication
+    if (username == 'admin' && password == 'admin123') {
+      // Generate OTP
+      generatedOtp.value = _generateOtp();
+      isLoading.value = false;
+      return true;
+    } else {
+      isLoading.value = false;
+      Get.snackbar(
+        'خطأ في تسجيل الدخول',
+        'اسم المستخدم أو كلمة المرور غير صحيحة',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+  }
+
+  /// Verify OTP
+  Future<bool> verifyOtp(String enteredOtp) async {
+    isLoading.value = true;
+
+    // Simulate API call
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (enteredOtp == generatedOtp.value) {
+      // Save session
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'auth_token',
+        'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+      );
+      await prefs.setString('user_role', 'Super Admin');
+
+      isLoggedIn.value = true;
+      userRole.value = 'Super Admin';
+      isLoading.value = false;
+      return true;
+    } else {
+      isLoading.value = false;
+      Get.snackbar(
+        'خطأ في التحقق',
+        'رمز التحقق غير صحيح',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+  }
+
+  /// Generate random 6-digit OTP
+  String _generateOtp() {
+    final random = DateTime.now().millisecondsSinceEpoch % 900000 + 100000;
+    return random.toString();
+  }
+
+  /// Logout
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    isLoggedIn.value = false;
+    userRole.value = '';
+    Get.offAllNamed('/login');
+  }
+
+  /// Forgot password (mock)
+  Future<void> forgotPassword(String email) async {
+    isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 2));
+    isLoading.value = false;
+
+    Get.snackbar(
+      'تم الإرسال',
+      'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+}
