@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'kasby_colors.dart';
 
-/// Kasby Admin App Theme
-/// Dark mode only with IBM Plex Sans Arabic typography
+/// Kasby Theme
+/// Dark theme with Kasby brand colors and IBM Plex Sans Arabic font
 class KasbyTheme {
   KasbyTheme._();
 
@@ -25,41 +24,58 @@ class KasbyTheme {
         onError: Colors.white,
       ),
 
-      // Typography - IBM Plex Sans Arabic
-      textTheme: GoogleFonts.ibmPlexSansArabicTextTheme(
-        const TextTheme(
-          // Headings
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: KasbyColors.textPrimary,
-          ),
-          displayMedium: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: KasbyColors.textPrimary,
-          ),
-          displaySmall: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: KasbyColors.textPrimary,
-          ),
-          // Body
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: KasbyColors.textBody,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.normal,
-            color: KasbyColors.textBody,
-          ),
-          bodySmall: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.normal,
-            color: KasbyColors.textSecondary,
-          ),
+      // Text Theme - IBM Plex Sans Arabic from local assets
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        displayMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        displaySmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        headlineSmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimary,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 16,
+          color: KasbyColors.textBody,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 14,
+          color: KasbyColors.textBody,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 12,
+          color: KasbyColors.textSecondary,
         ),
       ),
 
@@ -73,16 +89,17 @@ class KasbyTheme {
       ),
 
       // AppBar Theme
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: KasbyColors.background,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.ibmPlexSansArabic(
+        titleTextStyle: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: KasbyColors.textPrimary,
         ),
-        iconTheme: const IconThemeData(color: KasbyColors.primaryGold),
+        iconTheme: IconThemeData(color: KasbyColors.primaryGold),
       ),
 
       // Input Decoration Theme
@@ -125,7 +142,8 @@ class KasbyTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.ibmPlexSansArabic(
+          textStyle: const TextStyle(
+            fontFamily: 'IBMPlexSansArabic',
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
