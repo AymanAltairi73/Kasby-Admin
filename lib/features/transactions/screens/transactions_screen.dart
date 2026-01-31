@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
@@ -113,8 +114,8 @@ class TransactionsScreen extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: transaction.type == 'Deposit'
-                      ? KasbyColors.success.withOpacity(0.2)
-                      : KasbyColors.warning.withOpacity(0.2),
+                      ? KasbyColors.success.withValues(alpha: 0.2)
+                      : KasbyColors.warning.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -157,7 +158,7 @@ class TransactionsScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.2),
+                  color: statusColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -200,7 +201,7 @@ class TransactionsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: KasbyColors.error.withOpacity(0.1),
+                color: KasbyColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -281,7 +282,7 @@ class TransactionsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Directionality(
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           child: Text(
             value,
             style: TextStyle(

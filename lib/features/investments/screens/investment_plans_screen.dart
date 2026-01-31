@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -93,8 +94,8 @@ class InvestmentPlansScreen extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: plan.isActive
-                      ? KasbyColors.success.withOpacity(0.2)
-                      : KasbyColors.error.withOpacity(0.2),
+                      ? KasbyColors.success.withValues(alpha: 0.2)
+                      : KasbyColors.error.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -203,7 +204,7 @@ class InvestmentPlansScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Directionality(
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           child: Text(
             value,
             style: TextStyle(

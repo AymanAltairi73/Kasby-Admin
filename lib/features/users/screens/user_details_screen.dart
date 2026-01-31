@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -33,10 +34,12 @@ class UserDetailsScreen extends StatelessWidget {
                   style: TextStyle(color: KasbyColors.textPrimary),
                 ),
                 onTap: () {
-                  Future.delayed(
-                    Duration.zero,
-                    () => _showAddBalanceDialog(context, userController),
-                  );
+                  final ctx = context;
+                  Future.delayed(Duration.zero, () {
+                    if (ctx.mounted) {
+                      _showAddBalanceDialog(ctx, userController);
+                    }
+                  });
                 },
               ),
               PopupMenuItem(
@@ -45,10 +48,12 @@ class UserDetailsScreen extends StatelessWidget {
                   style: TextStyle(color: KasbyColors.textPrimary),
                 ),
                 onTap: () {
-                  Future.delayed(
-                    Duration.zero,
-                    () => _showDeductBalanceDialog(context, userController),
-                  );
+                  final ctx = context;
+                  Future.delayed(Duration.zero, () {
+                    if (ctx.mounted) {
+                      _showDeductBalanceDialog(ctx, userController);
+                    }
+                  });
                 },
               ),
               PopupMenuItem(
@@ -67,7 +72,9 @@ class UserDetailsScreen extends StatelessWidget {
                     } else {
                       userController.activateUser(user.id);
                     }
-                    Get.back();
+                    if (Get.isOverlaysOpen) {
+                      Get.back();
+                    }
                   });
                 },
               ),
@@ -147,11 +154,11 @@ class UserDetailsScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         user.phone,
+                        textDirection: ui.TextDirection.ltr,
                         style: const TextStyle(
                           fontSize: 14,
                           color: KasbyColors.textSecondary,
                         ),
-                        textDirection: TextDirection.ltr,
                       ),
                     ],
                   ),
@@ -165,8 +172,8 @@ class UserDetailsScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: user.status == 'Active'
-                          ? KasbyColors.success.withOpacity(0.2)
-                          : KasbyColors.error.withOpacity(0.2),
+                          ? KasbyColors.success.withValues(alpha: 0.2)
+                          : KasbyColors.error.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -184,7 +191,7 @@ class UserDetailsScreen extends StatelessWidget {
 
                   // Member Since
                   Directionality(
-                    textDirection: TextDirection.ltr,
+                    textDirection: ui.TextDirection.ltr,
                     child: Text(
                       'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(user.createdAt)}',
                       style: const TextStyle(
@@ -313,7 +320,7 @@ class UserDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Directionality(
-            textDirection: TextDirection.ltr,
+            textDirection: ui.TextDirection.ltr,
             child: Text(
               '\$${amount.toStringAsFixed(2)}',
               style: TextStyle(

@@ -160,7 +160,7 @@ class DashboardScreen extends StatelessWidget {
                         dotData: FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: KasbyColors.primaryGold.withOpacity(0.2),
+                          color: KasbyColors.primaryGold.withValues(alpha: 0.2),
                         ),
                       ),
                     ],
@@ -304,7 +304,7 @@ class DashboardScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: KasbyColors.primaryGold.withOpacity(0.2),
+              color: KasbyColors.primaryGold.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: KasbyColors.primaryGold, size: 24),

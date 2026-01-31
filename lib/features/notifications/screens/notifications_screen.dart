@@ -249,7 +249,7 @@ class NotificationsScreen extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? KasbyColors.primaryGold.withOpacity(0.2)
+                    ? KasbyColors.primaryGold.withValues(alpha: 0.2)
                     : KasbyColors.background,
                 borderRadius: BorderRadius.circular(12),
               ),

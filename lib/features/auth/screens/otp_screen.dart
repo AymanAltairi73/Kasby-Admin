@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import '../../../core/theme/kasby_colors.dart';
@@ -110,7 +111,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                 // PIN Code Field
                 Directionality(
-                  textDirection: TextDirection.ltr,
+                  textDirection: ui.TextDirection.ltr,
                   child: PinCodeTextField(
                     appContext: context,
                     length: 6,

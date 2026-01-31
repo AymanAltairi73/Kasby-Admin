@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:ui' as ui;
 import 'package:intl/intl.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
@@ -133,8 +134,8 @@ class UserInvestmentsScreen extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: investment.status == 'Active'
-                      ? KasbyColors.success.withOpacity(0.2)
-                      : KasbyColors.info.withOpacity(0.2),
+                      ? KasbyColors.success.withValues(alpha: 0.2)
+                      : KasbyColors.info.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -268,7 +269,7 @@ class UserInvestmentsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Directionality(
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           child: Text(
             value,
             style: TextStyle(

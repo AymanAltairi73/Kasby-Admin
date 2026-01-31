@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -193,8 +194,8 @@ class AgentsScreen extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: agent.status == 'Active'
-                      ? KasbyColors.success.withOpacity(0.2)
-                      : KasbyColors.error.withOpacity(0.2),
+                      ? KasbyColors.success.withValues(alpha: 0.2)
+                      : KasbyColors.error.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -280,7 +281,7 @@ class AgentsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Directionality(
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           child: Text(
             value,
             style: TextStyle(
@@ -462,7 +463,7 @@ class AgentsScreen extends StatelessWidget {
         ),
         Expanded(
           child: Directionality(
-            textDirection: TextDirection.ltr,
+            textDirection: ui.TextDirection.ltr,
             child: Text(
               value,
               style: const TextStyle(fontSize: 14, color: KasbyColors.textBody),

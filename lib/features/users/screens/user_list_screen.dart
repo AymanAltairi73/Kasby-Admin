@@ -214,8 +214,8 @@ class UserListScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: user.status == 'Active'
-                  ? KasbyColors.success.withOpacity(0.2)
-                  : KasbyColors.error.withOpacity(0.2),
+                  ? KasbyColors.success.withValues(alpha: 0.2)
+                  : KasbyColors.error.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

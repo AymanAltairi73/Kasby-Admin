@@ -181,7 +181,9 @@ class SettingsScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: (iconColor ?? KasbyColors.primaryGold).withOpacity(0.2),
+              color: (iconColor ?? KasbyColors.primaryGold).withValues(
+                alpha: 0.2,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
