@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/kasby_colors.dart';
 
 /// Kasby Card
@@ -42,6 +43,9 @@ class KasbyCard extends StatelessWidget {
       );
     }
 
-    return cardContent;
+    return cardContent
+        .animate()
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
   }
 }

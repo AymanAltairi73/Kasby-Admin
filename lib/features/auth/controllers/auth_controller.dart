@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:local_auth/local_auth.dart';
 
 /// Authentication Controller
 /// Manages login, OTP verification, and session state
@@ -9,6 +10,8 @@ class AuthController extends GetxController {
   final isLoggedIn = false.obs;
   final userRole = ''.obs; // Super Admin, Admin, Viewer
   final generatedOtp = ''.obs;
+  final isBiometricAvailable = false.obs;
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   @override
   void onInit() {
@@ -25,6 +28,34 @@ class AuthController extends GetxController {
     if (token != null && token.isNotEmpty) {
       isLoggedIn.value = true;
       userRole.value = role ?? 'Admin';
+    }
+
+    // Check biometric availability
+    isBiometricAvailable.value =
+        await _localAuth.canCheckBiometrics ||
+        await _localAuth.isDeviceSupported();
+  }
+
+  /// Authenticate with Biometrics
+  Future<bool> authenticateWithBiometrics() async {
+    try {
+      final authenticated = await _localAuth.authenticate(
+        localizedReason: 'يرجى المصادقة للدخول إلى لوحة التحكم',
+      );
+
+      if (authenticated) {
+        // Auto-login if previously logged in (simplified for demo)
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('auth_token');
+        if (token != null) {
+          isLoggedIn.value = true;
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      // debugPrint('Biometric Error: $e');
+      return false;
     }
   }
 

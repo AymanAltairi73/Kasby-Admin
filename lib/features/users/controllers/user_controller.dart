@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../models/user_model.dart';
+import '../../../core/services/audit_logger.dart';
 
 /// User Management Controller
 /// Handles user list, search, filter, and admin actions
@@ -68,11 +69,11 @@ class UserController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    // In real app, call API
-    Get.snackbar(
-      'نجح',
-      'تمت إضافة $amount إلى رصيد المستخدم\nالسبب: $reason',
-      snackPosition: SnackPosition.BOTTOM,
+    // Log action
+    await AuditLogger.log(
+      adminName: 'Super Admin', // In real app, get from AuthController
+      action: 'إضافة رصيد',
+      details: 'تم إضافة $amount للمستخدم $userId. السبب: $reason',
     );
 
     isLoading.value = false;
@@ -87,11 +88,11 @@ class UserController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    // In real app, call API
-    Get.snackbar(
-      'نجح',
-      'تم خصم $amount من رصيد المستخدم\nالسبب: $reason',
-      snackPosition: SnackPosition.BOTTOM,
+    // Log action
+    await AuditLogger.log(
+      adminName: 'Super Admin',
+      action: 'خصم رصيد',
+      details: 'تم خصم $amount من المستخدم $userId. السبب: $reason',
     );
 
     isLoading.value = false;
@@ -104,11 +105,11 @@ class UserController extends GetxController {
 
     final index = users.indexWhere((u) => u.id == userId);
     if (index != -1) {
-      // In real app, call API
-      Get.snackbar(
-        'نجح',
-        'تم حظر المستخدم',
-        snackPosition: SnackPosition.BOTTOM,
+      // Log action
+      await AuditLogger.log(
+        adminName: 'Super Admin',
+        action: 'حظر مستخدم',
+        details: 'تم حظر المستخدم $userId',
       );
     }
 
@@ -123,11 +124,11 @@ class UserController extends GetxController {
 
     final index = users.indexWhere((u) => u.id == userId);
     if (index != -1) {
-      // In real app, call API
-      Get.snackbar(
-        'نجح',
-        'تم تفعيل المستخدم',
-        snackPosition: SnackPosition.BOTTOM,
+      // Log action
+      await AuditLogger.log(
+        adminName: 'Super Admin',
+        action: 'تفعيل مستخدم',
+        details: 'تم تفعيل المستخدم $userId',
       );
     }
 
