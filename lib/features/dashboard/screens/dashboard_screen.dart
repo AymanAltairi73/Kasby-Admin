@@ -237,10 +237,19 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
         onTap: (index) {
-          if (index == 1) {
-            Get.toNamed('/users');
-          } else if (index != 0) {
-            Get.snackbar('قريباً', 'هذه الميزة قيد التطوير');
+          switch (index) {
+            case 0:
+              // Already on dashboard
+              break;
+            case 1:
+              Get.toNamed('/users');
+              break;
+            case 2:
+              Get.toNamed('/transactions');
+              break;
+            case 3:
+              Get.toNamed('/settings');
+              break;
           }
         },
       ),

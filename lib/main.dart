@@ -7,6 +7,13 @@ import 'features/auth/screens/otp_screen.dart';
 import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/users/screens/user_list_screen.dart';
+import 'features/investments/screens/investment_plans_screen.dart';
+import 'features/investments/screens/user_investments_screen.dart';
+import 'features/transactions/screens/transactions_screen.dart';
+import 'features/agents/screens/agents_screen.dart';
+import 'features/notifications/screens/notifications_screen.dart';
+import 'features/gamification/screens/rewards_screen.dart';
+import 'features/settings/screens/settings_screen.dart';
 
 void main() {
   // Initialize GetX Controllers
@@ -40,6 +47,22 @@ class KasbyAdminApp extends StatelessWidget {
         ),
         GetPage(name: '/dashboard', page: () => const DashboardScreen()),
         GetPage(name: '/users', page: () => const UserListScreen()),
+        GetPage(
+          name: '/investment-plans',
+          page: () => const InvestmentPlansScreen(),
+        ),
+        GetPage(
+          name: '/user-investments',
+          page: () => const UserInvestmentsScreen(),
+        ),
+        GetPage(name: '/transactions', page: () => const TransactionsScreen()),
+        GetPage(name: '/agents', page: () => const AgentsScreen()),
+        GetPage(
+          name: '/notifications',
+          page: () => const NotificationsScreen(),
+        ),
+        GetPage(name: '/rewards', page: () => const RewardsScreen()),
+        GetPage(name: '/settings', page: () => const SettingsScreen()),
       ],
 
       // Check if user is already logged in
