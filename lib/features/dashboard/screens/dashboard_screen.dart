@@ -9,8 +9,8 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/audit_controller.dart';
+import '../controllers/main_controller.dart';
 import '../models/audit_log_model.dart';
-import '../../transactions/screens/transactions_screen.dart';
 import '../../notifications/screens/notifications_screen.dart';
 
 /// Dashboard Home Screen
@@ -182,17 +182,13 @@ class DashboardScreen extends StatelessWidget {
                               'الإيداعات',
                               '23 طلب',
                               FontAwesomeIcons.circleArrowDown,
-                              () => Get.to(
-                                () => const TransactionsScreen(initialIndex: 0),
-                              ),
+                              () => Get.find<MainController>().changePage(2),
                             ),
                             _buildCompactAction(
                               'السحوبات',
                               '15 طلب',
                               FontAwesomeIcons.circleArrowUp,
-                              () => Get.to(
-                                () => const TransactionsScreen(initialIndex: 1),
-                              ),
+                              () => Get.find<MainController>().changePage(2),
                             ),
                             _buildCompactAction(
                               'إرسال إشعار',
@@ -250,7 +246,6 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -397,53 +392,6 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: KasbyColors.primaryGold,
-          unselectedItemColor: KasbyColors.textSecondary,
-          type: BottomNavigationBarType.fixed,
-          currentIndex: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
-              label: 'الرئيسية',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_alt_rounded),
-              label: 'المستخدمين',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_rounded),
-              label: 'المعاملات',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_rounded),
-              label: 'الإعدادات',
-            ),
-          ],
-          onTap: (index) {
-            switch (index) {
-              case 1:
-                Get.toNamed('/users');
-                break;
-              case 2:
-                Get.toNamed('/transactions');
-                break;
-              case 3:
-                Get.toNamed('/settings');
-                break;
-            }
-          },
         ),
       ),
     );

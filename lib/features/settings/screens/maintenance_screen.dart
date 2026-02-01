@@ -16,7 +16,7 @@ class MaintenanceScreen extends StatefulWidget {
 class _MaintenanceScreenState extends State<MaintenanceScreen> {
   bool _isMaintenanceActive = false;
   final _messageController = TextEditingController(
-    text: 'نحن نقوم ببعض التحسينات السحرية للنظام. سنعود قريباً!',
+    text: 'نحن نقوم ببعض الصيانة للنظام. سنعود قريباً!',
   );
 
   @override

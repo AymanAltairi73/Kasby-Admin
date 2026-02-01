@@ -7,6 +7,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/otp_screen.dart';
 import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/dashboard/screens/main_wrapper.dart';
 import 'features/users/screens/user_list_screen.dart';
 import 'features/investments/screens/investment_plans_screen.dart';
 import 'features/investments/screens/user_investments_screen.dart';
@@ -64,7 +65,7 @@ class KasbyAdminApp extends StatelessWidget {
           name: '/forgot-password',
           page: () => const ForgotPasswordScreen(),
         ),
-        GetPage(name: '/dashboard', page: () => const DashboardScreen()),
+        GetPage(name: '/dashboard', page: () => const MainWrapper()),
         GetPage(name: '/users', page: () => const UserListScreen()),
         GetPage(
           name: '/investment-plans',
