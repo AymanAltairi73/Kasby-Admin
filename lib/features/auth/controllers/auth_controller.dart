@@ -8,7 +8,7 @@ class AuthController extends GetxController {
   // Observable state
   final isLoading = false.obs;
   final isLoggedIn = false.obs;
-  final userRole = ''.obs; // Super Admin, Admin, Viewer
+  final userRole = ''.obs; // Admin
   final generatedOtp = ''.obs;
   final isBiometricAvailable = false.obs;
   final rememberMe = false.obs;
@@ -126,10 +126,10 @@ class AuthController extends GetxController {
         'auth_token',
         'mock_token_${DateTime.now().millisecondsSinceEpoch}',
       );
-      await prefs.setString('user_role', 'Super Admin');
+      await prefs.setString('user_role', 'Admin');
 
       isLoggedIn.value = true;
-      userRole.value = 'Super Admin';
+      userRole.value = 'Admin';
       isLoading.value = false;
       return true;
     } else {

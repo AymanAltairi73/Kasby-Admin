@@ -53,7 +53,7 @@ class TransactionController extends GetxController {
 
     // Log action
     await AuditLogger.log(
-      adminName: 'Super Admin',
+      adminName: 'Admin',
       action: 'موافقة على معاملة',
       details: 'تمت الموافقة على المعاملة $transactionId',
     );
@@ -75,7 +75,7 @@ class TransactionController extends GetxController {
 
     // Log action
     await AuditLogger.log(
-      adminName: 'Super Admin',
+      adminName: 'Admin',
       action: 'رفض معاملة',
       details: 'تم رفض المعاملة $transactionId. السبب: $reason',
     );

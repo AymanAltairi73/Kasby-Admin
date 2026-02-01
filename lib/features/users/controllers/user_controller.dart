@@ -71,7 +71,7 @@ class UserController extends GetxController {
 
     // Log action
     await AuditLogger.log(
-      adminName: 'Super Admin', // In real app, get from AuthController
+      adminName: 'Admin', // In real app, get from AuthController
       action: 'إضافة رصيد',
       details: 'تم إضافة $amount للمستخدم $userId. السبب: $reason',
     );
@@ -90,7 +90,7 @@ class UserController extends GetxController {
 
     // Log action
     await AuditLogger.log(
-      adminName: 'Super Admin',
+      adminName: 'Admin',
       action: 'خصم رصيد',
       details: 'تم خصم $amount من المستخدم $userId. السبب: $reason',
     );
@@ -107,7 +107,7 @@ class UserController extends GetxController {
     if (index != -1) {
       // Log action
       await AuditLogger.log(
-        adminName: 'Super Admin',
+        adminName: 'Admin',
         action: 'حظر مستخدم',
         details: 'تم حظر المستخدم $userId',
       );
@@ -126,7 +126,7 @@ class UserController extends GetxController {
     if (index != -1) {
       // Log action
       await AuditLogger.log(
-        adminName: 'Super Admin',
+        adminName: 'Admin',
         action: 'تفعيل مستخدم',
         details: 'تم تفعيل المستخدم $userId',
       );
