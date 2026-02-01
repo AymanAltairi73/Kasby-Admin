@@ -97,7 +97,35 @@ class DashboardScreen extends StatelessWidget {
                               () => Get.find<MainController>().changePage(2),
                             ),
                             _buildFloatingActionTile(
-                              'إرسال سحر',
+                              'خطط الاستثمار',
+                              'إدارة الخطط',
+                              FontAwesomeIcons.chartPie,
+                              KasbyColors.info,
+                              () => Get.toNamed('/investment-plans'),
+                            ),
+                            _buildFloatingActionTile(
+                              'استثماراتنا',
+                              'نشاط العملاء',
+                              FontAwesomeIcons.moneyBillTrendUp,
+                              KasbyColors.warning,
+                              () => Get.toNamed('/user-investments'),
+                            ),
+                            _buildFloatingActionTile(
+                              'المكافآت',
+                              'النقاط والهدايا',
+                              FontAwesomeIcons.gift,
+                              Colors.purpleAccent,
+                              () => Get.toNamed('/rewards'),
+                            ),
+                            _buildFloatingActionTile(
+                              'الوكلاء',
+                              'عرض الشبكة',
+                              FontAwesomeIcons.userTie,
+                              KasbyColors.glowOrange,
+                              () => Get.find<MainController>().changePage(1),
+                            ),
+                            _buildFloatingActionTile(
+                              'إرسال اشعار',
                               'إشعار عام',
                               FontAwesomeIcons.wandMagicSparkles,
                               KasbyColors.primaryGold,
@@ -195,7 +223,7 @@ class DashboardScreen extends StatelessWidget {
             centerTitle: true,
             title:
                 const Text(
-                      'لوحة التحكم الملكية',
+                      'لوحة التحكم',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -281,9 +309,10 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: authController.userRole.value,
+                    text: 'أيمن احمد',
+                    //text: authController.userRole.value,
                     style: const TextStyle(
-                      fontSize: 28,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: KasbyColors.primaryGold,
                     ),
@@ -321,7 +350,7 @@ class DashboardScreen extends StatelessWidget {
                   .fadeOut(duration: const Duration(seconds: 1)),
               const SizedBox(width: 8),
               Text(
-                'البث المباشر للبيانات نشط',
+                'حساب نشط',
                 style: TextStyle(
                   fontSize: 10,
                   color: KasbyColors.success.withOpacity(0.7),
@@ -694,7 +723,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة السحرية؟',
+                  'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white.withOpacity(0.6)),
                 ),
