@@ -13,7 +13,8 @@ import '../models/transaction_model.dart';
 /// Transactions Screen
 /// Manage deposits and withdrawals
 class TransactionsScreen extends StatelessWidget {
-  const TransactionsScreen({super.key});
+  final int initialIndex;
+  const TransactionsScreen({super.key, this.initialIndex = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,7 @@ class TransactionsScreen extends StatelessWidget {
 
     return DefaultTabController(
       length: 3,
+      initialIndex: initialIndex,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('المعاملات'),

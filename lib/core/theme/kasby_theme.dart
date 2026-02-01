@@ -154,4 +154,114 @@ class KasbyTheme {
       iconTheme: const IconThemeData(color: KasbyColors.primaryGold),
     );
   }
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: KasbyColors.backgroundLight,
+
+      // Color Scheme
+      colorScheme: const ColorScheme.light(
+        primary: KasbyColors.primaryGold,
+        secondary: KasbyColors.primaryGoldLight,
+        surface: KasbyColors.surfaceLight,
+        error: KasbyColors.error,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: KasbyColors.textPrimaryLight,
+        onError: Colors.white,
+      ),
+
+      // Text Theme
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimaryLight,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 16,
+          color: KasbyColors.textBodyLight,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 14,
+          color: KasbyColors.textBodyLight,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 12,
+          color: KasbyColors.textSecondaryLight,
+        ),
+      ),
+
+      // Card Theme
+      cardTheme: const CardThemeData(
+        color: KasbyColors.surfaceLight,
+        elevation: 2,
+        shadowColor: Colors.black12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
+
+      // AppBar Theme
+      appBarTheme: const AppBarTheme(
+        backgroundColor: KasbyColors.backgroundLight,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimaryLight,
+        ),
+        iconTheme: IconThemeData(color: KasbyColors.primaryGold),
+      ),
+
+      // Input Decoration Theme
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: KasbyColors.primaryGold,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        hintStyle: const TextStyle(color: KasbyColors.textSecondaryLight),
+      ),
+
+      // Elevated Button Theme
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: KasbyColors.primaryGold,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+
+      iconTheme: const IconThemeData(color: KasbyColors.primaryGold),
+    );
+  }
 }

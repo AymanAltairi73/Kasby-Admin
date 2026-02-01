@@ -15,6 +15,10 @@ import 'features/agents/screens/agents_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/gamification/screens/rewards_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
+import 'features/settings/screens/admin_management_screen.dart';
+import 'features/auth/screens/profile_screen.dart';
+import 'features/dashboard/screens/audit_logs_screen.dart';
+import 'core/controllers/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +29,7 @@ Future<void> main() async {
 
   // Initialize GetX Controllers
   Get.put(AuthController());
+  Get.put(ThemeController());
 
   runApp(const KasbyAdminApp());
 }
@@ -35,9 +40,13 @@ class KasbyAdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Kasby Admin',
+      title: 'Kasby Panel',
       debugShowCheckedModeBanner: false,
-      theme: KasbyTheme.darkTheme,
+      theme: KasbyTheme.lightTheme,
+      darkTheme: KasbyTheme.darkTheme,
+      themeMode: Get.find<ThemeController>().isDarkMode.value
+          ? ThemeMode.dark
+          : ThemeMode.light,
 
       // RTL Support
       locale: const Locale('ar', 'SA'),
@@ -70,6 +79,12 @@ class KasbyAdminApp extends StatelessWidget {
         ),
         GetPage(name: '/rewards', page: () => const RewardsScreen()),
         GetPage(name: '/settings', page: () => const SettingsScreen()),
+        GetPage(
+          name: '/admin-management',
+          page: () => const AdminManagementScreen(),
+        ),
+        GetPage(name: '/profile', page: () => const ProfileScreen()),
+        GetPage(name: '/audit-logs', page: () => const AuditLogsScreen()),
       ],
 
       // Check if user is already logged in

@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../controllers/audit_controller.dart';
+import '../models/audit_log_model.dart';
+import '../../transactions/screens/transactions_screen.dart';
+import '../../notifications/screens/notifications_screen.dart';
 
 /// Dashboard Home Screen
 /// Main overview with statistics and quick actions
@@ -14,6 +20,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
+    final auditController = Get.put(AuditController());
 
     return Scaffold(
       appBar: AppBar(
@@ -21,9 +28,7 @@ class DashboardScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // Navigate to notifications
-            },
+            onPressed: () => Get.toNamed('/notifications'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -156,11 +161,24 @@ class DashboardScreen extends StatelessWidget {
                         ],
                         isCurved: true,
                         color: KasbyColors.primaryGold,
-                        barWidth: 3,
-                        dotData: FlDotData(show: false),
+                        barWidth: 4,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                          gradient: LinearGradient(
+                            colors: [
+                              KasbyColors.primaryGold.withValues(alpha: 0.3),
+                              KasbyColors.primaryGold.withValues(alpha: 0.0),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                        shadow: const Shadow(
+                          color: KasbyColors.primaryGold,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
                         ),
                       ),
                     ],
@@ -184,31 +202,67 @@ class DashboardScreen extends StatelessWidget {
               title: 'الإيداعات المعلقة',
               subtitle: '23 طلب جديد',
               icon: FontAwesomeIcons.clockRotateLeft,
-              onTap: () {
-                // Navigate to pending deposits
-                Get.snackbar('قريباً', 'هذه الميزة قيد التطوير');
-              },
+              onTap: () =>
+                  Get.to(() => const TransactionsScreen(initialIndex: 0)),
             ),
             const SizedBox(height: 12),
             _buildQuickActionCard(
               title: 'السحوبات المعلقة',
               subtitle: '15 طلب جديد',
               icon: FontAwesomeIcons.moneyBillTransfer,
-              onTap: () {
-                // Navigate to pending withdrawals
-                Get.snackbar('قريباً', 'هذه الميزة قيد التطوير');
-              },
+              onTap: () =>
+                  Get.to(() => const TransactionsScreen(initialIndex: 1)),
             ),
             const SizedBox(height: 12),
             _buildQuickActionCard(
               title: 'إرسال إشعار',
               subtitle: 'إرسال إشعار لجميع المستخدمين',
               icon: FontAwesomeIcons.bellConcierge,
-              onTap: () {
-                // Navigate to send notification
-                Get.snackbar('قريباً', 'هذه الميزة قيد التطوير');
-              },
+              onTap: () => Get.to(() => const NotificationsScreen()),
             ),
+            const SizedBox(height: 24),
+
+            // Recent Activity Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'آخر النشاطات',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.textPrimary,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Get.toNamed('/audit-logs'),
+                  child: const Text(
+                    'عرض الكل',
+                    style: TextStyle(color: KasbyColors.primaryGold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Obx(() {
+              if (auditController.isLoading.value &&
+                  auditController.logs.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: KasbyColors.primaryGold,
+                  ),
+                );
+              }
+              return Column(
+                children: auditController.logs.take(3).map((log) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildActivityItem(log),
+                  );
+                }).toList(),
+              );
+            }),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -341,5 +395,72 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildActivityItem(AuditLog log) {
+    return KasbyCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(log.icon, size: 18, color: _getLogTypeColor(log.type)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  log.action,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  log.adminName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: KasbyColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Directionality(
+            textDirection: ui.TextDirection.ltr,
+            child: Text(
+              DateFormat('HH:mm', 'en').format(log.timestamp),
+              style: const TextStyle(
+                fontSize: 11,
+                color: KasbyColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getLogTypeColor(AuditLogType type) {
+    switch (type) {
+      case AuditLogType.security:
+        return KasbyColors.error;
+      case AuditLogType.financial:
+        return KasbyColors.success;
+      case AuditLogType.userManagement:
+        return KasbyColors.info;
+      case AuditLogType.investment:
+        return KasbyColors.primaryGold;
+      case AuditLogType.system:
+        return KasbyColors.warning;
+    }
   }
 }

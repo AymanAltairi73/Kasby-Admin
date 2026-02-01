@@ -16,13 +16,11 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final _otpController = TextEditingController();
   final _authController = Get.find<AuthController>();
   String _currentOtp = '';
 
   @override
   void dispose() {
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -115,7 +113,6 @@ class _OtpScreenState extends State<OtpScreen> {
                   child: PinCodeTextField(
                     appContext: context,
                     length: 6,
-                    controller: _otpController,
                     onChanged: (value) {
                       setState(() {
                         _currentOtp = value;

@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/controllers/theme_controller.dart';
 
 /// Settings Screen
 /// App configuration and admin settings
@@ -13,6 +14,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
+    final themeController = Get.find<ThemeController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
@@ -50,6 +52,12 @@ class SettingsScreen extends StatelessWidget {
               title: 'الوكلاء',
               subtitle: 'إدارة الوكلاء والممثلين',
               onTap: () => Get.toNamed('/agents'),
+            ),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.userShield,
+              title: 'إدارة المشرفين',
+              subtitle: 'إدارة حسابات المسؤولين والصلاحيات',
+              onTap: () => Get.toNamed('/admin-management'),
             ),
             const SizedBox(height: 24),
 
@@ -121,6 +129,31 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _buildSettingCard(
+              icon: FontAwesomeIcons.userPen,
+              title: 'الملف الشخصي',
+              subtitle: 'تعديل البيانات الشخصية وكلمة المرور',
+              onTap: () => Get.toNamed('/profile'),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () => _buildSettingCard(
+                icon: themeController.isDarkMode.value
+                    ? FontAwesomeIcons.moon
+                    : FontAwesomeIcons.sun,
+                title: 'المظهر',
+                subtitle: themeController.isDarkMode.value
+                    ? 'الوضع الليلي'
+                    : 'الوضع النهاري',
+                onTap: () => themeController.toggleTheme(),
+                trailing: Switch(
+                  value: themeController.isDarkMode.value,
+                  onChanged: (_) => themeController.toggleTheme(),
+                  activeColor: KasbyColors.primaryGold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
               icon: FontAwesomeIcons.rightFromBracket,
               title: 'تسجيل الخروج',
               subtitle: 'الخروج من الحساب',
@@ -172,6 +205,7 @@ class SettingsScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
     Color? iconColor,
+    Widget? trailing,
   }) {
     return KasbyCard(
       onTap: onTap,
@@ -216,11 +250,12 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            color: KasbyColors.textSecondary,
-            size: 16,
-          ),
+          trailing ??
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: KasbyColors.textSecondary,
+                size: 16,
+              ),
         ],
       ),
     );
