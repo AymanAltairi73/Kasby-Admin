@@ -296,29 +296,27 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Obx(
-            () => RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'مرحباً، ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.6),
-                      fontWeight: FontWeight.w300,
-                    ),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'مرحباً، ',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.6),
+                    fontWeight: FontWeight.w300,
                   ),
-                  TextSpan(
-                    text: 'أيمن احمد',
-                    //text: authController.userRole.value,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: KasbyColors.primaryGold,
-                    ),
+                ),
+                TextSpan(
+                  text: 'أيمن احمد',
+                  //text: authController.userRole.value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: KasbyColors.primaryGold,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ).animate().fadeIn().slideX(begin: -0.2),
           const SizedBox(height: 6),
