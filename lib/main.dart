@@ -16,6 +16,9 @@ import 'features/notifications/screens/notifications_screen.dart';
 import 'features/gamification/screens/rewards_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/settings/screens/admin_management_screen.dart';
+import 'features/settings/screens/terms_screen.dart';
+import 'features/settings/screens/faq_screen.dart';
+import 'features/settings/screens/maintenance_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/dashboard/screens/audit_logs_screen.dart';
 import 'core/controllers/theme_controller.dart';
@@ -85,6 +88,9 @@ class KasbyAdminApp extends StatelessWidget {
         ),
         GetPage(name: '/profile', page: () => const ProfileScreen()),
         GetPage(name: '/audit-logs', page: () => const AuditLogsScreen()),
+        GetPage(name: '/terms', page: () => const TermsScreen()),
+        GetPage(name: '/faq', page: () => const FaqScreen()),
+        GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),
       ],
 
       // Check if user is already logged in

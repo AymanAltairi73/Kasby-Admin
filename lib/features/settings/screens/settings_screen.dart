@@ -89,21 +89,21 @@ class SettingsScreen extends StatelessWidget {
               icon: FontAwesomeIcons.fileContract,
               title: 'الشروط والأحكام',
               subtitle: 'تحديث الشروط والأحكام',
-              onTap: () => Get.snackbar('قريباً', 'هذه الميزة قيد التطوير'),
+              onTap: () => Get.toNamed('/terms'),
             ),
             const SizedBox(height: 8),
             _buildSettingCard(
               icon: FontAwesomeIcons.circleQuestion,
               title: 'الأسئلة الشائعة',
               subtitle: 'إدارة الأسئلة الشائعة',
-              onTap: () => Get.snackbar('قريباً', 'هذه الميزة قيد التطوير'),
+              onTap: () => Get.toNamed('/faq'),
             ),
             const SizedBox(height: 8),
             _buildSettingCard(
               icon: FontAwesomeIcons.wrench,
               title: 'وضع الصيانة',
               subtitle: 'تفعيل/تعطيل وضع الصيانة',
-              onTap: () => _showMaintenanceModeDialog(context),
+              onTap: () => Get.toNamed('/maintenance'),
             ),
             const SizedBox(height: 24),
 
@@ -202,18 +202,6 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           trailing ?? const Icon(Icons.arrow_forward_ios, size: 16),
-        ],
-      ),
-    );
-  }
-
-  void _showMaintenanceModeDialog(BuildContext context) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('وضع الصيانة'),
-        content: const Text('هذه الميزة ستسمح بتفعيل وضع الصيانة للتطبيق'),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('حسناً')),
         ],
       ),
     );
