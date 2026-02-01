@@ -23,6 +23,10 @@ class ThemeController extends GetxController {
   Future<void> _loadThemeFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     isDarkMode.value = prefs.getBool(_storageKey) ?? true;
-    Get.changeThemeMode(isDarkMode.value ? ThemeMode.dark : ThemeMode.light);
+
+    // Apply theme on load
+    Future.delayed(Duration.zero, () {
+      Get.changeThemeMode(isDarkMode.value ? ThemeMode.dark : ThemeMode.light);
+    });
   }
 }

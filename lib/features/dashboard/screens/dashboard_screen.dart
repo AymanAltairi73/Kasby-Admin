@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
-import '../../../core/widgets/kasby_card.dart';
+import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/audit_controller.dart';
 import '../models/audit_log_model.dart';
@@ -23,8 +24,11 @@ class DashboardScreen extends StatelessWidget {
     final auditController = Get.put(AuditController());
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('لوحة التحكم'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Kasby Panel'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -32,311 +36,332 @@ class DashboardScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              Get.dialog(
-                AlertDialog(
-                  backgroundColor: KasbyColors.surface,
-                  title: const Text(
-                    'تسجيل الخروج',
-                    style: TextStyle(color: KasbyColors.textPrimary),
-                  ),
-                  content: const Text(
-                    'هل أنت متأكد من تسجيل الخروج؟',
-                    style: TextStyle(color: KasbyColors.textBody),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text(
-                        'إلغاء',
-                        style: TextStyle(color: KasbyColors.textSecondary),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Get.back();
-                        authController.logout();
-                      },
-                      child: const Text(
-                        'تسجيل الخروج',
-                        style: TextStyle(color: KasbyColors.error),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onPressed: () => _showLogoutDialog(authController),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Section
-            Obx(
-              () => Text(
-                'مرحباً، ${authController.userRole.value}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: KasbyColors.textPrimary,
+      body: Stack(
+        children: [
+          // Background Gradient blobs
+          Positioned(
+                top: -100,
+                right: -50,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'نظرة عامة على النظام',
-              style: TextStyle(fontSize: 14, color: KasbyColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
+              )
+              .animate()
+              .fadeIn(duration: const Duration(milliseconds: 800))
+              .scale(begin: const Offset(0.5, 0.5)),
 
-            // Statistics Grid
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.3,
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatCard(
-                  title: 'إجمالي المستخدمين',
-                  value: '12,543',
-                  icon: FontAwesomeIcons.users,
-                  color: KasbyColors.primaryGold,
-                ),
-                _buildStatCard(
-                  title: 'حجم الاستثمارات',
-                  value: '\$2.4M',
-                  icon: FontAwesomeIcons.chartLine,
-                  color: KasbyColors.success,
-                ),
-                _buildStatCard(
-                  title: 'الأرباح المدفوعة',
-                  value: '\$184K',
-                  icon: FontAwesomeIcons.moneyBillTrendUp,
-                  color: KasbyColors.info,
-                ),
-                _buildStatCard(
-                  title: 'المعاملات اليومية',
-                  value: '1,234',
-                  icon: FontAwesomeIcons.arrowRightArrowLeft,
-                  color: KasbyColors.warning,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Weekly Trend Chart
-            const Text(
-              'الاتجاه الأسبوعي',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            KasbyCard(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                height: 200,
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(show: false),
-                    titlesData: FlTitlesData(show: false),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: [
-                          const FlSpot(0, 3),
-                          const FlSpot(1, 4),
-                          const FlSpot(2, 3.5),
-                          const FlSpot(3, 5),
-                          const FlSpot(4, 4),
-                          const FlSpot(5, 6),
-                          const FlSpot(6, 5.5),
-                        ],
-                        isCurved: true,
-                        color: KasbyColors.primaryGold,
-                        barWidth: 4,
-                        isStrokeCapRound: true,
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            colors: [
-                              KasbyColors.primaryGold.withValues(alpha: 0.3),
-                              KasbyColors.primaryGold.withValues(alpha: 0.0),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
+                // Radiant Welcome Header
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 120, 24, 40),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        KasbyColors.primaryGold.withValues(alpha: 0.2),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(
+                            () => Text(
+                              'مرحباً، ${authController.userRole.value}',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: const Duration(milliseconds: 200))
+                          .slideX(begin: -0.2),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'إليك ملخص أداء النظام اليوم',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: KasbyColors.textSecondary,
                         ),
-                        shadow: const Shadow(
-                          color: KasbyColors.primaryGold,
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 400),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
 
-            // Quick Actions
-            const Text(
-              'إجراءات سريعة',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildQuickActionCard(
-              title: 'الإيداعات المعلقة',
-              subtitle: '23 طلب جديد',
-              icon: FontAwesomeIcons.clockRotateLeft,
-              onTap: () =>
-                  Get.to(() => const TransactionsScreen(initialIndex: 0)),
-            ),
-            const SizedBox(height: 12),
-            _buildQuickActionCard(
-              title: 'السحوبات المعلقة',
-              subtitle: '15 طلب جديد',
-              icon: FontAwesomeIcons.moneyBillTransfer,
-              onTap: () =>
-                  Get.to(() => const TransactionsScreen(initialIndex: 1)),
-            ),
-            const SizedBox(height: 12),
-            _buildQuickActionCard(
-              title: 'إرسال إشعار',
-              subtitle: 'إرسال إشعار لجميع المستخدمين',
-              icon: FontAwesomeIcons.bellConcierge,
-              onTap: () => Get.to(() => const NotificationsScreen()),
-            ),
-            const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Glowing Statistics Grid
+                      GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 1.2,
+                            children: [
+                              _buildGlowingStatCard(
+                                title: 'إجمالي المستخدمين',
+                                value: '12,543',
+                                icon: FontAwesomeIcons.users,
+                                glowColor: KasbyColors.glowGold,
+                              ),
+                              _buildGlowingStatCard(
+                                title: 'حجم الاستثمارات',
+                                value: '\$2.4M',
+                                icon: FontAwesomeIcons.chartLine,
+                                glowColor: KasbyColors.glowGreen,
+                              ),
+                              _buildGlowingStatCard(
+                                title: 'الأرباح المدفوعة',
+                                value: '\$184K',
+                                icon: FontAwesomeIcons.moneyBillTrendUp,
+                                glowColor: KasbyColors.glowBlue,
+                              ),
+                              _buildGlowingStatCard(
+                                title: 'المعاملات اليومية',
+                                value: '1,234',
+                                icon: FontAwesomeIcons.bolt,
+                                glowColor: KasbyColors.glowOrange,
+                              ),
+                            ],
+                          )
+                          .animate()
+                          .fadeIn(delay: const Duration(milliseconds: 600))
+                          .slideY(begin: 0.2),
 
-            // Recent Activity Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'آخر النشاطات',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Get.toNamed('/audit-logs'),
-                  child: const Text(
-                    'عرض الكل',
-                    style: TextStyle(color: KasbyColors.primaryGold),
+                      const SizedBox(height: 32),
+
+                      // Chart Section with Glassmorphism
+                      const _SectionHeader(
+                        title: 'الاتجاه الأسبوعي (المعاملات)',
+                      ),
+                      const SizedBox(height: 16),
+                      KasbyGlassCard(
+                        padding: const EdgeInsets.all(24),
+                        child: SizedBox(
+                          height: 220,
+                          child: _buildEnhancedChart(),
+                        ),
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 800),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Quick Actions
+                      const _SectionHeader(title: 'إجراءات سريعة'),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 120,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _buildCompactAction(
+                              'الإيداعات',
+                              '23 طلب',
+                              FontAwesomeIcons.circleArrowDown,
+                              () => Get.to(
+                                () => const TransactionsScreen(initialIndex: 0),
+                              ),
+                            ),
+                            _buildCompactAction(
+                              'السحوبات',
+                              '15 طلب',
+                              FontAwesomeIcons.circleArrowUp,
+                              () => Get.to(
+                                () => const TransactionsScreen(initialIndex: 1),
+                              ),
+                            ),
+                            _buildCompactAction(
+                              'إرسال إشعار',
+                              'عام',
+                              FontAwesomeIcons.paperPlane,
+                              () => Get.to(() => const NotificationsScreen()),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 900),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Recent Activity
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const _SectionHeader(title: 'آخر النشاطات'),
+                          TextButton(
+                            onPressed: () => Get.toNamed('/audit-logs'),
+                            child: const Text(
+                              'عرض الكل',
+                              style: TextStyle(color: KasbyColors.primaryGold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Obx(() {
+                        if (auditController.isLoading.value &&
+                            auditController.logs.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: KasbyColors.primaryGold,
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: auditController.logs.take(3).map((log) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildActivityItem(log),
+                            );
+                          }).toList(),
+                        );
+                      }),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Obx(() {
-              if (auditController.isLoading.value &&
-                  auditController.logs.isEmpty) {
-                return const Center(
-                  child: CircularProgressIndicator(
-                    color: KasbyColors.primaryGold,
-                  ),
-                );
-              }
-              return Column(
-                children: auditController.logs.take(3).map((log) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildActivityItem(log),
-                  );
-                }).toList(),
-              );
-            }),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: KasbyColors.surface,
-        selectedItemColor: KasbyColors.primaryGold,
-        unselectedItemColor: KasbyColors.textSecondary,
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'الرئيسية',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'المستخدمين',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'المعاملات',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'الإعدادات',
           ),
         ],
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              // Already on dashboard
-              break;
-            case 1:
-              Get.toNamed('/users');
-              break;
-            case 2:
-              Get.toNamed('/transactions');
-              break;
-            case 3:
-              Get.toNamed('/settings');
-              break;
-          }
-        },
       ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildGlowingStatCard({
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
+    required Color glowColor,
   }) {
-    return KasbyCard(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return KasbyGlassCard(
+      padding: const EdgeInsets.all(16),
+      opacity: 0.05,
+      child: Stack(
         children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              icon,
+              size: 60,
+              color: glowColor.withValues(alpha: 0.1),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              color: KasbyColors.textSecondary,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: glowColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: glowColor, size: 18),
+                  )
+                  .animate(onPlay: (c) => c.repeat())
+                  .shimmer(
+                    duration: const Duration(seconds: 2),
+                    color: glowColor.withValues(alpha: 0.2),
+                  ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: KasbyColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedChart() {
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.white.withValues(alpha: 0.05),
+            strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: [
+              const FlSpot(0, 3),
+              const FlSpot(1, 4),
+              const FlSpot(2, 3.5),
+              const FlSpot(3, 5),
+              const FlSpot(4, 4.5),
+              const FlSpot(5, 6),
+              const FlSpot(6, 5.8),
+            ],
+            isCurved: true,
+            color: KasbyColors.primaryGold,
+            barWidth: 4,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  KasbyColors.primaryGold.withValues(alpha: 0.3),
+                  KasbyColors.primaryGold.withValues(alpha: 0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            shadow: Shadow(
+              color: KasbyColors.primaryGold.withValues(alpha: 0.5),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ),
         ],
@@ -344,62 +369,148 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return KasbyCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildCompactAction(
+    String title,
+    String sub,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: KasbyGlassCard(
+        onTap: onTap,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: KasbyColors.primaryGold, size: 28),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
-            child: Icon(icon, color: KasbyColors.primaryGold, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Text(
+              sub,
+              style: const TextStyle(
+                color: KasbyColors.textSecondary,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedItemColor: KasbyColors.primaryGold,
+          unselectedItemColor: KasbyColors.textSecondary,
+          type: BottomNavigationBarType.fixed,
+          currentIndex: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded),
+              label: 'الرئيسية',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_alt_rounded),
+              label: 'المستخدمين',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_balance_wallet_rounded),
+              label: 'المعاملات',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_rounded),
+              label: 'الإعدادات',
+            ),
+          ],
+          onTap: (index) {
+            switch (index) {
+              case 1:
+                Get.toNamed('/users');
+                break;
+              case 2:
+                Get.toNamed('/transactions');
+                break;
+              case 3:
+                Get.toNamed('/settings');
+                break;
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(AuthController authController) {
+    Get.dialog(
+      KasbyGlassCard(
+        margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 250),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.logout_rounded,
+              color: KasbyColors.error,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'تسجيل الخروج',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(color: KasbyColors.textSecondary),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: KasbyColors.textSecondary,
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      authController.logout();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KasbyColors.error,
+                    ),
+                    child: const Text(
+                      'خروج',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            color: KasbyColors.textSecondary,
-            size: 16,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildActivityItem(AuditLog log) {
-    return KasbyCard(
+    return KasbyGlassCard(
       padding: const EdgeInsets.all(12),
+      opacity: 0.05,
       child: Row(
         children: [
           Container(
@@ -421,7 +532,6 @@ class DashboardScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
                   ),
                 ),
                 Text(
@@ -462,5 +572,22 @@ class DashboardScreen extends StatelessWidget {
       case AuditLogType.system:
         return KasbyColors.warning;
     }
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        letterSpacing: -0.5,
+      ),
+    );
   }
 }

@@ -26,11 +26,7 @@ class SettingsScreen extends StatelessWidget {
             // Management Section
             const Text(
               'الإدارة',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildSettingCard(
@@ -53,6 +49,7 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة الوكلاء والممثلين',
               onTap: () => Get.toNamed('/agents'),
             ),
+            const SizedBox(height: 8),
             _buildSettingCard(
               icon: FontAwesomeIcons.userShield,
               title: 'إدارة المشرفين',
@@ -64,11 +61,7 @@ class SettingsScreen extends StatelessWidget {
             // Notifications Section
             const Text(
               'الإشعارات',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildSettingCard(
@@ -89,11 +82,7 @@ class SettingsScreen extends StatelessWidget {
             // App Configuration Section
             const Text(
               'إعدادات التطبيق',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildSettingCard(
@@ -121,11 +110,7 @@ class SettingsScreen extends StatelessWidget {
             // Account Section
             const Text(
               'الحساب',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _buildSettingCard(
@@ -157,40 +142,7 @@ class SettingsScreen extends StatelessWidget {
               icon: FontAwesomeIcons.rightFromBracket,
               title: 'تسجيل الخروج',
               subtitle: 'الخروج من الحساب',
-              onTap: () {
-                Get.dialog(
-                  AlertDialog(
-                    backgroundColor: KasbyColors.surface,
-                    title: const Text(
-                      'تسجيل الخروج',
-                      style: TextStyle(color: KasbyColors.textPrimary),
-                    ),
-                    content: const Text(
-                      'هل أنت متأكد من تسجيل الخروج؟',
-                      style: TextStyle(color: KasbyColors.textBody),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text(
-                          'إلغاء',
-                          style: TextStyle(color: KasbyColors.textSecondary),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Get.back();
-                          authController.logout();
-                        },
-                        child: const Text(
-                          'تسجيل الخروج',
-                          style: TextStyle(color: KasbyColors.error),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              onTap: () => _showLogoutDialog(context, authController),
               iconColor: KasbyColors.error,
             ),
           ],
@@ -216,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: (iconColor ?? KasbyColors.primaryGold).withValues(
-                alpha: 0.2,
+                alpha: 0.1,
               ),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -236,7 +188,6 @@ class SettingsScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -250,12 +201,7 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          trailing ??
-              const Icon(
-                Icons.arrow_forward_ios,
-                color: KasbyColors.textSecondary,
-                size: 16,
-              ),
+          trailing ?? const Icon(Icons.arrow_forward_ios, size: 16),
         ],
       ),
     );
@@ -264,21 +210,30 @@ class SettingsScreen extends StatelessWidget {
   void _showMaintenanceModeDialog(BuildContext context) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text(
-          'وضع الصيانة',
-          style: TextStyle(color: KasbyColors.textPrimary),
-        ),
-        content: const Text(
-          'هذه الميزة ستسمح بتفعيل وضع الصيانة للتطبيق',
-          style: TextStyle(color: KasbyColors.textBody),
-        ),
+        title: const Text('وضع الصيانة'),
+        content: const Text('هذه الميزة ستسمح بتفعيل وضع الصيانة للتطبيق'),
         actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('حسناً')),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context, AuthController authController) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('تسجيل الخروج'),
+        content: const Text('هل أنت متأكد من تسجيل الخروج؟'),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
-            onPressed: () => Get.back(),
+            onPressed: () {
+              Get.back();
+              authController.logout();
+            },
             child: const Text(
-              'حسناً',
-              style: TextStyle(color: KasbyColors.primaryGold),
+              'تسجيل الخروج',
+              style: TextStyle(color: KasbyColors.error),
             ),
           ),
         ],

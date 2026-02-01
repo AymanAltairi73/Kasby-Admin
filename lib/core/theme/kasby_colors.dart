@@ -12,9 +12,20 @@ class KasbyColors {
   // Backgrounds
   static const Color background = Color(0xFF0E0E11);
   static const Color surface = Color(0xFF1A1A1F);
+  static const Color glassBackground = Color(0x1AFFFFFF);
 
-  static const Color backgroundLight = Color(0xFFF8F9FA);
+  // Premium Light Mode Palette
+  static const Color backgroundLight = Color(
+    0xFFF9FAFB,
+  ); // Very light gray-blue
   static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color cardLight = Color(0xFFFFFFFF);
+
+  // Glow Colors for Stats
+  static const Color glowGold = Color(0xFFFFD700);
+  static const Color glowGreen = Color(0xFF00FF88);
+  static const Color glowBlue = Color(0xFF00D1FF);
+  static const Color glowOrange = Color(0xFFFF9D00);
 
   // Status Colors
   static const Color success = Color(0xFF4CAF50);
@@ -29,9 +40,10 @@ class KasbyColors {
   static const Color textDisabled = Color(0xFF707070);
 
   // Text Colors - Light Mode
-  static const Color textPrimaryLight = Color(0xFF1A1A1F);
-  static const Color textBodyLight = Color(0xFF424242);
-  static const Color textSecondaryLight = Color(0xFF757575);
+  static const Color textPrimaryLight = Color(0xFF111827); // Deep Slate
+  static const Color textBodyLight = Color(0xFF374151); // Medium Slate
+  static const Color textSecondaryLight = Color(0xFF6B7280); // Muted Slate
+  static const Color textDisabledLight = Color(0xFF9CA3AF);
 
   // Gradient
   static const LinearGradient primaryGradient = LinearGradient(

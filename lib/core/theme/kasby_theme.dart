@@ -181,6 +181,18 @@ class KasbyTheme {
           fontWeight: FontWeight.bold,
           color: KasbyColors.textPrimaryLight,
         ),
+        headlineMedium: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimaryLight,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: 'IBMPlexSansArabic',
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: KasbyColors.textPrimaryLight,
+        ),
         bodyLarge: TextStyle(
           fontFamily: 'IBMPlexSansArabic',
           fontSize: 16,
@@ -201,9 +213,12 @@ class KasbyTheme {
       // Card Theme
       cardTheme: const CardThemeData(
         color: KasbyColors.surfaceLight,
-        elevation: 2,
-        shadowColor: Colors.black12,
+        elevation: 0,
         shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: Color(0xFFE5E7EB),
+            width: 1,
+          ), // Light border instead of heavy shadow
           borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
       ),
@@ -228,11 +243,11 @@ class KasbyTheme {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFEEEEEE)),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
