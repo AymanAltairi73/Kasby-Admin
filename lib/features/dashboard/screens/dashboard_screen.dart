@@ -13,8 +13,8 @@ import '../controllers/main_controller.dart';
 import '../models/audit_log_model.dart';
 import '../../notifications/screens/notifications_screen.dart';
 
-/// Dashboard Home Screen
-/// Main overview with statistics and quick actions
+/// Dashboard Home Screen - Masterpiece Edition
+/// Main overview with celestial aesthetics and magical interactions
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -25,198 +25,124 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Kasby Panel'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => Get.toNamed('/notifications'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _showLogoutDialog(authController),
-          ),
-        ],
-      ),
+      appBar: _buildRoyalAppBar(authController),
       body: Stack(
         children: [
-          // Background Gradient blobs
-          Positioned(
-                top: -100,
-                right: -50,
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                  ),
-                ),
-              )
-              .animate()
-              .fadeIn(duration: const Duration(milliseconds: 800))
-              .scale(begin: const Offset(0.5, 0.5)),
+          // Celestial Multi-Depth Background
+          _buildCelestialBackground(),
 
           SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Radiant Welcome Header
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(24, 120, 24, 40),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        KasbyColors.primaryGold.withValues(alpha: 0.2),
-                        Colors.transparent,
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Obx(
-                            () => Text(
-                              'مرحباً، ${authController.userRole.value}',
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: const Duration(milliseconds: 200))
-                          .slideX(begin: -0.2),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'إليك ملخص أداء النظام اليوم',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: KasbyColors.textSecondary,
-                        ),
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 400),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 140),
+
+                // Magical Welcome Header
+                _buildMagicalHeader(authController),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Glowing Statistics Grid
-                      GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 1.2,
-                            children: [
-                              _buildGlowingStatCard(
-                                title: 'إجمالي المستخدمين',
-                                value: '12,543',
-                                icon: FontAwesomeIcons.users,
-                                glowColor: KasbyColors.glowGold,
-                              ),
-                              _buildGlowingStatCard(
-                                title: 'حجم الاستثمارات',
-                                value: '\$2.4M',
-                                icon: FontAwesomeIcons.chartLine,
-                                glowColor: KasbyColors.glowGreen,
-                              ),
-                              _buildGlowingStatCard(
-                                title: 'الأرباح المدفوعة',
-                                value: '\$184K',
-                                icon: FontAwesomeIcons.moneyBillTrendUp,
-                                glowColor: KasbyColors.glowBlue,
-                              ),
-                              _buildGlowingStatCard(
-                                title: 'المعاملات اليومية',
-                                value: '1,234',
-                                icon: FontAwesomeIcons.bolt,
-                                glowColor: KasbyColors.glowOrange,
-                              ),
-                            ],
-                          )
-                          .animate()
-                          .fadeIn(delay: const Duration(milliseconds: 600))
-                          .slideY(begin: 0.2),
+                      // Magical Statistics Grid
+                      _buildMagicalStatsGrid(),
 
                       const SizedBox(height: 32),
 
-                      // Chart Section with Glassmorphism
+                      // Nebula Chart Section
                       const _SectionHeader(
-                        title: 'الاتجاه الأسبوعي (المعاملات)',
-                      ),
-                      const SizedBox(height: 16),
-                      KasbyGlassCard(
-                        padding: const EdgeInsets.all(24),
-                        child: SizedBox(
-                          height: 220,
-                          child: _buildEnhancedChart(),
-                        ),
+                        title: 'تحليل البيانات',
+                        subtitle: 'الاتجاه الأسبوعي للمعاملات',
                       ).animate().fadeIn(
                         delay: const Duration(milliseconds: 800),
                       ),
+                      const SizedBox(height: 16),
+                      KasbyGlassCard(
+                            padding: const EdgeInsets.all(24),
+                            opacity: 0.08,
+                            child: SizedBox(
+                              height: 220,
+                              child: _buildNebulaChart(),
+                            ),
+                          )
+                          .animate()
+                          .fadeIn(delay: const Duration(milliseconds: 900))
+                          .scale(begin: const Offset(0.95, 0.95)),
 
                       const SizedBox(height: 32),
 
-                      // Quick Actions
-                      const _SectionHeader(title: 'إجراءات سريعة'),
+                      // Floating Action Tiles
+                      const _SectionHeader(title: 'بوابات الوصول السريع'),
                       const SizedBox(height: 16),
                       SizedBox(
-                        height: 120,
+                        height: 150,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
                           children: [
-                            _buildCompactAction(
+                            _buildFloatingActionTile(
                               'الإيداعات',
-                              '23 طلب',
+                              '23 طلب معلق',
                               FontAwesomeIcons.circleArrowDown,
+                              KasbyColors.success,
                               () => Get.find<MainController>().changePage(2),
                             ),
-                            _buildCompactAction(
+                            _buildFloatingActionTile(
                               'السحوبات',
-                              '15 طلب',
+                              '15 طلب معلق',
                               FontAwesomeIcons.circleArrowUp,
+                              KasbyColors.error,
                               () => Get.find<MainController>().changePage(2),
                             ),
-                            _buildCompactAction(
-                              'إرسال إشعار',
-                              'عام',
-                              FontAwesomeIcons.paperPlane,
+                            _buildFloatingActionTile(
+                              'إرسال سحر',
+                              'إشعار عام',
+                              FontAwesomeIcons.wandMagicSparkles,
+                              KasbyColors.primaryGold,
                               () => Get.to(() => const NotificationsScreen()),
                             ),
                           ],
                         ),
                       ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 900),
+                        delay: const Duration(milliseconds: 1000),
                       ),
 
                       const SizedBox(height: 32),
 
-                      // Recent Activity
+                      // Celestial Activity Feed
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const _SectionHeader(title: 'آخر النشاطات'),
+                          const _SectionHeader(title: 'آخر التحركات'),
                           TextButton(
                             onPressed: () => Get.toNamed('/audit-logs'),
-                            child: const Text(
-                              'عرض الكل',
-                              style: TextStyle(color: KasbyColors.primaryGold),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'مشاهدة السجل',
+                                  style: TextStyle(
+                                    color: KasbyColors.primaryGold.withOpacity(
+                                      0.8,
+                                    ),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 10,
+                                  color: KasbyColors.primaryGold.withOpacity(
+                                    0.8,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 1100),
                       ),
                       const SizedBox(height: 12),
                       Obx(() {
@@ -229,15 +155,23 @@ class DashboardScreen extends StatelessWidget {
                           );
                         }
                         return Column(
-                          children: auditController.logs.take(3).map((log) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildActivityItem(log),
-                            );
-                          }).toList(),
+                          children: auditController.logs
+                              .take(3)
+                              .toList()
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                final int index = entry.key;
+                                final log = entry.value;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCelestialLogItem(log, index),
+                                );
+                              })
+                              .toList(),
                         );
                       }),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 100), // Spacing for bottom nav bar
                     ],
                   ),
                 ),
@@ -249,80 +183,291 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGlowingStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color glowColor,
-  }) {
-    return KasbyGlassCard(
-      padding: const EdgeInsets.all(16),
-      opacity: 0.05,
-      child: Stack(
-        children: [
-          Positioned(
-            right: -10,
-            bottom: -10,
-            child: Icon(
-              icon,
-              size: 60,
-              color: glowColor.withValues(alpha: 0.1),
+  PreferredSizeWidget _buildRoyalAppBar(AuthController authController) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(80),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: AppBar(
+            backgroundColor: Colors.white.withOpacity(0.02),
+            elevation: 0,
+            centerTitle: true,
+            title:
+                const Text(
+                      'لوحة التحكم الملكية',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                        color: Colors.white,
+                      ),
+                    )
+                    .animate(onPlay: (c) => c.repeat())
+                    .shimmer(
+                      duration: const Duration(seconds: 3),
+                      color: KasbyColors.primaryGold.withOpacity(0.3),
+                    ),
+            leadingWidth: 70,
+            leading: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: GestureDetector(
+                onTap: () => Get.toNamed('/profile'),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: KasbyColors.primaryGold.withOpacity(0.5),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: KasbyColors.primaryGold.withOpacity(0.2),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: const CircleAvatar(
+                    backgroundColor: Colors.black26,
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: KasbyColors.primaryGold,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Colors.white70,
+                ),
+                onPressed: () => Get.toNamed('/notifications'),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.power_settings_new_rounded,
+                  color: KasbyColors.error,
+                ),
+                onPressed: () => _showLogoutDialog(authController),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: glowColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: glowColor, size: 18),
-                  )
-                  .animate(onPlay: (c) => c.repeat())
-                  .shimmer(
-                    duration: const Duration(seconds: 2),
-                    color: glowColor.withValues(alpha: 0.2),
-                  ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMagicalHeader(AuthController authController) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Obx(
+            () => RichText(
+              text: TextSpan(
                 children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
+                  TextSpan(
+                    text: 'مرحباً، ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.6),
+                      fontWeight: FontWeight.w300,
                     ),
                   ),
-                  Text(
-                    title,
+                  TextSpan(
+                    text: authController.userRole.value,
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: KasbyColors.textSecondary,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: KasbyColors.primaryGold,
                     ),
                   ),
                 ],
               ),
+            ),
+          ).animate().fadeIn().slideX(begin: -0.2),
+          const SizedBox(height: 6),
+          Text(
+            'الحالة العامة للنظام تحت سيطرتك الآن.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.4),
+              fontStyle: FontStyle.italic,
+            ),
+          ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: KasbyColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat())
+                  .scale(
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.5, 1.5),
+                    duration: const Duration(seconds: 1),
+                  )
+                  .fadeOut(duration: const Duration(seconds: 1)),
+              const SizedBox(width: 8),
+              Text(
+                'البث المباشر للبيانات نشط',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: KasbyColors.success.withOpacity(0.7),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ],
-          ),
+          ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
         ],
       ),
     );
   }
 
-  Widget _buildEnhancedChart() {
+  Widget _buildMagicalStatsGrid() {
+    return GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 1.1,
+          children: [
+            _buildMagicalStatCard(
+              title: 'إجمالي المستخدمين',
+              value: '12,543',
+              icon: FontAwesomeIcons.users,
+              glowColor: KasbyColors.glowGold,
+              index: 0,
+            ),
+            _buildMagicalStatCard(
+              title: 'حجم الاستثمارات',
+              value: '\$2.4M',
+              icon: FontAwesomeIcons.chartLine,
+              glowColor: KasbyColors.glowGreen,
+              index: 1,
+            ),
+            _buildMagicalStatCard(
+              title: 'الأرباح المدفوعة',
+              value: '\$184K',
+              icon: FontAwesomeIcons.moneyBillTrendUp,
+              glowColor: KasbyColors.glowBlue,
+              index: 2,
+            ),
+            _buildMagicalStatCard(
+              title: 'المعاملات اليومية',
+              value: '1,234',
+              icon: FontAwesomeIcons.bolt,
+              glowColor: KasbyColors.glowOrange,
+              index: 3,
+            ),
+          ],
+        )
+        .animate()
+        .fadeIn(delay: const Duration(milliseconds: 600))
+        .slideY(begin: 0.2);
+  }
+
+  Widget _buildMagicalStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color glowColor,
+    required int index,
+  }) {
+    return KasbyGlassCard(
+          padding: const EdgeInsets.all(16),
+          opacity: 0.05,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Icon(icon, size: 80, color: glowColor.withOpacity(0.05)),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                        width: 45,
+                        height: 45,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: glowColor.withOpacity(0.1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: glowColor.withOpacity(0.2),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(icon, color: glowColor, size: 20),
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        end: const Offset(1.1, 1.1),
+                        duration: const Duration(seconds: 2),
+                      )
+                      .shimmer(color: Colors.white24),
+
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        )
+        .animate(delay: Duration(milliseconds: 100 * index))
+        .fadeIn(duration: const Duration(milliseconds: 600))
+        .scale(begin: const Offset(0.9, 0.9));
+  }
+
+  Widget _buildNebulaChart() {
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.white.withValues(alpha: 0.05),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: Colors.white.withOpacity(0.03), strokeWidth: 1),
         ),
         titlesData: FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
@@ -341,20 +486,29 @@ class DashboardScreen extends StatelessWidget {
             color: KasbyColors.primaryGold,
             barWidth: 4,
             isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) =>
+                  FlDotCirclePainter(
+                    radius: 4,
+                    color: Colors.black,
+                    strokeWidth: 2,
+                    strokeColor: KasbyColors.primaryGold,
+                  ),
+            ),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  KasbyColors.primaryGold.withValues(alpha: 0.3),
-                  KasbyColors.primaryGold.withValues(alpha: 0.0),
+                  KasbyColors.primaryGold.withOpacity(0.2),
+                  KasbyColors.primaryGold.withOpacity(0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
             shadow: Shadow(
-              color: KasbyColors.primaryGold.withValues(alpha: 0.5),
+              color: KasbyColors.primaryGold.withOpacity(0.5),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -364,30 +518,46 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactAction(
+  Widget _buildFloatingActionTile(
     String title,
     String sub,
     IconData icon,
+    Color color,
     VoidCallback onTap,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12),
+      padding: const EdgeInsets.only(left: 16),
       child: KasbyGlassCard(
         onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        opacity: 0.1,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: KasbyColors.primaryGold, size: 28),
-            const SizedBox(height: 12),
+            Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: color.withOpacity(0.2)),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(begin: -2, end: 2, duration: const Duration(seconds: 2)),
+            const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: Colors.white,
+              ),
             ),
             Text(
               sub,
-              style: const TextStyle(
-                color: KasbyColors.textSecondary,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.4),
                 fontSize: 10,
               ),
             ),
@@ -397,114 +567,81 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(AuthController authController) {
-    Get.dialog(
-      KasbyGlassCard(
-        margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 250),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.logout_rounded,
-              color: KasbyColors.error,
-              size: 48,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'تسجيل الخروج',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text(
-                      'إلغاء',
-                      style: TextStyle(color: KasbyColors.textSecondary),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      authController.logout();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: KasbyColors.error,
-                    ),
-                    child: const Text(
-                      'خروج',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(AuditLog log) {
+  Widget _buildCelestialLogItem(AuditLog log, int index) {
     return KasbyGlassCard(
-      padding: const EdgeInsets.all(12),
-      opacity: 0.05,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(log.icon, size: 18, color: _getLogTypeColor(log.type)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.action,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.all(16),
+          opacity: 0.05,
+          child: Row(
+            children: [
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: _getLogTypeColor(log.type).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _getLogTypeColor(log.type).withOpacity(0.2),
                   ),
                 ),
-                Text(
-                  log.adminName,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: KasbyColors.textSecondary,
-                  ),
+                child: Icon(
+                  log.icon,
+                  size: 20,
+                  color: _getLogTypeColor(log.type),
                 ),
-              ],
-            ),
-          ),
-          Directionality(
-            textDirection: ui.TextDirection.ltr,
-            child: Text(
-              DateFormat('HH:mm', 'en').format(log.timestamp),
-              style: const TextStyle(
-                fontSize: 11,
-                color: KasbyColors.textSecondary,
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.action,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'بواسطة: ${log.adminName}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Directionality(
+                    textDirection: ui.TextDirection.ltr,
+                    child: Text(
+                      DateFormat('HH:mm', 'en').format(log.timestamp),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: KasbyColors.primaryGold,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'اليوم',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        )
+        .animate(delay: Duration(milliseconds: 100 * index))
+        .fadeIn()
+        .slideX(begin: 0.1);
   }
 
   Color _getLogTypeColor(AuditLogType type) {
@@ -521,21 +658,198 @@ class DashboardScreen extends StatelessWidget {
         return KasbyColors.warning;
     }
   }
+
+  void _showLogoutDialog(AuthController authController) {
+    Get.dialog(
+      BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Colors.transparent,
+          contentPadding: EdgeInsets.zero,
+          content: KasbyGlassCard(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: KasbyColors.error.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: KasbyColors.error,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'خروج من النظام؟',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة السحرية؟',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Get.back(),
+                        child: Text(
+                          'تحليق بالبقاء',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: KasbyColors.error.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: KasbyColors.error.withOpacity(0.3),
+                          ),
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            Get.back();
+                            authController.logout();
+                          },
+                          child: const Text(
+                            'تأكيد الخروج',
+                            style: TextStyle(
+                              color: KasbyColors.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCelestialBackground() {
+    return Stack(
+      children: [
+        // Deep Space Base
+        Container(color: const Color(0xFF0F172A)),
+
+        // Distant Nebula Orbs (Depth 1)
+        _buildOrb(
+          top: -150,
+          right: -100,
+          size: 500,
+          color: KasbyColors.primaryGold.withOpacity(0.04),
+          duration: const Duration(seconds: 15),
+        ),
+
+        // Dynamic Glow Orbs (Depth 2)
+        _buildOrb(
+          bottom: 100,
+          left: -50,
+          size: 350,
+          color: KasbyColors.info.withOpacity(0.03),
+          duration: const Duration(seconds: 12),
+        ),
+
+        // Near Field Particles (Depth 3)
+        _buildOrb(
+          top: 300,
+          right: 50,
+          size: 150,
+          color: KasbyColors.success.withOpacity(0.02),
+          duration: const Duration(seconds: 8),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrb({
+    double? top,
+    double? bottom,
+    double? left,
+    double? right,
+    required double size,
+    required Color color,
+    required Duration duration,
+  }) {
+    return Positioned(
+      top: top,
+      bottom: bottom,
+      left: left,
+      right: right,
+      child:
+          Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+                  ],
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .moveY(begin: -30, end: 30, duration: duration)
+              .moveX(
+                begin: -20,
+                end: 20,
+                duration: duration + const Duration(seconds: 2),
+              ),
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final String? subtitle;
+  const _SectionHeader({required this.title, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        letterSpacing: -0.5,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -0.5,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle!,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.4),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

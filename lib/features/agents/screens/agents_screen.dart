@@ -24,7 +24,7 @@ class AgentsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('وكلاء العراق'),
+        title: const Text('قائمة الوكلاء'),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded),
