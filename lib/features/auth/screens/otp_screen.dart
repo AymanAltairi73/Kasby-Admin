@@ -192,7 +192,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               // Verify Button
                               Obx(
                                 () => KasbyButton(
-                                  text: 'تأكيد الرمز السحري',
+                                  text: 'تأكيد الرمز',
                                   onPressed: _handleVerifyOtp,
                                   isLoading: _authController.isLoading.value,
                                 ),

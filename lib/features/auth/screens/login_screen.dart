@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         .slideY(begin: 0.2),
                     const SizedBox(height: 8),
                     const Text(
-                      'مرحباً بك في لوحة القيادة السحرية',
+                      'مرحباً بك في لوحة التحكم ',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,

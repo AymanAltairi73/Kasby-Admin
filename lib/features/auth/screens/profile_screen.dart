@@ -21,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'الملف الشخصي الملكي',
+          'الملف الشخصي',
           style: TextStyle(fontWeight: FontWeight.w900),
         ),
         centerTitle: true,

@@ -119,7 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 // Reset Button
                                 Obx(
                                       () => KasbyButton(
-                                        text: 'إرسال الرابط السحري',
+                                        text: 'إرسال الرابط',
                                         onPressed: _handleResetPassword,
                                         isLoading:
                                             _authController.isLoading.value,
