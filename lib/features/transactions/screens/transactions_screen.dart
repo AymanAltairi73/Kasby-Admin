@@ -32,8 +32,8 @@ class TransactionsScreen extends StatelessWidget {
             labelColor: KasbyColors.primaryGold,
             unselectedLabelColor: KasbyColors.textSecondary,
             tabs: [
-              Tab(text: 'الإيداعات المعلقة'),
-              Tab(text: 'السحوبات المعلقة'),
+              Tab(text: 'الإيداعات قيد التدقيق'),
+              Tab(text: 'التسويات المالية المعلقة'),
               Tab(text: 'السجل'),
             ],
           ),
@@ -146,7 +146,9 @@ class TransactionsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      transaction.type == 'Deposit' ? 'إيداع' : 'سحب',
+                      transaction.type == 'Deposit'
+                          ? 'إيداع استثماري'
+                          : 'تسوية مالية',
                       style: const TextStyle(
                         fontSize: 14,
                         color: KasbyColors.textSecondary,
@@ -403,7 +405,7 @@ class TransactionsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     _buildSimpleFilterChip(
-                      'إيداع',
+                      'إيداع استثماري',
                       controller.selectedType.value == 'Deposit',
                       () => controller.setTypeFilter('Deposit'),
                     ),

@@ -73,7 +73,7 @@ class AuditLogsScreen extends StatelessWidget {
             backgroundColor: Colors.white.withValues(alpha: 0.02),
             elevation: 0,
             title: const Text(
-              'سجل النشاطات العمليات',
+              'سجل الامتثال والعمليات الفنية',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,

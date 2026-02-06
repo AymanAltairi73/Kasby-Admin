@@ -25,7 +25,7 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // Management Section
             const Text(
-              'الإدارة',
+              'الإدارة المركزية والامتثال',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -45,8 +45,8 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _buildSettingCard(
               icon: FontAwesomeIcons.userTie,
-              title: 'الوكلاء',
-              subtitle: 'إدارة الوكلاء والممثلين',
+              title: 'الوكلاء المعتمدون',
+              subtitle: 'إدارة شبكة الموزعين والامتثال',
               onTap: () => Get.toNamed('/agents'),
             ),
             const SizedBox(height: 8),

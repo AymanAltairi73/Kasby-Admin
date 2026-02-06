@@ -80,10 +80,11 @@ class AuditController extends GetxController {
     _allLogs.value = [
       AuditLog(
         id: '1',
-        action: 'موافقة على عملية سحب',
+        action: 'اعتماد تسوية مالية',
         adminName: 'أحمد علي (المدير العام)',
         timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-        details: 'تمت الموافقة على سحب مبلغ \$500.00 للمستخدم محمد حسن',
+        details:
+            'تم الاعتماد والمصادقة على تسوية مالية بقيمة \$500.00 للمستخدم محمد حسن',
         type: AuditLogType.financial,
         status: AuditLogStatus.success,
         icon: FontAwesomeIcons.moneyBillTransfer,

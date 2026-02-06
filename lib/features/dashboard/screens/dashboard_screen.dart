@@ -53,8 +53,8 @@ class DashboardScreen extends StatelessWidget {
 
                       // Nebula Chart Section
                       const _SectionHeader(
-                        title: 'تحليل البيانات',
-                        subtitle: 'الاتجاه الأسبوعي للمعاملات',
+                        title: 'التحليلات المالية والتدفقات',
+                        subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
                       ).animate().fadeIn(
                         delay: const Duration(milliseconds: 800),
                       ),
@@ -86,21 +86,21 @@ class DashboardScreen extends StatelessWidget {
                           physics: const BouncingScrollPhysics(),
                           children: [
                             _buildFloatingActionTile(
-                              'الإيداعات',
-                              '23 طلب معلق',
+                              'الإيداعات الاستثمارية',
+                              '23 طلب قيد المعالجة',
                               FontAwesomeIcons.circleArrowDown,
                               KasbyColors.success,
                               () => Get.find<MainController>().changePage(2),
                             ),
                             _buildFloatingActionTile(
-                              'السحوبات',
-                              '15 طلب معلق',
+                              'التسويات المالية (السحب)',
+                              '15 طلب قيد المعالجة',
                               FontAwesomeIcons.circleArrowUp,
                               KasbyColors.error,
                               () => Get.find<MainController>().changePage(2),
                             ),
                             _buildFloatingActionTile(
-                              'خطط الاستثمار',
+                              'خطط الاستثمار المعتمدة',
                               'إدارة الخطط',
                               FontAwesomeIcons.chartPie,
                               KasbyColors.info,
@@ -226,7 +226,7 @@ class DashboardScreen extends StatelessWidget {
             centerTitle: true,
             title:
                 const Text(
-                      'لوحة التحكم',
+                      'منظومة كاسبي الإدارية',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,

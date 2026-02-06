@@ -114,12 +114,13 @@ class TransactionController extends GetxController {
     await AuditLogger.log(
       adminName: 'Admin',
       action: 'موافقة على معاملة',
-      details: 'تمت الموافقة على المعاملة $transactionId',
+      details:
+          'تم تم الاعتماد والمصادقة على المعاملة $transactionId ومباشرة التنفيذ',
     );
 
     Get.snackbar(
       'نجح',
-      'تمت الموافقة على المعاملة',
+      'تم الاعتماد والمصادقة على المعاملة',
       snackPosition: SnackPosition.BOTTOM,
     );
 
