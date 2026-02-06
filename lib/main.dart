@@ -16,7 +16,6 @@ import 'features/agents/screens/agents_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/gamification/screens/rewards_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
-import 'features/settings/screens/admin_management_screen.dart';
 import 'features/settings/screens/terms_screen.dart';
 import 'features/settings/screens/faq_screen.dart';
 import 'features/settings/screens/maintenance_screen.dart';
@@ -83,10 +82,6 @@ class KasbyAdminApp extends StatelessWidget {
         ),
         GetPage(name: '/rewards', page: () => const RewardsScreen()),
         GetPage(name: '/settings', page: () => const SettingsScreen()),
-        GetPage(
-          name: '/admin-management',
-          page: () => const AdminManagementScreen(),
-        ),
         GetPage(name: '/profile', page: () => const ProfileScreen()),
         GetPage(name: '/audit-logs', page: () => const AuditLogsScreen()),
         GetPage(name: '/terms', page: () => const TermsScreen()),

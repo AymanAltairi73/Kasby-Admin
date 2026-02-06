@@ -25,17 +25,6 @@ class InvestmentPlan {
   static List<InvestmentPlan> getMockPlans() {
     return [
       InvestmentPlan(
-        id: '1',
-        name: 'Basic Plan',
-        nameAr: 'الخطة الأساسية',
-        profitPercentage: 5.0,
-        durationDays: 30,
-        minAmount: 100,
-        maxAmount: 1000,
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 90)),
-      ),
-      InvestmentPlan(
         id: '2',
         name: 'Silver Plan',
         nameAr: 'الخطة الفضية',
@@ -56,17 +45,6 @@ class InvestmentPlan {
         maxAmount: 20000,
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      ),
-      InvestmentPlan(
-        id: '4',
-        name: 'Platinum Plan',
-        nameAr: 'الخطة البلاتينية',
-        profitPercentage: 15.0,
-        durationDays: 180,
-        minAmount: 20000,
-        maxAmount: 100000,
-        isActive: false,
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
     ];
   }
@@ -127,19 +105,6 @@ class UserInvestment {
         startDate: DateTime.now().subtract(const Duration(days: 45)),
         endDate: DateTime.now().add(const Duration(days: 45)),
         status: 'Active',
-      ),
-      UserInvestment(
-        id: '3',
-        userId: '2',
-        userName: 'فاطمة علي',
-        planId: '1',
-        planName: 'الخطة الأساسية',
-        amount: 500,
-        profitPercentage: 5.0,
-        expectedProfit: 25,
-        startDate: DateTime.now().subtract(const Duration(days: 35)),
-        endDate: DateTime.now().subtract(const Duration(days: 5)),
-        status: 'Completed',
       ),
     ];
   }

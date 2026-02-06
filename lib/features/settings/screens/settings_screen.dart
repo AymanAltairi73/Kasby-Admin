@@ -49,13 +49,6 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة شبكة الموزعين والامتثال',
               onTap: () => Get.toNamed('/agents'),
             ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.userShield,
-              title: 'إدارة المشرفين',
-              subtitle: 'إدارة حسابات المسؤولين والصلاحيات',
-              onTap: () => Get.toNamed('/admin-management'),
-            ),
             const SizedBox(height: 24),
 
             // Notifications Section
