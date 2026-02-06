@@ -9,6 +9,7 @@ import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/transaction_controller.dart';
 import '../models/transaction_model.dart';
+import '../../../core/models/time_filter.dart';
 
 /// Transactions Screen
 /// Manage deposits and withdrawals
@@ -48,7 +49,7 @@ class TransactionsScreen extends StatelessWidget {
             children: [
               _buildTransactionsList(controller.pendingDeposits, controller),
               _buildTransactionsList(controller.pendingWithdrawals, controller),
-              _buildTransactionsList(controller.transactions, controller),
+              _buildTransactionsWithFilters(controller),
             ],
           );
         }),
@@ -344,6 +345,122 @@ class TransactionsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionsWithFilters(TransactionController controller) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Time Filter
+              Obx(
+                () => SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildSimpleFilterChip(
+                        'الكل',
+                        controller.selectedTimeFilter.value == TimeFilter.all,
+                        () => controller.setTimeFilter(TimeFilter.all),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'اليوم',
+                        controller.selectedTimeFilter.value == TimeFilter.daily,
+                        () => controller.setTimeFilter(TimeFilter.daily),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'الأسبوع',
+                        controller.selectedTimeFilter.value ==
+                            TimeFilter.weekly,
+                        () => controller.setTimeFilter(TimeFilter.weekly),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'الشهر',
+                        controller.selectedTimeFilter.value ==
+                            TimeFilter.monthly,
+                        () => controller.setTimeFilter(TimeFilter.monthly),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Type Filter
+              Obx(
+                () => Row(
+                  children: [
+                    _buildSimpleFilterChip(
+                      'الكل',
+                      controller.selectedType.value == 'Both',
+                      () => controller.setTypeFilter('Both'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSimpleFilterChip(
+                      'إيداع',
+                      controller.selectedType.value == 'Deposit',
+                      () => controller.setTypeFilter('Deposit'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildSimpleFilterChip(
+                      'سحب',
+                      controller.selectedType.value == 'Withdrawal',
+                      () => controller.setTypeFilter('Withdrawal'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Obx(
+            () => _buildTransactionsList(
+              controller.filteredTransactions,
+              controller,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSimpleFilterChip(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? KasbyColors.primaryGold.withValues(alpha: 0.2)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? KasbyColors.primaryGold
+                : KasbyColors.textSecondary.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected
+                ? KasbyColors.primaryGold
+                : KasbyColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }

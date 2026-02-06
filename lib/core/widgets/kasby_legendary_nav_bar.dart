@@ -82,7 +82,7 @@ class KasbyLegendaryNavBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                   boxShadow: [
                     BoxShadow(
-                      color: KasbyColors.primaryGold.withOpacity(0.5),
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
                       blurRadius: 15,
                       spreadRadius: 2,
                     ),
@@ -92,7 +92,7 @@ class KasbyLegendaryNavBar extends StatelessWidget {
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .shimmer(
                 duration: const Duration(seconds: 2),
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
         ],
       ),
@@ -120,7 +120,9 @@ class KasbyLegendaryNavBar extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: KasbyColors.primaryGold.withOpacity(0.15),
+                              color: KasbyColors.primaryGold.withValues(
+                                alpha: 0.15,
+                              ),
                               blurRadius: 15,
                               spreadRadius: 5,
                             ),
@@ -149,7 +151,7 @@ class KasbyLegendaryNavBar extends StatelessWidget {
                     )
                     .shimmer(
                       duration: const Duration(seconds: 2),
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
               ],
             ),

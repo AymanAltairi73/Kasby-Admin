@@ -8,6 +8,7 @@ import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/user_controller.dart';
 import '../models/user_model.dart';
 import 'user_details_screen.dart';
+import '../../../core/models/time_filter.dart';
 
 /// User List Screen
 /// Display all users with search and filter
@@ -27,9 +28,7 @@ class UserListScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_outlined),
-            onPressed: () {
-              // TODO: Implement add user
-            },
+            onPressed: () => _showAddUserDialog(context, userController),
           ),
         ],
       ),
@@ -109,7 +108,7 @@ class UserListScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
 
-                          // Status Filter
+                          // Time Filter
                           Obx(
                             () => SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -117,6 +116,77 @@ class UserListScreen extends StatelessWidget {
                                 children: [
                                   _buildDazzlingFilterChip(
                                     label: 'الكل',
+                                    isSelected:
+                                        userController
+                                            .selectedTimeFilter
+                                            .value ==
+                                        TimeFilter.all,
+                                    onTap: () =>
+                                        userController
+                                                .selectedTimeFilter
+                                                .value =
+                                            TimeFilter.all,
+                                    color: KasbyColors.primaryGold,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  _buildDazzlingFilterChip(
+                                    label: 'اليوم',
+                                    isSelected:
+                                        userController
+                                            .selectedTimeFilter
+                                            .value ==
+                                        TimeFilter.daily,
+                                    onTap: () =>
+                                        userController
+                                                .selectedTimeFilter
+                                                .value =
+                                            TimeFilter.daily,
+                                    color: KasbyColors.primaryGold,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  _buildDazzlingFilterChip(
+                                    label: 'هذا الأسبوع',
+                                    isSelected:
+                                        userController
+                                            .selectedTimeFilter
+                                            .value ==
+                                        TimeFilter.weekly,
+                                    onTap: () =>
+                                        userController
+                                                .selectedTimeFilter
+                                                .value =
+                                            TimeFilter.weekly,
+                                    color: KasbyColors.primaryGold,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  _buildDazzlingFilterChip(
+                                    label: 'هذا الشهر',
+                                    isSelected:
+                                        userController
+                                            .selectedTimeFilter
+                                            .value ==
+                                        TimeFilter.monthly,
+                                    onTap: () =>
+                                        userController
+                                                .selectedTimeFilter
+                                                .value =
+                                            TimeFilter.monthly,
+                                    color: KasbyColors.primaryGold,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Status Filter
+                          Obx(
+                            () => SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildDazzlingFilterChip(
+                                    label: 'جميع الحالات',
                                     isSelected:
                                         userController.selectedStatus.value ==
                                         'All',
@@ -126,7 +196,7 @@ class UserListScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 10),
                                   _buildDazzlingFilterChip(
-                                    label: 'المستخدمين النشطين',
+                                    label: 'النشطين',
                                     isSelected:
                                         userController.selectedStatus.value ==
                                         'Active',
@@ -136,7 +206,7 @@ class UserListScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 10),
                                   _buildDazzlingFilterChip(
-                                    label: 'الحسابات المحظورة',
+                                    label: 'المحظورين',
                                     isSelected:
                                         userController.selectedStatus.value ==
                                         'Blocked',
@@ -362,6 +432,96 @@ class UserListScreen extends StatelessWidget {
             color: KasbyColors.textSecondary.withValues(alpha: 0.5),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showAddUserDialog(BuildContext context, UserController controller) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: KasbyGlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'إضافة مستخدم جديد',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              KasbyTextField(
+                controller: nameController,
+                hintText: 'الاسم الكامل',
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: emailController,
+                hintText: 'البريد الإلكتروني',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: phoneController,
+                hintText: 'رقم الهاتف',
+                prefixIcon: Icons.phone_android_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(color: KasbyColors.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (nameController.text.isNotEmpty &&
+                          emailController.text.isNotEmpty &&
+                          phoneController.text.isNotEmpty) {
+                        controller.addUser(
+                          name: nameController.text,
+                          email: emailController.text,
+                          phone: phoneController.text,
+                        );
+                        Get.back();
+                      } else {
+                        Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KasbyColors.primaryGold,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'إضافة',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/user_model.dart';
 import '../controllers/user_controller.dart';
 
@@ -24,10 +25,10 @@ class UserDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('تفاصيل المستخدم'),
         actions: [
-          PopupMenuButton(
+          PopupMenuButton<void>(
             icon: const Icon(Icons.more_vert),
             color: KasbyColors.surface,
-            itemBuilder: (context) => [
+            itemBuilder: (context) => <PopupMenuEntry<void>>[
               PopupMenuItem(
                 child: const Text(
                   'إضافة رصيد',
@@ -75,6 +76,52 @@ class UserDetailsScreen extends StatelessWidget {
                     if (Get.isOverlaysOpen) {
                       Get.back();
                     }
+                  });
+                },
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: KasbyColors.textPrimary,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'تعديل البيانات',
+                      style: TextStyle(color: KasbyColors.textPrimary),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  final ctx = context;
+                  Future.delayed(Duration.zero, () {
+                    if (ctx.mounted) {
+                      _showEditUserDialog(ctx, userController);
+                    }
+                  });
+                },
+              ),
+              PopupMenuItem(
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: KasbyColors.error,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'حذف المستخدم',
+                      style: TextStyle(color: KasbyColors.error),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  Future.delayed(Duration.zero, () {
+                    _showDeleteConfirmation(userController);
                   });
                 },
               ),
@@ -450,6 +497,130 @@ class UserDetailsScreen extends StatelessWidget {
               'خصم',
               style: TextStyle(color: KasbyColors.error),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditUserDialog(BuildContext context, UserController controller) {
+    final nameController = TextEditingController(text: user.name);
+    final emailController = TextEditingController(text: user.email);
+    final phoneController = TextEditingController(text: user.phone);
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: KasbyGlassCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'تعديل بيانات المستخدم',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              KasbyTextField(
+                controller: nameController,
+                hintText: 'الاسم الكامل',
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: emailController,
+                hintText: 'البريد الإلكتروني',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: phoneController,
+                hintText: 'رقم الهاتف',
+                prefixIcon: Icons.phone_android_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(color: KasbyColors.textSecondary),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (nameController.text.isNotEmpty &&
+                          emailController.text.isNotEmpty &&
+                          phoneController.text.isNotEmpty) {
+                        final updatedUser = user.copyWith(
+                          name: nameController.text,
+                          email: emailController.text,
+                          phone: phoneController.text,
+                        );
+                        controller.updateUser(updatedUser);
+                        Get.back();
+                      } else {
+                        Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KasbyColors.primaryGold,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'حفظ التعديلات',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(UserController controller) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'هل أنت متأكد من حذف المستخدم "${user.name}"؟ لا يمكن التراجع عن هذا الإجراء.',
+          style: const TextStyle(color: KasbyColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              controller.deleteUser(user.id);
+              Get.back();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KasbyColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('حذف'),
           ),
         ],
       ),

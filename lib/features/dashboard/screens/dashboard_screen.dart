@@ -151,8 +151,8 @@ class DashboardScreen extends StatelessWidget {
                                 Text(
                                   'مشاهدة السجل',
                                   style: TextStyle(
-                                    color: KasbyColors.primaryGold.withOpacity(
-                                      0.8,
+                                    color: KasbyColors.primaryGold.withValues(
+                                      alpha: 0.8,
                                     ),
                                     fontSize: 12,
                                   ),
@@ -161,8 +161,8 @@ class DashboardScreen extends StatelessWidget {
                                 Icon(
                                   Icons.arrow_forward_ios_rounded,
                                   size: 10,
-                                  color: KasbyColors.primaryGold.withOpacity(
-                                    0.8,
+                                  color: KasbyColors.primaryGold.withValues(
+                                    alpha: 0.8,
                                   ),
                                 ),
                               ],
@@ -218,7 +218,7 @@ class DashboardScreen extends StatelessWidget {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: AppBar(
-            backgroundColor: Colors.white.withOpacity(0.02),
+            backgroundColor: Colors.white.withValues(alpha: 0.02),
             elevation: 0,
             centerTitle: true,
             title:
@@ -234,7 +234,7 @@ class DashboardScreen extends StatelessWidget {
                     .animate(onPlay: (c) => c.repeat())
                     .shimmer(
                       duration: const Duration(seconds: 3),
-                      color: KasbyColors.primaryGold.withOpacity(0.3),
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
                     ),
             leadingWidth: 70,
             leading: Padding(
@@ -245,12 +245,12 @@ class DashboardScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: KasbyColors.primaryGold.withOpacity(0.5),
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: KasbyColors.primaryGold.withOpacity(0.2),
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.2),
                         blurRadius: 10,
                       ),
                     ],
@@ -303,7 +303,7 @@ class DashboardScreen extends StatelessWidget {
                   text: 'مرحباً، ',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w300,
                   ),
                 ),
@@ -324,7 +324,7 @@ class DashboardScreen extends StatelessWidget {
             'الحالة العامة للنظام تحت سيطرتك الآن.',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               fontStyle: FontStyle.italic,
             ),
           ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
@@ -351,7 +351,7 @@ class DashboardScreen extends StatelessWidget {
                 'حساب نشط',
                 style: TextStyle(
                   fontSize: 10,
-                  color: KasbyColors.success.withOpacity(0.7),
+                  color: KasbyColors.success.withValues(alpha: 0.7),
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -422,7 +422,11 @@ class DashboardScreen extends StatelessWidget {
               Positioned(
                 right: -15,
                 bottom: -15,
-                child: Icon(icon, size: 80, color: glowColor.withOpacity(0.05)),
+                child: Icon(
+                  icon,
+                  size: 80,
+                  color: glowColor.withValues(alpha: 0.05),
+                ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,10 +437,10 @@ class DashboardScreen extends StatelessWidget {
                         height: 45,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: glowColor.withOpacity(0.1),
+                          color: glowColor.withValues(alpha: 0.1),
                           boxShadow: [
                             BoxShadow(
-                              color: glowColor.withOpacity(0.2),
+                              color: glowColor.withValues(alpha: 0.2),
                               blurRadius: 10,
                               spreadRadius: 2,
                             ),
@@ -471,7 +475,7 @@ class DashboardScreen extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -493,8 +497,10 @@ class DashboardScreen extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) =>
-              FlLine(color: Colors.white.withOpacity(0.03), strokeWidth: 1),
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.white.withValues(alpha: 0.03),
+            strokeWidth: 1,
+          ),
         ),
         titlesData: FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
@@ -527,15 +533,15 @@ class DashboardScreen extends StatelessWidget {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  KasbyColors.primaryGold.withOpacity(0.2),
-                  KasbyColors.primaryGold.withOpacity(0.0),
+                  KasbyColors.primaryGold.withValues(alpha: 0.2),
+                  KasbyColors.primaryGold.withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
             shadow: Shadow(
-              color: KasbyColors.primaryGold.withOpacity(0.5),
+              color: KasbyColors.primaryGold.withValues(alpha: 0.5),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -564,9 +570,9 @@ class DashboardScreen extends StatelessWidget {
             Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: color.withOpacity(0.2)),
+                    border: Border.all(color: color.withValues(alpha: 0.2)),
                   ),
                   child: Icon(icon, color: color, size: 24),
                 )
@@ -584,7 +590,7 @@ class DashboardScreen extends StatelessWidget {
             Text(
               sub,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 10,
               ),
             ),
@@ -604,10 +610,10 @@ class DashboardScreen extends StatelessWidget {
                 width: 45,
                 height: 45,
                 decoration: BoxDecoration(
-                  color: _getLogTypeColor(log.type).withOpacity(0.1),
+                  color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _getLogTypeColor(log.type).withOpacity(0.2),
+                    color: _getLogTypeColor(log.type).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Icon(
@@ -634,7 +640,7 @@ class DashboardScreen extends StatelessWidget {
                       'بواسطة: ${log.adminName}',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                       ),
                     ),
                   ],
@@ -658,7 +664,7 @@ class DashboardScreen extends StatelessWidget {
                     'اليوم',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                     ),
                   ),
                 ],
@@ -701,7 +707,7 @@ class DashboardScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: KasbyColors.error.withOpacity(0.1),
+                    color: KasbyColors.error.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -723,7 +729,7 @@ class DashboardScreen extends StatelessWidget {
                 Text(
                   'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white.withOpacity(0.6)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                 ),
                 const SizedBox(height: 32),
                 Row(
@@ -734,7 +740,7 @@ class DashboardScreen extends StatelessWidget {
                         child: Text(
                           'تحليق بالبقاء',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -743,10 +749,10 @@ class DashboardScreen extends StatelessWidget {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: KasbyColors.error.withOpacity(0.2),
+                          color: KasbyColors.error.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: KasbyColors.error.withOpacity(0.3),
+                            color: KasbyColors.error.withValues(alpha: 0.3),
                           ),
                         ),
                         child: TextButton(
@@ -785,7 +791,7 @@ class DashboardScreen extends StatelessWidget {
           top: -150,
           right: -100,
           size: 500,
-          color: KasbyColors.primaryGold.withOpacity(0.04),
+          color: KasbyColors.primaryGold.withValues(alpha: 0.04),
           duration: const Duration(seconds: 15),
         ),
 
@@ -794,7 +800,7 @@ class DashboardScreen extends StatelessWidget {
           bottom: 100,
           left: -50,
           size: 350,
-          color: KasbyColors.info.withOpacity(0.03),
+          color: KasbyColors.info.withValues(alpha: 0.03),
           duration: const Duration(seconds: 12),
         ),
 
@@ -803,7 +809,7 @@ class DashboardScreen extends StatelessWidget {
           top: 300,
           right: 50,
           size: 150,
-          color: KasbyColors.success.withOpacity(0.02),
+          color: KasbyColors.success.withValues(alpha: 0.02),
           duration: const Duration(seconds: 8),
         ),
       ],
@@ -871,7 +877,7 @@ class _SectionHeader extends StatelessWidget {
             subtitle!,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               fontWeight: FontWeight.w400,
             ),
           ),

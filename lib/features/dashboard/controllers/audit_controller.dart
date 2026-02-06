@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/audit_log_model.dart';
+import '../../../core/models/time_filter.dart';
 
 class AuditController extends GetxController {
   final _allLogs = <AuditLog>[].obs;
@@ -10,6 +11,7 @@ class AuditController extends GetxController {
   final searchQuery = ''.obs;
   final selectedType = Rxn<AuditLogType>();
   final selectedStatus = Rxn<AuditLogStatus>();
+  final selectedTimeFilter = TimeFilter.all.obs;
 
   @override
   void onInit() {
@@ -21,12 +23,31 @@ class AuditController extends GetxController {
       searchQuery,
       selectedType,
       selectedStatus,
+      selectedTimeFilter,
       _allLogs,
     ], (_) => _applyFilters());
   }
 
   void _applyFilters() {
     var result = _allLogs.toList();
+
+    // Time-based filtering
+    final now = DateTime.now();
+    if (selectedTimeFilter.value != TimeFilter.all) {
+      result = result.where((log) {
+        final difference = now.difference(log.timestamp);
+        switch (selectedTimeFilter.value) {
+          case TimeFilter.daily:
+            return difference.inDays == 0 && log.timestamp.day == now.day;
+          case TimeFilter.weekly:
+            return difference.inDays <= 7;
+          case TimeFilter.monthly:
+            return difference.inDays <= 30;
+          default:
+            return true;
+        }
+      }).toList();
+    }
 
     if (searchQuery.value.isNotEmpty) {
       result = result
@@ -88,10 +109,24 @@ class AuditController extends GetxController {
         metadata: {'reason': 'Suspicious Activity', 'duration': 'Permanent'},
       ),
       AuditLog(
+        id: '6',
+        action: 'إضافة وكيل جديد',
+        adminName: 'ناصر فهد',
+        timestamp: DateTime.now().subtract(const Duration(days: 2)),
+        details: 'تمت إضافة الوكيل "سالم العلي" إلى شبكة الوكلاء في دبي',
+        type: AuditLogType.userManagement,
+        status: AuditLogStatus.success,
+        icon: FontAwesomeIcons.userPlus,
+        ipAddress: '45.12.88.9',
+        device: 'Windows 11 (Firefox)',
+        targetId: 'AGENT_771',
+        targetType: 'Agent',
+      ),
+      AuditLog(
         id: '3',
         action: 'تعديل خطة استثمار',
         adminName: 'أحمد علي (المدير العام)',
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+        timestamp: DateTime.now().subtract(const Duration(days: 5)),
         details: 'تحديث العائد السنوي لخطة "النمو الذكي" إلى 12%',
         type: AuditLogType.investment,
         status: AuditLogStatus.success,
@@ -106,7 +141,7 @@ class AuditController extends GetxController {
         id: '4',
         action: 'فشل تسجيل دخول مسؤول',
         adminName: 'ناصر فهد',
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+        timestamp: DateTime.now().subtract(const Duration(days: 10)),
         details: 'محاولة فاشلة لتسجيل الدخول بكلمة مرور خاطئة 3 مرات',
         type: AuditLogType.security,
         status: AuditLogStatus.failure,
@@ -119,7 +154,7 @@ class AuditController extends GetxController {
         id: '5',
         action: 'إرسال إشعار عام',
         adminName: 'سارة خالد',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        timestamp: DateTime.now().subtract(const Duration(days: 25)),
         details: 'تم إرسال إشعار لجميع المستخدمين بخصوص الصيانة الدورية',
         type: AuditLogType.system,
         status: AuditLogStatus.success,

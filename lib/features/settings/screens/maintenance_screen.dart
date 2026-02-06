@@ -74,7 +74,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                               value: _isMaintenanceActive,
                               onChanged: (value) =>
                                   setState(() => _isMaintenanceActive = value),
-                              activeColor: KasbyColors.primaryGold,
+                              activeThumbColor: KasbyColors.primaryGold,
                             ),
                           ],
                         ),

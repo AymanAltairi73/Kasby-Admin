@@ -9,6 +9,7 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
+import '../../../core/models/time_filter.dart';
 
 /// Agents Screen
 /// Manage agents (proxies) and their performance with a dazzling Iraq focus
@@ -57,6 +58,41 @@ class AgentsScreen extends StatelessWidget {
                                     controller.searchAgents(value),
                               ),
                               const SizedBox(height: 12),
+                              // Time Filter
+                              Obx(() {
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _buildTimeFilterChip(
+                                        'الكل',
+                                        TimeFilter.all,
+                                        controller,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _buildTimeFilterChip(
+                                        'اليوم',
+                                        TimeFilter.daily,
+                                        controller,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _buildTimeFilterChip(
+                                        'الأسبوع',
+                                        TimeFilter.weekly,
+                                        controller,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _buildTimeFilterChip(
+                                        'الشهر',
+                                        TimeFilter.monthly,
+                                        controller,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              const SizedBox(height: 12),
+                              // Status Filter
                               Obx(() {
                                 return SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
@@ -114,7 +150,9 @@ class AgentsScreen extends StatelessWidget {
                           Icon(
                             Icons.group_off_rounded,
                             size: 64,
-                            color: KasbyColors.primaryGold.withOpacity(0.3),
+                            color: KasbyColors.primaryGold.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           const Text(
@@ -161,17 +199,17 @@ class AgentsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected ? KasbyColors.primaryGradient : null,
-          color: isSelected ? null : Colors.white.withOpacity(0.05),
+          color: isSelected ? null : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: isSelected
-                ? KasbyColors.primaryGold.withOpacity(0.5)
-                : Colors.white.withOpacity(0.1),
+                ? KasbyColors.primaryGold.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.1),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: KasbyColors.primaryGold.withOpacity(0.2),
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.2),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
@@ -207,7 +245,7 @@ class AgentsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: KasbyColors.primaryGold.withOpacity(0.3),
+                          color: KasbyColors.primaryGold.withValues(alpha: 0.3),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -253,7 +291,7 @@ class AgentsScreen extends StatelessWidget {
                               agent.country,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.white.withOpacity(0.7),
+                                color: Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -295,19 +333,55 @@ class AgentsScreen extends StatelessWidget {
         .slideY(begin: 0.2);
   }
 
+  Widget _buildTimeFilterChip(
+    String label,
+    TimeFilter filter,
+    AgentController controller,
+  ) {
+    final isSelected = controller.selectedTimeFilter.value == filter;
+    return GestureDetector(
+      onTap: () => controller.selectedTimeFilter.value = filter,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? KasbyColors.primaryGold.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? KasbyColors.primaryGold.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected
+                ? KasbyColors.primaryGold
+                : KasbyColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatusIndicator(String status) {
     final isActive = status == 'Active';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: isActive
-            ? KasbyColors.success.withOpacity(0.1)
-            : KasbyColors.error.withOpacity(0.1),
+            ? KasbyColors.success.withValues(alpha: 0.1)
+            : KasbyColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isActive
-              ? KasbyColors.success.withOpacity(0.3)
-              : KasbyColors.error.withOpacity(0.3),
+              ? KasbyColors.success.withValues(alpha: 0.3)
+              : KasbyColors.error.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -323,7 +397,7 @@ class AgentsScreen extends StatelessWidget {
                     BoxShadow(
                       color:
                           (isActive ? KasbyColors.success : KasbyColors.error)
-                              .withOpacity(0.5),
+                              .withValues(alpha: 0.5),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -361,13 +435,13 @@ class AgentsScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: color.withOpacity(0.7)),
+            Icon(icon, size: 14, color: color.withValues(alpha: 0.7)),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -453,7 +527,7 @@ class AgentsScreen extends StatelessWidget {
                         child: Text(
                           'إلغاء',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -529,7 +603,9 @@ class AgentsScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: KasbyColors.primaryGold.withOpacity(0.3),
+                              color: KasbyColors.primaryGold.withValues(
+                                alpha: 0.3,
+                              ),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -588,13 +664,13 @@ class AgentsScreen extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: agent.status == 'Active'
-                              ? KasbyColors.error.withOpacity(0.1)
-                              : KasbyColors.success.withOpacity(0.1),
+                              ? KasbyColors.error.withValues(alpha: 0.1)
+                              : KasbyColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: agent.status == 'Active'
-                                ? KasbyColors.error.withOpacity(0.3)
-                                : KasbyColors.success.withOpacity(0.3),
+                                ? KasbyColors.error.withValues(alpha: 0.3)
+                                : KasbyColors.success.withValues(alpha: 0.3),
                           ),
                         ),
                         child: TextButton(
@@ -620,7 +696,7 @@ class AgentsScreen extends StatelessWidget {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -650,9 +726,9 @@ class AgentsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -663,7 +739,7 @@ class AgentsScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
             ),
           ),
           Expanded(
@@ -695,19 +771,19 @@ class AgentsScreen extends StatelessWidget {
           top: -100,
           left: -100,
           size: 400,
-          color: KasbyColors.primaryGold.withOpacity(0.05),
+          color: KasbyColors.primaryGold.withValues(alpha: 0.05),
         ),
         _buildOrb(
           bottom: -150,
           right: -150,
           size: 500,
-          color: KasbyColors.info.withOpacity(0.05),
+          color: KasbyColors.info.withValues(alpha: 0.05),
         ),
         _buildOrb(
           top: 200,
           right: -50,
           size: 300,
-          color: KasbyColors.success.withOpacity(0.03),
+          color: KasbyColors.success.withValues(alpha: 0.03),
         ),
       ],
     );

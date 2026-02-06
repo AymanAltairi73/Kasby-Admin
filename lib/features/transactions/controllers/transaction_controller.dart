@@ -1,11 +1,16 @@
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
 import '../../../core/services/audit_logger.dart';
+import '../../../core/models/time_filter.dart';
 
 /// Transaction Controller
 /// Manages deposits and withdrawals
 class TransactionController extends GetxController {
   final transactions = <Transaction>[].obs;
+  final filteredTransactions = <Transaction>[].obs;
+  final selectedStatus = 'All'.obs;
+  final selectedType = 'Both'.obs;
+  final selectedTimeFilter = TimeFilter.all.obs;
   final isLoading = false.obs;
 
   @override
@@ -19,7 +24,61 @@ class TransactionController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
     transactions.value = Transaction.getMockTransactions();
+    _applyFilters();
     isLoading.value = false;
+  }
+
+  /// Apply all filters
+  void _applyFilters() {
+    var result = transactions.toList();
+
+    // Time Filter
+    final now = DateTime.now();
+    if (selectedTimeFilter.value != TimeFilter.all) {
+      result = result.where((t) {
+        final difference = now.difference(t.createdAt);
+        switch (selectedTimeFilter.value) {
+          case TimeFilter.daily:
+            return difference.inDays == 0 && t.createdAt.day == now.day;
+          case TimeFilter.weekly:
+            return difference.inDays <= 7;
+          case TimeFilter.monthly:
+            return difference.inDays <= 30;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Status Filter
+    if (selectedStatus.value != 'All') {
+      result = result.where((t) => t.status == selectedStatus.value).toList();
+    }
+
+    // Type Filter
+    if (selectedType.value != 'Both') {
+      result = result.where((t) => t.type == selectedType.value).toList();
+    }
+
+    filteredTransactions.value = result;
+  }
+
+  /// Change Status Filter
+  void setStatusFilter(String status) {
+    selectedStatus.value = status;
+    _applyFilters();
+  }
+
+  /// Change Type Filter
+  void setTypeFilter(String type) {
+    selectedType.value = type;
+    _applyFilters();
+  }
+
+  /// Change Time Filter
+  void setTimeFilter(TimeFilter filter) {
+    selectedTimeFilter.value = filter;
+    _applyFilters();
   }
 
   /// Get pending deposits

@@ -133,7 +133,7 @@ class SettingsScreen extends StatelessWidget {
                 trailing: Switch(
                   value: themeController.isDarkMode.value,
                   onChanged: (_) => themeController.toggleTheme(),
-                  activeColor: KasbyColors.primaryGold,
+                  activeThumbColor: KasbyColors.primaryGold,
                 ),
               ),
             ),

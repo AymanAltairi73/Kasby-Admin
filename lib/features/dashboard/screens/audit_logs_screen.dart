@@ -8,6 +8,7 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/audit_controller.dart';
 import '../models/audit_log_model.dart';
+import '../../../core/models/time_filter.dart';
 
 class AuditLogsScreen extends StatelessWidget {
   const AuditLogsScreen({super.key});
@@ -125,30 +126,73 @@ class AuditLogsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                _buildFilterChip(
-                  label: 'الكل',
-                  isSelected: controller.selectedType.value == null,
-                  onTap: () => controller.selectedType.value = null,
-                ),
-                ...AuditLogType.values.map((type) {
-                  return _buildFilterChip(
-                    label: _getTypeLabel(type),
-                    isSelected: controller.selectedType.value == type,
-                    onTap: () => controller.selectedType.value = type,
-                  );
-                }),
-              ],
+          Obx(
+            () => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildFilterChip(
+                    label: 'الكل',
+                    isSelected:
+                        controller.selectedTimeFilter.value == TimeFilter.all,
+                    onTap: () =>
+                        controller.selectedTimeFilter.value = TimeFilter.all,
+                  ),
+                  _buildFilterChip(
+                    label: 'اليوم',
+                    isSelected:
+                        controller.selectedTimeFilter.value == TimeFilter.daily,
+                    onTap: () =>
+                        controller.selectedTimeFilter.value = TimeFilter.daily,
+                  ),
+                  _buildFilterChip(
+                    label: 'هذا الأسبوع',
+                    isSelected:
+                        controller.selectedTimeFilter.value ==
+                        TimeFilter.weekly,
+                    onTap: () =>
+                        controller.selectedTimeFilter.value = TimeFilter.weekly,
+                  ),
+                  _buildFilterChip(
+                    label: 'هذا الشهر',
+                    isSelected:
+                        controller.selectedTimeFilter.value ==
+                        TimeFilter.monthly,
+                    onTap: () => controller.selectedTimeFilter.value =
+                        TimeFilter.monthly,
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 16),
+          Obx(
+            () => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildFilterChip(
+                    label: 'كل التصنيفات',
+                    isSelected: controller.selectedType.value == null,
+                    onTap: () => controller.selectedType.value = null,
+                  ),
+                  ...AuditLogType.values.map((type) {
+                    return _buildFilterChip(
+                      label: _getTypeLabel(type),
+                      isSelected: controller.selectedType.value == type,
+                      onTap: () => controller.selectedType.value = type,
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
       ),
-    ).animate().fadeIn().slideY(begin: -0.1);
+    );
   }
 
   Widget _buildFilterChip({
@@ -156,38 +200,37 @@ class AuditLogsScreen extends StatelessWidget {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return Obx(
-      () => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.only(left: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? KasbyColors.primaryGold
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
             color: isSelected
                 ? KasbyColors.primaryGold
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected
-                  ? KasbyColors.primaryGold
-                  : Colors.white.withValues(alpha: 0.1),
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                    ),
-                  ]
-                : null,
+                : Colors.white.withValues(alpha: 0.1),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.black : Colors.white70,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
           ),
         ),
       ),
