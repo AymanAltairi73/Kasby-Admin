@@ -25,7 +25,7 @@ class AgentsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('إدارة شبكة الوكلاء المعتمدين'),
+        title: const Text('إدارة الوكلاء'),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded),
@@ -485,7 +485,7 @@ class AgentsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'إضافة وكيل عراقي جديد',
+                  'إضافة وكيل جديد',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -495,7 +495,7 @@ class AgentsScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 KasbyTextField(
                   controller: nameController,
-                  hintText: 'اسم الوكيل (مثال: وكيل بغداد)',
+                  hintText: 'اسم الوكيل',
                   prefixIcon: Icons.person_rounded,
                 ),
                 const SizedBox(height: 16),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:ui' as ui;
-import 'package:intl/intl.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../controllers/investment_controller.dart';
@@ -73,7 +72,6 @@ class UserInvestmentsScreen extends StatelessWidget {
   }
 
   Widget _buildInvestmentCard(UserInvestment investment) {
-    final daysRemaining = investment.endDate.difference(DateTime.now()).inDays;
     final progress = investment.status == 'Active'
         ? (DateTime.now().difference(investment.startDate).inDays /
               investment.endDate.difference(investment.startDate).inDays)
@@ -181,21 +179,6 @@ class UserInvestmentsScreen extends StatelessWidget {
                   label: 'نسبة الربح',
                   value: '${investment.profitPercentage}%',
                   color: KasbyColors.info,
-                ),
-              ),
-              Expanded(
-                child: _buildInfoItem(
-                  icon: FontAwesomeIcons.clock,
-                  label: investment.status == 'Active'
-                      ? 'الأيام المتبقية'
-                      : 'تاريخ الانتهاء',
-                  value: investment.status == 'Active'
-                      ? '$daysRemaining يوم'
-                      : DateFormat(
-                          'dd/MM/yyyy',
-                          'en',
-                        ).format(investment.endDate),
-                  color: KasbyColors.warning,
                 ),
               ),
             ],
