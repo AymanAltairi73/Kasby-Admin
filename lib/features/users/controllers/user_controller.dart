@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import '../models/user_model.dart';
+import '../../transactions/models/transaction_model.dart';
+import '../../transactions/controllers/transaction_controller.dart';
 import '../../../core/services/audit_logger.dart';
 import '../../../core/models/time_filter.dart';
 
@@ -167,22 +169,38 @@ class UserController extends GetxController {
     _applyFilters();
   }
 
-  /// Add balance to user
+  /// Create a transaction request to add balance (No direct modification)
   Future<void> addBalance(String userId, double amount, String reason) async {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    // Log action
+    final user = users.firstWhere((u) => u.id == userId);
+    final transactionController = Get.find<TransactionController>();
+
+    final transaction = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: userId,
+      userName: user.name,
+      type: 'Adjustment',
+      amount: amount,
+      status: 'Pending',
+      reason: 'إضافة رصيد: $reason',
+      createdAt: DateTime.now(),
+    );
+
+    transactionController.transactions.add(transaction);
+
     await AuditLogger.log(
-      adminName: 'Admin', // In real app, get from AuthController
-      action: 'إضافة رصيد',
-      details: 'تم إضافة $amount للمستخدم $userId. السبب: $reason',
+      adminName: 'Admin',
+      action: 'طلب إضافة رصيد',
+      details: 'تم طلب إضافة $amount للمستخدم ${user.name}. السبب: $reason',
     );
 
     isLoading.value = false;
+    Get.snackbar('طلب معلق', 'تم إنشاء طلب إضافة الرصيد، بانتظار الموافقة');
   }
 
-  /// Deduct balance from user
+  /// Create a transaction request to deduct balance (No direct modification)
   Future<void> deductBalance(
     String userId,
     double amount,
@@ -191,14 +209,30 @@ class UserController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    // Log action
+    final user = users.firstWhere((u) => u.id == userId);
+    final transactionController = Get.find<TransactionController>();
+
+    final transaction = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: userId,
+      userName: user.name,
+      type: 'Adjustment',
+      amount: -amount, // Negative for deduction
+      status: 'Pending',
+      reason: 'خصم رصيد: $reason',
+      createdAt: DateTime.now(),
+    );
+
+    transactionController.transactions.add(transaction);
+
     await AuditLogger.log(
       adminName: 'Admin',
-      action: 'خصم رصيد',
-      details: 'تم خصم $amount من المستخدم $userId. السبب: $reason',
+      action: 'طلب خصم رصيد',
+      details: 'تم طلب خصم $amount من المستخدم ${user.name}. السبب: $reason',
     );
 
     isLoading.value = false;
+    Get.snackbar('طلب معلق', 'تم إنشاء طلب خصم الرصيد، بانتظار الموافقة');
   }
 
   /// Block user

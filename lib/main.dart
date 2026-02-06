@@ -22,6 +22,13 @@ import 'features/settings/screens/maintenance_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/dashboard/screens/audit_logs_screen.dart';
 import 'core/controllers/theme_controller.dart';
+import 'core/controllers/settings_controller.dart';
+import 'features/users/controllers/user_controller.dart';
+import 'features/transactions/controllers/transaction_controller.dart';
+import 'features/investments/controllers/investment_controller.dart';
+import 'features/agents/controllers/agent_controller.dart';
+import 'features/dashboard/controllers/main_controller.dart';
+import 'features/dashboard/controllers/audit_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,9 +37,16 @@ Future<void> main() async {
   await initializeDateFormatting('ar', null);
   await initializeDateFormatting('en', null);
 
-  // Initialize GetX Controllers
+  // Initialize GetX Controllers (Global)
   Get.put(AuthController());
   Get.put(ThemeController());
+  Get.put(SettingsController());
+  Get.put(UserController());
+  Get.put(TransactionController());
+  Get.put(InvestmentController());
+  Get.put(AgentController());
+  Get.put(MainController());
+  Get.put(AuditController());
 
   runApp(const KasbyAdminApp());
 }

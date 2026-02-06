@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
+import '../../users/controllers/user_controller.dart';
+import '../../../core/controllers/settings_controller.dart';
 import '../../../core/services/audit_logger.dart';
 import '../../../core/models/time_filter.dart';
 
@@ -107,22 +110,56 @@ class TransactionController extends GetxController {
 
   /// Approve transaction
   Future<void> approveTransaction(String transactionId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    final settingsController = Get.find<SettingsController>();
 
-    // Log action
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'موافقة على معاملة',
-      details:
-          'تم تم الاعتماد والمصادقة على المعاملة $transactionId ومباشرة التنفيذ',
-    );
+    final index = transactions.indexWhere((t) => t.id == transactionId);
+    if (index != -1) {
+      final transaction = transactions[index];
 
-    Get.snackbar(
-      'نجح',
-      'تم الاعتماد والمصادقة على المعاملة',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+      // Check for emergency pause if it's a withdrawal
+      if (transaction.type == 'Withdrawal' &&
+          settingsController.pauseWithdrawals.value) {
+        Get.snackbar(
+          'تنبيه النظام',
+          'لا يمكن الموافقة على السحب حالياً بسبب إيقاف عمليات السحب من الإعدادات',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withValues(alpha: 0.8),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      isLoading.value = true;
+      await Future.delayed(const Duration(seconds: 1));
+
+      // If it's an adjustment, update the user wallet
+      if (transaction.type == 'Adjustment') {
+        final userController = Get.find<UserController>();
+        final userIndex = userController.users.indexWhere(
+          (u) => u.id == transaction.userId,
+        );
+        if (userIndex != -1) {
+          final user = userController.users[userIndex];
+          userController.users[userIndex] = user.copyWith(
+            walletBalance: user.walletBalance + transaction.amount,
+          );
+        }
+      }
+
+      // Log action
+      await AuditLogger.log(
+        adminName: 'Admin',
+        action: 'موافقة على معاملة',
+        details:
+            'تم الاعتماد والمصادقة على المعاملة $transactionId من نوع ${transaction.type} بمبلغ ${transaction.amount}',
+      );
+
+      Get.snackbar(
+        'نجح',
+        'تم الاعتماد والمصادقة على المعاملة',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
 
     isLoading.value = false;
     loadTransactions();

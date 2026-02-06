@@ -8,7 +8,8 @@ class AuthController extends GetxController {
   // Observable state
   final isLoading = false.obs;
   final isLoggedIn = false.obs;
-  final userRole = ''.obs; // Admin
+  final userRole = ''.obs;
+  final userName = ''.obs;
   final generatedOtp = ''.obs;
   final isBiometricAvailable = false.obs;
   final rememberMe = false.obs;
@@ -130,6 +131,7 @@ class AuthController extends GetxController {
 
       isLoggedIn.value = true;
       userRole.value = 'Admin';
+      userName.value = 'المدير العام'; // Mock name
       isLoading.value = false;
       return true;
     } else {

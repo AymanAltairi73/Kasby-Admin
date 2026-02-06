@@ -58,10 +58,12 @@ class InvestmentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
+    // Safety Warning: Inform about impact
     Get.snackbar(
-      'نجح',
-      'تم تحديث الخطة بنجاح',
+      'تنبيه',
+      'تم تحديث الخطة. التعديلات تسري فقط على الاشتراكات الجديدة ولا تؤثر على الاستثمارات النشطة حالياً.',
       snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 5),
     );
 
     isLoading.value = false;

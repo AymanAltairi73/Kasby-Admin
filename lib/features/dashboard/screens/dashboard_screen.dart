@@ -10,6 +10,9 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/audit_controller.dart';
 import '../controllers/main_controller.dart';
+import '../../users/controllers/user_controller.dart';
+import '../../investments/controllers/investment_controller.dart';
+import '../../transactions/controllers/transaction_controller.dart';
 import '../models/audit_log_model.dart';
 import '../../notifications/screens/notifications_screen.dart';
 
@@ -21,7 +24,10 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
-    final auditController = Get.put(AuditController());
+    final auditController = Get.find<AuditController>();
+    final userController = Get.find<UserController>();
+    final investmentController = Get.find<InvestmentController>();
+    final transactionController = Get.find<TransactionController>();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -47,7 +53,11 @@ class DashboardScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Magical Statistics Grid
-                      _buildMagicalStatsGrid(),
+                      _buildMagicalStatsGrid(
+                        userController,
+                        investmentController,
+                        transactionController,
+                      ),
 
                       const SizedBox(height: 32),
 
@@ -299,27 +309,30 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'مرحباً، ',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w300,
+          Obx(
+            () => RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'مرحباً، ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: 'أيمن احمد',
-                  //text: authController.userRole.value,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: KasbyColors.primaryGold,
+                  TextSpan(
+                    text: authController.userName.value.isNotEmpty
+                        ? authController.userName.value
+                        : 'المدير',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: KasbyColors.primaryGold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ).animate().fadeIn().slideX(begin: -0.2),
           const SizedBox(height: 6),
@@ -366,48 +379,64 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMagicalStatsGrid() {
-    return GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.1,
-          children: [
-            _buildMagicalStatCard(
-              title: 'إجمالي المستخدمين',
-              value: '12,543',
-              icon: FontAwesomeIcons.users,
-              glowColor: KasbyColors.glowGold,
-              index: 0,
+  Widget _buildMagicalStatsGrid(
+    UserController userController,
+    InvestmentController investmentController,
+    TransactionController transactionController,
+  ) {
+    return Obx(() {
+      final totalInvested = investmentController.userInvestments.fold(
+        0.0,
+        (sum, inv) => sum + inv.amount,
+      );
+
+      final totalProfits = investmentController.userInvestments
+          .where((inv) => inv.status == 'Completed')
+          .fold(0.0, (sum, inv) => sum + (inv.expectedProfit));
+
+      return GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.1,
+        children: [
+          _buildMagicalStatCard(
+            title: 'إجمالي المستخدمين',
+            value: NumberFormat('#,###').format(userController.users.length),
+            icon: FontAwesomeIcons.users,
+            glowColor: KasbyColors.glowGold,
+            index: 0,
+          ),
+          _buildMagicalStatCard(
+            title: 'حجم الاستثمارات',
+            value: '\$${NumberFormat.compact().format(totalInvested)}',
+            icon: FontAwesomeIcons.chartLine,
+            glowColor: KasbyColors.glowGreen,
+            index: 1,
+          ),
+          _buildMagicalStatCard(
+            title: 'الأرباح المدفوعة',
+            value: '\$${NumberFormat.compact().format(totalProfits)}',
+            icon: FontAwesomeIcons.moneyBillTrendUp,
+            glowColor: KasbyColors.glowBlue,
+            index: 2,
+          ),
+          _buildMagicalStatCard(
+            title: 'المعاملات المعلقة',
+            value: NumberFormat('#,###').format(
+              transactionController.transactions
+                  .where((t) => t.status == 'Pending')
+                  .length,
             ),
-            _buildMagicalStatCard(
-              title: 'حجم الاستثمارات',
-              value: '\$2.4M',
-              icon: FontAwesomeIcons.chartLine,
-              glowColor: KasbyColors.glowGreen,
-              index: 1,
-            ),
-            _buildMagicalStatCard(
-              title: 'الأرباح المدفوعة',
-              value: '\$184K',
-              icon: FontAwesomeIcons.moneyBillTrendUp,
-              glowColor: KasbyColors.glowBlue,
-              index: 2,
-            ),
-            _buildMagicalStatCard(
-              title: 'المعاملات اليومية',
-              value: '1,234',
-              icon: FontAwesomeIcons.bolt,
-              glowColor: KasbyColors.glowOrange,
-              index: 3,
-            ),
-          ],
-        )
-        .animate()
-        .fadeIn(delay: const Duration(milliseconds: 600))
-        .slideY(begin: 0.2);
+            icon: FontAwesomeIcons.bolt,
+            glowColor: KasbyColors.glowOrange,
+            index: 3,
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildMagicalStatCard({

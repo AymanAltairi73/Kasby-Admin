@@ -3,7 +3,7 @@ class Transaction {
   final String id;
   final String userId;
   final String userName;
-  final String type; // Deposit, Withdrawal
+  final String type; // Deposit, Withdrawal, Adjustment
   final double amount;
   final String status; // Pending, Approved, Rejected
   final String? reason;
