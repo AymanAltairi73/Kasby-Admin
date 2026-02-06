@@ -22,7 +22,7 @@ class AuditLogsScreen extends StatelessWidget {
       appBar: _buildAppBar(controller),
       body: Stack(
         children: [
-          _buildCelestialBackground(),
+          RepaintBoundary(child: _buildCelestialBackground()),
           SafeArea(
             child: Column(
               children: [

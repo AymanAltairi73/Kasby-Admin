@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 
 class KasbyGlassCard extends StatelessWidget {
@@ -55,7 +56,17 @@ class KasbyGlassCard extends StatelessWidget {
     );
 
     if (onTap != null) {
-      return GestureDetector(onTap: onTap, child: content);
+      return GestureDetector(
+        onTap: onTap,
+        child: content
+            .animate(onPlay: (c) => c.stop())
+            .scale(
+              begin: const Offset(1, 1),
+              end: const Offset(0.97, 0.97),
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+            ),
+      );
     }
 
     return content;

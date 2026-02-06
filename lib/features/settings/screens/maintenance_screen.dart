@@ -34,7 +34,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
       ),
       body: Stack(
         children: [
-          _buildCelestialBackground(),
+          RepaintBoundary(child: _buildCelestialBackground()),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -251,23 +251,34 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
+      child: RepaintBoundary(
+        child:
+            Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color,
+                        blurRadius: 100,
+                        spreadRadius: 50,
+                      ),
+                    ],
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(
+                  begin: -30,
+                  end: 30,
+                  duration: const Duration(seconds: 8),
+                )
+                .moveX(
+                  begin: -20,
+                  end: 20,
+                  duration: const Duration(seconds: 10),
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .scale(
-                begin: const Offset(0.8, 0.8),
-                end: const Offset(1.2, 1.2),
-                duration: const Duration(seconds: 2),
-              ),
+      ),
     );
   }
 }

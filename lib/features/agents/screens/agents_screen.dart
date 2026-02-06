@@ -36,7 +36,7 @@ class AgentsScreen extends StatelessWidget {
       body: Stack(
         children: [
           // Celestial Background
-          _buildCelestialBackground(),
+          RepaintBoundary(child: _buildCelestialBackground()),
 
           Column(
             children: [
@@ -802,20 +802,34 @@ class AgentsScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
+      child: RepaintBoundary(
+        child:
+            Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color,
+                        blurRadius: 100,
+                        spreadRadius: 50,
+                      ),
+                    ],
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(
+                  begin: -20,
+                  end: 20,
+                  duration: const Duration(seconds: 4),
+                )
+                .moveX(
+                  begin: -20,
+                  end: 20,
+                  duration: const Duration(seconds: 5),
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: const Duration(seconds: 4))
-              .moveX(begin: -20, end: 20, duration: const Duration(seconds: 5)),
+      ),
     );
   }
 }

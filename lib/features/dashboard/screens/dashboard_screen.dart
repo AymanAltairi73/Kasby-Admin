@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
       body: Stack(
         children: [
           // Celestial Multi-Depth Background
-          _buildCelestialBackground(),
+          RepaintBoundary(child: _buildCelestialBackground()),
 
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -59,17 +59,20 @@ class DashboardScreen extends StatelessWidget {
                         delay: const Duration(milliseconds: 800),
                       ),
                       const SizedBox(height: 16),
-                      KasbyGlassCard(
-                            padding: const EdgeInsets.all(24),
-                            opacity: 0.08,
-                            child: SizedBox(
-                              height: 220,
-                              child: _buildNebulaChart(),
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: const Duration(milliseconds: 900))
-                          .scale(begin: const Offset(0.95, 0.95)),
+                      RepaintBoundary(
+                        child:
+                            KasbyGlassCard(
+                                  padding: const EdgeInsets.all(24),
+                                  opacity: 0.08,
+                                  child: SizedBox(
+                                    height: 220,
+                                    child: _buildNebulaChart(),
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(delay: 600.ms)
+                                .scale(begin: const Offset(0.95, 0.95)),
+                      ),
 
                       const SizedBox(height: 32),
 
@@ -830,24 +833,30 @@ class DashboardScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
+      child: RepaintBoundary(
+        child:
+            Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color,
+                        blurRadius: 100,
+                        spreadRadius: 50,
+                      ),
+                    ],
+                  ),
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .moveY(begin: -30, end: 30, duration: duration)
+                .moveX(
+                  begin: -20,
+                  end: 20,
+                  duration: duration + const Duration(seconds: 2),
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -30, end: 30, duration: duration)
-              .moveX(
-                begin: -20,
-                end: 20,
-                duration: duration + const Duration(seconds: 2),
-              ),
+      ),
     );
   }
 }
