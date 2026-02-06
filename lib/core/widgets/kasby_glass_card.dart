@@ -8,6 +8,7 @@ class KasbyGlassCard extends StatelessWidget {
   final double blur;
   final double opacity;
   final Color? borderColor;
+  final BorderRadius? borderRadius;
   final VoidCallback? onTap;
 
   const KasbyGlassCard({
@@ -18,15 +19,17 @@ class KasbyGlassCard extends StatelessWidget {
     this.blur = 10.0,
     this.opacity = 0.1,
     this.borderColor,
+    this.borderRadius,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final radius = borderRadius ?? BorderRadius.circular(24);
 
     Widget content = ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: radius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
@@ -36,7 +39,7 @@ class KasbyGlassCard extends StatelessWidget {
             color: (isDark ? Colors.white : Colors.black).withValues(
               alpha: opacity,
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: radius,
             border: Border.all(
               color:
                   borderColor ??

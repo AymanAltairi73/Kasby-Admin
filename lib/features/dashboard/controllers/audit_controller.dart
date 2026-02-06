@@ -3,23 +3,60 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/audit_log_model.dart';
 
 class AuditController extends GetxController {
+  final _allLogs = <AuditLog>[].obs;
   final logs = <AuditLog>[].obs;
   final isLoading = false.obs;
+
+  final searchQuery = ''.obs;
+  final selectedType = Rxn<AuditLogType>();
+  final selectedStatus = Rxn<AuditLogStatus>();
 
   @override
   void onInit() {
     super.onInit();
     fetchLogs();
+
+    // Set up filtering listeners
+    everAll([
+      searchQuery,
+      selectedType,
+      selectedStatus,
+      _allLogs,
+    ], (_) => _applyFilters());
+  }
+
+  void _applyFilters() {
+    var result = _allLogs.toList();
+
+    if (searchQuery.value.isNotEmpty) {
+      result = result
+          .where(
+            (log) =>
+                log.action.contains(searchQuery.value) ||
+                log.adminName.contains(searchQuery.value) ||
+                log.details.contains(searchQuery.value),
+          )
+          .toList();
+    }
+
+    if (selectedType.value != null) {
+      result = result.where((log) => log.type == selectedType.value).toList();
+    }
+
+    if (selectedStatus.value != null) {
+      result = result
+          .where((log) => log.status == selectedStatus.value)
+          .toList();
+    }
+
+    logs.value = result;
   }
 
   Future<void> fetchLogs() async {
     isLoading.value = true;
-
-    // Simulate API delay
     await Future.delayed(const Duration(seconds: 1));
 
-    // Mock data for Masterpiece feel
-    logs.value = [
+    _allLogs.value = [
       AuditLog(
         id: '1',
         action: 'موافقة على عملية سحب',
@@ -27,7 +64,13 @@ class AuditController extends GetxController {
         timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
         details: 'تمت الموافقة على سحب مبلغ \$500.00 للمستخدم محمد حسن',
         type: AuditLogType.financial,
+        status: AuditLogStatus.success,
         icon: FontAwesomeIcons.moneyBillTransfer,
+        ipAddress: '192.168.1.45',
+        device: 'macOS Monterey (Chrome)',
+        targetId: 'TXN_99283',
+        targetType: 'Transaction',
+        metadata: {'amount': 500.0, 'currency': 'USD', 'user_id': 'USR_552'},
       ),
       AuditLog(
         id: '2',
@@ -36,7 +79,13 @@ class AuditController extends GetxController {
         timestamp: DateTime.now().subtract(const Duration(hours: 1)),
         details: 'تم حظر المستخدم خالد محمود بسبب نشاط مشبوه',
         type: AuditLogType.userManagement,
+        status: AuditLogStatus.warning,
         icon: FontAwesomeIcons.userSlash,
+        ipAddress: '10.5.0.22',
+        device: 'iPhone 15 Pro (App)',
+        targetId: 'USR_112',
+        targetType: 'User',
+        metadata: {'reason': 'Suspicious Activity', 'duration': 'Permanent'},
       ),
       AuditLog(
         id: '3',
@@ -45,16 +94,26 @@ class AuditController extends GetxController {
         timestamp: DateTime.now().subtract(const Duration(hours: 3)),
         details: 'تحديث العائد السنوي لخطة "النمو الذكي" إلى 12%',
         type: AuditLogType.investment,
+        status: AuditLogStatus.success,
         icon: FontAwesomeIcons.chartLine,
+        ipAddress: '192.168.1.45',
+        device: 'macOS Monterey (Chrome)',
+        targetId: 'PLAN_002',
+        targetType: 'InvestmentPlan',
+        metadata: {'old_rate': 10.5, 'new_rate': 12.0},
       ),
       AuditLog(
         id: '4',
-        action: 'تسجيل دخول مسؤول',
+        action: 'فشل تسجيل دخول مسؤول',
         adminName: 'ناصر فهد',
         timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-        details: 'سجل المسؤول ناصر فهد الدخول من جهاز جديد',
+        details: 'محاولة فاشلة لتسجيل الدخول بكلمة مرور خاطئة 3 مرات',
         type: AuditLogType.security,
+        status: AuditLogStatus.failure,
         icon: FontAwesomeIcons.shieldHalved,
+        ipAddress: '45.12.88.9',
+        device: 'Windows 11 (Firefox)',
+        metadata: {'attempts': 3, 'location': 'Dubai, UAE'},
       ),
       AuditLog(
         id: '5',
@@ -63,7 +122,11 @@ class AuditController extends GetxController {
         timestamp: DateTime.now().subtract(const Duration(days: 1)),
         details: 'تم إرسال إشعار لجميع المستخدمين بخصوص الصيانة الدورية',
         type: AuditLogType.system,
+        status: AuditLogStatus.success,
         icon: FontAwesomeIcons.bullhorn,
+        ipAddress: '10.5.0.22',
+        device: 'iPhone 15 Pro (App)',
+        metadata: {'recipient_count': 12543, 'template_id': 'maint_01'},
       ),
     ];
 
