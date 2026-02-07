@@ -1,3 +1,5 @@
+import 'user_activity_model.dart';
+
 /// Mock User Model
 class User {
   final String id;
@@ -5,10 +7,15 @@ class User {
   final String email;
   final String phone;
   final String status; // Active, Blocked
+  final String country; // New
+  final String accountType; // Free, Verified, VIP // New
+  final String kycStatus; // Unverified, Pending, Verified // New
   final double walletBalance;
   final double investedAmount;
   final double pendingAmount;
   final DateTime createdAt;
+  final List<String> documents; // List of document URLs (images) // New
+  final List<UserActivity> activityLog; // User history // New
 
   User({
     required this.id,
@@ -16,10 +23,15 @@ class User {
     required this.email,
     required this.phone,
     required this.status,
+    required this.country,
+    required this.accountType,
+    required this.kycStatus,
     required this.walletBalance,
     required this.investedAmount,
     required this.pendingAmount,
     required this.createdAt,
+    this.documents = const [],
+    this.activityLog = const [],
   });
 
   User copyWith({
@@ -28,10 +40,15 @@ class User {
     String? email,
     String? phone,
     String? status,
+    String? country,
+    String? accountType,
+    String? kycStatus,
     double? walletBalance,
     double? investedAmount,
     double? pendingAmount,
     DateTime? createdAt,
+    List<String>? documents,
+    List<UserActivity>? activityLog,
   }) {
     return User(
       id: id ?? this.id,
@@ -39,10 +56,15 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       status: status ?? this.status,
+      country: country ?? this.country,
+      accountType: accountType ?? this.accountType,
+      kycStatus: kycStatus ?? this.kycStatus,
       walletBalance: walletBalance ?? this.walletBalance,
       investedAmount: investedAmount ?? this.investedAmount,
       pendingAmount: pendingAmount ?? this.pendingAmount,
       createdAt: createdAt ?? this.createdAt,
+      documents: documents ?? this.documents,
+      activityLog: activityLog ?? this.activityLog,
     );
   }
 
@@ -56,28 +78,67 @@ class User {
         email: 'ahmed@example.com',
         phone: '+966501234567',
         status: 'Active',
+        country: 'Saudi Arabia',
+        accountType: 'VIP',
+        kycStatus: 'Verified',
         walletBalance: 5000.0,
         investedAmount: 15000.0,
         pendingAmount: 500.0,
         createdAt: now.subtract(const Duration(minutes: 30)), // Today
+        activityLog: [
+          UserActivity(
+            id: 'a1',
+            action: 'تسجيل دخول',
+            details: 'تم تسجيل الدخول من الرياض',
+            timestamp: now.subtract(const Duration(hours: 1)),
+            type: 'Security',
+          ),
+          UserActivity(
+            id: 'a2',
+            action: 'إيداع',
+            details: 'إيداع بنكي بقيمة 5000 ريال',
+            timestamp: now.subtract(const Duration(days: 1)),
+            type: 'Transaction',
+          ),
+        ],
+        documents: [
+          'assets/images/id_card_front.jpg',
+          'assets/images/id_card_back.jpg',
+        ],
       ),
       User(
         id: '2',
         name: 'فاطمة علي',
         email: 'fatima@example.com',
-        phone: '+966507654321',
+        phone: '+971507654321',
         status: 'Active',
+        country: 'UAE',
+        accountType: 'Verified',
+        kycStatus: 'Verified',
         walletBalance: 3200.0,
         investedAmount: 8000.0,
         pendingAmount: 0.0,
         createdAt: now.subtract(const Duration(days: 2)), // This Week
+        activityLog: [
+          UserActivity(
+            id: 'a3',
+            action: 'تحديث البيانات',
+            details: 'تحديث رقم الهاتف',
+            timestamp: now.subtract(const Duration(days: 3)),
+            type: 'System',
+          ),
+        ],
+        documents: ['assets/images/passport.jpg'],
       ),
       User(
         id: '3',
         name: 'خالد سعيد',
         email: 'khaled@example.com',
-        phone: '+966509876543',
+        phone: '+965509876543',
         status: 'Blocked',
+        country: 'Kuwait',
+        accountType: 'Free',
+        kycStatus: 'Unverified',
         walletBalance: 0.0,
         investedAmount: 0.0,
         pendingAmount: 0.0,
@@ -89,28 +150,47 @@ class User {
         email: 'noura@example.com',
         phone: '+966502345678',
         status: 'Active',
+        country: 'Saudi Arabia',
+        accountType: 'VIP',
+        kycStatus: 'Verified',
         walletBalance: 12000.0,
         investedAmount: 25000.0,
         pendingAmount: 1200.0,
         createdAt: now.subtract(const Duration(hours: 5)), // Today
+        activityLog: [
+          UserActivity(
+            id: 'a4',
+            action: 'استثمار جديد',
+            details: 'شراء أسهم في صندوق النمو',
+            timestamp: now.subtract(const Duration(hours: 4)),
+            type: 'Transaction',
+          ),
+        ],
       ),
       User(
         id: '5',
         name: 'عمر حسن',
         email: 'omar@example.com',
-        phone: '+966508765432',
+        phone: '+201508765432',
         status: 'Active',
+        country: 'Egypt',
+        accountType: 'Verified',
+        kycStatus: 'Pending',
         walletBalance: 7500.0,
         investedAmount: 18000.0,
         pendingAmount: 300.0,
         createdAt: now.subtract(const Duration(days: 4)), // This Week
+        documents: ['assets/images/national_id.jpg'], // Pending verification
       ),
       User(
         id: '6',
         name: 'ليلى يوسف',
         email: 'layla@example.com',
-        phone: '+966501112223',
+        phone: '+968501112223',
         status: 'Active',
+        country: 'Oman',
+        accountType: 'Free',
+        kycStatus: 'Unverified',
         walletBalance: 1500.0,
         investedAmount: 5000.0,
         pendingAmount: 100.0,

@@ -12,6 +12,8 @@ class UserController extends GetxController {
   final filteredUsers = <User>[].obs;
   final searchQuery = ''.obs;
   final selectedStatus = 'All'.obs; // All, Active, Blocked
+  final selectedCountry = 'All'.obs; // New
+  final selectedAccountType = 'All'.obs; // New
   final selectedTimeFilter = TimeFilter.all.obs;
   final isLoading = false.obs;
 
@@ -30,6 +32,7 @@ class UserController extends GetxController {
     filteredUsers.value = users;
 
     isLoading.value = false;
+    _applyFilters();
   }
 
   /// Search users by name, email, or phone
@@ -41,6 +44,18 @@ class UserController extends GetxController {
   /// Filter users by status
   void filterByStatus(String status) {
     selectedStatus.value = status;
+    _applyFilters();
+  }
+
+  /// Filter users by country
+  void filterByCountry(String country) {
+    selectedCountry.value = country;
+    _applyFilters();
+  }
+
+  /// Filter users by account type
+  void filterByAccountType(String type) {
+    selectedAccountType.value = type;
     _applyFilters();
   }
 
@@ -70,6 +85,21 @@ class UserController extends GetxController {
     if (selectedStatus.value != 'All') {
       result = result
           .where((user) => user.status == selectedStatus.value)
+          //    .where((user) => user.status.toLowerCase() == selectedStatus.value.toLowerCase()) // Case insensitive if needed
+          .toList();
+    }
+
+    // Apply country filter
+    if (selectedCountry.value != 'All') {
+      result = result
+          .where((user) => user.country == selectedCountry.value)
+          .toList();
+    }
+
+    // Apply account type filter
+    if (selectedAccountType.value != 'All') {
+      result = result
+          .where((user) => user.accountType == selectedAccountType.value)
           .toList();
     }
 
@@ -91,6 +121,9 @@ class UserController extends GetxController {
     required String name,
     required String email,
     required String phone,
+    String country = 'Unknown',
+    String accountType = 'Free',
+    String kycStatus = 'Unverified',
   }) async {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
@@ -101,6 +134,9 @@ class UserController extends GetxController {
       email: email,
       phone: phone,
       status: 'Active',
+      country: country,
+      accountType: accountType,
+      kycStatus: kycStatus,
       walletBalance: 0.0,
       investedAmount: 0.0,
       pendingAmount: 0.0,
@@ -242,6 +278,9 @@ class UserController extends GetxController {
 
     final index = users.indexWhere((u) => u.id == userId);
     if (index != -1) {
+      final user = users[index];
+      users[index] = user.copyWith(status: 'Blocked'); // Update local state
+
       // Log action
       await AuditLogger.log(
         adminName: 'Admin',
@@ -251,7 +290,8 @@ class UserController extends GetxController {
     }
 
     isLoading.value = false;
-    loadUsers(); // Reload
+    _applyFilters(); // Re-apply filters
+    update(); // Force update if needed
   }
 
   /// Activate user
@@ -261,6 +301,9 @@ class UserController extends GetxController {
 
     final index = users.indexWhere((u) => u.id == userId);
     if (index != -1) {
+      final user = users[index];
+      users[index] = user.copyWith(status: 'Active'); // Update local state
+
       // Log action
       await AuditLogger.log(
         adminName: 'Admin',
@@ -270,6 +313,65 @@ class UserController extends GetxController {
     }
 
     isLoading.value = false;
-    loadUsers(); // Reload
+    _applyFilters(); // Re-apply filters
+    update();
+  }
+
+  /// Verify User Documents (KYC)
+  Future<void> verifyDocuments(String userId) async {
+    isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 1));
+
+    final index = users.indexWhere((u) => u.id == userId);
+    if (index != -1) {
+      final user = users[index];
+      users[index] = user.copyWith(
+        kycStatus: 'Verified',
+        accountType: 'Verified', // Auto upgrade to Verified
+      );
+
+      // Update Activity Log
+      // In a real app, we would append to the list, but for now we rely on the object update (if mutable) or just log it
+      // Since the list in model is final, we should ideally construct a new list.
+      // For this mock, we are just updating the main user object in the list.
+      // Let's assume we maintain local state only.
+
+      await AuditLogger.log(
+        adminName: 'Admin',
+        action: 'توثيق حساب',
+        details: 'تم توثيق حساب المستخدم ${user.name}',
+      );
+
+      Get.snackbar('نجح', 'تم توثيق الحساب بنجاح');
+    }
+
+    isLoading.value = false;
+    _applyFilters();
+    update();
+  }
+
+  /// Reject User Documents (KYC)
+  Future<void> rejectDocuments(String userId, String reason) async {
+    isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 1));
+
+    final index = users.indexWhere((u) => u.id == userId);
+    if (index != -1) {
+      final user = users[index];
+      // Reset to Unverified or keep Pending depending on logic. Usually 'Unverified' allows re-upload.
+      users[index] = user.copyWith(kycStatus: 'Unverified');
+
+      await AuditLogger.log(
+        adminName: 'Admin',
+        action: 'رفض وثائق',
+        details: 'تم رفض وثائق المستخدم ${user.name}. السبب: $reason',
+      );
+
+      Get.snackbar('تم', 'تم رفض الوثائق وإشعار المستخدم');
+    }
+
+    isLoading.value = false;
+    _applyFilters();
+    update();
   }
 }

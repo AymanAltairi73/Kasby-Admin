@@ -172,6 +172,76 @@ class UserListScreen extends StatelessWidget {
             ],
           ),
 
+          // Country Filter
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.public_rounded),
+            tooltip: 'تصفية حسب الدولة',
+            onSelected: (String country) {
+              userController.filterByCountry(country);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'All',
+                child: Text(
+                  'كل الدول',
+                  style: TextStyle(
+                    color: userController.selectedCountry.value == 'All'
+                        ? KasbyColors.primaryGold
+                        : Colors.white,
+                  ),
+                ),
+              ),
+              ...['Saudi Arabia', 'UAE', 'Kuwait', 'Egypt', 'Oman'].map(
+                (country) => PopupMenuItem(
+                  value: country,
+                  child: Text(
+                    country,
+                    style: TextStyle(
+                      color: userController.selectedCountry.value == country
+                          ? KasbyColors.primaryGold
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Account Type Filter
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.verified_user_rounded),
+            tooltip: 'تصفية حسب نوع الحساب',
+            onSelected: (String type) {
+              userController.filterByAccountType(type);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'All',
+                child: Text(
+                  'كل الحسابات',
+                  style: TextStyle(
+                    color: userController.selectedAccountType.value == 'All'
+                        ? KasbyColors.primaryGold
+                        : Colors.white,
+                  ),
+                ),
+              ),
+              ...['Free', 'Verified', 'VIP'].map(
+                (type) => PopupMenuItem(
+                  value: type,
+                  child: Text(
+                    type,
+                    style: TextStyle(
+                      color: userController.selectedAccountType.value == type
+                          ? KasbyColors.primaryGold
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_outlined),
             onPressed: () => _showAddUserDialog(context, userController),
@@ -328,6 +398,16 @@ class UserListScreen extends StatelessWidget {
         ? KasbyColors.success
         : KasbyColors.error;
 
+    Color accountColor = Colors.white;
+    IconData accountIcon = Icons.person_outline;
+    if (user.accountType == 'VIP') {
+      accountColor = KasbyColors.primaryGold;
+      accountIcon = Icons.stars_rounded;
+    } else if (user.accountType == 'Verified') {
+      accountColor = KasbyColors.info;
+      accountIcon = Icons.verified_rounded;
+    }
+
     return KasbyGlassCard(
       onTap: () => Get.to(() => UserDetailsScreen(user: user)),
       padding: const EdgeInsets.all(12),
@@ -376,6 +456,20 @@ class UserListScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // Account Type Badge
+              if (user.accountType != 'Free')
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: KasbyColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(accountIcon, size: 14, color: accountColor),
+                  ),
+                ),
             ],
           ),
           const SizedBox(width: 16),
@@ -385,12 +479,35 @@ class UserListScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  user.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      user.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Country Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        user.country,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
                   user.email,
@@ -416,6 +533,20 @@ class UserListScreen extends StatelessWidget {
                         color: KasbyColors.primaryGold,
                       ),
                     ),
+                    const Spacer(),
+                    // KYC Status
+                    if (user.kycStatus == 'Verified')
+                      const Icon(
+                        Icons.check_circle,
+                        size: 12,
+                        color: KasbyColors.success,
+                      ),
+                    if (user.kycStatus == 'Pending')
+                      const Icon(
+                        Icons.info_outline,
+                        size: 12,
+                        color: KasbyColors.warning,
+                      ),
                   ],
                 ),
               ],

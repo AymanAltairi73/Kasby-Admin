@@ -159,14 +159,37 @@ class UserDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Name
-                  Text(
-                    user.name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: KasbyColors.textPrimary,
-                    ),
+                  // Name & Badges
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        user.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: KasbyColors.textPrimary,
+                        ),
+                      ),
+                      if (user.accountType == 'VIP')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(
+                            Icons.stars_rounded,
+                            color: KasbyColors.primaryGold,
+                            size: 24,
+                          ),
+                        )
+                      else if (user.accountType == 'Verified')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(
+                            Icons.verified_rounded,
+                            color: KasbyColors.info,
+                            size: 24,
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 
@@ -211,29 +234,34 @@ class UserDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: user.status == 'Active'
-                          ? KasbyColors.success.withValues(alpha: 0.2)
-                          : KasbyColors.error.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      user.status == 'Active' ? 'نشط' : 'محظور',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                  // Status Badges Row
+                  Wrap(
+                    spacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      _buildStatusBadge(
+                        label: user.status == 'Active' ? 'نشط' : 'محظور',
                         color: user.status == 'Active'
                             ? KasbyColors.success
                             : KasbyColors.error,
                       ),
-                    ),
+                      _buildStatusBadge(
+                        label: user.country,
+                        color: KasbyColors.info,
+                        icon: Icons.public,
+                      ),
+                      _buildStatusBadge(
+                        label: 'KYC: ${user.kycStatus}',
+                        color: user.kycStatus == 'Verified'
+                            ? KasbyColors.success
+                            : (user.kycStatus == 'Pending'
+                                  ? KasbyColors.warning
+                                  : KasbyColors.error),
+                        icon: Icons.how_to_reg,
+                      ),
+                    ],
                   ),
+
                   const SizedBox(height: 8),
 
                   // Member Since
@@ -247,6 +275,46 @@ class UserDetailsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  // KYC Actions (If Pending)
+                  if (user.kycStatus == 'Pending')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.close, size: 16),
+                            label: const Text('رفض'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.error,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              // Mock Action
+                              Get.snackbar('تم', 'تم رفض وثائق التوثيق');
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.check, size: 16),
+                            label: const Text('توثيق الحساب'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.success,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              // Mock Action
+                              final updated = user.copyWith(
+                                kycStatus: 'Verified',
+                                accountType: 'Verified',
+                              );
+                              userController.updateUser(updated);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -315,6 +383,224 @@ class UserDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
+            // Documents Section
+            if (user.documents.isNotEmpty) ...[
+              const Text(
+                'الوثائق المقدمة',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: KasbyColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 200,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: user.documents.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      width: 300,
+                      child: KasbyGlassCard(
+                        padding: EdgeInsets.zero,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.asset(
+                              user.documents[index], // Assuming local assets for mock
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white54,
+                                    size: 50,
+                                  ),
+                                );
+                              },
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.7),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 12,
+                              right: 12,
+                              child: Text(
+                                'وثيقة ${index + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // Verify/Reject Actions for Pending KYC
+              if (user.kycStatus == 'Pending')
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text('قبول وتوثيق'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: KasbyColors.success,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () =>
+                              _showVerifyConfirmation(context, userController),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.cancel_outlined),
+                          label: const Text('رفض الوثائق'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: KasbyColors.error,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () =>
+                              _showRejectDialog(context, userController),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
+
+            // Activity Log
+            const Text(
+              'سجل النشاط',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (user.activityLog.isEmpty)
+              KasbyCard(
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Text(
+                      'لا يوجد نشاط مسجل',
+                      style: TextStyle(color: KasbyColors.textSecondary),
+                    ),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: user.activityLog.length,
+                itemBuilder: (context, index) {
+                  final activity = user.activityLog[index];
+                  IconData icon;
+                  Color iconColor;
+
+                  switch (activity.type) {
+                    case 'Security':
+                      icon = Icons.security;
+                      iconColor = KasbyColors.info;
+                      break;
+                    case 'Transaction':
+                      icon = Icons.account_balance_wallet;
+                      iconColor = KasbyColors.primaryGold;
+                      break;
+                    case 'System':
+                      icon = Icons.settings;
+                      iconColor = KasbyColors.textSecondary;
+                      break;
+                    default:
+                      icon = Icons.info_outline;
+                      iconColor = Colors.white70;
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: KasbyGlassCard(
+                      padding: const EdgeInsets.all(12),
+                      opacity: 0.05,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: iconColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(icon, color: iconColor, size: 16),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  activity.action,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  activity.details,
+                                  style: const TextStyle(
+                                    color: KasbyColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat(
+                              'MM/dd HH:mm',
+                              'en',
+                            ).format(activity.timestamp),
+                            style: const TextStyle(
+                              color: KasbyColors.textSecondary,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            const SizedBox(height: 24),
+
             // Transaction History
             const Text(
               'سجل المعاملات',
@@ -338,6 +624,38 @@ class UserDetailsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge({
+    required String label,
+    required Color color,
+    IconData? icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -621,6 +939,94 @@ class UserDetailsScreen extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVerifyConfirmation(
+    BuildContext context,
+    UserController controller,
+  ) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: const Text(
+          'تأكيد التوثيق',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'هل أنت متأكد من قبول وثائق "${user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
+          style: const TextStyle(color: KasbyColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              controller.verifyDocuments(user.id);
+              Get.back();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KasbyColors.success,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('توثيق'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRejectDialog(BuildContext context, UserController controller) {
+    final reasonController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: const Text('رفض الوثائق', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'يرجى ذكر سبب رفض الوثائق لإشعار المستخدم.',
+              style: TextStyle(color: KasbyColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            KasbyTextField(
+              controller: reasonController,
+              hintText: 'سبب الرفض (مثلاً: الصورة غير واضحة)',
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (reasonController.text.isNotEmpty) {
+                controller.rejectDocuments(user.id, reasonController.text);
+                Get.back();
+              } else {
+                Get.snackbar('Hata', 'يرجى كتابة سبب الرفض');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KasbyColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('رفض'),
           ),
         ],
       ),
