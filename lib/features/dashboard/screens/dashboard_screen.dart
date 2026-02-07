@@ -60,7 +60,12 @@ class DashboardScreen extends StatelessWidget {
                         transactionController,
                       ),
 
-                      //const SizedBox(height: 6),
+                      const SizedBox(height: 16),
+
+                      // Urgent Alerts (New Section)
+                      _buildUrgentAlerts(transactionController),
+
+                      const SizedBox(height: 16),
 
                       // Nebula Chart Section
                       const _SectionHeader(
@@ -169,6 +174,41 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildUrgentAlerts(TransactionController transactionController) {
+    return Obx(() {
+      final pendingWithdrawals = transactionController.pendingWithdrawals;
+      if (pendingWithdrawals.isEmpty) return const SizedBox.shrink();
+
+      return KasbyGlassCard(
+        padding: const EdgeInsets.all(12),
+        color: KasbyColors.error.withValues(alpha: 0.05),
+        child: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: KasbyColors.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'تنبيه: هناك ${pendingWithdrawals.length} معاملات سحب بانتظار الموافقة.',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Get.toNamed('/transactions', arguments: 1),
+              child: const Text(
+                'مراجعة',
+                style: TextStyle(color: KasbyColors.primaryGold),
+              ),
+            ),
+          ],
+        ),
+      ).animate().shake(hz: 4, curve: Curves.easeInOutCubic).fadeIn();
+    });
   }
 
   Widget _buildPremiumGoldenBackground() {
@@ -442,13 +482,20 @@ class DashboardScreen extends StatelessWidget {
           .where((inv) => inv.status == 'Completed')
           .fold(0.0, (sum, inv) => sum + (inv.expectedProfit));
 
+      final activeUsers = userController.users
+          .where((u) => u.status == 'Active')
+          .length;
+      final pendingTransactions = transactionController.transactions
+          .where((t) => t.status == 'Pending')
+          .length;
+
       return GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.45,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.35,
         children: [
           _buildMagicalStatCard(
             title: 'إجمالي المستخدمين',
@@ -458,29 +505,40 @@ class DashboardScreen extends StatelessWidget {
             index: 0,
           ),
           _buildMagicalStatCard(
+            title: 'المستخدمين النشطين',
+            value: NumberFormat('#,###').format(activeUsers),
+            icon: FontAwesomeIcons.userCheck,
+            glowColor: KasbyColors.glowGreen,
+            index: 1,
+          ),
+          _buildMagicalStatCard(
             title: 'حجم الاستثمارات',
             value: '\$${NumberFormat.compact().format(totalInvested)}',
             icon: FontAwesomeIcons.chartLine,
-            glowColor: KasbyColors.glowGreen,
-            index: 1,
+            glowColor: KasbyColors.glowBlue,
+            index: 2,
           ),
           _buildMagicalStatCard(
             title: 'الأرباح المدفوعة',
             value: '\$${NumberFormat.compact().format(totalProfits)}',
             icon: FontAwesomeIcons.moneyBillTrendUp,
-            glowColor: KasbyColors.glowBlue,
-            index: 2,
+            glowColor: KasbyColors.glowGreen,
+            index: 3,
           ),
           _buildMagicalStatCard(
             title: 'المعاملات المعلقة',
-            value: NumberFormat('#,###').format(
-              transactionController.transactions
-                  .where((t) => t.status == 'Pending')
-                  .length,
-            ),
+            value: NumberFormat('#,###').format(pendingTransactions),
             icon: FontAwesomeIcons.bolt,
             glowColor: KasbyColors.glowOrange,
-            index: 3,
+            index: 4,
+          ),
+          _buildMagicalStatCard(
+            title: 'حجم التداول اليومي',
+            value:
+                '\$${NumberFormat.compact().format(12450)}', // Placeholder estimation
+            icon: FontAwesomeIcons.arrowTrendUp,
+            glowColor: KasbyColors.glowGold,
+            index: 5,
           ),
         ],
       );

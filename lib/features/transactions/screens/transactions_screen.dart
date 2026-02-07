@@ -10,6 +10,7 @@ import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/transaction_controller.dart';
 import '../models/transaction_model.dart';
 import '../../../core/models/time_filter.dart';
+import '../services/report_service.dart';
 
 /// Transactions Screen
 /// Manage deposits and withdrawals
@@ -27,6 +28,14 @@ class TransactionsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('المعاملات'),
+          actions: [
+            IconButton(
+              icon: const Icon(FontAwesomeIcons.fileLines),
+              onPressed: () => _showReportOptions(context, controller),
+              tooltip: 'توليد تقرير',
+            ),
+            const SizedBox(width: 8),
+          ],
           bottom: const TabBar(
             indicatorColor: KasbyColors.primaryGold,
             labelColor: KasbyColors.primaryGold,
@@ -463,6 +472,195 @@ class TransactionsScreen extends StatelessWidget {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
+      ),
+    );
+  }
+
+  void _showReportOptions(
+    BuildContext context,
+    TransactionController controller,
+  ) {
+    Get.bottomSheet(
+      KasbyCard(
+        margin: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'توليد تقرير مالي',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildReportOption(
+              icon: FontAwesomeIcons.fileCsv,
+              title: 'تقرير CSV (إكسل)',
+              subtitle: 'تصدير كافة المعاملات المفلترة حالياً',
+              onTap: () {
+                Get.back();
+                _generateReport(controller, 'CSV');
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildReportOption(
+              icon: FontAwesomeIcons.filePdf,
+              title: 'تقرير PDF (كشف حساب)',
+              subtitle: 'تقرير منسق للطباعة والمشاركة',
+              onTap: () {
+                Get.back();
+                _generateReport(controller, 'PDF');
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildReportOption(
+              icon: FontAwesomeIcons.chartPie,
+              title: 'ملخص إحصائي',
+              subtitle: 'عرض ملخص سريع للأداء المالي',
+              onTap: () {
+                Get.back();
+                _showSummaryReport(controller);
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _buildReportOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: KasbyColors.primaryGold, size: 20),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: KasbyColors.textSecondary),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+    );
+  }
+
+  Future<void> _generateReport(
+    TransactionController controller,
+    String type,
+  ) async {
+    Get.dialog(
+      const Center(
+        child: CircularProgressIndicator(color: KasbyColors.primaryGold),
+      ),
+      barrierDismissible: false,
+    );
+
+    String path;
+    if (type == 'CSV') {
+      path = await ReportService.exportToCSV(controller.filteredTransactions);
+    } else {
+      path = await ReportService.exportToPDF(controller.filteredTransactions);
+    }
+
+    Get.back(); // Close loading
+
+    Get.snackbar(
+      'تم التوليد',
+      'تم حفظ التقرير في: $path',
+      snackPosition: SnackPosition.BOTTOM,
+      mainButton: TextButton(
+        onPressed: () {},
+        child: const Text(
+          'فتح',
+          style: TextStyle(color: KasbyColors.primaryGold),
+        ),
+      ),
+    );
+  }
+
+  void _showSummaryReport(TransactionController controller) {
+    final summary = ReportService.generateSummary(
+      controller.filteredTransactions,
+    );
+
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: const Text(
+          'الملخص المالي',
+          style: TextStyle(color: KasbyColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSummaryRow(
+              'إجمالي التداول:',
+              '\$${(summary['total_volume'] as double).toStringAsFixed(2)}',
+            ),
+            _buildSummaryRow(
+              'صافي التدفق:',
+              '\$${(summary['net_flow'] as double).toStringAsFixed(2)}',
+            ),
+            _buildSummaryRow(
+              'عدد الإيداعات:',
+              summary['deposit_count'].toString(),
+            ),
+            _buildSummaryRow(
+              'عدد السحوبات:',
+              summary['withdrawal_count'].toString(),
+            ),
+            _buildSummaryRow(
+              'متوسط الإيداع:',
+              '\$${(summary['average_deposit'] as double).toStringAsFixed(2)}',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إغلاق')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: KasbyColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: KasbyColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }

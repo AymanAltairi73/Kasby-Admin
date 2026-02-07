@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
+import 'fee_settings_screen.dart';
+import 'currency_settings_screen.dart';
+import 'transaction_limits_screen.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/controllers/theme_controller.dart';
 
@@ -104,6 +107,27 @@ class SettingsScreen extends StatelessWidget {
               title: 'وضع الصيانة',
               subtitle: 'تفعيل/تعطيل وضع الصيانة',
               onTap: () => Get.toNamed('/maintenance'),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.percent,
+              title: 'الرسوم والعمولات',
+              subtitle: 'إدارة رسوم السحب والإيداع والاستثمار',
+              onTap: () => Get.to(() => const FeeSettingsScreen()),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.coins,
+              title: 'العملات',
+              subtitle: 'إدارة العملات المدعومة وأسعار الصرف',
+              onTap: () => Get.to(() => const CurrencySettingsScreen()),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.sliders,
+              title: 'حدود المعاملات',
+              subtitle: 'ضبط الحدود الدنيا والقصوى للعمليات',
+              onTap: () => Get.to(() => const TransactionLimitsScreen()),
             ),
             const SizedBox(height: 24),
 

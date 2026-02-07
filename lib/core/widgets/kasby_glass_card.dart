@@ -8,6 +8,7 @@ class KasbyGlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double blur;
   final double opacity;
+  final Color? color;
   final Color? borderColor;
   final BorderRadius? borderRadius;
   final VoidCallback? onTap;
@@ -19,6 +20,7 @@ class KasbyGlassCard extends StatelessWidget {
     this.margin,
     this.blur = 10.0,
     this.opacity = 0.1,
+    this.color,
     this.borderColor,
     this.borderRadius,
     this.onTap,
@@ -37,9 +39,11 @@ class KasbyGlassCard extends StatelessWidget {
           padding: padding ?? const EdgeInsets.all(20),
           margin: margin,
           decoration: BoxDecoration(
-            color: (isDark ? Colors.white : Colors.black).withValues(
-              alpha: opacity,
-            ),
+            color:
+                color ??
+                (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: opacity,
+                ),
             borderRadius: radius,
             border: Border.all(
               color:

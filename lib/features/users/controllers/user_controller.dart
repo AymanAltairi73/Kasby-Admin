@@ -374,4 +374,48 @@ class UserController extends GetxController {
     _applyFilters();
     update();
   }
+
+  /// Promote user to VIP
+  Future<void> promoteToVIP(String userId) async {
+    isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 1));
+
+    final index = users.indexWhere((u) => u.id == userId);
+    if (index != -1) {
+      final user = users[index];
+      users[index] = user.copyWith(accountType: 'VIP');
+
+      await AuditLogger.log(
+        adminName: 'Admin',
+        action: 'ترقية إلى VIP',
+        details: 'تم ترقية المستخدم ${user.name} إلى فئة VIP',
+      );
+
+      Get.snackbar('نجح', 'تمت ترقية المستخدم إلى VIP بنجاح');
+    }
+
+    isLoading.value = false;
+    _applyFilters();
+    update();
+  }
+
+  /// Reset Password (Mock)
+  Future<void> resetPassword(String userId) async {
+    isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 1));
+
+    final user = users.firstWhere((u) => u.id == userId);
+
+    await AuditLogger.log(
+      adminName: 'Admin',
+      action: 'إعادة تعيين كلمة مرور',
+      details: 'تم إرسال رابط إعادة تعيين كلمة المرور للمستخدم ${user.name}',
+    );
+
+    isLoading.value = false;
+    Get.snackbar(
+      'تم الإرسال',
+      'تم إرسال رابط إعادة تعيين كلمة المرور للمستخدم',
+    );
+  }
 }
