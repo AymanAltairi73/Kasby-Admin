@@ -127,8 +127,6 @@ class AgentsScreen extends StatelessWidget {
                         .slideY(begin: -0.2),
               ),
 
-              const SizedBox(height: 16),
-
               // Agents List
               Expanded(
                 child: Obx(() {
@@ -288,7 +286,7 @@ class AgentsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              agent.country,
+                              '${agent.city} - ${agent.country}',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withValues(alpha: 0.7),
@@ -296,6 +294,32 @@ class AgentsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (agent.isAvailableNow) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: KasbyColors.success.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: KasbyColors.success.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: const Text(
+                              'متوفر الآن',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: KasbyColors.success,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -304,7 +328,6 @@ class AgentsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Divider(color: Colors.white10),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -324,6 +347,53 @@ class AgentsScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              const SizedBox(height: 12),
+              const Text(
+                'وسائل التواصل المتاحة:',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: KasbyColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: agent.supportedMethods.map((method) {
+                  IconData iconData;
+                  Color iconColor;
+                  switch (method) {
+                    case 'WhatsApp':
+                      iconData = FontAwesomeIcons.whatsapp;
+                      iconColor = const Color(0xFF25D366);
+                      break;
+                    case 'Telegram':
+                      iconData = FontAwesomeIcons.telegram;
+                      iconColor = const Color(0xFF24A1DE);
+                      break;
+                    case 'Call':
+                      iconData = Icons.phone_rounded;
+                      iconColor = KasbyColors.info;
+                      break;
+                    default:
+                      iconData = Icons.chat_rounded;
+                      iconColor = Colors.white;
+                  }
+                  return Container(
+                    margin: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: iconColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(iconData, size: 16, color: iconColor),
+                  );
+                }).toList(),
               ),
             ],
           ),
@@ -469,6 +539,7 @@ class AgentsScreen extends StatelessWidget {
   ) {
     final nameController = TextEditingController();
     final countryController = TextEditingController(text: 'العراق');
+    final cityController = TextEditingController();
     final phoneController = TextEditingController(text: '+964');
     final emailController = TextEditingController();
 
@@ -503,6 +574,12 @@ class AgentsScreen extends StatelessWidget {
                   controller: countryController,
                   hintText: 'البلد',
                   prefixIcon: Icons.location_on_rounded,
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: cityController,
+                  hintText: 'المدينة (مثل: بغداد، البصرة)',
+                  prefixIcon: Icons.location_city_rounded,
                 ),
                 const SizedBox(height: 16),
                 KasbyTextField(
@@ -543,11 +620,13 @@ class AgentsScreen extends StatelessWidget {
                           onPressed: () {
                             if (nameController.text.isNotEmpty &&
                                 countryController.text.isNotEmpty &&
+                                cityController.text.isNotEmpty &&
                                 phoneController.text.isNotEmpty &&
                                 emailController.text.isNotEmpty) {
                               controller.createAgent(
                                 name: nameController.text,
                                 country: countryController.text,
+                                city: cityController.text,
                                 phone: phoneController.text,
                                 email: emailController.text,
                               );

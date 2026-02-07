@@ -33,12 +33,12 @@ class InvestmentController extends GetxController {
 
   /// Create new plan
   Future<void> createPlan({
-    required String name,
     required String nameAr,
+    required String descriptionAr,
     required double profitPercentage,
-    required int durationDays,
     required double minAmount,
     required double maxAmount,
+    List<double>? availableAmounts,
   }) async {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));

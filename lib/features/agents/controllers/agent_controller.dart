@@ -66,6 +66,9 @@ class AgentController extends GetxController {
             agent.country.toLowerCase().contains(
               searchQuery.value.toLowerCase(),
             ) ||
+            agent.city.toLowerCase().contains(
+              searchQuery.value.toLowerCase(),
+            ) ||
             agent.email.toLowerCase().contains(searchQuery.value.toLowerCase());
       }).toList();
     }
@@ -84,8 +87,11 @@ class AgentController extends GetxController {
   Future<void> createAgent({
     required String name,
     required String country,
+    required String city,
     required String phone,
     required String email,
+    bool isAvailableNow = true,
+    List<String> supportedMethods = const ['WhatsApp', 'Telegram', 'Call'],
   }) async {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));

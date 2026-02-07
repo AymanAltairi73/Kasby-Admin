@@ -1,23 +1,23 @@
 /// Investment Plan Model
 class InvestmentPlan {
   final String id;
-  final String name;
   final String nameAr;
   final double profitPercentage;
-  final int durationDays;
   final double minAmount;
   final double maxAmount;
+  final List<double>? availableAmounts;
+  final String descriptionAr;
   final bool isActive;
   final DateTime createdAt;
 
   InvestmentPlan({
     required this.id,
-    required this.name,
     required this.nameAr,
     required this.profitPercentage,
-    required this.durationDays,
     required this.minAmount,
     required this.maxAmount,
+    this.availableAmounts,
+    required this.descriptionAr,
     required this.isActive,
     required this.createdAt,
   });
@@ -25,26 +25,38 @@ class InvestmentPlan {
   static List<InvestmentPlan> getMockPlans() {
     return [
       InvestmentPlan(
-        id: '2',
-        name: 'Silver Plan',
-        nameAr: 'الخطة الفضية',
-        profitPercentage: 8.5,
-        durationDays: 60,
-        minAmount: 1000,
-        maxAmount: 5000,
+        id: '1',
+        nameAr: 'خطة استثمار الفضة',
+        profitPercentage: 6.0,
+        minAmount: 100,
+        maxAmount: 500,
+        availableAmounts: [100, 200, 300, 400, 500],
+        descriptionAr: 'خطة استثمار متوسطة تهدف إلى نمو رأس المال بشكل مستقر.',
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 60)),
       ),
       InvestmentPlan(
-        id: '3',
-        name: 'Gold Plan',
-        nameAr: 'الخطة الذهبية',
-        profitPercentage: 12.0,
-        durationDays: 90,
-        minAmount: 5000,
-        maxAmount: 20000,
+        id: '2',
+        nameAr: 'خطة استثمار الذهب',
+        profitPercentage: 8.0,
+        minAmount: 500,
+        maxAmount: 2500,
+        availableAmounts: [500, 1000, 1500, 2000, 2500],
+        descriptionAr:
+            'استثمار آمن في أصول الذهب مع حماية وتشفير عالي للبيانات.',
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
+      ),
+      InvestmentPlan(
+        id: '3',
+        nameAr: 'خطة استثمار العقارات',
+        profitPercentage: 10.0,
+        minAmount: 2000,
+        maxAmount: 10000,
+        descriptionAr:
+            'أعلى العوائد من خلال الاستثمار في الأصول العقارية الموثوقة.',
+        isActive: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 15)),
       ),
     ];
   }

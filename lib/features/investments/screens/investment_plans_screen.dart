@@ -187,13 +187,6 @@ class InvestmentPlansScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    plan.name,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: KasbyColors.textSecondary,
-                    ),
-                  ),
                 ],
               ),
               Container(
@@ -253,28 +246,65 @@ class InvestmentPlansScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Text(
+            plan.descriptionAr,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.6),
+              height: 1.5,
+            ),
+          ),
+          if (plan.availableAmounts != null &&
+              plan.availableAmounts!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'المبالغ المتاحة للاستثمار:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.primaryGold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: plan.availableAmounts!.map((amount) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    '\$${amount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
           const SizedBox(height: 24),
 
           // Metrics Grid
-          Row(
-            children: [
-              Expanded(
-                child: _buildDazzlingMetric(
-                  icon: FontAwesomeIcons.bolt,
-                  label: 'نسبة الربح',
-                  value: '${plan.profitPercentage}%',
-                  color: tierColor,
-                ),
-              ),
-              Expanded(
-                child: _buildDazzlingMetric(
-                  icon: FontAwesomeIcons.hourglassHalf,
-                  label: 'مدة الاستثمار',
-                  value: '${plan.durationDays} يوم',
-                  color: KasbyColors.info,
-                ),
-              ),
-            ],
+          Center(
+            child: _buildDazzlingMetric(
+              icon: FontAwesomeIcons.bolt,
+              label: 'نسبة الربح المتوقعة',
+              value: '${plan.profitPercentage}%',
+              color: tierColor,
+            ),
           ),
           const SizedBox(height: 20),
           Row(
@@ -402,12 +432,12 @@ class InvestmentPlansScreen extends StatelessWidget {
     BuildContext context,
     InvestmentController controller,
   ) {
-    final nameController = TextEditingController();
     final nameArController = TextEditingController();
+    final descriptionController = TextEditingController();
     final profitController = TextEditingController();
-    final durationController = TextEditingController();
     final minAmountController = TextEditingController();
     final maxAmountController = TextEditingController();
+    final amountsController = TextEditingController();
 
     Get.dialog(
       AlertDialog(
@@ -422,13 +452,7 @@ class InvestmentPlansScreen extends StatelessWidget {
             children: [
               KasbyTextField(
                 controller: nameArController,
-                hintText: 'الاسم بالعربية',
-                prefixIcon: Icons.title,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: nameController,
-                hintText: 'الاسم بالإنجليزية',
+                hintText: 'اسم خطة الاستثمار',
                 prefixIcon: Icons.title,
               ),
               const SizedBox(height: 12),
@@ -439,12 +463,12 @@ class InvestmentPlansScreen extends StatelessWidget {
                 prefixIcon: Icons.percent,
               ),
               const SizedBox(height: 12),
-              KasbyTextField(
-                controller: durationController,
-                hintText: 'المدة (أيام)',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.calendar_today,
-              ),
+              // KasbyTextField(
+              //   controller: durationController,
+              //   hintText: 'المدة (أيام)',
+              //   keyboardType: TextInputType.number,
+              //   prefixIcon: Icons.calendar_today,
+              // ),
               const SizedBox(height: 12),
               KasbyTextField(
                 controller: minAmountController,
@@ -472,13 +496,27 @@ class InvestmentPlansScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              // Parse amounts
+              List<double> availableAmounts = [];
+              if (amountsController.text.isNotEmpty) {
+                availableAmounts = amountsController.text
+                    .split(',')
+                    .map((e) => double.tryParse(e.trim()) ?? 0)
+                    .where((e) => e > 0)
+                    .toList();
+              }
+
               controller.createPlan(
-                name: nameController.text,
                 nameAr: nameArController.text,
+                descriptionAr: descriptionController.text.isNotEmpty
+                    ? descriptionController.text
+                    : 'وصف الخطة المقترحة للاستثمار...',
                 profitPercentage: double.tryParse(profitController.text) ?? 0,
-                durationDays: int.tryParse(durationController.text) ?? 0,
                 minAmount: double.tryParse(minAmountController.text) ?? 0,
                 maxAmount: double.tryParse(maxAmountController.text) ?? 0,
+                availableAmounts: availableAmounts.isNotEmpty
+                    ? availableAmounts
+                    : null,
               );
               Get.back();
             },
@@ -497,19 +535,21 @@ class InvestmentPlansScreen extends StatelessWidget {
     InvestmentController controller,
     InvestmentPlan plan,
   ) {
-    final nameController = TextEditingController(text: plan.name);
     final nameArController = TextEditingController(text: plan.nameAr);
+    final descriptionController = TextEditingController(
+      text: plan.descriptionAr,
+    );
     final profitController = TextEditingController(
       text: plan.profitPercentage.toString(),
-    );
-    final durationController = TextEditingController(
-      text: plan.durationDays.toString(),
     );
     final minAmountController = TextEditingController(
       text: plan.minAmount.toString(),
     );
     final maxAmountController = TextEditingController(
       text: plan.maxAmount.toString(),
+    );
+    final amountsController = TextEditingController(
+      text: plan.availableAmounts?.join(', ') ?? '',
     );
 
     Get.dialog(
@@ -530,9 +570,10 @@ class InvestmentPlansScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               KasbyTextField(
-                controller: nameController,
-                hintText: 'الاسم بالإنجليزية',
-                prefixIcon: Icons.title,
+                controller: descriptionController,
+                hintText: 'وصف الخطة (بالعربية)',
+                prefixIcon: Icons.description,
+                maxLines: 3,
               ),
               const SizedBox(height: 12),
               KasbyTextField(
@@ -543,24 +584,23 @@ class InvestmentPlansScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               KasbyTextField(
-                controller: durationController,
-                hintText: 'المدة (أيام)',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.calendar_today,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
                 controller: minAmountController,
-                hintText: 'الحد الأدنى',
+                hintText: 'الحد الأدنى للاستثمار',
                 keyboardType: TextInputType.number,
                 prefixIcon: Icons.attach_money,
               ),
               const SizedBox(height: 12),
               KasbyTextField(
                 controller: maxAmountController,
-                hintText: 'الحد الأقصى',
+                hintText: 'الحد الأقصى للاستثمار',
                 keyboardType: TextInputType.number,
                 prefixIcon: Icons.attach_money,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: amountsController,
+                hintText: 'المبالغ المتاحة (مثل: 100, 200, 500)',
+                prefixIcon: Icons.list_alt,
               ),
             ],
           ),
@@ -575,13 +615,25 @@ class InvestmentPlansScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              // Parse amounts
+              List<double> availableAmounts = [];
+              if (amountsController.text.isNotEmpty) {
+                availableAmounts = amountsController.text
+                    .split(',')
+                    .map((e) => double.tryParse(e.trim()) ?? 0)
+                    .where((e) => e > 0)
+                    .toList();
+              }
+
               controller.updatePlan(plan.id, {
-                'name': nameController.text,
                 'nameAr': nameArController.text,
+                'descriptionAr': descriptionController.text,
                 'profitPercentage': double.tryParse(profitController.text) ?? 0,
-                'durationDays': int.tryParse(durationController.text) ?? 0,
                 'minAmount': double.tryParse(minAmountController.text) ?? 0,
                 'maxAmount': double.tryParse(maxAmountController.text) ?? 0,
+                'availableAmounts': availableAmounts.isNotEmpty
+                    ? availableAmounts
+                    : null,
               });
               Get.back();
             },
