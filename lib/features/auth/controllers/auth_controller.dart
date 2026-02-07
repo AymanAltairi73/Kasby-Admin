@@ -131,7 +131,7 @@ class AuthController extends GetxController {
 
       isLoggedIn.value = true;
       userRole.value = 'Admin';
-      userName.value = 'المدير العام'; // Mock name
+      userName.value = 'المدير'; // Mock name
       isLoading.value = false;
       return true;
     } else {

@@ -14,7 +14,7 @@ import '../../users/controllers/user_controller.dart';
 import '../../investments/controllers/investment_controller.dart';
 import '../../transactions/controllers/transaction_controller.dart';
 import '../models/audit_log_model.dart';
-import '../../notifications/screens/notifications_screen.dart';
+import '../../chat/controllers/chat_controller.dart';
 
 /// Dashboard Home Screen - Masterpiece Edition
 /// Main overview with celestial aesthetics and magical interactions
@@ -32,199 +32,132 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: _buildRoyalAppBar(authController),
-      body: Stack(
-        children: [
-          // Celestial Multi-Depth Background
-          RepaintBoundary(child: _buildCelestialBackground()),
+      backgroundColor: const Color(0xFF0E0E11), // Smooth dark background
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 100),
 
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 140),
+            // Magical Welcome Header
+            _buildMagicalHeader(authController),
 
-                // Magical Welcome Header
-                _buildMagicalHeader(authController),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Magical Statistics Grid
+                  _buildMagicalStatsGrid(
+                    userController,
+                    investmentController,
+                    transactionController,
+                  ),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  //const SizedBox(height: 6),
+
+                  // Nebula Chart Section
+                  const _SectionHeader(
+                    title: 'التحليلات المالية والتدفقات',
+                    subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 800)),
+                  const SizedBox(height: 16),
+                  RepaintBoundary(
+                    child:
+                        KasbyGlassCard(
+                              padding: const EdgeInsets.all(16),
+                              opacity: 0.08,
+                              child: SizedBox(
+                                height: 180,
+                                child: _buildNebulaChart(),
+                              ),
+                            )
+                            .animate()
+                            .fadeIn(delay: const Duration(milliseconds: 600))
+                            .scale(begin: const Offset(0.95, 0.95)),
+                            
+                  ),
+
+               
+
+                  // Magical Command Hub
+                  const _SectionHeader(
+                    title: 'مركز القيادة والتحكم',
+                    subtitle: 'وصول فوري لكافة أركان المنظومة',
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 900)),
+                  _buildMagicalActionHub(),
+
+                  // Celestial Activity Feed
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Magical Statistics Grid
-                      _buildMagicalStatsGrid(
-                        userController,
-                        investmentController,
-                        transactionController,
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Nebula Chart Section
-                      const _SectionHeader(
-                        title: 'التحليلات المالية والتدفقات',
-                        subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 800),
-                      ),
-                      const SizedBox(height: 16),
-                      RepaintBoundary(
-                        child:
-                            KasbyGlassCard(
-                                  padding: const EdgeInsets.all(24),
-                                  opacity: 0.08,
-                                  child: SizedBox(
-                                    height: 220,
-                                    child: _buildNebulaChart(),
-                                  ),
-                                )
-                                .animate()
-                                .fadeIn(delay: 600.ms)
-                                .scale(begin: const Offset(0.95, 0.95)),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Floating Action Tiles
-                      const _SectionHeader(title: 'بوابات الوصول السريع'),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 150,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
+                      const _SectionHeader(title: 'آخر التحركات'),
+                      TextButton(
+                        onPressed: () => Get.toNamed('/audit-logs'),
+                        child: Row(
                           children: [
-                            _buildFloatingActionTile(
-                              'الإيداعات الاستثمارية',
-                              '23 طلب قيد المعالجة',
-                              FontAwesomeIcons.circleArrowDown,
-                              KasbyColors.success,
-                              () => Get.find<MainController>().changePage(2),
+                            Text(
+                              'مشاهدة السجل',
+                              style: TextStyle(
+                                color: KasbyColors.primaryGold.withValues(
+                                  alpha: 0.8,
+                                ),
+                                fontSize: 12,
+                              ),
                             ),
-                            _buildFloatingActionTile(
-                              'التسويات المالية (السحب)',
-                              '15 طلب قيد المعالجة',
-                              FontAwesomeIcons.circleArrowUp,
-                              KasbyColors.error,
-                              () => Get.find<MainController>().changePage(2),
-                            ),
-                            _buildFloatingActionTile(
-                              'خطط الاستثمار المعتمدة',
-                              'إدارة الخطط',
-                              FontAwesomeIcons.chartPie,
-                              KasbyColors.info,
-                              () => Get.toNamed('/investment-plans'),
-                            ),
-                            _buildFloatingActionTile(
-                              'استثماراتنا',
-                              'نشاط العملاء',
-                              FontAwesomeIcons.moneyBillTrendUp,
-                              KasbyColors.warning,
-                              () => Get.toNamed('/user-investments'),
-                            ),
-                            _buildFloatingActionTile(
-                              'المكافآت',
-                              'النقاط والهدايا',
-                              FontAwesomeIcons.gift,
-                              Colors.purpleAccent,
-                              () => Get.toNamed('/rewards'),
-                            ),
-                            _buildFloatingActionTile(
-                              'الوكلاء',
-                              'عرض الشبكة',
-                              FontAwesomeIcons.userTie,
-                              KasbyColors.glowOrange,
-                              () => Get.find<MainController>().changePage(1),
-                            ),
-                            _buildFloatingActionTile(
-                              'إرسال اشعار',
-                              'إشعار عام',
-                              FontAwesomeIcons.wandMagicSparkles,
-                              KasbyColors.primaryGold,
-                              () => Get.to(() => const NotificationsScreen()),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: KasbyColors.primaryGold.withValues(
+                                alpha: 0.8,
+                              ),
                             ),
                           ],
                         ),
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 1000),
                       ),
-
-                      const SizedBox(height: 32),
-
-                      // Celestial Activity Feed
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const _SectionHeader(title: 'آخر التحركات'),
-                          TextButton(
-                            onPressed: () => Get.toNamed('/audit-logs'),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'مشاهدة السجل',
-                                  style: TextStyle(
-                                    color: KasbyColors.primaryGold.withValues(
-                                      alpha: 0.8,
-                                    ),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 10,
-                                  color: KasbyColors.primaryGold.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 1100),
-                      ),
-                      const SizedBox(height: 12),
-                      Obx(() {
-                        if (auditController.isLoading.value &&
-                            auditController.logs.isEmpty) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: KasbyColors.primaryGold,
-                            ),
-                          );
-                        }
-                        return Column(
-                          children: auditController.logs
-                              .take(3)
-                              .toList()
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                                final int index = entry.key;
-                                final log = entry.value;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildCelestialLogItem(log, index),
-                                );
-                              })
-                              .toList(),
-                        );
-                      }),
-                      const SizedBox(height: 100), // Spacing for bottom nav bar
                     ],
-                  ),
-                ),
-              ],
+                  ).animate().fadeIn(delay: const Duration(milliseconds: 1100)),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    if (auditController.isLoading.value &&
+                        auditController.logs.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: KasbyColors.primaryGold,
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: auditController.logs
+                          .take(3)
+                          .toList()
+                          .asMap()
+                          .entries
+                          .map((entry) {
+                            final int index = entry.key;
+                            final log = entry.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCelestialLogItem(log, index),
+                            );
+                          })
+                          .toList(),
+                    );
+                  }),
+                  const SizedBox(height: 100), // Spacing for bottom nav bar
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   PreferredSizeWidget _buildRoyalAppBar(AuthController authController) {
+    final chatController = Get.find<ChatController>();
     return PreferredSize(
       preferredSize: const Size.fromHeight(80),
       child: ClipRRect(
@@ -236,7 +169,7 @@ class DashboardScreen extends StatelessWidget {
             centerTitle: true,
             title:
                 const Text(
-                      'منظومة كاسبي الإدارية',
+                      'لوحة تحكم',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -287,6 +220,52 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 onPressed: () => Get.toNamed('/notifications'),
               ),
+              // Magical Chat Trigger
+              Obx(
+                () => Stack(
+                  children: [
+                    IconButton(
+                          icon: const Icon(
+                            FontAwesomeIcons.commentDots,
+                            color: KasbyColors.primaryGold,
+                            size: 20,
+                          ),
+                          onPressed: () => Get.toNamed('/chat-list'),
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(1, 1),
+                          end: const Offset(1.1, 1.1),
+                          duration: const Duration(seconds: 2),
+                        ),
+                    if (chatController.unreadTotal.value > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: KasbyColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${chatController.unreadTotal.value}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ).animate().scale().shake(),
+                      ),
+                  ],
+                ),
+              ),
               IconButton(
                 icon: const Icon(
                   Icons.power_settings_new_rounded,
@@ -305,46 +284,32 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildMagicalHeader(AuthController authController) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Obx(
-            () => RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'مرحباً، ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontWeight: FontWeight.w300,
-                    ),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'مرحباً، ',
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w300,
                   ),
-                  TextSpan(
-                    text: authController.userName.value.isNotEmpty
-                        ? authController.userName.value
-                        : 'المدير',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: KasbyColors.primaryGold,
-                    ),
+                ),
+                TextSpan(
+                  text: 'أيمن',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: KasbyColors.primaryGold,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ).animate().fadeIn().slideX(begin: -0.2),
-          const SizedBox(height: 6),
-          Text(
-            'الحالة العامة للنظام تحت سيطرتك الآن.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withValues(alpha: 0.4),
-              fontStyle: FontStyle.italic,
-            ),
-          ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
-          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -398,9 +363,9 @@ class DashboardScreen extends StatelessWidget {
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 1.1,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.45,
         children: [
           _buildMagicalStatCard(
             title: 'إجمالي المستخدمين',
@@ -446,81 +411,205 @@ class DashboardScreen extends StatelessWidget {
     required Color glowColor,
     required int index,
   }) {
-    return KasbyGlassCard(
-          padding: const EdgeInsets.all(16),
-          opacity: 0.05,
-          child: Stack(
-            children: [
-              Positioned(
-                right: -15,
-                bottom: -15,
-                child: Icon(
-                  icon,
-                  size: 80,
-                  color: glowColor.withValues(alpha: 0.05),
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                        width: 45,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: glowColor.withValues(alpha: 0.1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: glowColor.withValues(alpha: 0.2),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Icon(icon, color: glowColor, size: 20),
-                        ),
-                      )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
-                      .scale(
-                        begin: const Offset(0.9, 0.9),
-                        end: const Offset(1.1, 1.1),
-                        duration: const Duration(seconds: 2),
-                      )
-                      .shimmer(color: Colors.white24),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
+    return _AnimatedGlowingBorder(
+          baseColor: glowColor,
+          borderRadius: 24,
+          child: KasbyGlassCard(
+            padding: const EdgeInsets.all(12),
+            opacity: 0.08,
+            child: Stack(
+              children: [
+                // Inner Glow
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: RadialGradient(
+                        colors: [
+                          glowColor.withValues(alpha: 0.1),
+                          Colors.transparent,
+                        ],
+                        center: Alignment.topLeft,
+                        radius: 1.2,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                Positioned(
+                  right: -10,
+                  bottom: -10,
+                  child: Icon(
+                    icon,
+                    size: 70,
+                    color: glowColor.withValues(alpha: 0.03),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildGlowingIcon(
+                          icon: icon,
+                          color: glowColor,
+                          size: 18,
+                        ),
+                        Icon(
+                          Icons.trending_up_rounded,
+                          size: 14,
+                          color: glowColor.withValues(alpha: 0.5),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -1,
+                          ),
+                        ).animate().shimmer(
+                          duration: const Duration(seconds: 3),
+                          color: Colors.white24,
+                        ),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         )
         .animate(delay: Duration(milliseconds: 100 * index))
-        .fadeIn(duration: const Duration(milliseconds: 600))
-        .scale(begin: const Offset(0.9, 0.9));
+        .fadeIn(duration: const Duration(milliseconds: 800))
+        .slideY(begin: 0.2, curve: Curves.easeOutBack);
+  }
+
+  Widget _buildMagicalActionHub() {
+    final actions = [
+      {
+        'title': 'إدارة المستخدمين',
+        'icon': FontAwesomeIcons.usersGear,
+        'color': KasbyColors.primaryGold,
+        'route': '/users',
+        'sub': 'تحكم كامل',
+      },
+      {
+        'title': 'طلبات السحب',
+        'icon': FontAwesomeIcons.moneyBillTransfer,
+        'color': KasbyColors.error,
+        'page': 2,
+        'sub': '15 طلب معلق',
+      },
+      {
+        'title': 'خطط الاستثمار',
+        'icon': FontAwesomeIcons.chartPie,
+        'color': KasbyColors.info,
+        'route': '/investment-plans',
+        'sub': 'إدارة المحافظ',
+      },
+      {
+        'title': 'شبكة الوكلاء',
+        'icon': FontAwesomeIcons.networkWired,
+        'color': KasbyColors.glowOrange,
+        'page': 1,
+        'sub': 'نظام التوزيع',
+      },
+      {
+        'title': 'إعدادات النظام',
+        'icon': FontAwesomeIcons.gears,
+        'color': Colors.purpleAccent,
+        'route': '/settings',
+        'sub': 'خيارات الطوارئ',
+      },
+      {
+        'title': 'مركز الإشعارات',
+        'icon': FontAwesomeIcons.bullhorn,
+        'color': KasbyColors.warning,
+        'route': '/notifications',
+        'sub': 'تواصل ذكي',
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1.05,
+      ),
+      itemCount: actions.length,
+      itemBuilder: (context, index) {
+        final action = actions[index];
+        final color = action['color'] as Color;
+        return _AnimatedGlowingBorder(
+              baseColor: color,
+              borderRadius: 20,
+              child: KasbyGlassCard(
+                onTap: () {
+                  if (action.containsKey('page')) {
+                    Get.find<MainController>().changePage(
+                      action['page'] as int,
+                    );
+                  } else if (action.containsKey('route')) {
+                    Get.toNamed(action['route'] as String);
+                  }
+                },
+                padding: const EdgeInsets.all(8),
+                opacity: 0.08,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildGlowingIcon(
+                      icon: action['icon'] as IconData,
+                      color: color,
+                      size: 20,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      action['title'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      action['sub'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .animate(delay: Duration(milliseconds: 200 + index * 50))
+            .fadeIn()
+            .scale(begin: const Offset(0.8, 0.8));
+      },
+    );
   }
 
   Widget _buildNebulaChart() {
@@ -579,55 +668,6 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionTile(
-    String title,
-    String sub,
-    IconData icon,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: KasbyGlassCard(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        opacity: 0.1,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: color.withValues(alpha: 0.2)),
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .moveY(begin: -2, end: 2, duration: const Duration(seconds: 2)),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              sub,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -726,168 +766,228 @@ class DashboardScreen extends StatelessWidget {
 
   void _showLogoutDialog(AuthController authController) {
     Get.dialog(
-      BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.transparent,
-          contentPadding: EdgeInsets.zero,
-          content: KasbyGlassCard(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: KasbyColors.error.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.logout_rounded,
-                    color: KasbyColors.error,
-                    size: 40,
-                  ),
+      Center(
+        child: KasbyGlassCard(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.all(24),
+          opacity: 0.1,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: KasbyColors.error.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'خروج من النظام؟',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                child: const Icon(
+                  Icons.logout_rounded,
+                  color: KasbyColors.error,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'تسجيل الخروج',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        'تحليق بالبقاء',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: KasbyColors.error.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: KasbyColors.error.withValues(alpha: 0.3),
+                        ),
+                      ),
                       child: TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text(
-                          'تحليق بالبقاء',
+                        onPressed: () {
+                          Get.back();
+                          authController.logout();
+                        },
+                        child: const Text(
+                          'تأكيد الخروج',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: KasbyColors.error,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: KasbyColors.error.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: KasbyColors.error.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: TextButton(
-                          onPressed: () {
-                            Get.back();
-                            authController.logout();
-                          },
-                          child: const Text(
-                            'تأكيد الخروج',
-                            style: TextStyle(
-                              color: KasbyColors.error,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCelestialBackground() {
-    return Stack(
-      children: [
-        // Deep Space Base
-        Container(color: const Color(0xFF0F172A)),
+  // --- NEW MASTERPIECE WIDGETS ---
 
-        // Distant Nebula Orbs (Depth 1)
-        _buildOrb(
-          top: -150,
-          right: -100,
-          size: 500,
-          color: KasbyColors.primaryGold.withValues(alpha: 0.04),
-          duration: const Duration(seconds: 15),
-        ),
-
-        // Dynamic Glow Orbs (Depth 2)
-        _buildOrb(
-          bottom: 100,
-          left: -50,
-          size: 350,
-          color: KasbyColors.info.withValues(alpha: 0.03),
-          duration: const Duration(seconds: 12),
-        ),
-
-        // Near Field Particles (Depth 3)
-        _buildOrb(
-          top: 300,
-          right: 50,
-          size: 150,
-          color: KasbyColors.success.withValues(alpha: 0.02),
-          duration: const Duration(seconds: 8),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrb({
-    double? top,
-    double? bottom,
-    double? left,
-    double? right,
-    required double size,
+  Widget _buildGlowingIcon({
+    required IconData icon,
     required Color color,
-    required Duration duration,
+    double size = 20,
+    bool animate = true,
   }) {
-    return Positioned(
-      top: top,
-      bottom: bottom,
-      left: left,
-      right: right,
-      child: RepaintBoundary(
-        child:
-            Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color,
-                        blurRadius: 100,
-                        spreadRadius: 50,
-                      ),
-                    ],
-                  ),
-                )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .moveY(begin: -30, end: 30, duration: duration)
-                .moveX(
-                  begin: -20,
-                  end: 20,
-                  duration: duration + const Duration(seconds: 2),
-                ),
-      ),
+    return Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.3),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+              BoxShadow(
+                color: color.withValues(alpha: 0.1),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Icon(icon, color: color, size: size),
+        )
+        .animate(target: animate ? 1 : 0)
+        .shimmer(duration: const Duration(seconds: 3), color: Colors.white24);
+  }
+}
+
+class _AnimatedGlowingBorder extends StatefulWidget {
+  final Widget child;
+  final double borderRadius;
+  final Color baseColor;
+
+  const _AnimatedGlowingBorder({
+    required this.child,
+    this.borderRadius = 24,
+    required this.baseColor,
+  });
+
+  @override
+  State<_AnimatedGlowingBorder> createState() => _AnimatedGlowingBorderState();
+}
+
+class _AnimatedGlowingBorderState extends State<_AnimatedGlowingBorder>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            border: Border.all(color: Colors.transparent),
+          ),
+          child: CustomPaint(
+            painter: _GlowingBorderPainter(
+              progress: _controller.value,
+              color: widget.baseColor,
+              borderRadius: widget.borderRadius,
+            ),
+            child: widget.child,
+          ),
+        );
+      },
     );
   }
+}
+
+class _GlowingBorderPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final double borderRadius;
+
+  _GlowingBorderPainter({
+    required this.progress,
+    required this.color,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final RRect rrect = RRect.fromRectAndRadius(
+      rect,
+      Radius.circular(borderRadius),
+    );
+
+    final paint = Paint()
+      ..shader = ui.Gradient.sweep(
+        rect.center,
+        [
+          color.withValues(alpha: 0.0),
+          color.withValues(alpha: 0.8),
+          color.withValues(alpha: 0.0),
+        ],
+        [0.0, 0.5, 1.0],
+        TileMode.clamp,
+        progress * 2 * 3.14159,
+        (progress * 2 * 3.14159) + 3.14159,
+      )
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawRRect(rrect, paint);
+
+    // Optional: Outer blur for the border
+    final blurPaint = Paint()
+      ..shader = paint.shader
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+
+    canvas.drawRRect(rrect, blurPaint);
+  }
+
+  @override
+  bool shouldRepaint(_GlowingBorderPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class _SectionHeader extends StatelessWidget {

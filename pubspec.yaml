@@ -50,6 +50,7 @@ dependencies:
   intl: ^0.19.0
   shared_preferences: ^2.2.3
   local_auth: ^3.0.0
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +88,8 @@ flutter:
   # Assets
   assets:
     - assets/images/logo.png
+    - assets/sounds/message_sent.mp3
+    - assets/sounds/notification.mp3
 
   # Fonts - IBM Plex Sans Arabic from local assets
   fonts:

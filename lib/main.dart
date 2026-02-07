@@ -29,6 +29,10 @@ import 'features/investments/controllers/investment_controller.dart';
 import 'features/agents/controllers/agent_controller.dart';
 import 'features/dashboard/controllers/main_controller.dart';
 import 'features/dashboard/controllers/audit_controller.dart';
+import 'features/chat/controllers/chat_controller.dart';
+import 'features/chat/screens/chat_list_screen.dart';
+import 'features/chat/screens/chat_details_screen.dart';
+import 'core/services/audio_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +51,8 @@ Future<void> main() async {
   Get.put(AgentController());
   Get.put(MainController());
   Get.put(AuditController());
+  Get.put(AudioService());
+  Get.put(ChatController());
 
   runApp(const KasbyAdminApp());
 }
@@ -101,6 +107,8 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(name: '/terms', page: () => const TermsScreen()),
         GetPage(name: '/faq', page: () => const FaqScreen()),
         GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),
+        GetPage(name: '/chat-list', page: () => const ChatListScreen()),
+        GetPage(name: '/chat-details', page: () => const ChatDetailsScreen()),
       ],
 
       // Check if user is already logged in
