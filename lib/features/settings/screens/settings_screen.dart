@@ -49,6 +49,13 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة شبكة الموزعين والامتثال',
               onTap: () => Get.toNamed('/agents'),
             ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.handHoldingDollar,
+              title: 'سلفات كاسبي',
+              subtitle: 'إدارة السلف والقروض',
+              onTap: () => Get.toNamed('/loans'),
+            ),
             const SizedBox(height: 24),
 
             // Notifications Section

@@ -26,6 +26,152 @@ class UserListScreen extends StatelessWidget {
         elevation: 0,
         title: const Text('إدارة المستخدمين'),
         actions: [
+          // Search Icon
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () => _showSearchDialog(context, userController),
+          ),
+          // Time Filter Dropdown
+          PopupMenuButton<TimeFilter>(
+            icon: const Icon(Icons.filter_list_rounded),
+            tooltip: 'تصفية حسب الوقت',
+            onSelected: (TimeFilter filter) {
+              userController.selectedTimeFilter.value = filter;
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: TimeFilter.all,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive,
+                      size: 18,
+                      color:
+                          userController.selectedTimeFilter.value ==
+                              TimeFilter.all
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('الكل'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.daily,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.today,
+                      size: 18,
+                      color:
+                          userController.selectedTimeFilter.value ==
+                              TimeFilter.daily
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('اليوم'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.weekly,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.date_range,
+                      size: 18,
+                      color:
+                          userController.selectedTimeFilter.value ==
+                              TimeFilter.weekly
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('هذا الأسبوع'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.monthly,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_month,
+                      size: 18,
+                      color:
+                          userController.selectedTimeFilter.value ==
+                              TimeFilter.monthly
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('هذا الشهر'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Status Filter Dropdown
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.people_outline_rounded),
+            tooltip: 'تصفية حسب الحالة',
+            onSelected: (String status) {
+              userController.filterByStatus(status);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'All',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive,
+                      size: 18,
+                      color: userController.selectedStatus.value == 'All'
+                          ? KasbyColors.info
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('جميع الحالات'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Active',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: userController.selectedStatus.value == 'Active'
+                          ? KasbyColors.success
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('النشطين'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Blocked',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.block,
+                      size: 18,
+                      color: userController.selectedStatus.value == 'Blocked'
+                          ? KasbyColors.error
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('المحظورين'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_outlined),
             onPressed: () => _showAddUserDialog(context, userController),
@@ -67,15 +213,15 @@ class UserListScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'دليل المعاملات والمستخدمين',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ).animate().fadeIn().slideX(begin: -0.2),
-                    const SizedBox(height: 8),
+                    // const Text(
+                    //   'دليل المعاملات والمستخدمين',
+                    //   style: TextStyle(
+                    //     fontSize: 28,
+                    //     fontWeight: FontWeight.w900,
+                    //     letterSpacing: -0.5,
+                    //   ),
+                    // ).animate().fadeIn().slideX(begin: -0.2),
+                    // const SizedBox(height: 8),
                     Obx(
                       () => Text(
                         'إجمالي المسجلين: ${userController.filteredUsers.length} مستخدم',
@@ -91,141 +237,7 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
 
-              // Floating Glass Search and Filter Section
-              Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: KasbyGlassCard(
-                      padding: const EdgeInsets.all(12),
-                      opacity: 0.08,
-                      child: Column(
-                        children: [
-                          // Search Field
-                          KasbyTextField(
-                            hintText: 'بحث بالاسم، البريد، أو الهاتف...',
-                            prefixIcon: Icons.search_rounded,
-                            onChanged: (value) =>
-                                userController.searchUsers(value),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Time Filter
-                          Obx(
-                            () => SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  _buildDazzlingFilterChip(
-                                    label: 'الكل',
-                                    isSelected:
-                                        userController
-                                            .selectedTimeFilter
-                                            .value ==
-                                        TimeFilter.all,
-                                    onTap: () =>
-                                        userController
-                                                .selectedTimeFilter
-                                                .value =
-                                            TimeFilter.all,
-                                    color: KasbyColors.primaryGold,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _buildDazzlingFilterChip(
-                                    label: 'اليوم',
-                                    isSelected:
-                                        userController
-                                            .selectedTimeFilter
-                                            .value ==
-                                        TimeFilter.daily,
-                                    onTap: () =>
-                                        userController
-                                                .selectedTimeFilter
-                                                .value =
-                                            TimeFilter.daily,
-                                    color: KasbyColors.primaryGold,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _buildDazzlingFilterChip(
-                                    label: 'هذا الأسبوع',
-                                    isSelected:
-                                        userController
-                                            .selectedTimeFilter
-                                            .value ==
-                                        TimeFilter.weekly,
-                                    onTap: () =>
-                                        userController
-                                                .selectedTimeFilter
-                                                .value =
-                                            TimeFilter.weekly,
-                                    color: KasbyColors.primaryGold,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _buildDazzlingFilterChip(
-                                    label: 'هذا الشهر',
-                                    isSelected:
-                                        userController
-                                            .selectedTimeFilter
-                                            .value ==
-                                        TimeFilter.monthly,
-                                    onTap: () =>
-                                        userController
-                                                .selectedTimeFilter
-                                                .value =
-                                            TimeFilter.monthly,
-                                    color: KasbyColors.primaryGold,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Status Filter
-                          Obx(
-                            () => SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  _buildDazzlingFilterChip(
-                                    label: 'جميع الحالات',
-                                    isSelected:
-                                        userController.selectedStatus.value ==
-                                        'All',
-                                    onTap: () =>
-                                        userController.filterByStatus('All'),
-                                    color: KasbyColors.info,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _buildDazzlingFilterChip(
-                                    label: 'النشطين',
-                                    isSelected:
-                                        userController.selectedStatus.value ==
-                                        'Active',
-                                    onTap: () =>
-                                        userController.filterByStatus('Active'),
-                                    color: KasbyColors.success,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  _buildDazzlingFilterChip(
-                                    label: 'المحظورين',
-                                    isSelected:
-                                        userController.selectedStatus.value ==
-                                        'Blocked',
-                                    onTap: () => userController.filterByStatus(
-                                      'Blocked',
-                                    ),
-                                    color: KasbyColors.error,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(delay: const Duration(milliseconds: 400))
-                  .slideY(begin: 0.2),
+              // Removed - Filters now in AppBar
 
               // User List
               Expanded(
@@ -285,43 +297,28 @@ class UserListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDazzlingFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
-          border: Border.all(
-            color: isSelected
-                ? color
-                : KasbyColors.textSecondary.withValues(alpha: 0.3),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
+  // Search Dialog
+  static void _showSearchDialog(
+    BuildContext context,
+    UserController controller,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('بحث عن مستخدم'),
+        content: KasbyTextField(
+          hintText: 'بحث بالاسم، البريد، أو الهاتف...',
+          prefixIcon: Icons.search_rounded,
+          onChanged: (value) => controller.searchUsers(value),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? color : KasbyColors.textSecondary,
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.normal,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
           ),
-        ),
+        ],
       ),
     );
   }

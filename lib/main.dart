@@ -33,6 +33,8 @@ import 'features/chat/controllers/chat_controller.dart';
 import 'features/chat/screens/chat_list_screen.dart';
 import 'features/chat/screens/chat_details_screen.dart';
 import 'core/services/audio_service.dart';
+import 'features/loans/controllers/loan_controller.dart';
+import 'features/loans/screens/loans_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +51,7 @@ Future<void> main() async {
   Get.put(TransactionController());
   Get.put(InvestmentController());
   Get.put(AgentController());
+  Get.put(LoanController());
   Get.put(MainController());
   Get.put(AuditController());
   Get.put(AudioService());
@@ -96,6 +99,7 @@ class KasbyAdminApp extends StatelessWidget {
         ),
         GetPage(name: '/transactions', page: () => const TransactionsScreen()),
         GetPage(name: '/agents', page: () => const AgentsScreen()),
+        GetPage(name: '/loans', page: () => const LoansScreen()),
         GetPage(
           name: '/notifications',
           page: () => const NotificationsScreen(),

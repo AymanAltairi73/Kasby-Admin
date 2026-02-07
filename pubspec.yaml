@@ -70,9 +70,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/logoo.png"
   adaptive_icon_background: "#0E0E11"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground: "assets/images/logoo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -87,7 +87,7 @@ flutter:
 
   # Assets
   assets:
-    - assets/images/logo.png
+    - assets/images/logoo.png
     - assets/sounds/message_sent.mp3
     - assets/sounds/notification.mp3
 

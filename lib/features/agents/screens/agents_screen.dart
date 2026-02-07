@@ -27,6 +27,151 @@ class AgentsScreen extends StatelessWidget {
         elevation: 0,
         title: const Text('إدارة الوكلاء'),
         actions: [
+          // Search Icon
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () => _showSearchDialog(context, controller),
+          ),
+          // Time Filter Dropdown
+          PopupMenuButton<TimeFilter>(
+            icon: const Icon(Icons.filter_list_rounded),
+            tooltip: 'تصفية حسب الوقت',
+            onSelected: (TimeFilter filter) {
+              controller.selectedTimeFilter.value = filter;
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: TimeFilter.all,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive,
+                      size: 18,
+                      color:
+                          controller.selectedTimeFilter.value == TimeFilter.all
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('الكل'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.daily,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.today,
+                      size: 18,
+                      color:
+                          controller.selectedTimeFilter.value ==
+                              TimeFilter.daily
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('اليوم'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.weekly,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.date_range,
+                      size: 18,
+                      color:
+                          controller.selectedTimeFilter.value ==
+                              TimeFilter.weekly
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('الأسبوع'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: TimeFilter.monthly,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_month,
+                      size: 18,
+                      color:
+                          controller.selectedTimeFilter.value ==
+                              TimeFilter.monthly
+                          ? KasbyColors.primaryGold
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('الشهر'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Status Filter Dropdown
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.people_outline_rounded),
+            tooltip: 'تصفية حسب الحالة',
+            onSelected: (String status) {
+              controller.filterByStatus(status);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'All',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.all_inclusive,
+                      size: 18,
+                      color: controller.selectedStatus.value == 'All'
+                          ? KasbyColors.info
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('الكل'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Active',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
+                      color: controller.selectedStatus.value == 'Active'
+                          ? KasbyColors.success
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('نشط'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Inactive',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.block,
+                      size: 18,
+                      color: controller.selectedStatus.value == 'Inactive'
+                          ? KasbyColors.error
+                          : Colors.white60,
+                    ),
+                    const SizedBox(width: 8),
+                    Text('معطل'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded),
             onPressed: () => _showCreateAgentDialog(context, controller),
@@ -42,90 +187,7 @@ class AgentsScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 100),
 
-              // Search and Filter Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child:
-                    KasbyGlassCard(
-                          padding: const EdgeInsets.all(16),
-                          opacity: 0.08,
-                          child: Column(
-                            children: [
-                              KasbyTextField(
-                                hintText: 'بحث باسم المنطقة أو الوكيل...',
-                                prefixIcon: Icons.search_rounded,
-                                onChanged: (value) =>
-                                    controller.searchAgents(value),
-                              ),
-                              const SizedBox(height: 12),
-                              // Time Filter
-                              Obx(() {
-                                return SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      _buildTimeFilterChip(
-                                        'الكل',
-                                        TimeFilter.all,
-                                        controller,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildTimeFilterChip(
-                                        'اليوم',
-                                        TimeFilter.daily,
-                                        controller,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildTimeFilterChip(
-                                        'الأسبوع',
-                                        TimeFilter.weekly,
-                                        controller,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildTimeFilterChip(
-                                        'الشهر',
-                                        TimeFilter.monthly,
-                                        controller,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              const SizedBox(height: 12),
-                              // Status Filter
-                              Obx(() {
-                                return SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      _buildFilterChip(
-                                        'الكل',
-                                        'All',
-                                        controller,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildFilterChip(
-                                        'نشط',
-                                        'Active',
-                                        controller,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _buildFilterChip(
-                                        'معطل',
-                                        'Inactive',
-                                        controller,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(duration: const Duration(milliseconds: 600))
-                        .slideY(begin: -0.2),
-              ),
+              // Removed - Filters now in AppBar
 
               // Agents List
               Expanded(
@@ -184,44 +246,28 @@ class AgentsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterChip(
-    String label,
-    String value,
+  // Search Dialog
+  static void _showSearchDialog(
+    BuildContext context,
     AgentController controller,
   ) {
-    final isSelected = controller.selectedStatus.value == value;
-    return GestureDetector(
-      onTap: () => controller.filterByStatus(value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: isSelected ? KasbyColors.primaryGradient : null,
-          color: isSelected ? null : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: isSelected
-                ? KasbyColors.primaryGold.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.1),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('بحث عن وكيل'),
+        content: KasbyTextField(
+          hintText: 'بحث باسم المنطقة أو الوكيل...',
+          prefixIcon: Icons.search_rounded,
+          onChanged: (value) => controller.searchAgents(value),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.black : KasbyColors.textSecondary,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -403,42 +449,6 @@ class AgentsScreen extends StatelessWidget {
         .slideY(begin: 0.2);
   }
 
-  Widget _buildTimeFilterChip(
-    String label,
-    TimeFilter filter,
-    AgentController controller,
-  ) {
-    final isSelected = controller.selectedTimeFilter.value == filter;
-    return GestureDetector(
-      onTap: () => controller.selectedTimeFilter.value = filter,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? KasbyColors.primaryGold.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? KasbyColors.primaryGold.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected
-                ? KasbyColors.primaryGold
-                : KasbyColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildStatusIndicator(String status) {
     final isActive = status == 'Active';
     return Container(
@@ -578,7 +588,7 @@ class AgentsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 KasbyTextField(
                   controller: cityController,
-                  hintText: 'المدينة (مثل: بغداد، البصرة)',
+                  hintText: 'المدينة',
                   prefixIcon: Icons.location_city_rounded,
                 ),
                 const SizedBox(height: 16),

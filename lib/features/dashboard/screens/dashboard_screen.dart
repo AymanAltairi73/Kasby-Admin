@@ -32,127 +32,210 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: _buildRoyalAppBar(authController),
-      backgroundColor: const Color(0xFF0E0E11), // Smooth dark background
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 100),
+      body: Stack(
+        children: [
+          // Professional Golden Transparent Background
+          _buildPremiumGoldenBackground(),
 
-            // Magical Welcome Header
-            _buildMagicalHeader(authController),
+          // Main Content
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 100),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Magical Statistics Grid
-                  _buildMagicalStatsGrid(
-                    userController,
-                    investmentController,
-                    transactionController,
-                  ),
+                // Magical Welcome Header
+                _buildMagicalHeader(authController),
 
-                  //const SizedBox(height: 6),
-
-                  // Nebula Chart Section
-                  const _SectionHeader(
-                    title: 'التحليلات المالية والتدفقات',
-                    subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 800)),
-                  const SizedBox(height: 16),
-                  RepaintBoundary(
-                    child:
-                        KasbyGlassCard(
-                              padding: const EdgeInsets.all(16),
-                              opacity: 0.08,
-                              child: SizedBox(
-                                height: 180,
-                                child: _buildNebulaChart(),
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(delay: const Duration(milliseconds: 600))
-                            .scale(begin: const Offset(0.95, 0.95)),
-                            
-                  ),
-
-               
-
-                  // Magical Command Hub
-                  const _SectionHeader(
-                    title: 'مركز القيادة والتحكم',
-                    subtitle: 'وصول فوري لكافة أركان المنظومة',
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 900)),
-                  _buildMagicalActionHub(),
-
-                  // Celestial Activity Feed
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _SectionHeader(title: 'آخر التحركات'),
-                      TextButton(
-                        onPressed: () => Get.toNamed('/audit-logs'),
-                        child: Row(
-                          children: [
-                            Text(
-                              'مشاهدة السجل',
-                              style: TextStyle(
-                                color: KasbyColors.primaryGold.withValues(
-                                  alpha: 0.8,
-                                ),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 10,
-                              color: KasbyColors.primaryGold.withValues(
-                                alpha: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
+                      // Magical Statistics Grid
+                      _buildMagicalStatsGrid(
+                        userController,
+                        investmentController,
+                        transactionController,
                       ),
+
+                      //const SizedBox(height: 6),
+
+                      // Nebula Chart Section
+                      const _SectionHeader(
+                        title: 'التحليلات المالية والتدفقات',
+                        subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 800),
+                      ),
+                      const SizedBox(height: 16),
+                      RepaintBoundary(
+                        child:
+                            KasbyGlassCard(
+                                  padding: const EdgeInsets.all(16),
+                                  opacity: 0.08,
+                                  child: SizedBox(
+                                    height: 180,
+                                    child: _buildNebulaChart(),
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(
+                                  delay: const Duration(milliseconds: 600),
+                                )
+                                .scale(begin: const Offset(0.95, 0.95)),
+                      ),
+
+                      SizedBox(height: 25),
+
+                      // Magical Command Hub
+                      const _SectionHeader(
+                        title: 'مركز القيادة والتحكم',
+                        subtitle: 'وصول فوري لكافة أركان المنظومة',
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 900),
+                      ),
+                      SizedBox(height: 25),
+                      _buildMagicalActionHub(),
+
+                      // Celestial Activity Feed
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const _SectionHeader(title: 'آخر التحركات'),
+                          TextButton(
+                            onPressed: () => Get.toNamed('/audit-logs'),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'مشاهدة السجل',
+                                  style: TextStyle(
+                                    color: KasbyColors.primaryGold.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 10,
+                                  color: KasbyColors.primaryGold.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ).animate().fadeIn(
+                        delay: const Duration(milliseconds: 1100),
+                      ),
+                      const SizedBox(height: 8),
+                      Obx(() {
+                        if (auditController.isLoading.value &&
+                            auditController.logs.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: KasbyColors.primaryGold,
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: auditController.logs
+                              .take(3)
+                              .toList()
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                final int index = entry.key;
+                                final log = entry.value;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCelestialLogItem(log, index),
+                                );
+                              })
+                              .toList(),
+                        );
+                      }),
+                      const SizedBox(height: 100), // Spacing for bottom nav bar
                     ],
-                  ).animate().fadeIn(delay: const Duration(milliseconds: 1100)),
-                  const SizedBox(height: 8),
-                  Obx(() {
-                    if (auditController.isLoading.value &&
-                        auditController.logs.isEmpty) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: KasbyColors.primaryGold,
-                        ),
-                      );
-                    }
-                    return Column(
-                      children: auditController.logs
-                          .take(3)
-                          .toList()
-                          .asMap()
-                          .entries
-                          .map((entry) {
-                            final int index = entry.key;
-                            final log = entry.value;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCelestialLogItem(log, index),
-                            );
-                          })
-                          .toList(),
-                    );
-                  }),
-                  const SizedBox(height: 100), // Spacing for bottom nav bar
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumGoldenBackground() {
+    return Stack(
+      children: [
+        // Base Deep Background
+        Container(
+          color: const Color(0xFF0F172A), // Slate 900
+        ),
+
+        // Subtle Ambient Glows - Top Right
+        Positioned(
+          top: -100,
+          right: -100,
+          child: Container(
+            width: 500,
+            height: 500,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  KasbyColors.primaryGold.withValues(alpha: 0.15),
+                  Colors.transparent,
                 ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
+
+        // Subtle Ambient Glows - Bottom Left
+        Positioned(
+          bottom: -100,
+          left: -100,
+          child: Container(
+            width: 400,
+            height: 400,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  KasbyColors.primaryGoldLight.withValues(alpha: 0.1),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Noise Texture Overlay (Optional for subtle grain)
+        Opacity(
+          opacity: 0.03,
+          child: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/noise.png'),
+                repeat: ImageRepeat.repeat,
+              ),
+            ),
+          ),
+        ),
+
+        // Glass Overlay
+        BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+          child: Container(color: Colors.transparent),
+        ),
+      ],
     );
   }
 
@@ -411,90 +494,86 @@ class DashboardScreen extends StatelessWidget {
     required Color glowColor,
     required int index,
   }) {
-    return _AnimatedGlowingBorder(
-          baseColor: glowColor,
-          borderRadius: 24,
-          child: KasbyGlassCard(
-            padding: const EdgeInsets.all(12),
-            opacity: 0.08,
-            child: Stack(
-              children: [
-                // Inner Glow
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: RadialGradient(
-                        colors: [
-                          glowColor.withValues(alpha: 0.1),
-                          Colors.transparent,
-                        ],
-                        center: Alignment.topLeft,
-                        radius: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  right: -10,
-                  bottom: -10,
-                  child: Icon(
-                    icon,
-                    size: 70,
-                    color: glowColor.withValues(alpha: 0.03),
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildGlowingIcon(
-                          icon: icon,
-                          color: glowColor,
-                          size: 18,
-                        ),
-                        Icon(
-                          Icons.trending_up_rounded,
-                          size: 14,
-                          color: glowColor.withValues(alpha: 0.5),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          value,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -1,
-                          ),
-                        ).animate().shimmer(
-                          duration: const Duration(seconds: 3),
-                          color: Colors.white24,
-                        ),
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.4),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
+    return KasbyGlassCard(
+      padding: const EdgeInsets.all(12),
+      opacity: 0.08,
+      child: Stack(
+        children: [
+          // Inner Glow
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: RadialGradient(
+                  colors: [
+                    glowColor.withValues(alpha: 0.1),
+                    Colors.transparent,
                   ],
+                  center: Alignment.topLeft,
+                  radius: 1.2,
                 ),
-              ],
+              ),
             ),
           ),
-        )
+    
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              icon,
+              size: 70,
+              color: glowColor.withValues(alpha: 0.03),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildGlowingIcon(
+                    icon: icon,
+                    color: glowColor,
+                    size: 18,
+                  ),
+                  Icon(
+                    Icons.trending_up_rounded,
+                    size: 14,
+                    color: glowColor.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
+                  ).animate().shimmer(
+                    duration: const Duration(seconds: 3),
+                    color: Colors.white24,
+                  ),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    )
         .animate(delay: Duration(milliseconds: 100 * index))
         .fadeIn(duration: const Duration(milliseconds: 800))
         .slideY(begin: 0.2, curve: Curves.easeOutBack);
@@ -538,6 +617,13 @@ class DashboardScreen extends StatelessWidget {
         'sub': 'خيارات الطوارئ',
       },
       {
+        'title': 'سلفات كاسبي',
+        'icon': FontAwesomeIcons.handHoldingDollar,
+        'color': KasbyColors.success,
+        'route': '/loans',
+        'sub': 'نظام القروض',
+      },
+      {
         'title': 'مركز الإشعارات',
         'icon': FontAwesomeIcons.bullhorn,
         'color': KasbyColors.warning,
@@ -559,52 +645,48 @@ class DashboardScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final action = actions[index];
         final color = action['color'] as Color;
-        return _AnimatedGlowingBorder(
-              baseColor: color,
-              borderRadius: 20,
-              child: KasbyGlassCard(
-                onTap: () {
-                  if (action.containsKey('page')) {
-                    Get.find<MainController>().changePage(
-                      action['page'] as int,
-                    );
-                  } else if (action.containsKey('route')) {
-                    Get.toNamed(action['route'] as String);
-                  }
-                },
-                padding: const EdgeInsets.all(8),
-                opacity: 0.08,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildGlowingIcon(
-                      icon: action['icon'] as IconData,
-                      color: color,
-                      size: 20,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      action['title'] as String,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      action['sub'] as String,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ],
+        return KasbyGlassCard(
+          onTap: () {
+            if (action.containsKey('page')) {
+              Get.find<MainController>().changePage(
+                action['page'] as int,
+              );
+            } else if (action.containsKey('route')) {
+              Get.toNamed(action['route'] as String);
+            }
+          },
+          padding: const EdgeInsets.all(8),
+          opacity: 0.08,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildGlowingIcon(
+                icon: action['icon'] as IconData,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                action['title'] as String,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
                 ),
               ),
-            )
+              const SizedBox(height: 2),
+              Text(
+                action['sub'] as String,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+            ],
+          ),
+        )
             .animate(delay: Duration(milliseconds: 200 + index * 50))
             .fadeIn()
             .scale(begin: const Offset(0.8, 0.8));
