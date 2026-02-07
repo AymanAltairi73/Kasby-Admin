@@ -495,85 +495,81 @@ class DashboardScreen extends StatelessWidget {
     required int index,
   }) {
     return KasbyGlassCard(
-      padding: const EdgeInsets.all(12),
-      opacity: 0.08,
-      child: Stack(
-        children: [
-          // Inner Glow
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: RadialGradient(
-                  colors: [
-                    glowColor.withValues(alpha: 0.1),
-                    Colors.transparent,
-                  ],
-                  center: Alignment.topLeft,
-                  radius: 1.2,
+          padding: const EdgeInsets.all(12),
+          opacity: 0.08,
+          child: Stack(
+            children: [
+              // Inner Glow
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: RadialGradient(
+                      colors: [
+                        glowColor.withValues(alpha: 0.1),
+                        Colors.transparent,
+                      ],
+                      center: Alignment.topLeft,
+                      radius: 1.2,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-    
-          Positioned(
-            right: -10,
-            bottom: -10,
-            child: Icon(
-              icon,
-              size: 70,
-              color: glowColor.withValues(alpha: 0.03),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildGlowingIcon(
-                    icon: icon,
-                    color: glowColor,
-                    size: 18,
-                  ),
-                  Icon(
-                    Icons.trending_up_rounded,
-                    size: 14,
-                    color: glowColor.withValues(alpha: 0.5),
-                  ),
-                ],
+
+              Positioned(
+                right: -10,
+                bottom: -10,
+                child: Icon(
+                  icon,
+                  size: 70,
+                  color: glowColor.withValues(alpha: 0.03),
+                ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
-                  ).animate().shimmer(
-                    duration: const Duration(seconds: 3),
-                    color: Colors.white24,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildGlowingIcon(icon: icon, color: glowColor, size: 18),
+                      Icon(
+                        Icons.trending_up_rounded,
+                        size: 14,
+                        color: glowColor.withValues(alpha: 0.5),
+                      ),
+                    ],
                   ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w400,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -1,
+                        ),
+                      ).animate().shimmer(
+                        duration: const Duration(seconds: 3),
+                        color: Colors.white24,
+                      ),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
           ),
-        ],
-      ),
-    )
+        )
         .animate(delay: Duration(milliseconds: 100 * index))
         .fadeIn(duration: const Duration(milliseconds: 800))
         .slideY(begin: 0.2, curve: Curves.easeOutBack);
@@ -646,47 +642,45 @@ class DashboardScreen extends StatelessWidget {
         final action = actions[index];
         final color = action['color'] as Color;
         return KasbyGlassCard(
-          onTap: () {
-            if (action.containsKey('page')) {
-              Get.find<MainController>().changePage(
-                action['page'] as int,
-              );
-            } else if (action.containsKey('route')) {
-              Get.toNamed(action['route'] as String);
-            }
-          },
-          padding: const EdgeInsets.all(8),
-          opacity: 0.08,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildGlowingIcon(
-                icon: action['icon'] as IconData,
-                color: color,
-                size: 20,
+              onTap: () {
+                if (action.containsKey('page')) {
+                  Get.find<MainController>().changePage(action['page'] as int);
+                } else if (action.containsKey('route')) {
+                  Get.toNamed(action['route'] as String);
+                }
+              },
+              padding: const EdgeInsets.all(8),
+              opacity: 0.08,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildGlowingIcon(
+                    icon: action['icon'] as IconData,
+                    color: color,
+                    size: 20,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    action['title'] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    action['sub'] as String,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                action['title'] as String,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                action['sub'] as String,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.white.withValues(alpha: 0.3),
-                ),
-              ),
-            ],
-          ),
-        )
+            )
             .animate(delay: Duration(milliseconds: 200 + index * 50))
             .fadeIn()
             .scale(begin: const Offset(0.8, 0.8));
