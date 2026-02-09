@@ -24,6 +24,40 @@ class Transaction {
     this.processedAt,
   });
 
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      userName: json['userName'] ?? '',
+      type: json['type'] ?? 'Deposit',
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      status: json['status'] ?? 'Pending',
+      reason: json['reason'],
+      proofUrl: json['proofUrl'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      processedAt: json['processedAt'] != null
+          ? DateTime.parse(json['processedAt'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'userName': userName,
+      'type': type,
+      'amount': amount,
+      'status': status,
+      'reason': reason,
+      'proofUrl': proofUrl,
+      'createdAt': createdAt.toIso8601String(),
+      'processedAt': processedAt?.toIso8601String(),
+    };
+  }
+
   static List<Transaction> getMockTransactions() {
     return [
       Transaction(

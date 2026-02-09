@@ -41,6 +41,35 @@ class Loan {
     }
   }
 
+  factory Loan.fromJson(Map<String, dynamic> json) {
+    return Loan(
+      id: json['id'] ?? '',
+      userName: json['userName'] ?? '',
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      loanDate: json['loanDate'] != null
+          ? DateTime.parse(json['loanDate'])
+          : DateTime.now(),
+      repaymentDate: json['repaymentDate'] != null
+          ? DateTime.parse(json['repaymentDate'])
+          : DateTime.now(),
+      status: LoanStatus.values.firstWhere(
+        (e) => e.toString() == json['status'],
+        orElse: () => LoanStatus.current,
+      ),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userName': userName,
+      'amount': amount,
+      'loanDate': loanDate.toIso8601String(),
+      'repaymentDate': repaymentDate.toIso8601String(),
+      'status': status.toString(),
+    };
+  }
+
   static List<Loan> getMockLoans() {
     return [
       Loan(

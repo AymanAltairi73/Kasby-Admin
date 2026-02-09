@@ -32,6 +32,46 @@ class Agent {
     required this.createdAt,
   });
 
+  factory Agent.fromJson(Map<String, dynamic> json) {
+    return Agent(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      country: json['country'] ?? '',
+      province: json['province'] ?? '',
+      city: json['city'] ?? '',
+      address: json['address'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+      status: json['status'] ?? 'Active',
+      isAvailableNow: json['isAvailableNow'] ?? false,
+      supportedMethods: List<String>.from(json['supportedMethods'] ?? []),
+      successRate: (json['successRate'] ?? 0.0).toDouble(),
+      totalTransactions: json['totalTransactions'] ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'country': country,
+      'province': province,
+      'city': city,
+      'address': address,
+      'phone': phone,
+      'email': email,
+      'status': status,
+      'isAvailableNow': isAvailableNow,
+      'supportedMethods': supportedMethods,
+      'successRate': successRate,
+      'totalTransactions': totalTransactions,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
   static List<Agent> getMockAgents() {
     return [
       Agent(

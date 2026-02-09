@@ -19,6 +19,49 @@ class AuditLog {
   final String? targetType;
   final Map<String, dynamic>? metadata;
 
+  factory AuditLog.fromJson(Map<String, dynamic> json) {
+    return AuditLog(
+      id: json['id'] ?? '',
+      action: json['action'] ?? '',
+      adminName: json['adminName'] ?? '',
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'])
+          : DateTime.now(),
+      details: json['details'] ?? '',
+      type: AuditLogType.values.firstWhere(
+        (e) => e.toString() == json['type'],
+        orElse: () => AuditLogType.system,
+      ),
+      status: AuditLogStatus.values.firstWhere(
+        (e) => e.toString() == json['status'],
+        orElse: () => AuditLogStatus.success,
+      ),
+      icon: Icons.history, // Placeholder as IconData is not easily serializable
+      ipAddress: json['ipAddress'],
+      device: json['device'],
+      targetId: json['targetId'],
+      targetType: json['targetType'],
+      metadata: json['metadata'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'action': action,
+      'adminName': adminName,
+      'timestamp': timestamp.toIso8601String(),
+      'details': details,
+      'type': type.toString(),
+      'status': status.toString(),
+      'ipAddress': ipAddress,
+      'device': device,
+      'targetId': targetId,
+      'targetType': targetType,
+      'metadata': metadata,
+    };
+  }
+
   AuditLog({
     required this.id,
     required this.action,

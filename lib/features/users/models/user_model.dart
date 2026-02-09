@@ -80,6 +80,56 @@ class User {
     );
   }
 
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      status: json['status'] ?? 'Active',
+      country: json['country'] ?? '',
+      province: json['province'] ?? '',
+      city: json['city'] ?? '',
+      address: json['address'] ?? '',
+      accountType: json['accountType'] ?? 'Free',
+      kycStatus: json['kycStatus'] ?? 'Unverified',
+      walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
+      investedAmount: (json['investedAmount'] ?? 0.0).toDouble(),
+      pendingAmount: (json['pendingAmount'] ?? 0.0).toDouble(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      documents: List<String>.from(json['documents'] ?? []),
+      activityLog: json['activityLog'] != null
+          ? List<UserActivity>.from(
+              json['activityLog'].map((x) => UserActivity.fromJson(x)),
+            )
+          : [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'status': status,
+      'country': country,
+      'province': province,
+      'city': city,
+      'address': address,
+      'accountType': accountType,
+      'kycStatus': kycStatus,
+      'walletBalance': walletBalance,
+      'investedAmount': investedAmount,
+      'pendingAmount': pendingAmount,
+      'createdAt': createdAt.toIso8601String(),
+      'documents': documents,
+      'activityLog': activityLog.map((x) => x.toJson()).toList(),
+    };
+  }
+
   // Mock data generator
   static List<User> getMockUsers() {
     final now = DateTime.now();

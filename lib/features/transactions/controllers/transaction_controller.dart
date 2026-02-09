@@ -118,7 +118,7 @@ class TransactionController extends GetxController {
 
       // Check for emergency pause if it's a withdrawal
       if (transaction.type == 'Withdrawal' &&
-          settingsController.pauseWithdrawals.value) {
+          settingsController.pauseWithdrawals) {
         Get.snackbar(
           'تنبيه النظام',
           'لا يمكن الموافقة على السحب حالياً بسبب إيقاف عمليات السحب من الإعدادات',

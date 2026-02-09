@@ -50,6 +50,40 @@ class InvestmentPlan {
     );
   }
 
+  factory InvestmentPlan.fromJson(Map<String, dynamic> json) {
+    return InvestmentPlan(
+      id: json['id'] ?? '',
+      nameAr: json['nameAr'] ?? '',
+      profitPercentage: (json['profitPercentage'] ?? 0.0).toDouble(),
+      minAmount: (json['minAmount'] ?? 0.0).toDouble(),
+      maxAmount: (json['maxAmount'] ?? 0.0).toDouble(),
+      availableAmounts: json['availableAmounts'] != null
+          ? List<double>.from(json['availableAmounts'].map((x) => x.toDouble()))
+          : null,
+      descriptionAr: json['descriptionAr'] ?? '',
+      isActive: json['isActive'] ?? true,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      imagePath: json['imagePath'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nameAr': nameAr,
+      'profitPercentage': profitPercentage,
+      'minAmount': minAmount,
+      'maxAmount': maxAmount,
+      'availableAmounts': availableAmounts,
+      'descriptionAr': descriptionAr,
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'imagePath': imagePath,
+    };
+  }
+
   static List<InvestmentPlan> getMockPlans() {
     return [
       InvestmentPlan(
@@ -120,6 +154,42 @@ class UserInvestment {
     required this.endDate,
     required this.status,
   });
+
+  factory UserInvestment.fromJson(Map<String, dynamic> json) {
+    return UserInvestment(
+      id: json['id'] ?? '',
+      userId: json['userId'] ?? '',
+      userName: json['userName'] ?? '',
+      planId: json['planId'] ?? '',
+      planName: json['planName'] ?? '',
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      profitPercentage: (json['profitPercentage'] ?? 0.0).toDouble(),
+      expectedProfit: (json['expectedProfit'] ?? 0.0).toDouble(),
+      startDate: json['startDate'] != null
+          ? DateTime.parse(json['startDate'])
+          : DateTime.now(),
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'])
+          : DateTime.now(),
+      status: json['status'] ?? 'Active',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'userName': userName,
+      'planId': planId,
+      'planName': planName,
+      'amount': amount,
+      'profitPercentage': profitPercentage,
+      'expectedProfit': expectedProfit,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
+      'status': status,
+    };
+  }
 
   static List<UserInvestment> getMockInvestments() {
     return [

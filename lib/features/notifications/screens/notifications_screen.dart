@@ -351,8 +351,8 @@ class NotificationsScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  n['status'] == 'Sent' ? Icons.check_circle : Icons.schedule,
-                  color: n['status'] == 'Sent'
+                  n.status == 'Sent' ? Icons.check_circle : Icons.schedule,
+                  color: n.status == 'Sent'
                       ? KasbyColors.success
                       : KasbyColors.warning,
                   size: 20,
@@ -363,14 +363,14 @@ class NotificationsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        n['title'],
+                        n.title,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
                       ),
                       Text(
-                        n['message'],
+                        n.message,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -382,7 +382,7 @@ class NotificationsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  DateFormat('HH:mm').format(n['sentAt']),
+                  DateFormat('HH:mm').format(n.sentAt),
                   style: const TextStyle(
                     fontSize: 11,
                     color: KasbyColors.textSecondary,
