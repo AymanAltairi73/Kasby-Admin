@@ -69,8 +69,8 @@ class DashboardScreen extends StatelessWidget {
 
                       // Nebula Chart Section
                       const _SectionHeader(
-                        title: 'التحليلات المالية والتدفقات',
-                        subtitle: 'مؤشرات الأداء الأسبوعية للاستثمارات',
+                        title: 'مركز التحليلات المالية والتدفقات',
+                        subtitle: 'مؤشرات الأداء الأسبوعية للمحافظ الاستثمارية',
                       ).animate().fadeIn(
                         delay: const Duration(milliseconds: 800),
                       ),
@@ -505,21 +505,21 @@ class DashboardScreen extends StatelessWidget {
             index: 0,
           ),
           _buildMagicalStatCard(
-            title: 'المستخدمين النشطين',
+            title: 'المستخدمون النشطون',
             value: NumberFormat('#,###').format(activeUsers),
             icon: FontAwesomeIcons.userCheck,
             glowColor: KasbyColors.glowGreen,
             index: 1,
           ),
           _buildMagicalStatCard(
-            title: 'حجم الاستثمارات',
+            title: 'إجمالي المحافظ الاستثمارية',
             value: '\$${NumberFormat.compact().format(totalInvested)}',
             icon: FontAwesomeIcons.chartLine,
             glowColor: KasbyColors.glowBlue,
             index: 2,
           ),
           _buildMagicalStatCard(
-            title: 'الأرباح المدفوعة',
+            title: 'الأرباح المحققة',
             value: '\$${NumberFormat.compact().format(totalProfits)}',
             icon: FontAwesomeIcons.moneyBillTrendUp,
             glowColor: KasbyColors.glowGreen,

@@ -102,7 +102,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'خطط النمو والاستثمار',
+                          'باقات الاستثمار والنمو الذكي',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
@@ -294,7 +294,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            plan.isActive ? 'نشط الآن' : 'معطل مؤقتاً',
+                            plan.isActive ? 'نشط' : 'متوقف',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -383,7 +383,7 @@ class InvestmentPlansScreen extends StatelessWidget {
           Center(
             child: _buildDazzlingMetric(
               icon: FontAwesomeIcons.bolt,
-              label: 'نسبة الربح المتوقعة',
+              label: 'العائد المتوقع',
               value: '${plan.profitPercentage}%',
               color: tierColor,
             ),
@@ -394,7 +394,7 @@ class InvestmentPlansScreen extends StatelessWidget {
               Expanded(
                 child: _buildDazzlingMetric(
                   icon: FontAwesomeIcons.circleArrowDown,
-                  label: 'الحد الأدنى',
+                  label: 'الحد الأدنى للمشاركة',
                   value: '\$${plan.minAmount.toStringAsFixed(0)}',
                   color: KasbyColors.success,
                 ),
@@ -415,7 +415,7 @@ class InvestmentPlansScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: KasbyButton(
-              text: 'تعديل البيانات وإدارة الخطة',
+              text: 'تحديث إعدادات الباقة',
               onPressed: () =>
                   Get.to(() => EditInvestmentPlanScreen(plan: plan)),
               icon: Icons.edit,

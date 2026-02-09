@@ -36,7 +36,7 @@ class EditInvestmentPlanScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تعديل خطة الاستثمار'),
+        title: const Text('تحديث إعدادات الباقة'),
         actions: [
           IconButton(
             icon: const Icon(
@@ -56,7 +56,7 @@ class EditInvestmentPlanScreen extends StatelessWidget {
           children: [
             // Image Preview & Selection
             const Text(
-              'أيقونة الخطة',
+              'أيقونة الباقة',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

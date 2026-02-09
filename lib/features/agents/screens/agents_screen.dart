@@ -206,7 +206,7 @@ class AgentsScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'إحصائيات الوكلاء',
+                              'إحصائيات شبكة الوكلاء',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -217,13 +217,13 @@ class AgentsScreen extends StatelessWidget {
                             Row(
                               children: [
                                 _buildSummaryItem(
-                                  label: 'الكل:',
+                                  label: 'الإجمالي:',
                                   value: totalAgents.toString(),
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 12),
                                 _buildSummaryItem(
-                                  label: 'نشط:',
+                                  label: 'النشطون:',
                                   value: activeAgents.toString(),
                                   color: KasbyColors.success,
                                 ),
@@ -419,21 +419,107 @@ class AgentsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildStatusIndicator(agent.status),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_horiz_sharp,
+                          color: KasbyColors.primaryGold,
+                        ),
+                        offset: const Offset(0, 40),
+                        color: const Color(0xFF1E293B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.white10),
+                        ),
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              _showEditAgentDialog(
+                                Get.context!,
+                                agent,
+                                controller,
+                              );
+                              break;
+                            case 'toggle':
+                              controller.toggleAgentStatus(agent.id);
+                              break;
+                            case 'delete':
+                              _showDeleteAgentConfirmation(
+                                Get.context!,
+                                agent,
+                                controller,
+                              );
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_rounded,
+                                  size: 18,
+                                  color: KasbyColors.primaryGold,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text('تحديث بيانات الوكيل'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'toggle',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  agent.status == 'Active'
+                                      ? Icons.block_rounded
+                                      : Icons.check_circle_rounded,
+                                  size: 18,
+                                  color: agent.status == 'Active'
+                                      ? KasbyColors.warning
+                                      : KasbyColors.success,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  agent.status == 'Active'
+                                      ? 'تعطيل الحساب'
+                                      : 'تفعيل الحساب',
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(height: 1),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 18,
+                                  color: KasbyColors.error,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'حذف الوكيل',
+                                  style: TextStyle(color: KasbyColors.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      _buildStatusIndicator(agent.status),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
               const Divider(color: Colors.white10),
               Row(
                 children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: FontAwesomeIcons.chartLine,
-                      label: 'نسبة النجاح',
-                      value: '${agent.successRate.toStringAsFixed(1)}%',
-                      color: KasbyColors.success,
-                    ),
-                  ),
                   Expanded(
                     child: _buildInfoItem(
                       icon: FontAwesomeIcons.arrowRightArrowLeft,
@@ -448,7 +534,7 @@ class AgentsScreen extends StatelessWidget {
               const Divider(color: Colors.white10),
               const SizedBox(height: 12),
               const Text(
-                'وسائل التواصل المتاحة:',
+                'خيارات التواصل المتاحة:',
                 style: TextStyle(
                   fontSize: 11,
                   color: KasbyColors.textSecondary,
@@ -1018,15 +1104,6 @@ class AgentsScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildDetailStatCard(
-                          label: 'نسبة النجاح',
-                          value: '${agent.successRate}%',
-                          icon: FontAwesomeIcons.chartLine,
-                          color: KasbyColors.success,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildDetailStatCard(
                           label: 'المعاملات',
                           value: agent.totalTransactions.toString(),
                           icon: FontAwesomeIcons.arrowRightArrowLeft,
@@ -1059,60 +1136,42 @@ class AgentsScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // Action Buttons Section - Professional layout
+                  // Quick Communication Section
                   const Text(
-                    'الإجراءات الإدارية',
+                    'قنوات التواصل المباشر',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: KasbyColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-
+                  const SizedBox(height: 12),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Expanded(
-                        child: _buildActionButton(
-                          label: 'تعديل',
-                          icon: Icons.edit_rounded,
-                          color: KasbyColors.primaryGold,
-                          onPressed: () {
-                            Get.back();
-                            _showEditAgentDialog(context, agent, controller);
-                          },
-                        ),
+                      _buildCommunicationButton(
+                        icon: FontAwesomeIcons.whatsapp,
+                        color: const Color(0xFF25D366),
+                        label: 'واتساب',
+                        onPressed: () {
+                          // Placeholder for WhatsApp logic
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildActionButton(
-                          label: agent.status == 'Active' ? 'تعطيل' : 'تفعيل',
-                          icon: agent.status == 'Active'
-                              ? Icons.block_rounded
-                              : Icons.check_circle_rounded,
-                          color: agent.status == 'Active'
-                              ? KasbyColors.warning
-                              : KasbyColors.success,
-                          onPressed: () {
-                            Get.back();
-                            controller.toggleAgentStatus(agent.id);
-                          },
-                        ),
+                      _buildCommunicationButton(
+                        icon: FontAwesomeIcons.telegram,
+                        color: const Color(0xFF24A1DE),
+                        label: 'تليجرام',
+                        onPressed: () {
+                          // Placeholder for Telegram logic
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildActionButton(
-                          label: 'حذف',
-                          icon: Icons.delete_outline_rounded,
-                          color: KasbyColors.error,
-                          onPressed: () {
-                            _showDeleteAgentConfirmation(
-                              context,
-                              agent,
-                              controller,
-                            );
-                          },
-                        ),
+                      _buildCommunicationButton(
+                        icon: Icons.phone_forwarded_rounded,
+                        color: KasbyColors.info,
+                        label: 'اتصال',
+                        onPressed: () {
+                          // Placeholder for Call logic
+                        },
                       ),
                     ],
                   ),
@@ -1180,41 +1239,42 @@ class AgentsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton({
-    required String label,
+  Widget _buildCommunicationButton({
     required IconData icon,
     required Color color,
+    required String label,
     required VoidCallback onPressed,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
-          ],
-        ),
+            child: Icon(icon, size: 24, color: color),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
