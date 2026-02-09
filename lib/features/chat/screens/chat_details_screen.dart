@@ -116,14 +116,14 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
       margin: const EdgeInsets.symmetric(vertical: 20),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: Colors.white.withOpacity(0.4),
+          color: Colors.white.withValues(alpha: 0.4),
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
@@ -139,9 +139,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -176,7 +176,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AppBar(
-            backgroundColor: Colors.white.withOpacity(0.02),
+            backgroundColor: Colors.white.withValues(alpha: 0.02),
             elevation: 0,
             leading: IconButton(
               icon: const Icon(
@@ -192,11 +192,13 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: KasbyColors.primaryGold.withOpacity(0.3),
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
                     ),
                   ),
                   child: CircleAvatar(
-                    backgroundColor: KasbyColors.primaryGold.withOpacity(0.2),
+                    backgroundColor: KasbyColors.primaryGold.withValues(
+                      alpha: 0.2,
+                    ),
                     child: Text(
                       conversation.userName[0],
                       style: const TextStyle(
@@ -244,7 +246,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                               fontSize: 10,
                               color: isTyping
                                   ? KasbyColors.success
-                                  : Colors.white.withOpacity(0.5),
+                                  : Colors.white.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -294,8 +296,8 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: msg.isMe
-                      ? KasbyColors.primaryGold.withOpacity(0.15)
-                      : Colors.white.withOpacity(0.08),
+                      ? KasbyColors.primaryGold.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(20),
                     topRight: const Radius.circular(20),
@@ -304,8 +306,8 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   ),
                   border: Border.all(
                     color: msg.isMe
-                        ? KasbyColors.primaryGold.withOpacity(0.3)
-                        : Colors.white.withOpacity(0.1),
+                        ? KasbyColors.primaryGold.withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Text(
@@ -323,7 +325,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     DateFormat('HH:mm', 'ar').format(msg.timestamp),
                     style: TextStyle(
                       fontSize: 9,
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                     ),
                   ),
                   if (msg.isMe) ...[
@@ -331,7 +333,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     Icon(
                       Icons.done_all_rounded,
                       size: 12,
-                      color: KasbyColors.primaryGold.withOpacity(0.5),
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
                     ),
                   ],
                 ],
@@ -347,15 +349,17 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+        color: Colors.black.withValues(alpha: 0.2),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
       ),
       child: Row(
         children: [
           IconButton(
             icon: Icon(
               Icons.add_photo_alternate_rounded,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
             ),
             onPressed: () {},
           ),
@@ -368,7 +372,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'اكتب رسالتك...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => _handleSend(),
@@ -382,7 +388,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: KasbyColors.primaryGold.withOpacity(0.3),
+                  color: KasbyColors.primaryGold.withValues(alpha: 0.3),
                   blurRadius: 10,
                   spreadRadius: 2,
                 ),

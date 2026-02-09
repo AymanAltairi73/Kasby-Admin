@@ -301,23 +301,45 @@ class AgentsScreen extends StatelessWidget {
     BuildContext context,
     AgentController controller,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('بحث عن وكيل'),
-        content: KasbyTextField(
-          hintText: 'بحث باسم المنطقة أو الوكيل...',
-          prefixIcon: Icons.search_rounded,
-          onChanged: (value) => controller.searchAgents(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إغلاق'),
+    Get.dialog(
+      Center(
+        child: KasbyGlassCard(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'بحث عن وكيل',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: KasbyColors.primaryGold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              KasbyTextField(
+                hintText: 'بحث باسم المنطقة أو الوكيل...',
+                prefixIcon: Icons.search_rounded,
+                onChanged: (value) => controller.searchAgents(value),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text(
+                    'إغلاق النافذة',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

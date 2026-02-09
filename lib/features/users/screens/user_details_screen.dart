@@ -9,6 +9,8 @@ import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/user_model.dart';
 import '../controllers/user_controller.dart';
+import '../../chat/models/chat_model.dart';
+import '../../chat/screens/chat_details_screen.dart';
 
 /// User Details Screen
 /// Show detailed user information and admin actions
@@ -90,7 +92,7 @@ class UserDetailsScreen extends StatelessWidget {
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'تعديل البيانات',
+                      'تحديث بيانات المستخدم',
                       style: TextStyle(color: KasbyColors.textPrimary),
                     ),
                   ],
@@ -318,6 +320,120 @@ class UserDetailsScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Quick Communication & Chat Section
+            KasbyGlassCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'قنوات التواصل المباشر',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: KasbyColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildCommunicationButton(
+                        icon: FontAwesomeIcons.whatsapp,
+                        color: const Color(0xFF25D366),
+                        label: 'واتساب',
+                        onPressed: () {
+                          // Placeholder for WhatsApp logic
+                        },
+                      ),
+                      _buildCommunicationButton(
+                        icon: FontAwesomeIcons.telegram,
+                        color: const Color(0xFF24A1DE),
+                        label: 'تليجرام',
+                        onPressed: () {
+                          // Placeholder for Telegram logic
+                        },
+                      ),
+                      _buildCommunicationButton(
+                        icon: Icons.phone_forwarded_rounded,
+                        color: KasbyColors.info,
+                        label: 'اتصال',
+                        onPressed: () {
+                          // Placeholder for Call logic
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            KasbyColors.primaryGold.withValues(alpha: 0.2),
+                            KasbyColors.primaryGold.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: KasbyColors.primaryGold.withValues(
+                              alpha: 0.1,
+                            ),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Navigate to instant chat
+                          Get.to(
+                            () => const ChatDetailsScreen(),
+                            arguments: ChatConversation(
+                              userId: user.id,
+                              userName: user.name,
+                              lastMessage: 'بدء محادثة جديدة',
+                              lastMessageTime: DateTime.now(),
+                              isOnline: true,
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          FontAwesomeIcons.commentDots,
+                          color: KasbyColors.primaryGold,
+                        ),
+                        label: const Text(
+                          'بدء دردشة فورية',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Wallet Section
@@ -429,7 +545,7 @@ class UserDetailsScreen extends StatelessWidget {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    Colors.black.withOpacity(0.7),
+                                    Colors.black.withValues(alpha: 0.7),
                                   ],
                                 ),
                               ),
@@ -553,7 +669,7 @@ class UserDetailsScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: iconColor.withOpacity(0.1),
+                              color: iconColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(icon, color: iconColor, size: 16),
@@ -693,6 +809,46 @@ class UserDetailsScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommunicationButton({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Icon(icon, size: 24, color: color),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
         ],

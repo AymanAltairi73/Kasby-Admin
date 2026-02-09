@@ -15,7 +15,7 @@ class AudioService extends GetxService {
       await _player.stop();
       await _player.play(AssetSource('sounds/message_sent.mp3'));
     } catch (e) {
-      print('Error playing sound: $e');
+      Get.log('Error playing sound: $e');
     }
   }
 
@@ -24,7 +24,7 @@ class AudioService extends GetxService {
       await _player.stop();
       await _player.play(AssetSource('sounds/notification.mp3'));
     } catch (e) {
-      print('Error playing sound: $e');
+      Get.log('Error playing sound: $e');
     }
   }
 

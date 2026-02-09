@@ -45,7 +45,7 @@ class ChatListScreen extends StatelessWidget {
                       decoration: InputDecoration(
                         hintText: 'البحث عن محادثة...',
                         hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                         ),
                         border: InputBorder.none,
                         icon: const Icon(
@@ -68,13 +68,13 @@ class ChatListScreen extends StatelessWidget {
                             Icon(
                               FontAwesomeIcons.comments,
                               size: 60,
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'لا توجد محادثات نشطة',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
+                                color: Colors.white.withValues(alpha: 0.4),
                                 fontSize: 16,
                               ),
                             ),
@@ -123,8 +123,8 @@ class ChatListScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: conv.isOnline
-                          ? KasbyColors.success.withOpacity(0.5)
-                          : KasbyColors.primaryGold.withOpacity(0.3),
+                          ? KasbyColors.success.withValues(alpha: 0.5)
+                          : KasbyColors.primaryGold.withValues(alpha: 0.3),
                       width: 2,
                     ),
                     boxShadow: [
@@ -133,7 +133,7 @@ class ChatListScreen extends StatelessWidget {
                             (conv.isOnline
                                     ? KasbyColors.success
                                     : KasbyColors.primaryGold)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                         blurRadius: 10,
                       ),
                     ],
@@ -186,7 +186,7 @@ class ChatListScreen extends StatelessWidget {
                       Text(
                         DateFormat('HH:mm', 'ar').format(conv.lastMessageTime),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           fontSize: 10,
                         ),
                       ),
@@ -203,7 +203,7 @@ class ChatListScreen extends StatelessWidget {
                           style: TextStyle(
                             color: conv.unreadCount > 0
                                 ? Colors.white
-                                : Colors.white.withOpacity(0.5),
+                                : Colors.white.withValues(alpha: 0.5),
                             fontSize: 13,
                             fontWeight: conv.unreadCount > 0
                                 ? FontWeight.bold
