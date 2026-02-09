@@ -707,7 +707,9 @@ class AgentsScreen extends StatelessWidget {
   ) {
     final nameController = TextEditingController();
     final countryController = TextEditingController(text: 'العراق');
+    final provinceController = TextEditingController();
     final cityController = TextEditingController();
+    final addressController = TextEditingController();
     final phoneController = TextEditingController(text: '+964');
     final emailController = TextEditingController();
 
@@ -748,6 +750,18 @@ class AgentsScreen extends StatelessWidget {
                   controller: cityController,
                   hintText: 'المدينة',
                   prefixIcon: Icons.location_city_rounded,
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: provinceController,
+                  hintText: 'المحافظة',
+                  prefixIcon: Icons.map_rounded,
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: addressController,
+                  hintText: 'العنوان بالتفصيل',
+                  prefixIcon: Icons.home_work_rounded,
                 ),
                 const SizedBox(height: 16),
                 KasbyTextField(
@@ -794,7 +808,9 @@ class AgentsScreen extends StatelessWidget {
                               controller.createAgent(
                                 name: nameController.text,
                                 country: countryController.text,
+                                province: provinceController.text,
                                 city: cityController.text,
+                                address: addressController.text,
                                 phone: phoneController.text,
                                 email: emailController.text,
                               );
@@ -830,7 +846,9 @@ class AgentsScreen extends StatelessWidget {
   ) {
     final nameController = TextEditingController(text: agent.name);
     final countryController = TextEditingController(text: agent.country);
+    final provinceController = TextEditingController(text: agent.province);
     final cityController = TextEditingController(text: agent.city);
+    final addressController = TextEditingController(text: agent.address);
     final phoneController = TextEditingController(text: agent.phone);
     final emailController = TextEditingController(text: agent.email);
 
@@ -871,6 +889,18 @@ class AgentsScreen extends StatelessWidget {
                   controller: cityController,
                   hintText: 'المدينة',
                   prefixIcon: Icons.location_city_rounded,
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: provinceController,
+                  hintText: 'المحافظة',
+                  prefixIcon: Icons.map_rounded,
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: addressController,
+                  hintText: 'العنوان بالتفصيل',
+                  prefixIcon: Icons.home_work_rounded,
                 ),
                 const SizedBox(height: 16),
                 KasbyTextField(
@@ -917,7 +947,9 @@ class AgentsScreen extends StatelessWidget {
                               controller.updateAgent(agent.id, {
                                 'name': nameController.text,
                                 'country': countryController.text,
+                                'province': provinceController.text,
                                 'city': cityController.text,
+                                'address': addressController.text,
                                 'phone': phoneController.text,
                                 'email': emailController.text,
                               });

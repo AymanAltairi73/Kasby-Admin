@@ -7,7 +7,10 @@ class User {
   final String email;
   final String phone;
   final String status; // Active, Blocked
-  final String country; // New
+  final String country;
+  final String province; // New
+  final String city; // New
+  final String address; // New
   final String accountType; // Free, Verified, VIP // New
   final String kycStatus; // Unverified, Pending, Verified // New
   final double walletBalance;
@@ -24,6 +27,9 @@ class User {
     required this.phone,
     required this.status,
     required this.country,
+    required this.province,
+    required this.city,
+    required this.address,
     required this.accountType,
     required this.kycStatus,
     required this.walletBalance,
@@ -41,6 +47,9 @@ class User {
     String? phone,
     String? status,
     String? country,
+    String? province,
+    String? city,
+    String? address,
     String? accountType,
     String? kycStatus,
     double? walletBalance,
@@ -57,6 +66,9 @@ class User {
       phone: phone ?? this.phone,
       status: status ?? this.status,
       country: country ?? this.country,
+      province: province ?? this.province,
+      city: city ?? this.city,
+      address: address ?? this.address,
       accountType: accountType ?? this.accountType,
       kycStatus: kycStatus ?? this.kycStatus,
       walletBalance: walletBalance ?? this.walletBalance,
@@ -79,6 +91,9 @@ class User {
         phone: '+966501234567',
         status: 'Active',
         country: 'Saudi Arabia',
+        province: 'Riyadh Province',
+        city: 'الرياض',
+        address: 'شارع التخصصي، حي العليا',
         accountType: 'VIP',
         kycStatus: 'Verified',
         walletBalance: 5000.0,
@@ -113,6 +128,9 @@ class User {
         phone: '+971507654321',
         status: 'Active',
         country: 'UAE',
+        province: 'Dubai',
+        city: 'دبي',
+        address: 'شارع الشيخ زايد، داون تاون',
         accountType: 'Verified',
         kycStatus: 'Verified',
         walletBalance: 3200.0,
@@ -137,6 +155,9 @@ class User {
         phone: '+965509876543',
         status: 'Blocked',
         country: 'Kuwait',
+        province: 'Kuwait City',
+        city: 'الكويت',
+        address: 'منطقة السالمية، شارع الخليج العربي',
         accountType: 'Free',
         kycStatus: 'Unverified',
         walletBalance: 0.0,
@@ -151,6 +172,9 @@ class User {
         phone: '+966502345678',
         status: 'Active',
         country: 'Saudi Arabia',
+        province: 'Makkah Province',
+        city: 'جدة',
+        address: 'شارع فلسطين، مقابل الحمراء',
         accountType: 'VIP',
         kycStatus: 'Verified',
         walletBalance: 12000.0,
@@ -174,6 +198,9 @@ class User {
         phone: '+201508765432',
         status: 'Active',
         country: 'Egypt',
+        province: 'Cairo',
+        city: 'القاهرة',
+        address: 'حي المعادي، شارع 9',
         accountType: 'Verified',
         kycStatus: 'Pending',
         walletBalance: 7500.0,
@@ -189,6 +216,9 @@ class User {
         phone: '+968501112223',
         status: 'Active',
         country: 'Oman',
+        province: 'Muscat',
+        city: 'مسقط',
+        address: 'روي، شارع الفرسان',
         accountType: 'Free',
         kycStatus: 'Unverified',
         walletBalance: 1500.0,

@@ -3,7 +3,9 @@ class Agent {
   final String id;
   final String name;
   final String country;
+  final String province; // New
   final String city;
+  final String address; // New
   final String phone;
   final String email;
   final String status; // Active, Inactive
@@ -17,7 +19,9 @@ class Agent {
     required this.id,
     required this.name,
     required this.country,
+    required this.province,
     required this.city,
+    required this.address,
     required this.phone,
     required this.email,
     required this.status,
@@ -34,7 +38,9 @@ class Agent {
         id: '1',
         name: 'وكيل بغداد',
         country: 'العراق',
+        province: 'بغداد',
         city: 'بغداد',
+        address: 'شارع المنصور، قرب المتنبي',
         phone: '+9647701234567',
         email: 'baghdad@kasby.com',
         status: 'Active',
@@ -48,7 +54,9 @@ class Agent {
         id: '2',
         name: 'وكيل البصرة',
         country: 'العراق',
+        province: 'البصرة',
         city: 'البصرة',
+        address: 'شارع الجزائر، المعقل',
         phone: '+9647801234567',
         email: 'basra@kasby.com',
         status: 'Active',
@@ -62,7 +70,9 @@ class Agent {
         id: '3',
         name: 'وكيل أربيل',
         country: 'العراق',
+        province: 'أربيل',
         city: 'أربيل',
+        address: 'طريق عينكاوة، حي بختياري',
         phone: '+9647501234567',
         email: 'erbil@kasby.com',
         status: 'Active',
@@ -76,7 +86,9 @@ class Agent {
         id: '4',
         name: 'وكيل كربلاء',
         country: 'العراق',
+        province: 'كربلاء',
         city: 'كربلاء',
+        address: 'حي البلدي، مقابل القبلة',
         phone: '+9647711234567',
         email: 'karbala@kasby.com',
         status: 'Active',
@@ -90,7 +102,9 @@ class Agent {
         id: '5',
         name: 'وكيل النجف الأشرف',
         country: 'العراق',
+        province: 'النجف',
         city: 'النجف الأشرف',
+        address: 'حي السعد، شارع الكوفة',
         phone: '+9647811234567',
         email: 'najaf@kasby.com',
         status: 'Active',

@@ -590,6 +590,10 @@ class UserListScreen extends StatelessWidget {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final phoneController = TextEditingController();
+    final countryController = TextEditingController(text: 'اليمن');
+    final provinceController = TextEditingController();
+    final cityController = TextEditingController();
+    final addressController = TextEditingController();
 
     Get.dialog(
       Dialog(
@@ -618,8 +622,32 @@ class UserListScreen extends StatelessWidget {
               KasbyTextField(
                 controller: emailController,
                 hintText: 'البريد الإلكتروني',
-                prefixIcon: Icons.email_outlined,
+                prefixIcon: Icons.email_rounded,
                 keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: countryController,
+                hintText: 'الدولة',
+                prefixIcon: Icons.public_rounded,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: provinceController,
+                hintText: 'المحافظة',
+                prefixIcon: Icons.map_rounded,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: cityController,
+                hintText: 'المدينة',
+                prefixIcon: Icons.location_city_rounded,
+              ),
+              const SizedBox(height: 12),
+              KasbyTextField(
+                controller: addressController,
+                hintText: 'العنوان بالتفصيل',
+                prefixIcon: Icons.home_work_rounded,
               ),
               const SizedBox(height: 12),
               KasbyTextField(
@@ -649,6 +677,10 @@ class UserListScreen extends StatelessWidget {
                           name: nameController.text,
                           email: emailController.text,
                           phone: phoneController.text,
+                          country: countryController.text,
+                          province: provinceController.text,
+                          city: cityController.text,
+                          address: addressController.text,
                         );
                         Get.back();
                       } else {
