@@ -88,6 +88,7 @@ flutter:
   # Assets
   assets:
     - assets/images/logoo.png
+    - assets/images/
     - assets/sounds/message_sent.mp3
     - assets/sounds/notification.mp3
 

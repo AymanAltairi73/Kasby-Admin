@@ -12,6 +12,8 @@ class KasbyButton extends StatelessWidget {
   final double? width;
   final double? height;
   final IconData? icon;
+  final Color? backgroundColor;
+  final Color? textColor;
 
   const KasbyButton({
     super.key,
@@ -22,6 +24,8 @@ class KasbyButton extends StatelessWidget {
     this.width,
     this.height,
     this.icon,
+    this.backgroundColor,
+    this.textColor,
   });
 
   @override
@@ -36,7 +40,8 @@ class KasbyButton extends StatelessWidget {
   Widget _buildGradientButton() {
     return Container(
       decoration: BoxDecoration(
-        gradient: KasbyColors.primaryGradient,
+        color: backgroundColor,
+        gradient: backgroundColor == null ? KasbyColors.primaryGradient : null,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Material(
@@ -63,15 +68,15 @@ class KasbyButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, color: Colors.black, size: 20),
+                        Icon(icon, color: textColor ?? Colors.black, size: 20),
                         const SizedBox(width: 8),
                       ],
                       Text(
                         text,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: textColor ?? Colors.black,
                         ),
                       ),
                     ],
@@ -85,7 +90,10 @@ class KasbyButton extends StatelessWidget {
   Widget _buildOutlinedButton() {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: KasbyColors.primaryGold, width: 2),
+        border: Border.all(
+          color: backgroundColor ?? KasbyColors.primaryGold,
+          width: 2,
+        ),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Material(
@@ -100,11 +108,11 @@ class KasbyButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Center(
             child: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      color: KasbyColors.primaryGold,
+                      color: backgroundColor ?? KasbyColors.primaryGold,
                       strokeWidth: 2,
                     ),
                   )
@@ -112,15 +120,23 @@ class KasbyButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, color: KasbyColors.primaryGold, size: 20),
+                        Icon(
+                          icon,
+                          color:
+                              textColor ??
+                              (backgroundColor ?? KasbyColors.primaryGold),
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                       ],
                       Text(
                         text,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: KasbyColors.primaryGold,
+                          color:
+                              textColor ??
+                              (backgroundColor ?? KasbyColors.primaryGold),
                         ),
                       ),
                     ],

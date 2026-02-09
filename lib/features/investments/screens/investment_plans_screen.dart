@@ -6,8 +6,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/kasby_button.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
+import 'edit_investment_plan_screen.dart';
 
 /// Investment Plans Screen
 /// Manage investment plans (CRUD)
@@ -168,85 +170,80 @@ class InvestmentPlansScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    plan.nameAr,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: tierColor,
-                      shadows: [
-                        Shadow(
-                          color: tierColor.withValues(alpha: 0.5),
-                          blurRadius: 10,
-                        ),
-                      ],
+              if (plan.imagePath != null)
+                Container(
+                  width: 60,
+                  height: 60,
+                  margin: const EdgeInsets.only(left: 16),
+                  decoration: BoxDecoration(
+                    color: tierColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: tierColor.withValues(alpha: 0.3),
+                      width: 1,
                     ),
                   ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset(plan.imagePath!, fit: BoxFit.contain),
                 ),
-                decoration: BoxDecoration(
-                  color: plan.isActive
-                      ? KasbyColors.success.withValues(alpha: 0.1)
-                      : KasbyColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: plan.isActive
-                        ? KasbyColors.success
-                        : KasbyColors.error,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: plan.isActive
-                                ? KasbyColors.success
-                                : KasbyColors.error,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: plan.isActive
-                                    ? KasbyColors.success
-                                    : KasbyColors.error,
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                        )
-                        .animate(onPlay: (c) => c.repeat())
-                        .shimmer(duration: const Duration(seconds: 2)),
-                    const SizedBox(width: 8),
                     Text(
-                      plan.isActive ? 'باقة نشطة' : 'معطلة حالياً',
+                      plan.nameAr,
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: tierColor,
+                        shadows: [
+                          Shadow(
+                            color: tierColor.withValues(alpha: 0.5),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
                         color: plan.isActive
-                            ? KasbyColors.success
-                            : KasbyColors.error,
+                            ? KasbyColors.success.withValues(alpha: 0.1)
+                            : KasbyColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        plan.isActive ? 'نشط' : 'معطل',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: plan.isActive
+                              ? KasbyColors.success
+                              : KasbyColors.error,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              IconButton(
+                icon: const Icon(
+                  FontAwesomeIcons.trashCan,
+                  color: KasbyColors.error,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    _confirmDeletePlan(Get.context!, controller, plan),
+                tooltip: 'حذف الخطة',
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             plan.descriptionAr,
             style: TextStyle(
@@ -330,54 +327,16 @@ class InvestmentPlansScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => controller.togglePlanStatus(plan.id),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: plan.isActive
-                            ? KasbyColors.error
-                            : KasbyColors.success,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    plan.isActive ? 'تعطيل الخطة' : 'تفعيل الخطة',
-                    style: TextStyle(
-                      color: plan.isActive
-                          ? KasbyColors.error
-                          : KasbyColors.success,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () =>
-                      _showEditPlanDialog(Get.context!, controller, plan),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: tierColor.withValues(alpha: 0.2),
-                    foregroundColor: tierColor,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'تعديل البيانات',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
+          SizedBox(
+            width: double.infinity,
+            child: KasbyButton(
+              text: 'تعديل البيانات وإدارة الخطة',
+              onPressed: () =>
+                  Get.to(() => EditInvestmentPlanScreen(plan: plan)),
+              icon: Icons.edit,
+              backgroundColor: tierColor.withValues(alpha: 0.15),
+              textColor: tierColor,
+            ),
           ),
         ],
       ),
@@ -463,13 +422,6 @@ class InvestmentPlansScreen extends StatelessWidget {
                 prefixIcon: Icons.percent,
               ),
               const SizedBox(height: 12),
-              // KasbyTextField(
-              //   controller: durationController,
-              //   hintText: 'المدة (أيام)',
-              //   keyboardType: TextInputType.number,
-              //   prefixIcon: Icons.calendar_today,
-              // ),
-              const SizedBox(height: 12),
               KasbyTextField(
                 controller: minAmountController,
                 hintText: 'الحد الأدنى',
@@ -530,116 +482,32 @@ class InvestmentPlansScreen extends StatelessWidget {
     );
   }
 
-  void _showEditPlanDialog(
+  void _confirmDeletePlan(
     BuildContext context,
     InvestmentController controller,
     InvestmentPlan plan,
   ) {
-    final nameArController = TextEditingController(text: plan.nameAr);
-    final descriptionController = TextEditingController(
-      text: plan.descriptionAr,
-    );
-    final profitController = TextEditingController(
-      text: plan.profitPercentage.toString(),
-    );
-    final minAmountController = TextEditingController(
-      text: plan.minAmount.toString(),
-    );
-    final maxAmountController = TextEditingController(
-      text: plan.maxAmount.toString(),
-    );
-    final amountsController = TextEditingController(
-      text: plan.availableAmounts?.join(', ') ?? '',
-    );
-
     Get.dialog(
       AlertDialog(
         backgroundColor: KasbyColors.surface,
         title: const Text(
-          'تعديل الخطة',
-          style: TextStyle(color: KasbyColors.textPrimary),
+          'حذف الخطة',
+          style: TextStyle(color: KasbyColors.error),
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              KasbyTextField(
-                controller: nameArController,
-                hintText: 'الاسم بالعربية',
-                prefixIcon: Icons.title,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: descriptionController,
-                hintText: 'وصف الخطة (بالعربية)',
-                prefixIcon: Icons.description,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: profitController,
-                hintText: 'نسبة الربح (%)',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.percent,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: minAmountController,
-                hintText: 'الحد الأدنى للاستثمار',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.attach_money,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: maxAmountController,
-                hintText: 'الحد الأقصى للاستثمار',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.attach_money,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: amountsController,
-                hintText: 'المبالغ المتاحة (مثل: 100, 200, 500)',
-                prefixIcon: Icons.list_alt,
-              ),
-            ],
-          ),
+        content: Text(
+          'هل أنت متأكد من حذف "${plan.nameAr}"؟ سيتم إزالتها من عرض المستخدمين الجدد.',
+          style: const TextStyle(color: KasbyColors.textBody),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
             onPressed: () {
-              // Parse amounts
-              List<double> availableAmounts = [];
-              if (amountsController.text.isNotEmpty) {
-                availableAmounts = amountsController.text
-                    .split(',')
-                    .map((e) => double.tryParse(e.trim()) ?? 0)
-                    .where((e) => e > 0)
-                    .toList();
-              }
-
-              controller.updatePlan(plan.id, {
-                'nameAr': nameArController.text,
-                'descriptionAr': descriptionController.text,
-                'profitPercentage': double.tryParse(profitController.text) ?? 0,
-                'minAmount': double.tryParse(minAmountController.text) ?? 0,
-                'maxAmount': double.tryParse(maxAmountController.text) ?? 0,
-                'availableAmounts': availableAmounts.isNotEmpty
-                    ? availableAmounts
-                    : null,
-              });
+              controller.deletePlan(plan.id);
               Get.back();
             },
             child: const Text(
-              'حفظ',
-              style: TextStyle(color: KasbyColors.primaryGold),
+              'حذف',
+              style: TextStyle(color: KasbyColors.error),
             ),
           ),
         ],

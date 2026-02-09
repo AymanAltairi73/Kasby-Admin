@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../../core/theme/kasby_colors.dart';
 import '../models/investment_model.dart';
 
 /// Investment Controller
@@ -39,18 +40,35 @@ class InvestmentController extends GetxController {
     required double minAmount,
     required double maxAmount,
     List<double>? availableAmounts,
+    String? imagePath,
   }) async {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
+
+    final newPlan = InvestmentPlan(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      nameAr: nameAr,
+      descriptionAr: descriptionAr,
+      profitPercentage: profitPercentage,
+      minAmount: minAmount,
+      maxAmount: maxAmount,
+      availableAmounts: availableAmounts,
+      imagePath: imagePath,
+      isActive: true,
+      createdAt: DateTime.now(),
+    );
+
+    plans.add(newPlan);
 
     Get.snackbar(
       'نجح',
       'تم إنشاء الخطة بنجاح',
       snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
+      colorText: KasbyColors.success,
     );
 
     isLoading.value = false;
-    loadPlans();
   }
 
   /// Update plan
@@ -58,31 +76,29 @@ class InvestmentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    // Safety Warning: Inform about impact
-    Get.snackbar(
-      'تنبيه',
-      'تم تحديث الخطة. التعديلات تسري فقط على الاشتراكات الجديدة ولا تؤثر على الاستثمارات النشطة حالياً.',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 5),
-    );
+    final index = plans.indexWhere((p) => p.id == planId);
+    if (index != -1) {
+      final oldPlan = plans[index];
+      plans[index] = oldPlan.copyWith(
+        nameAr: updates['nameAr'],
+        descriptionAr: updates['descriptionAr'],
+        profitPercentage: updates['profitPercentage'],
+        minAmount: updates['minAmount'],
+        maxAmount: updates['maxAmount'],
+        availableAmounts: updates['availableAmounts'],
+        imagePath: updates['imagePath'],
+      );
+
+      Get.snackbar(
+        'نجح',
+        'تم تحديث بيانات الخطة بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: KasbyColors.primaryGold.withValues(alpha: 0.1),
+        colorText: KasbyColors.primaryGold,
+      );
+    }
 
     isLoading.value = false;
-    loadPlans();
-  }
-
-  /// Toggle plan active status
-  Future<void> togglePlanStatus(String planId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    Get.snackbar(
-      'نجح',
-      'تم تحديث حالة الخطة',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-
-    isLoading.value = false;
-    loadPlans();
   }
 
   /// Delete plan
@@ -90,10 +106,17 @@ class InvestmentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    Get.snackbar('نجح', 'تم حذف الخطة', snackPosition: SnackPosition.BOTTOM);
+    plans.removeWhere((p) => p.id == planId);
+
+    Get.snackbar(
+      'نجح',
+      'تم حذف الخطة نهائياً من العرض',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
+      colorText: KasbyColors.error,
+    );
 
     isLoading.value = false;
-    loadPlans();
   }
 
   /// Get active investments

@@ -9,6 +9,7 @@ class InvestmentPlan {
   final String descriptionAr;
   final bool isActive;
   final DateTime createdAt;
+  final String? imagePath;
 
   InvestmentPlan({
     required this.id,
@@ -20,13 +21,40 @@ class InvestmentPlan {
     required this.descriptionAr,
     required this.isActive,
     required this.createdAt,
+    this.imagePath,
   });
+
+  InvestmentPlan copyWith({
+    String? id,
+    String? nameAr,
+    double? profitPercentage,
+    double? minAmount,
+    double? maxAmount,
+    List<double>? availableAmounts,
+    String? descriptionAr,
+    bool? isActive,
+    DateTime? createdAt,
+    String? imagePath,
+  }) {
+    return InvestmentPlan(
+      id: id ?? this.id,
+      nameAr: nameAr ?? this.nameAr,
+      profitPercentage: profitPercentage ?? this.profitPercentage,
+      minAmount: minAmount ?? this.minAmount,
+      maxAmount: maxAmount ?? this.maxAmount,
+      availableAmounts: availableAmounts ?? this.availableAmounts,
+      descriptionAr: descriptionAr ?? this.descriptionAr,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      imagePath: imagePath ?? this.imagePath,
+    );
+  }
 
   static List<InvestmentPlan> getMockPlans() {
     return [
       InvestmentPlan(
         id: '1',
-        nameAr: 'خطة استثمار الفضة',
+        nameAr: 'خطة الفضة',
         profitPercentage: 6.0,
         minAmount: 100,
         maxAmount: 500,
@@ -34,11 +62,12 @@ class InvestmentPlan {
         descriptionAr: 'خطة استثمار متوسطة تهدف إلى نمو رأس المال بشكل مستقر.',
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 60)),
+        imagePath: 'assets/images/sliver.png',
       ),
       InvestmentPlan(
         id: '2',
-        nameAr: 'خطة استثمار الذهب',
-        profitPercentage: 8.0,
+        nameAr: 'خطة الذهب',
+        profitPercentage: 12.0,
         minAmount: 500,
         maxAmount: 2500,
         availableAmounts: [500, 1000, 1500, 2000, 2500],
@@ -46,17 +75,19 @@ class InvestmentPlan {
             'استثمار آمن في أصول الذهب مع حماية وتشفير عالي للبيانات.',
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 30)),
+        imagePath: 'assets/images/gold.png',
       ),
       InvestmentPlan(
         id: '3',
-        nameAr: 'خطة استثمار العقارات',
-        profitPercentage: 10.0,
+        nameAr: 'خطة العقارات',
+        profitPercentage: 18.0,
         minAmount: 2000,
         maxAmount: 10000,
         descriptionAr:
             'أعلى العوائد من خلال الاستثمار في الأصول العقارية الموثوقة.',
         isActive: true,
         createdAt: DateTime.now().subtract(const Duration(days: 15)),
+        imagePath: 'assets/images/real_estate.png',
       ),
     ];
   }
