@@ -87,7 +87,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                   // Radiant Header
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(24, 120, 24, 40),
+                    padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -129,7 +129,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
                     itemCount: controller.plans.length,
                     separatorBuilder: (context, index) =>
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final plan = controller.plans[index];
                       // Determine tier color based on profit
@@ -172,20 +172,76 @@ class InvestmentPlansScreen extends StatelessWidget {
           Row(
             children: [
               if (plan.imagePath != null)
-                Container(
-                  width: 60,
-                  height: 60,
-                  margin: const EdgeInsets.only(left: 16),
-                  decoration: BoxDecoration(
-                    color: tierColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: tierColor.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  child: Image.asset(plan.imagePath!, fit: BoxFit.contain),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Glow Aura
+                    Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: tierColor.withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(0.8, 0.8),
+                          end: const Offset(1.2, 1.2),
+                          duration: const Duration(seconds: 3),
+                        ),
+                    // Image Container
+                    Container(
+                          width: 80,
+                          height: 80,
+                          margin: const EdgeInsets.only(left: 16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                tierColor.withValues(alpha: 0.15),
+                                tierColor.withValues(alpha: 0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: tierColor.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          child: Image.asset(
+                            plan.imagePath!,
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveY(
+                          begin: -3,
+                          end: 3,
+                          duration: const Duration(seconds: 2),
+                          curve: Curves.easeInOut,
+                        )
+                        .shimmer(
+                          delay: const Duration(seconds: 3),
+                          duration: const Duration(seconds: 2),
+                          color: tierColor.withValues(alpha: 0.1),
+                        ),
+                  ],
                 ),
               Expanded(
                 child: Column(
@@ -194,13 +250,14 @@ class InvestmentPlansScreen extends StatelessWidget {
                     Text(
                       plan.nameAr,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: tierColor,
+                        letterSpacing: -0.5,
                         shadows: [
                           Shadow(
-                            color: tierColor.withValues(alpha: 0.5),
-                            blurRadius: 10,
+                            color: tierColor.withValues(alpha: 0.4),
+                            blurRadius: 12,
                           ),
                         ],
                       ),
@@ -208,7 +265,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
+                        horizontal: 10,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
@@ -216,26 +273,54 @@ class InvestmentPlansScreen extends StatelessWidget {
                             ? KasbyColors.success.withValues(alpha: 0.1)
                             : KasbyColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        plan.isActive ? 'نشط' : 'معطل',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                        border: Border.all(
                           color: plan.isActive
-                              ? KasbyColors.success
-                              : KasbyColors.error,
+                              ? KasbyColors.success.withValues(alpha: 0.2)
+                              : KasbyColors.error.withValues(alpha: 0.2),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: plan.isActive
+                                  ? KasbyColors.success
+                                  : KasbyColors.error,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            plan.isActive ? 'نشط الآن' : 'معطل مؤقتاً',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: plan.isActive
+                                  ? KasbyColors.success
+                                  : KasbyColors.error,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.trashCan,
-                  color: KasbyColors.error,
-                  size: 20,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: KasbyColors.error.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    FontAwesomeIcons.trashCan,
+                    color: KasbyColors.error,
+                    size: 16,
+                  ),
                 ),
                 onPressed: () =>
                     _confirmDeletePlan(Get.context!, controller, plan),

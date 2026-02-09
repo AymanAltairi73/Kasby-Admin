@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -66,44 +67,84 @@ class EditInvestmentPlanScreen extends StatelessWidget {
             Obx(
               () => Center(
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
+                    // Glow Aura
+                    Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: KasbyColors.primaryGold.withValues(
+                                  alpha: 0.1,
+                                ),
+                                blurRadius: 25,
+                                spreadRadius: 8,
+                              ),
+                            ],
+                          ),
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .scale(
+                          begin: const Offset(0.8, 0.8),
+                          end: const Offset(1.2, 1.2),
+                          duration: const Duration(seconds: 3),
+                        ),
+                    // Image Container
                     Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
                         color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                          width: 2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       child: selectedImagePath.value != null
                           ? Image.asset(
                               selectedImagePath.value!,
                               fit: BoxFit.contain,
-                            )
+                            ).animate().fadeIn().scale()
                           : const Icon(
-                              Icons.image,
+                              Icons.image_outlined,
                               size: 40,
                               color: KasbyColors.textSecondary,
                             ),
                     ),
                     Positioned(
-                      bottom: 0,
-                      right: 0,
+                      bottom: 4,
+                      right: 4,
                       child: GestureDetector(
                         onTap: () =>
                             _showImagePicker(context, selectedImagePath),
                         child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: KasbyColors.primaryGold,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: KasbyColors.primaryGradient,
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: const Icon(
-                            Icons.edit,
-                            size: 16,
+                            Icons.camera_alt_rounded,
+                            size: 18,
                             color: Colors.black,
                           ),
                         ),
