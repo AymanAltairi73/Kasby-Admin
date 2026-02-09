@@ -19,6 +19,7 @@ class AgentController extends GetxController {
 
   /// Load agents
   Future<void> loadAgents() async {
+    if (agents.isNotEmpty) return; // Prevent overwriting local changes
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
     agents.value = Agent.getMockAgents();
@@ -96,6 +97,23 @@ class AgentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
+    final newAgent = Agent(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      country: country,
+      city: city,
+      phone: phone,
+      email: email,
+      status: 'Active',
+      isAvailableNow: isAvailableNow,
+      supportedMethods: supportedMethods,
+      successRate: 0.0,
+      totalTransactions: 0,
+      createdAt: DateTime.now(),
+    );
+
+    agents.add(newAgent);
+
     Get.snackbar(
       'نجح',
       'تم إضافة الوكيل بنجاح',
@@ -103,7 +121,6 @@ class AgentController extends GetxController {
     );
 
     isLoading.value = false;
-    loadAgents();
   }
 
   /// Update agent
@@ -111,14 +128,32 @@ class AgentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    Get.snackbar(
-      'نجح',
-      'تم تحديث بيانات الوكيل',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    final index = agents.indexWhere((a) => a.id == agentId);
+    if (index != -1) {
+      final old = agents[index];
+      agents[index] = Agent(
+        id: old.id,
+        name: updates['name'] ?? old.name,
+        country: updates['country'] ?? old.country,
+        city: updates['city'] ?? old.city,
+        phone: updates['phone'] ?? old.phone,
+        email: updates['email'] ?? old.email,
+        status: updates['status'] ?? old.status,
+        isAvailableNow: updates['isAvailableNow'] ?? old.isAvailableNow,
+        supportedMethods: updates['supportedMethods'] ?? old.supportedMethods,
+        successRate: old.successRate,
+        totalTransactions: old.totalTransactions,
+        createdAt: old.createdAt,
+      );
+
+      Get.snackbar(
+        'نجح',
+        'تم تحديث بيانات الوكيل',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
 
     isLoading.value = false;
-    loadAgents();
   }
 
   /// Toggle agent status
@@ -126,14 +161,34 @@ class AgentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
-    Get.snackbar(
-      'نجح',
-      'تم تحديث حالة الوكيل',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    final index = agents.indexWhere((a) => a.id == agentId);
+    if (index != -1) {
+      final old = agents[index];
+      final newStatus = old.status == 'Active' ? 'Inactive' : 'Active';
+
+      agents[index] = Agent(
+        id: old.id,
+        name: old.name,
+        country: old.country,
+        city: old.city,
+        phone: old.phone,
+        email: old.email,
+        status: newStatus,
+        isAvailableNow: old.isAvailableNow,
+        supportedMethods: old.supportedMethods,
+        successRate: old.successRate,
+        totalTransactions: old.totalTransactions,
+        createdAt: old.createdAt,
+      );
+
+      Get.snackbar(
+        'نجح',
+        'تم تحديث حالة الوكيل إلى ${newStatus == 'Active' ? 'نشط' : 'معطل'}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
 
     isLoading.value = false;
-    loadAgents();
   }
 
   /// Delete agent
@@ -141,10 +196,11 @@ class AgentController extends GetxController {
     isLoading.value = true;
     await Future.delayed(const Duration(seconds: 1));
 
+    agents.removeWhere((a) => a.id == agentId);
+
     Get.snackbar('نجح', 'تم حذف الوكيل', snackPosition: SnackPosition.BOTTOM);
 
     isLoading.value = false;
-    loadAgents();
   }
 
   /// Get active agents
