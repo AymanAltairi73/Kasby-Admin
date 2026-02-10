@@ -12,6 +12,18 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = TextEditingController(text: 'أيمن محمد');
+    final emailController = TextEditingController(text: 'ayman@kasby.com');
+    final phoneController = TextEditingController(text: '+964 77660444646');
+
+    final countryController = TextEditingController(
+      text: 'العراق',
+    );
+    final provinceController = TextEditingController(text: 'بغداد');
+    final cityController = TextEditingController(text: 'الكرخ');
+    final addressController = TextEditingController(
+      text: 'شارع التخصصي، حي العليا',
+    );
+
     final passwordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
 
@@ -22,9 +34,15 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
         title: const Text(
           'الملف الشخصي',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () => Get.offAllNamed('/login'),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -45,7 +63,7 @@ class ProfileScreen extends StatelessWidget {
                 _buildMajesticAvatar(),
                 const SizedBox(height: 48),
 
-                // Info Cards
+                // Personal Info
                 _buildInfoSection('المعلومات الشخصية', [
                   KasbyTextField(
                     controller: nameController,
@@ -53,16 +71,101 @@ class ProfileScreen extends StatelessWidget {
                     prefixIcon: Icons.person_outline,
                   ),
                   const SizedBox(height: 16),
-                  const KasbyTextField(
-                    hintText: 'ayman@kasby.com',
+                  KasbyTextField(
+                    controller: emailController,
+                    hintText: 'البريد الإلكتروني',
                     prefixIcon: Icons.email_outlined,
-                    enabled: false,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: phoneController,
+                    hintText: 'رقم الهاتف',
+                    prefixIcon: Icons.phone_android_outlined,
+                  ),
+                ], delay: 100),
+                const SizedBox(height: 24),
+
+                // Location Details
+                _buildInfoSection('تفاصيل الموقع', [
+                  KasbyTextField(
+                    controller: countryController,
+                    hintText: 'الدولة',
+                    prefixIcon: Icons.public_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: provinceController,
+                    hintText: 'المحافظة / المنطقة',
+                    prefixIcon: Icons.map_outlined,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: KasbyTextField(
+                          controller: cityController,
+                          hintText: 'المدينة',
+                          prefixIcon: Icons.location_city_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: addressController,
+                    hintText: 'العنوان',
+                    prefixIcon: Icons.home_outlined,
+                    maxLines: 2,
                   ),
                 ], delay: 200),
                 const SizedBox(height: 24),
 
+                // Account Status & Finances
+                _buildInfoSection('حالة الحساب والمالية', [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusBadge(
+                          'نوع الحساب',
+                          'VIP',
+                          KasbyColors.primaryGold,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatusBadge(
+                          'التوثيق',
+                          'مـوثـق',
+                          KasbyColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(color: Colors.white12),
+                  const SizedBox(height: 20),
+                  _buildFinancialRow(
+                    'رصيد المحفظة',
+                    '5,000.00\$',
+                    Icons.account_balance_wallet_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFinancialRow(
+                    'إجمالي الاستثمار',
+                    '15,000.00\$',
+                    Icons.trending_up_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFinancialRow(
+                    'مبالغ معلقة',
+                    '500.00\$',
+                    Icons.hourglass_empty_rounded,
+                  ),
+                ], delay: 300),
+                const SizedBox(height: 24),
+
                 // Security Card
-                _buildInfoSection('الأمان والخصوصية', [
+                _buildInfoSection('تغيير كلمة المرور', [
                   KasbyTextField(
                     controller: passwordController,
                     hintText: 'كلمة المرور الجديدة',
@@ -85,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
                       onPressed: () {
                         Get.snackbar(
                           'تم التحديث',
-                          'تم حفظ المعلومات الشخصية بنجاح',
+                          'تم حفظ المعلومات بنجاح',
                           snackPosition: SnackPosition.BOTTOM,
                           backgroundColor: KasbyColors.success.withValues(
                             alpha: 0.8,
@@ -95,8 +198,9 @@ class ProfileScreen extends StatelessWidget {
                       },
                     )
                     .animate()
-                    .fadeIn(delay: const Duration(milliseconds: 600))
+                    .fadeIn(delay: const Duration(milliseconds: 500))
                     .scale(),
+                const SizedBox(height: 50),
               ],
             ),
           ),
@@ -188,6 +292,71 @@ class ProfileScreen extends StatelessWidget {
         ),
       ],
     ).animate().fadeIn().scale();
+  }
+
+  Widget _buildStatusBadge(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: color.withValues(alpha: 0.7),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              color: color,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinancialRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: KasbyColors.primaryGold),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: const TextStyle(
+            color: KasbyColors.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(
+            color: KasbyColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildInfoSection(
