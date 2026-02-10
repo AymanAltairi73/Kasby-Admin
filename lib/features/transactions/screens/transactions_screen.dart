@@ -11,6 +11,7 @@ import '../controllers/transaction_controller.dart';
 import '../models/transaction_model.dart';
 import '../../../core/models/time_filter.dart';
 import '../services/report_service.dart';
+import 'package:open_filex/open_filex.dart';
 
 /// Transactions Screen
 /// Manage deposits and withdrawals
@@ -582,16 +583,25 @@ class TransactionsScreen extends StatelessWidget {
 
     Get.snackbar(
       'تم التوليد',
-      'تم حفظ التقرير في: $path',
+      'تم حفظ التقرير بنجاح',
       snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: KasbyColors.surface,
+      colorText: KasbyColors.textPrimary,
+      duration: const Duration(seconds: 5),
       mainButton: TextButton(
-        onPressed: () {},
+        onPressed: () => OpenFilex.open(path),
         child: const Text(
           'فتح',
-          style: TextStyle(color: KasbyColors.primaryGold),
+          style: TextStyle(
+            color: KasbyColors.primaryGold,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
+
+    // Also try to open it automatically
+    await OpenFilex.open(path);
   }
 
   void _showSummaryReport(TransactionController controller) {
