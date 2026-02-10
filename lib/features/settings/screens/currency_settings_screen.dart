@@ -1,61 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
+import '../../../core/widgets/kasby_text_field.dart';
+import '../controllers/settings_management_controller.dart';
+import '../models/settings_models.dart';
 
 class CurrencySettingsScreen extends StatelessWidget {
   const CurrencySettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<SettingsManagementController>();
+
     return Scaffold(
       appBar: AppBar(title: const Text('إعدادات العملات')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildCurrencyCard(
-            name: 'الدولار الأمريكي',
-            code: 'USD',
-            rate: '1.00',
-            isBase: true,
-            icon: FontAwesomeIcons.dollarSign,
-          ),
-          const SizedBox(height: 12),
-          _buildCurrencyCard(
-            name: 'الدرهم الإماراتي',
-            code: 'AED',
-            rate: '3.67',
-            isBase: false,
-            icon: FontAwesomeIcons.briefcase,
-          ),
-          const SizedBox(height: 12),
-          _buildCurrencyCard(
-            name: 'الريال السعودي',
-            code: 'SAR',
-            rate: '3.75',
-            isBase: false,
-            icon: FontAwesomeIcons.coins,
-          ),
-          const SizedBox(height: 24),
-          KasbyButton(
-            text: 'إضافة عملة جديدة',
-            onPressed: () {},
-            isOutlined: true,
-            icon: Icons.add,
-          ),
-        ],
+      body: Obx(
+        () => ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            ...controller.currencies.map(
+              (currency) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildCurrencyCard(context, controller, currency),
+              ),
+            ),
+            const SizedBox(height: 24),
+            KasbyButton(
+              text: 'إضافة عملة جديدة',
+              onPressed: () => _showAddDialog(context, controller),
+              isOutlined: true,
+              icon: Icons.add,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCurrencyCard({
-    required String name,
-    required String code,
-    required String rate,
-    required bool isBase,
-    required IconData icon,
-  }) {
+  Widget _buildCurrencyCard(
+    BuildContext context,
+    SettingsManagementController controller,
+    CurrencyItem currency,
+  ) {
     return KasbyGlassCard(
       child: Row(
         children: [
@@ -65,7 +54,13 @@ class CurrencySettingsScreen extends StatelessWidget {
               color: KasbyColors.primaryGold.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: KasbyColors.primaryGold, size: 24),
+            child: Icon(
+              currency.icon is IconData
+                  ? currency.icon
+                  : FontAwesomeIcons.coins,
+              color: KasbyColors.primaryGold,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -75,7 +70,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      name,
+                      currency.name,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -83,7 +78,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (isBase)
+                    if (currency.isBase)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
@@ -104,7 +99,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '1 USD = $rate $code',
+                  '1 USD = ${currency.rate} ${currency.code}',
                   style: const TextStyle(
                     color: KasbyColors.textSecondary,
                     fontSize: 12,
@@ -113,9 +108,174 @@ class CurrencySettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.settings, color: KasbyColors.textSecondary),
-            onPressed: () {},
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, size: 20, color: KasbyColors.info),
+                onPressed: () =>
+                    _showAddDialog(context, controller, currency: currency),
+              ),
+              if (!currency.isBase)
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: KasbyColors.error,
+                  ),
+                  onPressed: () =>
+                      _showDeleteConfirmation(context, controller, currency.id),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddDialog(
+    BuildContext context,
+    SettingsManagementController controller, {
+    CurrencyItem? currency,
+  }) {
+    final nameController = TextEditingController(text: currency?.name);
+    final codeController = TextEditingController(text: currency?.code);
+    final rateController = TextEditingController(text: currency?.rate);
+    final isBase = (currency?.isBase ?? false).obs;
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  currency == null ? 'إضافة عملة جديدة' : 'تعديل العملة',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                KasbyTextField(
+                  controller: nameController,
+                  labelText: 'اسم العملة',
+                  hintText: 'مثال: ريال سعودي',
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: codeController,
+                  labelText: 'رمز العملة',
+                  hintText: 'مثال: SAR',
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: rateController,
+                  labelText: 'سعر الصرف (مقابل USD)',
+                  hintText: 'مثال: 3.75',
+                ),
+                const SizedBox(height: 16),
+                Obx(
+                  () => SwitchListTile(
+                    title: const Text(
+                      'عملة أساسية',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                    value: isBase.value,
+                    onChanged: (val) => isBase.value = val,
+                    activeColor: KasbyColors.primaryGold,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                KasbyButton(
+                  text: currency == null ? 'إضافة' : 'حفظ التعديلات',
+                  onPressed: () {
+                    final newCurrency = CurrencyItem(
+                      id:
+                          currency?.id ??
+                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      name: nameController.text,
+                      code: codeController.text,
+                      rate: rateController.text,
+                      isBase: isBase.value,
+                      icon: currency?.icon ?? FontAwesomeIcons.coins,
+                    );
+
+                    if (currency == null) {
+                      controller.addCurrency(newCurrency);
+                    } else {
+                      int idx = controller.currencies.indexWhere(
+                        (e) => e.id == currency.id,
+                      );
+                      if (idx != -1) {
+                        if (isBase.value) {
+                          for (
+                            int i = 0;
+                            i < controller.currencies.length;
+                            i++
+                          ) {
+                            controller.currencies[i] = controller.currencies[i]
+                                .copyWith(isBase: false);
+                          }
+                        }
+                        controller.currencies[idx] = newCurrency;
+                      }
+                    }
+                    Get.back();
+                    Get.snackbar('تم', 'تم حفظ بيانات العملة');
+                  },
+                ),
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(color: KasbyColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    SettingsManagementController controller,
+    String id,
+  ) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'هل أنت متأكد من رغبتك في حذف هذه العملة؟',
+          style: TextStyle(color: KasbyColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              controller.deleteCurrency(id);
+              Get.back();
+            },
+            child: const Text(
+              'حذف',
+              style: TextStyle(color: KasbyColors.error),
+            ),
           ),
         ],
       ),

@@ -4,49 +4,57 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../controllers/settings_management_controller.dart';
+import '../models/settings_models.dart';
 
 class TransactionLimitsScreen extends StatelessWidget {
   const TransactionLimitsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<SettingsManagementController>();
+
     return Scaffold(
       appBar: AppBar(title: const Text('حدود المعاملات')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildLimitSection(
-            title: 'المستخدم العادي',
-            limits: [
-              _LimitItem(label: 'الحد الأدنى للإيداع', value: '50'),
-              _LimitItem(label: 'الحد الأقصى للإيداع (يومي)', value: '5000'),
-              _LimitItem(label: 'الحد الأدنى للسحب', value: '20'),
-              _LimitItem(label: 'الحد الأقصى للسحب (شهري)', value: '10000'),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildLimitSection(
-            title: 'المستخدم الموثق / VIP',
-            limits: [
-              _LimitItem(label: 'الحد الأدنى للإيداع', value: '10'),
-              _LimitItem(label: 'الحد الأقصى للإيداع (يومي)', value: '50000'),
-              _LimitItem(label: 'الحد الأدنى للسحب', value: '10'),
-              _LimitItem(label: 'الحد الأقصى للسحب (شهري)', value: 'Unlimited'),
-            ],
-          ),
-          const SizedBox(height: 40),
-          KasbyButton(
-            text: 'حفظ كافة الحدود',
-            onPressed: () => Get.snackbar('تم', 'تم تحديث حدود المعاملات'),
-          ),
-        ],
+      body: Obx(
+        () => ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildLimitSection(
+              context,
+              controller,
+              title: 'المستخدم العادي',
+              limits: controller.limits
+                  .where((e) => e.tier == 'Normal')
+                  .toList(),
+            ),
+            const SizedBox(height: 24),
+            _buildLimitSection(
+              context,
+              controller,
+              title: 'المستخدم الموثق / VIP',
+              limits: controller.limits.where((e) => e.tier == 'VIP').toList(),
+            ),
+            const SizedBox(height: 40),
+            KasbyButton(
+              text: 'إضافة حد جديد',
+              isOutlined: true,
+              onPressed: () => Get.snackbar(
+                'تنبيه',
+                'يمكنك تعديل الحدود الحالية فقط في هذا الإصدار',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLimitSection({
+  Widget _buildLimitSection(
+    BuildContext context,
+    SettingsManagementController controller, {
     required String title,
-    required List<_LimitItem> limits,
+    required List<LimitItem> limits,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,18 +75,45 @@ class TransactionLimitsScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  limit.label,
-                  style: const TextStyle(
-                    color: KasbyColors.textBody,
-                    fontSize: 14,
+                Expanded(
+                  child: Text(
+                    limit.label,
+                    style: const TextStyle(
+                      color: KasbyColors.textBody,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-                SizedBox(
-                  width: 100,
-                  child: KasbyTextField(
-                    controller: TextEditingController(text: limit.value),
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        limit.value,
+                        style: const TextStyle(
+                          color: KasbyColors.primaryGold,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: KasbyColors.info,
+                      ),
+                      onPressed: () =>
+                          _showEditDialog(context, controller, limit),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -87,10 +122,61 @@ class TransactionLimitsScreen extends StatelessWidget {
       ],
     );
   }
-}
 
-class _LimitItem {
-  final String label;
-  final String value;
-  _LimitItem({required this.label, required this.value});
+  void _showEditDialog(
+    BuildContext context,
+    SettingsManagementController controller,
+    LimitItem limit,
+  ) {
+    final valueController = TextEditingController(text: limit.value);
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'تعديل ${limit.label}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                KasbyTextField(
+                  controller: valueController,
+                  labelText: 'القيمة الجديدة',
+                  hintText: 'مثال: 5000 أو Unlimited',
+                ),
+                const SizedBox(height: 32),
+                KasbyButton(
+                  text: 'حفظ التغييرات',
+                  onPressed: () {
+                    controller.updateLimit(limit.id, valueController.text);
+                    Get.back();
+                    Get.snackbar('تم', 'تم تحديث الحد بنجاح');
+                  },
+                ),
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(color: KasbyColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -356,14 +356,6 @@ class UserDetailsScreen extends StatelessWidget {
                           // Placeholder for Telegram logic
                         },
                       ),
-                      _buildCommunicationButton(
-                        icon: Icons.phone_forwarded_rounded,
-                        color: KasbyColors.info,
-                        label: 'اتصال',
-                        onPressed: () {
-                          // Placeholder for Call logic
-                        },
-                      ),
                     ],
                   ),
                   const SizedBox(height: 24),

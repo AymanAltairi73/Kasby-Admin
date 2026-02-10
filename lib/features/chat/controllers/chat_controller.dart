@@ -18,32 +18,49 @@ class ChatController extends GetxController {
     _loadMockData();
   }
 
+  List<ChatConversation> get agentConversations =>
+      conversations.where((c) => c.isAgent).toList();
+  List<ChatConversation> get userConversations =>
+      conversations.where((c) => !c.isAgent).toList();
+
   void _loadMockData() {
     // Adding some mock conversations
     conversations.assignAll([
       ChatConversation(
         userId: 'u1',
-        userName: 'أحمد علي',
-        lastMessage: 'كيف يمكنني سحب أرباحي؟',
+        userName: 'الوكيل: أحمد علي',
+        lastMessage: 'تم تحديث أسعار الصرف اليوم',
         lastMessageTime: DateTime.now().subtract(const Duration(minutes: 5)),
         unreadCount: 2,
         isOnline: true,
+        isAgent: true,
       ),
       ChatConversation(
         userId: 'u2',
-        userName: 'سارة محمد',
+        userName: 'المستخدم: سارة محمد',
         lastMessage: 'تم استلام الحوالة، شكراً لكم',
         lastMessageTime: DateTime.now().subtract(const Duration(hours: 2)),
         unreadCount: 0,
         isOnline: false,
+        isAgent: false,
       ),
       ChatConversation(
         userId: 'u3',
-        userName: 'محمد حسن',
-        lastMessage: 'هل توجد خطط استثمارية جديدة؟',
+        userName: 'الوكيل: محمد حسن',
+        lastMessage: 'هل توجد عمولات خاصة لوكلاء VIP؟',
         lastMessageTime: DateTime.now().subtract(const Duration(days: 1)),
         unreadCount: 0,
         isOnline: true,
+        isAgent: true,
+      ),
+      ChatConversation(
+        userId: 'u4',
+        userName: 'المستخدم: عبد الله عمر',
+        lastMessage: 'متى سيتم تفعيل حسابي؟',
+        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 45)),
+        unreadCount: 1,
+        isOnline: true,
+        isAgent: false,
       ),
     ]);
 
@@ -52,23 +69,16 @@ class ChatController extends GetxController {
       ChatMessage(
         id: '1',
         senderId: 'u1',
-        content: 'مرحباً، لدي استفسار بخصوص السحب',
+        content: 'مرحباً، تم تحديث كشف الحساب الخاص بي',
         timestamp: DateTime.now().subtract(const Duration(hours: 1)),
         isMe: false,
       ),
       ChatMessage(
-        id: '2',
+        id: '1.1',
         senderId: 'admin',
-        content: 'أهلاً بك أحمد، كيف يمكنني مساعدتك؟',
+        content: 'أهلاً بك يا أحمد، سأتحقق منه الآن',
         timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
         isMe: true,
-      ),
-      ChatMessage(
-        id: '3',
-        senderId: 'u1',
-        content: 'كيف يمكنني سحب أرباحي؟',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        isMe: false,
       ),
     ];
 
@@ -115,7 +125,9 @@ class ChatController extends GetxController {
         lastMessageTime: DateTime.now(),
         unreadCount: conv.unreadCount,
         isOnline: conv.isOnline,
+        isAgent: conv.isAgent,
       );
+      conversations.refresh();
     }
 
     // Simulate reply
@@ -157,7 +169,9 @@ class ChatController extends GetxController {
         lastMessageTime: DateTime.now(),
         unreadCount: conv.unreadCount + 1,
         isOnline: conv.isOnline,
+        isAgent: conv.isAgent,
       );
+      conversations.refresh();
       _calculateUnread();
     }
   }
@@ -174,7 +188,9 @@ class ChatController extends GetxController {
         lastMessageTime: conv.lastMessageTime,
         unreadCount: 0,
         isOnline: conv.isOnline,
+        isAgent: conv.isAgent,
       );
+      conversations.refresh();
       _calculateUnread();
     }
   }

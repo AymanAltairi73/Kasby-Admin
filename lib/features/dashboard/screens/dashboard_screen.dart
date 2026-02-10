@@ -777,6 +777,7 @@ class DashboardScreen extends StatelessWidget {
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, percent, barData, index) =>
+      
                   FlDotCirclePainter(
                     radius: 4,
                     color: Colors.black,

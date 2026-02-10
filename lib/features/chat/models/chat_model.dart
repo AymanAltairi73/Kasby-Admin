@@ -26,6 +26,7 @@ class ChatConversation {
   final DateTime lastMessageTime;
   final int unreadCount;
   final bool isOnline;
+  final bool isAgent;
 
   ChatConversation({
     required this.userId,
@@ -35,5 +36,6 @@ class ChatConversation {
     required this.lastMessageTime,
     this.unreadCount = 0,
     this.isOnline = false,
+    this.isAgent = false,
   });
 }

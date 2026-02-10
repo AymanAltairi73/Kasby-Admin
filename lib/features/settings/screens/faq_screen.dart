@@ -1,46 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
+import '../../../core/widgets/kasby_button.dart';
+import '../../../core/widgets/kasby_text_field.dart';
+import '../controllers/settings_management_controller.dart';
+import '../models/settings_models.dart';
 
-class FaqScreen extends StatefulWidget {
+class FaqScreen extends StatelessWidget {
   const FaqScreen({super.key});
 
   @override
-  State<FaqScreen> createState() => _FaqScreenState();
-}
-
-class _FaqScreenState extends State<FaqScreen> {
-  final List<Map<String, String>> _faqs = [
-    {
-      'question': 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-      'answer':
-          'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-    },
-    {
-      'question': 'ما هي طريقة تفعيل وضع الصيانة للتطبيق؟',
-      'answer':
-          'يتم التفعيل من قسم "وضع الصيانة" في الإعدادات، حيث يمكنك كتابة رسالة مخصصة تظهر للمستخدمين أثناء فترة العمل على النظام.',
-    },
-    {
-      'question': 'كيف يتم تأمين بيانات الاستثمارات المالية؟',
-      'answer':
-          'تستخدم Kasby Panel أنظمة تشفير متطورة (End-to-End Encryption) لضمان عدم وصول أي طرف غير مصرح له لبيانات المستخدمين أو الحركات المالية.',
-    },
-    {
-      'question': 'هل يمكنني استخراج تقارير بصيغة PDF؟',
-      'answer':
-          'نعم، في قسم المعاملات والاستثمارات، يتوفر خيار "تصدير" الذي يتيح لك تحميل التقارير بصيغ متعددة تشمل PDF و CSV.',
-    },
-    {
-      'question': 'كيف يمكنني استعادة كلمة المرور الخاصة بي؟',
-      'answer':
-          'من شاشة تسجيل الدخول، انقر على "نسيت كلمة المرور" وأدخل بريدك الإلكتروني، سيصلك رمز سحري لاستعادة الوصول فوراً.',
-    },
-  ];
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<SettingsManagementController>();
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -51,26 +25,38 @@ class _FaqScreenState extends State<FaqScreen> {
           style: TextStyle(fontWeight: FontWeight.w900),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.add_comment_outlined,
+              color: KasbyColors.primaryGold,
+            ),
+            onPressed: () => _showEditDialog(context, controller),
+          ),
+        ],
       ),
       body: Stack(
         children: [
           _buildCelestialBackground(),
           SafeArea(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: _faqs.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) return _buildHeader();
-                final faq = _faqs[index - 1];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildFaqItem(
-                    faq['question']!,
-                    faq['answer']!,
-                    index: index,
-                  ),
-                );
-              },
+            child: Obx(
+              () => ListView.builder(
+                padding: const EdgeInsets.all(24),
+                itemCount: controller.faqs.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) return _buildHeader();
+                  final faq = controller.faqs[index - 1];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildFaqItem(
+                      context,
+                      controller,
+                      faq,
+                      index: index,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -81,6 +67,7 @@ class _FaqScreenState extends State<FaqScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
+        const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -95,7 +82,7 @@ class _FaqScreenState extends State<FaqScreen> {
             size: 48,
             color: KasbyColors.primaryGold,
           ),
-        ).animate().scale(duration: const Duration(milliseconds: 600)).shake(),
+        ).animate().scale(duration: 600.ms).shake(),
         const SizedBox(height: 16),
         const Text(
           'هل لديك أي استفسار؟',
@@ -104,20 +91,25 @@ class _FaqScreenState extends State<FaqScreen> {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-        ).animate().fadeIn(delay: const Duration(milliseconds: 300)),
+        ).animate().fadeIn(delay: 300.ms),
         const SizedBox(height: 32),
       ],
     );
   }
 
-  Widget _buildFaqItem(String question, String answer, {required int index}) {
+  Widget _buildFaqItem(
+    BuildContext context,
+    SettingsManagementController controller,
+    FAQItem faq, {
+    required int index,
+  }) {
     return KasbyGlassCard(
       padding: EdgeInsets.zero,
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           title: Text(
-            question,
+            faq.question,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -126,11 +118,30 @@ class _FaqScreenState extends State<FaqScreen> {
           ),
           iconColor: KasbyColors.primaryGold,
           collapsedIconColor: KasbyColors.textSecondary,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: KasbyColors.info),
+                onPressed: () => _showEditDialog(context, controller, faq: faq),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: KasbyColors.error,
+                ),
+                onPressed: () =>
+                    _showDeleteConfirmation(context, controller, faq.id),
+              ),
+              const Icon(Icons.expand_more, color: KasbyColors.textSecondary),
+            ],
+          ),
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Text(
-                answer,
+                faq.answer,
                 style: const TextStyle(
                   fontSize: 14,
                   color: KasbyColors.textSecondary,
@@ -141,7 +152,118 @@ class _FaqScreenState extends State<FaqScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: (index * 150).milliseconds).slideX(begin: 0.1);
+    ).animate().fadeIn(delay: (index * 150).ms).slideX(begin: 0.1);
+  }
+
+  void _showEditDialog(
+    BuildContext context,
+    SettingsManagementController controller, {
+    FAQItem? faq,
+  }) {
+    final questionController = TextEditingController(text: faq?.question);
+    final answerController = TextEditingController(text: faq?.answer);
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  faq == null ? 'إضافة سؤال جديد' : 'تعديل السؤال',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                KasbyTextField(
+                  controller: questionController,
+                  labelText: 'السؤال',
+                  hintText: 'مثال: كيف يمكنني إضافة مشرف؟',
+                ),
+                const SizedBox(height: 16),
+                KasbyTextField(
+                  controller: answerController,
+                  labelText: 'الإجابة',
+                  hintText: 'اكتب الإجابة هنا...',
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 32),
+                KasbyButton(
+                  text: faq == null ? 'إضافة' : 'حفظ التعديلات',
+                  onPressed: () {
+                    if (faq == null) {
+                      controller.addFAQ(
+                        questionController.text,
+                        answerController.text,
+                      );
+                    } else {
+                      controller.updateFAQ(
+                        faq.id,
+                        questionController.text,
+                        answerController.text,
+                      );
+                    }
+                    Get.back();
+                  },
+                ),
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text(
+                    'إلغاء',
+                    style: TextStyle(color: KasbyColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    SettingsManagementController controller,
+    String id,
+  ) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'هل أنت متأكد من رغبتك في حذف هذا السؤال؟',
+          style: TextStyle(color: KasbyColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(color: KasbyColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              controller.deleteFAQ(id);
+              Get.back();
+            },
+            child: const Text(
+              'حذف',
+              style: TextStyle(color: KasbyColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCelestialBackground() {
@@ -189,8 +311,8 @@ class _FaqScreenState extends State<FaqScreen> {
                 ),
               )
               .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: const Duration(seconds: 5))
-              .moveX(begin: -20, end: 20, duration: const Duration(seconds: 7)),
+              .moveY(begin: -20, end: 20, duration: 5000.ms)
+              .moveX(begin: -20, end: 20, duration: 7000.ms),
     );
   }
 }

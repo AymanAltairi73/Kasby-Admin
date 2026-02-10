@@ -258,8 +258,22 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
             ),
             actions: [
               IconButton(
+                icon: const Icon(Icons.call_rounded, color: Colors.white70),
+                onPressed: () {
+                  Get.snackbar(
+                    'اتصال صوتي',
+                    'جاري بدء اتصال صوتي مع ${conversation.userName}...',
+                  );
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.videocam_rounded, color: Colors.white70),
-                onPressed: () {},
+                onPressed: () {
+                  Get.snackbar(
+                    'اتصال مرئي',
+                    'جاري بدء اتصال مرئي مع ${conversation.userName}...',
+                  );
+                },
               ),
               IconButton(
                 icon: const Icon(

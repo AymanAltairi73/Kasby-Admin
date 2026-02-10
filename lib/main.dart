@@ -35,6 +35,7 @@ import 'features/chat/screens/chat_details_screen.dart';
 import 'core/services/audio_service.dart';
 import 'features/loans/controllers/loan_controller.dart';
 import 'features/loans/screens/loans_screen.dart';
+import 'features/settings/controllers/settings_management_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +48,7 @@ Future<void> main() async {
   Get.put(AuthController());
   Get.put(ThemeController());
   Get.put(SettingsController());
+  Get.put(SettingsManagementController());
   Get.put(UserController());
   Get.put(TransactionController());
   Get.put(InvestmentController());

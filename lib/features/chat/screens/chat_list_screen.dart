@@ -15,90 +15,120 @@ class ChatListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final chatController = Get.find<ChatController>();
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'دردشات الوكلاء',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text(
+            'مركز المحادثات',
+            style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+          ),
+          centerTitle: true,
+          bottom: TabBar(
+            indicatorColor: KasbyColors.primaryGold,
+            indicatorWeight: 3,
+            labelColor: KasbyColors.primaryGold,
+            unselectedLabelColor: Colors.white.withValues(alpha: 0.5),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+            tabs: const [
+              Tab(text: 'الوكلاء'),
+              Tab(text: 'المستخدمين'),
+            ],
+          ),
         ),
-        centerTitle: true,
-      ),
-      body: Stack(
-        children: [
-          // Background - Nebula Style
-          _buildNebulaBackground(),
+        body: Stack(
+          children: [
+            // Background - Nebula Style
+            _buildNebulaBackground(),
 
-          SafeArea(
-            child: Column(
-              children: [
-                // Top Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: KasbyGlassCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    opacity: 0.1,
-                    child: TextField(
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'البحث عن محادثة...',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
-                        ),
-                        border: InputBorder.none,
-                        icon: const Icon(
-                          Icons.search,
-                          color: KasbyColors.primaryGold,
+            SafeArea(
+              child: Column(
+                children: [
+                  // Top Search Bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: KasbyGlassCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      opacity: 0.1,
+                      child: TextField(
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'البحث عن محادثة...',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
+                          border: InputBorder.none,
+                          icon: const Icon(
+                            Icons.search,
+                            color: KasbyColors.primaryGold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                // Conversations List
-                Expanded(
-                  child: Obx(() {
-                    if (chatController.conversations.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              FontAwesomeIcons.comments,
-                              size: 60,
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'لا توجد محادثات نشطة',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: chatController.conversations.length,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemBuilder: (context, index) {
-                        final conv = chatController.conversations[index];
-                        return _buildConversationItem(conv, index);
-                      },
-                    );
-                  }),
-                ),
-              ],
+                  // Conversations Tabs
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _buildConversationList(chatController, isAgent: true),
+                        _buildConversationList(chatController, isAgent: false),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildConversationList(
+    ChatController chatController, {
+    required bool isAgent,
+  }) {
+    return Obx(() {
+      final filteredList = isAgent
+          ? chatController.agentConversations
+          : chatController.userConversations;
+
+      if (filteredList.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isAgent ? FontAwesomeIcons.userTie : FontAwesomeIcons.users,
+                size: 60,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'لا توجد محادثات نشطة',
+                style: TextStyle(color: Colors.white54, fontSize: 16),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.builder(
+        itemCount: filteredList.length,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        itemBuilder: (context, index) {
+          final conv = filteredList[index];
+          return _buildConversationItem(conv, index);
+        },
+      );
+    });
   }
 
   Widget _buildConversationItem(ChatConversation conv, int index) {
