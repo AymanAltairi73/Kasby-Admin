@@ -721,117 +721,119 @@ class AgentsScreen extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           content: KasbyGlassCard(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'إضافة وكيل جديد',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.primaryGold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                KasbyTextField(
-                  controller: nameController,
-                  hintText: 'اسم الوكيل',
-                  prefixIcon: Icons.person_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: countryController,
-                  hintText: 'البلد',
-                  prefixIcon: Icons.location_on_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: cityController,
-                  hintText: 'المدينة',
-                  prefixIcon: Icons.location_city_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: provinceController,
-                  hintText: 'المحافظة',
-                  prefixIcon: Icons.map_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: addressController,
-                  hintText: 'العنوان بالتفصيل',
-                  prefixIcon: Icons.home_work_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: phoneController,
-                  hintText: 'رقم الهاتف',
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.phone_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: emailController,
-                  hintText: 'البريد الإلكتروني',
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_rounded,
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text(
-                          'إلغاء',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'إضافة وكيل جديد',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: KasbyColors.primaryGold,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: KasbyColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  KasbyTextField(
+                    controller: nameController,
+                    hintText: 'اسم الوكيل',
+                    prefixIcon: Icons.person_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: countryController,
+                    hintText: 'البلد',
+                    prefixIcon: Icons.location_on_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: cityController,
+                    hintText: 'المدينة',
+                    prefixIcon: Icons.location_city_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: provinceController,
+                    hintText: 'المحافظة',
+                    prefixIcon: Icons.map_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: addressController,
+                    hintText: 'العنوان بالتفصيل',
+                    prefixIcon: Icons.home_work_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: phoneController,
+                    hintText: 'رقم الهاتف',
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: emailController,
+                    hintText: 'البريد الإلكتروني',
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: Icons.email_rounded,
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
                         child: TextButton(
-                          onPressed: () {
-                            if (nameController.text.isNotEmpty &&
-                                countryController.text.isNotEmpty &&
-                                cityController.text.isNotEmpty &&
-                                phoneController.text.isNotEmpty &&
-                                emailController.text.isNotEmpty) {
-                              controller.createAgent(
-                                name: nameController.text,
-                                country: countryController.text,
-                                province: provinceController.text,
-                                city: cityController.text,
-                                address: addressController.text,
-                                phone: phoneController.text,
-                                email: emailController.text,
-                              );
-                              Get.back();
-                            } else {
-                              Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
-                            }
-                          },
-                          child: const Text(
-                            'إضافة',
+                          onPressed: () => Get.back(),
+                          child: Text(
+                            'إلغاء',
                             style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: KasbyColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextButton(
+                            onPressed: () {
+                              if (nameController.text.isNotEmpty &&
+                                  countryController.text.isNotEmpty &&
+                                  cityController.text.isNotEmpty &&
+                                  phoneController.text.isNotEmpty &&
+                                  emailController.text.isNotEmpty) {
+                                controller.createAgent(
+                                  name: nameController.text,
+                                  country: countryController.text,
+                                  province: provinceController.text,
+                                  city: cityController.text,
+                                  address: addressController.text,
+                                  phone: phoneController.text,
+                                  email: emailController.text,
+                                );
+                                Get.back();
+                              } else {
+                                Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
+                              }
+                            },
+                            child: const Text(
+                              'إضافة',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -860,117 +862,119 @@ class AgentsScreen extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           content: KasbyGlassCard(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'تعديل بيانات الوكيل',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.primaryGold,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                KasbyTextField(
-                  controller: nameController,
-                  hintText: 'اسم الوكيل',
-                  prefixIcon: Icons.person_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: countryController,
-                  hintText: 'البلد',
-                  prefixIcon: Icons.location_on_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: cityController,
-                  hintText: 'المدينة',
-                  prefixIcon: Icons.location_city_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: provinceController,
-                  hintText: 'المحافظة',
-                  prefixIcon: Icons.map_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: addressController,
-                  hintText: 'العنوان بالتفصيل',
-                  prefixIcon: Icons.home_work_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: phoneController,
-                  hintText: 'رقم الهاتف',
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.phone_rounded,
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: emailController,
-                  hintText: 'البريد الإلكتروني',
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_rounded,
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Get.back(),
-                        child: Text(
-                          'إلغاء',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'تعديل بيانات الوكيل',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: KasbyColors.primaryGold,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: KasbyColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  ),
+                  const SizedBox(height: 24),
+                  KasbyTextField(
+                    controller: nameController,
+                    hintText: 'اسم الوكيل',
+                    prefixIcon: Icons.person_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: countryController,
+                    hintText: 'البلد',
+                    prefixIcon: Icons.location_on_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: cityController,
+                    hintText: 'المدينة',
+                    prefixIcon: Icons.location_city_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: provinceController,
+                    hintText: 'المحافظة',
+                    prefixIcon: Icons.map_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: addressController,
+                    hintText: 'العنوان بالتفصيل',
+                    prefixIcon: Icons.home_work_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: phoneController,
+                    hintText: 'رقم الهاتف',
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  KasbyTextField(
+                    controller: emailController,
+                    hintText: 'البريد الإلكتروني',
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: Icons.email_rounded,
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
                         child: TextButton(
-                          onPressed: () {
-                            if (nameController.text.isNotEmpty &&
-                                countryController.text.isNotEmpty &&
-                                cityController.text.isNotEmpty &&
-                                phoneController.text.isNotEmpty &&
-                                emailController.text.isNotEmpty) {
-                              controller.updateAgent(agent.id, {
-                                'name': nameController.text,
-                                'country': countryController.text,
-                                'province': provinceController.text,
-                                'city': cityController.text,
-                                'address': addressController.text,
-                                'phone': phoneController.text,
-                                'email': emailController.text,
-                              });
-                              Get.back();
-                            } else {
-                              Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
-                            }
-                          },
-                          child: const Text(
-                            'حفظ',
+                          onPressed: () => Get.back(),
+                          child: Text(
+                            'إلغاء',
                             style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: KasbyColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextButton(
+                            onPressed: () {
+                              if (nameController.text.isNotEmpty &&
+                                  countryController.text.isNotEmpty &&
+                                  cityController.text.isNotEmpty &&
+                                  phoneController.text.isNotEmpty &&
+                                  emailController.text.isNotEmpty) {
+                                controller.updateAgent(agent.id, {
+                                  'name': nameController.text,
+                                  'country': countryController.text,
+                                  'province': provinceController.text,
+                                  'city': cityController.text,
+                                  'address': addressController.text,
+                                  'phone': phoneController.text,
+                                  'email': emailController.text,
+                                });
+                                Get.back();
+                              } else {
+                                Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
+                              }
+                            },
+                            child: const Text(
+                              'حفظ',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

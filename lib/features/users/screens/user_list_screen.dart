@@ -600,108 +600,110 @@ class UserListScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         child: KasbyGlassCard(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'إضافة مستخدم جديد',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-              KasbyTextField(
-                controller: nameController,
-                hintText: 'الاسم الكامل',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: emailController,
-                hintText: 'البريد الإلكتروني',
-                prefixIcon: Icons.email_rounded,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: countryController,
-                hintText: 'الدولة',
-                prefixIcon: Icons.public_rounded,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: provinceController,
-                hintText: 'المحافظة',
-                prefixIcon: Icons.map_rounded,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: cityController,
-                hintText: 'المدينة',
-                prefixIcon: Icons.location_city_rounded,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: addressController,
-                hintText: 'العنوان بالتفصيل',
-                prefixIcon: Icons.home_work_rounded,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: phoneController,
-                hintText: 'رقم الهاتف',
-                prefixIcon: Icons.phone_android_outlined,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text(
-                      'إلغاء',
-                      style: TextStyle(color: KasbyColors.textSecondary),
-                    ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'إضافة مستخدم جديد',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (nameController.text.isNotEmpty &&
-                          emailController.text.isNotEmpty &&
-                          phoneController.text.isNotEmpty) {
-                        controller.addUser(
-                          name: nameController.text,
-                          email: emailController.text,
-                          phone: phoneController.text,
-                          country: countryController.text,
-                          province: provinceController.text,
-                          city: cityController.text,
-                          address: addressController.text,
-                        );
-                        Get.back();
-                      } else {
-                        Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: KasbyColors.primaryGold,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(height: 20),
+                KasbyTextField(
+                  controller: nameController,
+                  hintText: 'الاسم الكامل',
+                  prefixIcon: Icons.person_outline,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: emailController,
+                  hintText: 'البريد الإلكتروني',
+                  prefixIcon: Icons.email_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: countryController,
+                  hintText: 'الدولة',
+                  prefixIcon: Icons.public_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: provinceController,
+                  hintText: 'المحافظة',
+                  prefixIcon: Icons.map_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: cityController,
+                  hintText: 'المدينة',
+                  prefixIcon: Icons.location_city_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: addressController,
+                  hintText: 'العنوان بالتفصيل',
+                  prefixIcon: Icons.home_work_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: phoneController,
+                  hintText: 'رقم الهاتف',
+                  prefixIcon: Icons.phone_android_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(color: KasbyColors.textSecondary),
                       ),
                     ),
-                    child: const Text(
-                      'إضافة',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (nameController.text.isNotEmpty &&
+                            emailController.text.isNotEmpty &&
+                            phoneController.text.isNotEmpty) {
+                          controller.addUser(
+                            name: nameController.text,
+                            email: emailController.text,
+                            phone: phoneController.text,
+                            country: countryController.text,
+                            province: provinceController.text,
+                            city: cityController.text,
+                            address: addressController.text,
+                          );
+                          Get.back();
+                        } else {
+                          Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: KasbyColors.primaryGold,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'إضافة',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

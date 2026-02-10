@@ -980,6 +980,10 @@ class UserDetailsScreen extends StatelessWidget {
   void _showEditUserDialog(BuildContext context, UserController controller) {
     final nameController = TextEditingController(text: user.name);
     final emailController = TextEditingController(text: user.email);
+    final countryController = TextEditingController(text: user.country);
+    final provinceController = TextEditingController(text: user.province);
+    final cityController = TextEditingController(text: user.city);
+    final addressController = TextEditingController(text: user.address);
     final phoneController = TextEditingController(text: user.phone);
 
     Get.dialog(
@@ -987,81 +991,111 @@ class UserDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         child: KasbyGlassCard(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'تعديل بيانات المستخدم',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-              KasbyTextField(
-                controller: nameController,
-                hintText: 'الاسم الكامل',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: emailController,
-                hintText: 'البريد الإلكتروني',
-                prefixIcon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 12),
-              KasbyTextField(
-                controller: phoneController,
-                hintText: 'رقم الهاتف',
-                prefixIcon: Icons.phone_android_outlined,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: const Text(
-                      'إلغاء',
-                      style: TextStyle(color: KasbyColors.textSecondary),
-                    ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'تعديل بيانات المستخدم',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (nameController.text.isNotEmpty &&
-                          emailController.text.isNotEmpty &&
-                          phoneController.text.isNotEmpty) {
-                        final updatedUser = user.copyWith(
-                          name: nameController.text,
-                          email: emailController.text,
-                          phone: phoneController.text,
-                        );
-                        controller.updateUser(updatedUser);
-                        Get.back();
-                      } else {
-                        Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: KasbyColors.primaryGold,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                ),
+                const SizedBox(height: 20),
+                KasbyTextField(
+                  controller: nameController,
+                  hintText: 'الاسم الكامل',
+                  prefixIcon: Icons.person_outline,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: emailController,
+                  hintText: 'البريد الإلكتروني',
+                  prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: countryController,
+                  hintText: 'الدولة',
+                  prefixIcon: Icons.public_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: provinceController,
+                  hintText: 'المحافظة',
+                  prefixIcon: Icons.map_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: cityController,
+                  hintText: 'المدينة',
+                  prefixIcon: Icons.location_city_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: addressController,
+                  hintText: 'العنوان بالتفصيل',
+                  prefixIcon: Icons.home_work_rounded,
+                ),
+                const SizedBox(height: 12),
+                KasbyTextField(
+                  controller: phoneController,
+                  hintText: 'رقم الهاتف',
+                  prefixIcon: Icons.phone_android_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text(
+                        'إلغاء',
+                        style: TextStyle(color: KasbyColors.textSecondary),
                       ),
                     ),
-                    child: const Text(
-                      'حفظ التعديلات',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (nameController.text.isNotEmpty &&
+                            emailController.text.isNotEmpty &&
+                            phoneController.text.isNotEmpty) {
+                          final updatedUser = user.copyWith(
+                            name: nameController.text,
+                            email: emailController.text,
+                            country: countryController.text,
+                            province: provinceController.text,
+                            city: cityController.text,
+                            address: addressController.text,
+                            phone: phoneController.text,
+                          );
+                          controller.updateUser(updatedUser);
+                          Get.back();
+                        } else {
+                          Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: KasbyColors.primaryGold,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'حفظ التعديلات',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
