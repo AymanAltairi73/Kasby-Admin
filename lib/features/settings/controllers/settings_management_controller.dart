@@ -191,7 +191,9 @@ class SettingsManagementController extends GetxController {
         code: 'USD',
         rate: '1.00',
         isBase: true,
-        icon: FontAwesomeIcons.dollarSign,
+        iconCode: FontAwesomeIcons.dollarSign.codePoint,
+        iconFamily: FontAwesomeIcons.dollarSign.fontFamily,
+        iconPackage: FontAwesomeIcons.dollarSign.fontPackage,
       ),
       CurrencyItem(
         id: '2',
@@ -199,7 +201,9 @@ class SettingsManagementController extends GetxController {
         code: 'AED',
         rate: '3.67',
         isBase: false,
-        icon: FontAwesomeIcons.briefcase,
+        iconCode: FontAwesomeIcons.briefcase.codePoint,
+        iconFamily: FontAwesomeIcons.briefcase.fontFamily,
+        iconPackage: FontAwesomeIcons.briefcase.fontPackage,
       ),
     ]);
   }

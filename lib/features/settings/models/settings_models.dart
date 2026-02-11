@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 /// Settings Data Models
 class FAQItem {
   final String id;
@@ -107,7 +105,9 @@ class CurrencyItem {
   final String code;
   final String rate;
   final bool isBase;
-  final dynamic icon; // IconData or similar
+  final int? iconCode;
+  final String? iconFamily;
+  final String? iconPackage;
 
   CurrencyItem({
     required this.id,
@@ -115,7 +115,9 @@ class CurrencyItem {
     required this.code,
     required this.rate,
     this.isBase = false,
-    this.icon,
+    this.iconCode,
+    this.iconFamily,
+    this.iconPackage,
   });
 
   CurrencyItem copyWith({
@@ -123,7 +125,9 @@ class CurrencyItem {
     String? code,
     String? rate,
     bool? isBase,
-    dynamic icon,
+    int? iconCode,
+    String? iconFamily,
+    String? iconPackage,
   }) {
     return CurrencyItem(
       id: id,
@@ -131,47 +135,40 @@ class CurrencyItem {
       code: code ?? this.code,
       rate: rate ?? this.rate,
       isBase: isBase ?? this.isBase,
-      icon: icon ?? this.icon,
+      iconCode: iconCode ?? this.iconCode,
+      iconFamily: iconFamily ?? this.iconFamily,
+      iconPackage: iconPackage ?? this.iconPackage,
     );
   }
 
   factory CurrencyItem.fromJson(Map<String, dynamic> json) {
-    IconData? iconData;
-    if (json['icon_code'] != null) {
-      iconData = IconData(
-        json['icon_code'],
-        fontFamily: json['icon_family'] ?? 'MaterialIcons',
-        fontPackage: json['icon_package'],
-      );
-    }
-
     return CurrencyItem(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       code: json['code'] ?? '',
       rate: json['rate'] ?? '',
       isBase: json['isBase'] ?? false,
-      icon: iconData,
+      iconCode: json['icon_code'] is int
+          ? json['icon_code']
+          : (json['icon_code'] != null
+                ? int.tryParse(json['icon_code'].toString())
+                : null),
+      iconFamily: json['icon_family'],
+      iconPackage: json['icon_package'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> map = {
+    return {
       'id': id,
       'name': name,
       'code': code,
       'rate': rate,
       'isBase': isBase,
+      'icon_code': iconCode,
+      'icon_family': iconFamily,
+      'icon_package': iconPackage,
     };
-
-    if (icon is IconData) {
-      final data = icon as IconData;
-      map['icon_code'] = data.codePoint;
-      map['icon_family'] = data.fontFamily;
-      map['icon_package'] = data.fontPackage;
-    }
-
-    return map;
   }
 }
 

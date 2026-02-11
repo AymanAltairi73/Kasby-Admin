@@ -54,13 +54,7 @@ class CurrencySettingsScreen extends StatelessWidget {
               color: KasbyColors.primaryGold.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              currency.icon is IconData
-                  ? currency.icon
-                  : FontAwesomeIcons.coins,
-              color: KasbyColors.primaryGold,
-              size: 24,
-            ),
+            child: _buildCurrencyIcon(currency),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -204,7 +198,15 @@ class CurrencySettingsScreen extends StatelessWidget {
                       code: codeController.text,
                       rate: rateController.text,
                       isBase: isBase.value,
-                      icon: currency?.icon ?? FontAwesomeIcons.coins,
+                      iconCode:
+                          currency?.iconCode ??
+                          FontAwesomeIcons.coins.codePoint,
+                      iconFamily:
+                          currency?.iconFamily ??
+                          FontAwesomeIcons.coins.fontFamily,
+                      iconPackage:
+                          currency?.iconPackage ??
+                          FontAwesomeIcons.coins.fontPackage,
                     );
 
                     if (currency == null) {
@@ -278,6 +280,26 @@ class CurrencySettingsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCurrencyIcon(CurrencyItem currency) {
+    if (currency.iconCode == null) {
+      return const Icon(
+        FontAwesomeIcons.coins,
+        color: KasbyColors.primaryGold,
+        size: 24,
+      );
+    }
+
+    return Text(
+      String.fromCharCode(currency.iconCode!),
+      style: TextStyle(
+        fontFamily: currency.iconFamily ?? 'MaterialIcons',
+        package: currency.iconPackage,
+        fontSize: 24,
+        color: KasbyColors.primaryGold,
       ),
     );
   }
