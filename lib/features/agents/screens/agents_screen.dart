@@ -719,6 +719,7 @@ class AgentsScreen extends StatelessWidget {
     final emailController = TextEditingController();
     final telegramController = TextEditingController();
     final whatsappController = TextEditingController();
+    final notesController = TextEditingController();
 
     final isFormValid = false.obs;
 
@@ -794,6 +795,13 @@ class AgentsScreen extends StatelessWidget {
               prefixIcon: Icons.alternate_email_rounded,
               validator: ValidationUtils.validateEmail,
             ),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: notesController,
+              labelText: 'الملاحظات',
+              prefixIcon: Icons.note_add_rounded,
+              maxLines: 3,
+            ),
           ],
         ),
       ),
@@ -815,6 +823,7 @@ class AgentsScreen extends StatelessWidget {
                           whatsapp: whatsappController.text,
                           telegram: telegramController.text,
                           email: emailController.text,
+                          notes: notesController.text,
                         );
                       },
                     );
@@ -854,6 +863,7 @@ class AgentsScreen extends StatelessWidget {
 
     final telegramController = TextEditingController(text: agent.telegram);
     final whatsappController = TextEditingController(text: agent.whatsapp);
+    final notesController = TextEditingController(text: agent.notes);
 
     final isFormValid = true.obs;
 
@@ -941,6 +951,13 @@ class AgentsScreen extends StatelessWidget {
                 controller: addressController,
                 labelText: 'العنوان بالتفصيل',
                 prefixIcon: Icons.location_on_rounded,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: notesController,
+                labelText: 'الملاحظات',
+                prefixIcon: Icons.edit_note_rounded,
+                maxLines: 3,
               ),
             ],
           ),
@@ -1175,6 +1192,37 @@ class AgentsScreen extends StatelessWidget {
                     DateFormat('dd MMMM yyyy', 'en').format(agent.createdAt),
                     Icons.calendar_month_rounded,
                   ),
+                  if (agent.notes.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'ملاحظات إضافية',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: KasbyColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        agent.notes,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
 

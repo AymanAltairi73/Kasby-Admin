@@ -114,6 +114,7 @@ class AgentController extends GetxController {
     required String whatsapp,
     required String telegram,
     required String email,
+    String notes = '',
     bool isAvailableNow = true,
     List<String> supportedMethods = const ['WhatsApp', 'Telegram', 'Call'],
   }) async {
@@ -135,6 +136,7 @@ class AgentController extends GetxController {
       supportedMethods: supportedMethods,
       successRate: 0.0,
       totalTransactions: 0,
+      notes: notes,
       createdAt: DateTime.now(),
     );
 
@@ -173,6 +175,7 @@ class AgentController extends GetxController {
         supportedMethods: updates['supportedMethods'] ?? old.supportedMethods,
         successRate: old.successRate,
         totalTransactions: old.totalTransactions,
+        notes: updates['notes'] ?? old.notes,
         createdAt: old.createdAt,
       );
 

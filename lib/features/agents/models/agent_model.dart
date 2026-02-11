@@ -15,6 +15,7 @@ class Agent {
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
   final double successRate;
   final int totalTransactions;
+  final String notes; // New
   final DateTime createdAt;
 
   Agent({
@@ -33,6 +34,7 @@ class Agent {
     required this.supportedMethods,
     required this.successRate,
     required this.totalTransactions,
+    this.notes = '',
     required this.createdAt,
   });
 
@@ -51,6 +53,7 @@ class Agent {
     List<String>? supportedMethods,
     double? successRate,
     int? totalTransactions,
+    String? notes,
     DateTime? createdAt,
   }) {
     return Agent(
@@ -69,6 +72,7 @@ class Agent {
       supportedMethods: supportedMethods ?? this.supportedMethods,
       successRate: successRate ?? this.successRate,
       totalTransactions: totalTransactions ?? this.totalTransactions,
+      notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -90,6 +94,7 @@ class Agent {
       supportedMethods: List<String>.from(json['supportedMethods'] ?? []),
       successRate: (json['successRate'] ?? 0.0).toDouble(),
       totalTransactions: json['totalTransactions'] ?? 0,
+      notes: json['notes'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -113,6 +118,7 @@ class Agent {
       'supportedMethods': supportedMethods,
       'successRate': successRate,
       'totalTransactions': totalTransactions,
+      'notes': notes,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -135,6 +141,7 @@ class Agent {
         supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
         successRate: 98.5,
         totalTransactions: 1250,
+        notes: 'وكيل معتمد في منطقة المنصور، يتميز بسرعة الاستجابة.',
         createdAt: DateTime.now().subtract(const Duration(days: 180)),
       ),
       Agent(
