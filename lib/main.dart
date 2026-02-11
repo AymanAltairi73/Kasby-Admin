@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'core/theme/kasby_colors.dart';
 import 'core/theme/kasby_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/otp_screen.dart';
 import 'features/auth/screens/forgot_password_screen.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/dashboard/screens/main_wrapper.dart';
 import 'features/users/screens/user_list_screen.dart';
 import 'features/investments/screens/investment_plans_screen.dart';
@@ -36,6 +36,7 @@ import 'core/services/audio_service.dart';
 import 'features/loans/controllers/loan_controller.dart';
 import 'features/loans/screens/loans_screen.dart';
 import 'features/settings/controllers/settings_management_controller.dart';
+import 'features/gamification/controllers/rewards_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +59,7 @@ Future<void> main() async {
   Get.put(AuditController());
   Get.put(AudioService());
   Get.put(ChatController());
+  Get.put(RewardsController());
 
   runApp(const KasbyAdminApp());
 }
@@ -80,8 +82,8 @@ class KasbyAdminApp extends StatelessWidget {
       locale: const Locale('ar', 'SA'),
       fallbackLocale: const Locale('en', 'US'),
 
-      // Routes
-      initialRoute: '/login',
+      // Routes (Home handles entry logic)
+      home: const AuthWrapper(),
       getPages: [
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/otp', page: () => const OtpScreen()),
@@ -118,7 +120,6 @@ class KasbyAdminApp extends StatelessWidget {
       ],
 
       // Check if user is already logged in
-      home: const AuthWrapper(),
     );
   }
 }
@@ -132,8 +133,16 @@ class AuthWrapper extends StatelessWidget {
     final authController = Get.find<AuthController>();
 
     return Obx(() {
+      if (authController.isCheckingAuth.value) {
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: KasbyColors.primaryGold),
+          ),
+        );
+      }
+
       if (authController.isLoggedIn.value) {
-        return const DashboardScreen();
+        return const MainWrapper(); // Use MainWrapper for proper navigation setup
       } else {
         return const LoginScreen();
       }

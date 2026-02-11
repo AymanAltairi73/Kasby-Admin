@@ -8,6 +8,7 @@ class AuthController extends GetxController {
   // Observable state
   final isLoading = false.obs;
   final isLoggedIn = false.obs;
+  final isCheckingAuth = true.obs;
   final userRole = ''.obs;
   final userName = ''.obs;
   final generatedOtp = ''.obs;
@@ -25,13 +26,17 @@ class AuthController extends GetxController {
 
   /// Check if user is already logged in
   Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    final role = prefs.getString('user_role');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final role = prefs.getString('user_role');
 
-    if (token != null && token.isNotEmpty) {
-      isLoggedIn.value = true;
-      userRole.value = role ?? 'Admin';
+      if (token != null && token.isNotEmpty) {
+        isLoggedIn.value = true;
+        userRole.value = role ?? 'Admin';
+      }
+    } finally {
+      isCheckingAuth.value = false;
     }
 
     // Check biometric availability
@@ -154,7 +159,10 @@ class AuthController extends GetxController {
   /// Logout
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Only clear session data, keep preferences
+    await prefs.remove('auth_token');
+    await prefs.remove('user_role');
+
     isLoggedIn.value = false;
     userRole.value = '';
     Get.offAllNamed('/login');

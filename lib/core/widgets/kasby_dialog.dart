@@ -116,7 +116,7 @@ class KasbyDialog extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                content,
+                Flexible(child: content),
                 if (actions != null) ...[
                   const SizedBox(height: 32),
                   Row(
