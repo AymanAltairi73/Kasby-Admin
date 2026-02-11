@@ -8,6 +8,7 @@ import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_dialog.dart';
 import '../controllers/rewards_controller.dart';
+import '../models/reward_model.dart';
 
 /// Rewards Screen
 /// Manage daily rewards, spin wheel, and points system
@@ -302,16 +303,45 @@ class RewardsScreen extends StatelessWidget {
     BuildContext context,
     RewardsController controller,
   ) {
+    // Local state for the dialog
+    final localRewards = List<Reward>.from(controller.rewards);
+    final localPrizes = List<Prize>.from(controller.prizes);
+    final localEarnRules = List<PointRule>.from(controller.pointsEarnRules);
+    final localRedeemRules = List<PointRule>.from(controller.pointsRedeemRules);
+
     Get.dialog(
       KasbyDialog(
         title: 'تعديل قيم المكافآت',
+        actions: [
+          KasbyButton(
+            text: 'إلغاء',
+            onPressed: () => Get.back(),
+            isOutlined: true,
+            width: 100,
+          ),
+          const SizedBox(width: 12),
+          KasbyButton(
+            text: 'حفظ التعديلات',
+            onPressed: () async {
+              await controller.updateAllSettings(
+                updatedRewards: localRewards,
+                updatedPrizes: localPrizes,
+                updatedEarnRules: localEarnRules,
+                updatedRedeemRules: localRedeemRules,
+              );
+              Get.back();
+              Get.snackbar('نجح', 'تم حفظ التعديلات بنجاح');
+            },
+            width: 150,
+          ),
+        ],
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- Daily Rewards Section ---
               _buildSectionTitle('المكافآت اليومية'),
-              ...controller.rewards.map((reward) {
+              ...localRewards.map((Reward reward) {
                 final pointsController = TextEditingController(
                   text: reward.points.toString(),
                 );
@@ -320,7 +350,8 @@ class RewardsScreen extends StatelessWidget {
                   controller: pointsController,
                   onSave: (val) {
                     final points = int.tryParse(val) ?? reward.points;
-                    controller.updateReward(reward.copyWith(points: points));
+                    final index = localRewards.indexOf(reward);
+                    localRewards[index] = reward.copyWith(points: points);
                   },
                 );
               }),
@@ -328,13 +359,14 @@ class RewardsScreen extends StatelessWidget {
               const SizedBox(height: 20),
               // --- Point Rules Section ---
               _buildSectionTitle('قواعد كسب النقاط'),
-              ...controller.pointsEarnRules.map((rule) {
+              ...localEarnRules.map((PointRule rule) {
                 final valController = TextEditingController(text: rule.points);
                 return _buildEditField(
                   label: rule.action,
                   controller: valController,
                   onSave: (val) {
-                    controller.updatePointRule(rule.copyWith(points: val));
+                    final index = localEarnRules.indexOf(rule);
+                    localEarnRules[index] = rule.copyWith(points: val);
                   },
                 );
               }),
@@ -342,13 +374,14 @@ class RewardsScreen extends StatelessWidget {
               const SizedBox(height: 20),
               // --- Point Redemption Section ---
               _buildSectionTitle('قواعد استبدال النقاط'),
-              ...controller.pointsRedeemRules.map((rule) {
+              ...localRedeemRules.map((PointRule rule) {
                 final valController = TextEditingController(text: rule.points);
                 return _buildEditField(
                   label: rule.action,
                   controller: valController,
                   onSave: (val) {
-                    controller.updatePointRule(rule.copyWith(points: val));
+                    final index = localRedeemRules.indexOf(rule);
+                    localRedeemRules[index] = rule.copyWith(points: val);
                   },
                 );
               }),
@@ -356,13 +389,14 @@ class RewardsScreen extends StatelessWidget {
               const SizedBox(height: 20),
               // --- Spin Wheel Section ---
               _buildSectionTitle('جوائز عجلة الحظ'),
-              ...controller.prizes.map((prize) {
+              ...localPrizes.map((Prize prize) {
                 final valController = TextEditingController(text: prize.label);
                 return _buildEditField(
                   label: 'الجائزة ${prize.id}',
                   controller: valController,
                   onSave: (val) {
-                    controller.updatePrize(prize.copyWith(label: val));
+                    final index = localPrizes.indexOf(prize);
+                    localPrizes[index] = prize.copyWith(label: val);
                   },
                 );
               }),

@@ -208,7 +208,7 @@ class RewardsController extends GetxController {
     }
   }
 
-  /// Update spin wheel prize
+  /// Update prize on the wheel
   Future<void> updatePrize(Prize updatedPrize) async {
     final index = prizes.indexWhere((p) => p.id == updatedPrize.id);
     if (index != -1) {
@@ -220,5 +220,29 @@ class RewardsController extends GetxController {
         details: 'تم تعديل جائزة ${updatedPrize.label}',
       );
     }
+  }
+
+  /// Update all settings at once (Batch)
+  Future<void> updateAllSettings({
+    required List<Reward> updatedRewards,
+    required List<Prize> updatedPrizes,
+    required List<PointRule> updatedEarnRules,
+    required List<PointRule> updatedRedeemRules,
+  }) async {
+    isLoading.value = true;
+
+    rewards.assignAll(updatedRewards);
+    prizes.assignAll(updatedPrizes);
+    pointsEarnRules.assignAll(updatedEarnRules);
+    pointsRedeemRules.assignAll(updatedRedeemRules);
+
+    await saveSettings();
+    await AuditLogger.log(
+      adminName: 'Admin',
+      action: 'تحديث شامل لإعدادات المكافآت',
+      details: 'تم تحديث قيم المكافآت، الجوائز وقواعد النقاط.',
+    );
+
+    isLoading.value = false;
   }
 }
