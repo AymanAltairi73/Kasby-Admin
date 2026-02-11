@@ -51,6 +51,7 @@ class KasbyTextField extends StatelessWidget {
         hintText: hintText,
         labelText: labelText,
         labelStyle: const TextStyle(color: KasbyColors.textSecondary),
+        errorStyle: const TextStyle(color: KasbyColors.error, fontSize: 12),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: KasbyColors.primaryGold)
             : null,
@@ -60,6 +61,31 @@ class KasbyTextField extends StatelessWidget {
                 onPressed: onSuffixIconTap,
               )
             : null,
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: KasbyColors.primaryGold,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: KasbyColors.error, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: KasbyColors.error, width: 1.5),
+        ),
       ),
     );
   }

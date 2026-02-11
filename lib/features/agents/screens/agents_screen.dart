@@ -7,6 +7,10 @@ import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/kasby_dialog.dart';
+import '../../../core/widgets/kasby_confirmation_dialog.dart';
+import '../../../core/utils/validation_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
 import '../../../core/models/time_filter.dart';
@@ -705,6 +709,7 @@ class AgentsScreen extends StatelessWidget {
     BuildContext context,
     AgentController controller,
   ) {
+    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final countryController = TextEditingController(text: 'العراق');
     final provinceController = TextEditingController();
@@ -712,132 +717,124 @@ class AgentsScreen extends StatelessWidget {
     final addressController = TextEditingController();
     final phoneController = TextEditingController(text: '+964');
     final emailController = TextEditingController();
+    final telegramController = TextEditingController();
+    final whatsappController = TextEditingController();
 
-    Get.dialog(
-      BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: Colors.transparent,
-          contentPadding: EdgeInsets.zero,
-          content: KasbyGlassCard(
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'إضافة وكيل جديد',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: KasbyColors.primaryGold,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  KasbyTextField(
-                    controller: nameController,
-                    hintText: 'اسم الوكيل',
-                    prefixIcon: Icons.person_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
+    final isFormValid = false.obs;
+
+    void validate() {
+      isFormValid.value = formKey.currentState?.validate() ?? false;
+    }
+
+    KasbyDialog.show(
+      title: 'إضافة وكيل جديد',
+      content: Form(
+        key: formKey,
+        onChanged: validate,
+        child: Column(
+          children: [
+            KasbyTextField(
+              controller: nameController,
+              labelText: 'الاسم الكامل للوكيل',
+              prefixIcon: Icons.person_rounded,
+              validator: (v) => ValidationUtils.validateRequired(v, 'الاسم'),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: KasbyTextField(
                     controller: countryController,
-                    hintText: 'البلد',
-                    prefixIcon: Icons.location_on_rounded,
+                    labelText: 'الدولة',
+                    prefixIcon: Icons.public_rounded,
+                    validator: (v) =>
+                        ValidationUtils.validateRequired(v, 'الدولة'),
                   ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: KasbyTextField(
                     controller: cityController,
-                    hintText: 'المدينة',
+                    labelText: 'المدينة',
                     prefixIcon: Icons.location_city_rounded,
+                    validator: (v) =>
+                        ValidationUtils.validateRequired(v, 'المدينة'),
                   ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: provinceController,
-                    hintText: 'المحافظة',
-                    prefixIcon: Icons.map_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: addressController,
-                    hintText: 'العنوان بالتفصيل',
-                    prefixIcon: Icons.home_work_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: phoneController,
-                    hintText: 'رقم الهاتف',
-                    keyboardType: TextInputType.phone,
-                    prefixIcon: Icons.phone_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: emailController,
-                    hintText: 'البريد الإلكتروني',
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.email_rounded,
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Get.back(),
-                          child: Text(
-                            'إلغاء',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: KasbyColors.primaryGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextButton(
-                            onPressed: () {
-                              if (nameController.text.isNotEmpty &&
-                                  countryController.text.isNotEmpty &&
-                                  cityController.text.isNotEmpty &&
-                                  phoneController.text.isNotEmpty &&
-                                  emailController.text.isNotEmpty) {
-                                controller.createAgent(
-                                  name: nameController.text,
-                                  country: countryController.text,
-                                  province: provinceController.text,
-                                  city: cityController.text,
-                                  address: addressController.text,
-                                  phone: phoneController.text,
-                                  email: emailController.text,
-                                );
-                                Get.back();
-                              } else {
-                                Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
-                              }
-                            },
-                            child: const Text(
-                              'إضافة',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: phoneController,
+              labelText: 'رقم الهاتف (مع كود الدولة)',
+              keyboardType: TextInputType.phone,
+              prefixIcon: Icons.phone_android_rounded,
+              validator: ValidationUtils.validatePhone,
+            ),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: whatsappController,
+              labelText: 'رقم واتساب (اختياري)',
+              keyboardType: TextInputType.phone,
+              prefixIcon: FontAwesomeIcons.whatsapp,
+              validator: ValidationUtils.validateWhatsApp,
+            ),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: telegramController,
+              labelText: 'معرف تيليجرام (اختياري)',
+              prefixIcon: FontAwesomeIcons.telegram,
+              validator: ValidationUtils.validateTelegram,
+            ),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: emailController,
+              labelText: 'البريد الإلكتروني (اختياري)',
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: Icons.alternate_email_rounded,
+              validator: ValidationUtils.validateEmail,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        Obx(
+          () => ElevatedButton(
+            onPressed: isFormValid.value
+                ? () {
+                    KasbyConfirmationDialog.show(
+                      message: 'هل أنت متأكد من إضافة هذا الوكيل؟',
+                      onConfirm: () async {
+                        await controller.createAgent(
+                          name: nameController.text,
+                          country: countryController.text,
+                          province: provinceController.text,
+                          city: cityController.text,
+                          address: addressController.text,
+                          phone: phoneController.text,
+                          whatsapp: whatsappController.text,
+                          telegram: telegramController.text,
+                          email: emailController.text,
+                        );
+                      },
+                    );
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KasbyColors.primaryGold,
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.white12,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
+            ),
+            child: const Text(
+              'حفظ',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -846,6 +843,7 @@ class AgentsScreen extends StatelessWidget {
     Agent agent,
     AgentController controller,
   ) {
+    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: agent.name);
     final countryController = TextEditingController(text: agent.country);
     final provinceController = TextEditingController(text: agent.province);
@@ -854,131 +852,137 @@ class AgentsScreen extends StatelessWidget {
     final phoneController = TextEditingController(text: agent.phone);
     final emailController = TextEditingController(text: agent.email);
 
-    Get.dialog(
-      BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: Colors.transparent,
-          contentPadding: EdgeInsets.zero,
-          content: KasbyGlassCard(
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+    final telegramController = TextEditingController(text: agent.telegram);
+    final whatsappController = TextEditingController(text: agent.whatsapp);
+
+    final isFormValid = true.obs;
+
+    void validate() {
+      isFormValid.value = formKey.currentState?.validate() ?? false;
+    }
+
+    KasbyDialog.show(
+      title: 'تعديل بيانات الوكيل',
+      content: Form(
+        key: formKey,
+        onChanged: validate,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              KasbyTextField(
+                controller: nameController,
+                labelText: 'الاسم الكامل',
+                prefixIcon: Icons.person_rounded,
+                validator: (v) => ValidationUtils.validateRequired(v, 'الاسم'),
+              ),
+              const SizedBox(height: 16),
+              Row(
                 children: [
-                  const Text(
-                    'تعديل بيانات الوكيل',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: KasbyColors.primaryGold,
+                  Expanded(
+                    child: KasbyTextField(
+                      controller: countryController,
+                      labelText: 'الدولة',
+                      prefixIcon: Icons.public_rounded,
+                      validator: (v) =>
+                          ValidationUtils.validateRequired(v, 'الدولة'),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  KasbyTextField(
-                    controller: nameController,
-                    hintText: 'اسم الوكيل',
-                    prefixIcon: Icons.person_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: countryController,
-                    hintText: 'البلد',
-                    prefixIcon: Icons.location_on_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: cityController,
-                    hintText: 'المدينة',
-                    prefixIcon: Icons.location_city_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: provinceController,
-                    hintText: 'المحافظة',
-                    prefixIcon: Icons.map_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: addressController,
-                    hintText: 'العنوان بالتفصيل',
-                    prefixIcon: Icons.home_work_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: phoneController,
-                    hintText: 'رقم الهاتف',
-                    keyboardType: TextInputType.phone,
-                    prefixIcon: Icons.phone_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  KasbyTextField(
-                    controller: emailController,
-                    hintText: 'البريد الإلكتروني',
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.email_rounded,
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Get.back(),
-                          child: Text(
-                            'إلغاء',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: KasbyColors.primaryGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextButton(
-                            onPressed: () {
-                              if (nameController.text.isNotEmpty &&
-                                  countryController.text.isNotEmpty &&
-                                  cityController.text.isNotEmpty &&
-                                  phoneController.text.isNotEmpty &&
-                                  emailController.text.isNotEmpty) {
-                                controller.updateAgent(agent.id, {
-                                  'name': nameController.text,
-                                  'country': countryController.text,
-                                  'province': provinceController.text,
-                                  'city': cityController.text,
-                                  'address': addressController.text,
-                                  'phone': phoneController.text,
-                                  'email': emailController.text,
-                                });
-                                Get.back();
-                              } else {
-                                Get.snackbar('خطأ', 'الرجاء ملء جميع الحقول');
-                              }
-                            },
-                            child: const Text(
-                              'حفظ',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: KasbyTextField(
+                      controller: cityController,
+                      labelText: 'المدينة',
+                      prefixIcon: Icons.location_city_rounded,
+                      validator: (v) =>
+                          ValidationUtils.validateRequired(v, 'المدينة'),
+                    ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: phoneController,
+                labelText: 'رقم الهاتف',
+                keyboardType: TextInputType.phone,
+                prefixIcon: Icons.phone_android_rounded,
+                validator: ValidationUtils.validatePhone,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: whatsappController,
+                labelText: 'رقم واتساب',
+                keyboardType: TextInputType.phone,
+                prefixIcon: FontAwesomeIcons.whatsapp,
+                validator: ValidationUtils.validateWhatsApp,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: telegramController,
+                labelText: 'معرف تيليجرام',
+                prefixIcon: FontAwesomeIcons.telegram,
+                validator: ValidationUtils.validateTelegram,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: emailController,
+                labelText: 'البريد الإلكتروني',
+                keyboardType: TextInputType.emailAddress,
+                prefixIcon: Icons.alternate_email_rounded,
+                validator: ValidationUtils.validateEmail,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: provinceController,
+                labelText: 'المحافظة',
+                prefixIcon: Icons.map_rounded,
+              ),
+              const SizedBox(height: 16),
+              KasbyTextField(
+                controller: addressController,
+                labelText: 'العنوان بالتفصيل',
+                prefixIcon: Icons.location_on_rounded,
+              ),
+            ],
           ),
         ),
       ),
+      actions: [
+        Obx(
+          () => ElevatedButton(
+            onPressed: isFormValid.value
+                ? () {
+                    KasbyConfirmationDialog.show(
+                      message: 'هل أنت متأكد من تعديل بيانات الوكيل؟',
+                      onConfirm: () {
+                        controller.updateAgent(agent.id, {
+                          'name': nameController.text,
+                          'phone': phoneController.text,
+                          'country': countryController.text,
+                          'city': cityController.text,
+                          'province': provinceController.text,
+                          'address': addressController.text,
+                          'whatsapp': whatsappController.text,
+                          'telegram': telegramController.text,
+                          'email': emailController.text,
+                        });
+                      },
+                    );
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: KasbyColors.primaryGold,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'حفظ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -987,36 +991,16 @@ class AgentsScreen extends StatelessWidget {
     Agent agent,
     AgentController controller,
   ) {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('تأكيد الحذف'),
-        content: Text(
-          'هل أنت متأكد من حذف الوكيل "${agent.name}"؟ لا يمكن التراجع عن هذا الإجراء.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              controller.deleteAgent(agent.id);
-              Get.back(); // Close confirmation
-              Get.back(); // Close details dialog
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KasbyColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('حذف'),
-          ),
-        ],
-      ),
+    KasbyConfirmationDialog.show(
+      title: 'حذف الوكيل',
+      message:
+          'هل أنت متأكد من حذف الوكيل "${agent.name}"؟ لا يمكن التراجع عن هذه العملية.',
+      isDangerous: true,
+      confirmText: 'حذف',
+      onConfirm: () {
+        controller.deleteAgent(agent.id);
+        if (Get.isDialogOpen ?? false) Get.back();
+      },
     );
   }
 
@@ -1211,44 +1195,31 @@ class AgentsScreen extends StatelessWidget {
                         icon: FontAwesomeIcons.whatsapp,
                         color: const Color(0xFF25D366),
                         label: 'واتساب',
-                        onPressed: () {
-                          // Placeholder for WhatsApp logic
-                        },
+                        onPressed: () => _launchUrl(
+                          'https://wa.me/${agent.whatsapp.replaceAll('+', '')}',
+                          fallbackMessage:
+                              'يرجى التأكد من تثبيت واتساب على جهازك',
+                        ),
                       ),
                       _buildCommunicationButton(
                         icon: FontAwesomeIcons.telegram,
                         color: const Color(0xFF24A1DE),
                         label: 'تليجرام',
-                        onPressed: () {
-                          // Placeholder for Telegram logic
-                        },
+                        onPressed: () => _launchUrl(
+                          agent.telegram.startsWith('http')
+                              ? agent.telegram
+                              : 'https://t.me/${agent.telegram.replaceAll('@', '')}',
+                          fallbackMessage:
+                              'يرجى التأكد من تثبيت تليجرام على جهازك',
+                        ),
                       ),
                       _buildCommunicationButton(
                         icon: Icons.phone_forwarded_rounded,
                         color: KasbyColors.info,
                         label: 'اتصال',
-                        onPressed: () {
-                          // Placeholder for Call logic
-                        },
+                        onPressed: () => _launchUrl('tel:${agent.phone}'),
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Close Button
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'إغلاق النافذة',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -1257,6 +1228,26 @@ class AgentsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar(
+          'تنبيه',
+          fallbackMessage ??
+              'لا يمكن فتح الرابط، يرجى التأكد من تثبيت التطبيق المطلوب',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: KasbyColors.warning.withValues(alpha: 0.8),
+          colorText: Colors.black,
+        );
+      }
+    } catch (e) {
+      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط');
+    }
   }
 
   Widget _buildDetailStatCard({

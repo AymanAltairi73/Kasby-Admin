@@ -7,6 +7,8 @@ class Agent {
   final String city;
   final String address; // New
   final String phone;
+  final String whatsapp; // New
+  final String telegram; // New
   final String email;
   final String status; // Active, Inactive
   final bool isAvailableNow;
@@ -23,6 +25,8 @@ class Agent {
     required this.city,
     required this.address,
     required this.phone,
+    required this.whatsapp,
+    required this.telegram,
     required this.email,
     required this.status,
     required this.isAvailableNow,
@@ -41,6 +45,8 @@ class Agent {
       city: json['city'] ?? '',
       address: json['address'] ?? '',
       phone: json['phone'] ?? '',
+      whatsapp: json['whatsapp'] ?? (json['phone'] ?? ''),
+      telegram: json['telegram'] ?? '',
       email: json['email'] ?? '',
       status: json['status'] ?? 'Active',
       isAvailableNow: json['isAvailableNow'] ?? false,
@@ -62,6 +68,8 @@ class Agent {
       'city': city,
       'address': address,
       'phone': phone,
+      'whatsapp': whatsapp,
+      'telegram': telegram,
       'email': email,
       'status': status,
       'isAvailableNow': isAvailableNow,
@@ -82,6 +90,8 @@ class Agent {
         city: 'بغداد',
         address: 'شارع المنصور، قرب المتنبي',
         phone: '+9647701234567',
+        whatsapp: '+9647701234567',
+        telegram: 'baghdad_agent',
         email: 'baghdad@kasby.com',
         status: 'Active',
         isAvailableNow: true,
@@ -98,6 +108,8 @@ class Agent {
         city: 'البصرة',
         address: 'شارع الجزائر، المعقل',
         phone: '+9647801234567',
+        whatsapp: '+9647801234567',
+        telegram: 'basra_agent',
         email: 'basra@kasby.com',
         status: 'Active',
         isAvailableNow: true,
@@ -114,6 +126,8 @@ class Agent {
         city: 'أربيل',
         address: 'طريق عينكاوة، حي بختياري',
         phone: '+9647501234567',
+        whatsapp: '+9647501234567',
+        telegram: 'erbil_agent',
         email: 'erbil@kasby.com',
         status: 'Active',
         isAvailableNow: true,
@@ -130,6 +144,8 @@ class Agent {
         city: 'كربلاء',
         address: 'حي البلدي، مقابل القبلة',
         phone: '+9647711234567',
+        whatsapp: '+9647711234567',
+        telegram: 'karbala_agent',
         email: 'karbala@kasby.com',
         status: 'Active',
         isAvailableNow: true,
@@ -146,6 +162,8 @@ class Agent {
         city: 'النجف الأشرف',
         address: 'حي السعد، شارع الكوفة',
         phone: '+9647811234567',
+        whatsapp: '+9647811234567',
+        telegram: 'najaf_agent',
         email: 'najaf@kasby.com',
         status: 'Active',
         isAvailableNow: true,

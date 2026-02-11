@@ -7,6 +7,9 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
+import '../../../core/widgets/kasby_dialog.dart';
+import '../../../core/widgets/kasby_confirmation_dialog.dart';
+import '../../../core/utils/validation_utils.dart';
 import '../models/user_model.dart';
 import '../controllers/user_controller.dart';
 import '../../chat/models/chat_model.dart';
@@ -69,16 +72,22 @@ class UserDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
-                  Future.delayed(Duration.zero, () {
-                    if (user.status == 'Active') {
-                      userController.blockUser(user.id);
-                    } else {
-                      userController.activateUser(user.id);
-                    }
-                    if (Get.isOverlaysOpen) {
-                      Get.back();
-                    }
-                  });
+                  KasbyConfirmationDialog.show(
+                    title: user.status == 'Active'
+                        ? 'حظر المستخدم'
+                        : 'تفعيل المستخدم',
+                    message: user.status == 'Active'
+                        ? 'هل أنت متأكد من حظر المستخدم "${user.name}"؟'
+                        : 'هل أنت متأكد من تفعيل المستخدم "${user.name}"؟',
+                    isDangerous: user.status == 'Active',
+                    onConfirm: () {
+                      if (user.status == 'Active') {
+                        userController.blockUser(user.id);
+                      } else {
+                        userController.activateUser(user.id);
+                      }
+                    },
+                  );
                 },
               ),
               const PopupMenuDivider(),
@@ -808,100 +817,122 @@ class UserDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCommunicationButton({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Column(
+  void _showDeleteConfirmation(UserController controller) {
+    KasbyConfirmationDialog.show(
+      title: 'حذف المستخدم',
+      message:
+          'هل أنت متأكد من حذف المستخدم "${user.name}" نهائياً؟ لا يمكن التراجع عن هذه العملية.',
+      isDangerous: true,
+      confirmText: 'حذف',
+      onConfirm: () {
+        controller.deleteUser(user.id);
+        Get.back(); // Back to list
+      },
+    );
+  }
+
+  void _showVerifyConfirmation(
+    BuildContext context,
+    UserController controller,
+  ) {
+    KasbyConfirmationDialog.show(
+      title: 'توثيق الحساب',
+      message:
+          'هل أنت متأكد من قبول وثائق "${user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
+      confirmText: 'توثيق',
+      onConfirm: () {
+        controller.verifyDocuments(user.id);
+      },
+    );
+  }
+
+  void _showRejectDialog(BuildContext context, UserController controller) {
+    final reasonController = TextEditingController();
+
+    KasbyDialog.show(
+      title: 'رفض الوثائق',
+      content: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: color.withValues(alpha: 0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Icon(icon, size: 24, color: color),
+          const Text(
+            'يرجى ذكر سبب رفض الوثائق لإشعار المستخدم.',
+            style: TextStyle(color: KasbyColors.textSecondary, fontSize: 13),
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          const SizedBox(height: 16),
+          KasbyTextField(
+            controller: reasonController,
+            labelText: 'سبب الرفض',
+            hintText: 'مثلاً: الصورة غير واضحة',
+            maxLines: 2,
           ),
         ],
       ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            if (reasonController.text.isNotEmpty) {
+              KasbyConfirmationDialog.show(
+                message: 'هل أنت متأكد من رفض وثائق المستخدم؟',
+                isDangerous: true,
+                confirmText: 'رفض',
+                onConfirm: () {
+                  controller.rejectDocuments(user.id, reasonController.text);
+                },
+              );
+            } else {
+              Get.snackbar('تنبيه', 'يرجى كتابة سبب الرفض');
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KasbyColors.error,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text(
+            'رفض',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 
   void _showAddBalanceDialog(BuildContext context, UserController controller) {
     final amountController = TextEditingController();
-    final reasonController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text(
-          'إضافة رصيد',
-          style: TextStyle(color: KasbyColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KasbyTextField(
-              controller: amountController,
-              hintText: 'المبلغ',
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.attach_money,
-            ),
-            const SizedBox(height: 12),
-            KasbyTextField(
-              controller: reasonController,
-              hintText: 'السبب',
-              maxLines: 3,
-              prefixIcon: Icons.note,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final amount = double.tryParse(amountController.text) ?? 0;
-              if (amount > 0 && reasonController.text.isNotEmpty) {
-                controller.addBalance(user.id, amount, reasonController.text);
-                Get.back();
-              } else {
-                Get.snackbar('خطأ', 'الرجاء إدخال مبلغ وسبب صحيحين');
-              }
-            },
-            child: const Text(
-              'إضافة',
-              style: TextStyle(color: KasbyColors.primaryGold),
-            ),
-          ),
-        ],
+    KasbyDialog.show(
+      title: 'إضافة رصيد',
+      content: KasbyTextField(
+        controller: amountController,
+        labelText: 'المبلغ (\$)',
+        keyboardType: TextInputType.number,
+        prefixIcon: FontAwesomeIcons.dollarSign,
+        validator: (v) => ValidationUtils.validateRequired(v, 'المبلغ'),
       ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            if (amountController.text.isNotEmpty) {
+              KasbyConfirmationDialog.show(
+                message: 'إضافة \$${amountController.text} للمحفظة؟',
+                onConfirm: () => controller.addBalance(
+                  user.id,
+                  double.parse(amountController.text),
+                  'إضافة رصيد من قبل الإدارة',
+                ),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KasbyColors.success,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('تأكيد'),
+        ),
+      ],
     );
   }
 
@@ -910,308 +941,113 @@ class UserDetailsScreen extends StatelessWidget {
     UserController controller,
   ) {
     final amountController = TextEditingController();
-    final reasonController = TextEditingController();
-
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text(
-          'خصم رصيد',
-          style: TextStyle(color: KasbyColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KasbyTextField(
-              controller: amountController,
-              hintText: 'المبلغ',
-              keyboardType: TextInputType.number,
-              prefixIcon: Icons.attach_money,
-            ),
-            const SizedBox(height: 12),
-            KasbyTextField(
-              controller: reasonController,
-              hintText: 'السبب',
-              maxLines: 3,
-              prefixIcon: Icons.note,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final amount = double.tryParse(amountController.text) ?? 0;
-              if (amount > 0 && reasonController.text.isNotEmpty) {
-                controller.deductBalance(
-                  user.id,
-                  amount,
-                  reasonController.text,
-                );
-                Get.back();
-              } else {
-                Get.snackbar('خطأ', 'الرجاء إدخال مبلغ وسبب صحيحين');
-              }
-            },
-            child: const Text(
-              'خصم',
-              style: TextStyle(color: KasbyColors.error),
-            ),
-          ),
-        ],
+    KasbyDialog.show(
+      title: 'خصم رصيد',
+      content: KasbyTextField(
+        controller: amountController,
+        labelText: 'المبلغ (\$)',
+        keyboardType: TextInputType.number,
+        prefixIcon: FontAwesomeIcons.dollarSign,
+        validator: (v) => ValidationUtils.validateRequired(v, 'المبلغ'),
       ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            if (amountController.text.isNotEmpty) {
+              KasbyConfirmationDialog.show(
+                message: 'خصم \$${amountController.text} من المحفظة؟',
+                isDangerous: true,
+                onConfirm: () => controller.deductBalance(
+                  user.id,
+                  double.parse(amountController.text),
+                  'خصم رصيد من قبل الإدارة',
+                ),
+              );
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KasbyColors.error,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('خصم'),
+        ),
+      ],
     );
   }
 
   void _showEditUserDialog(BuildContext context, UserController controller) {
+    // Basic edit dialog for common fields
     final nameController = TextEditingController(text: user.name);
-    final emailController = TextEditingController(text: user.email);
-    final countryController = TextEditingController(text: user.country);
-    final provinceController = TextEditingController(text: user.province);
-    final cityController = TextEditingController(text: user.city);
-    final addressController = TextEditingController(text: user.address);
     final phoneController = TextEditingController(text: user.phone);
-
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        child: KasbyGlassCard(
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'تعديل بيانات المستخدم',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                KasbyTextField(
-                  controller: nameController,
-                  hintText: 'الاسم الكامل',
-                  prefixIcon: Icons.person_outline,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: emailController,
-                  hintText: 'البريد الإلكتروني',
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: countryController,
-                  hintText: 'الدولة',
-                  prefixIcon: Icons.public_rounded,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: provinceController,
-                  hintText: 'المحافظة',
-                  prefixIcon: Icons.map_rounded,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: cityController,
-                  hintText: 'المدينة',
-                  prefixIcon: Icons.location_city_rounded,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: addressController,
-                  hintText: 'العنوان بالتفصيل',
-                  prefixIcon: Icons.home_work_rounded,
-                ),
-                const SizedBox(height: 12),
-                KasbyTextField(
-                  controller: phoneController,
-                  hintText: 'رقم الهاتف',
-                  prefixIcon: Icons.phone_android_outlined,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text(
-                        'إلغاء',
-                        style: TextStyle(color: KasbyColors.textSecondary),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (nameController.text.isNotEmpty &&
-                            emailController.text.isNotEmpty &&
-                            phoneController.text.isNotEmpty) {
-                          final updatedUser = user.copyWith(
-                            name: nameController.text,
-                            email: emailController.text,
-                            country: countryController.text,
-                            province: provinceController.text,
-                            city: cityController.text,
-                            address: addressController.text,
-                            phone: phoneController.text,
-                          );
-                          controller.updateUser(updatedUser);
-                          Get.back();
-                        } else {
-                          Get.snackbar('خطأ', 'يرجى ملء جميع الحقول');
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: KasbyColors.primaryGold,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'حفظ التعديلات',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+    KasbyDialog.show(
+      title: 'تحديث البيانات',
+      content: Column(
+        children: [
+          KasbyTextField(
+            controller: nameController,
+            labelText: 'الاسم الكامل',
+            prefixIcon: Icons.person_rounded,
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation(UserController controller) {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'هل أنت متأكد من حذف المستخدم "${user.name}"؟ لا يمكن التراجع عن هذا الإجراء.',
-          style: const TextStyle(color: KasbyColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              controller.deleteUser(user.id);
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KasbyColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('حذف'),
+          const SizedBox(height: 16),
+          KasbyTextField(
+            controller: phoneController,
+            labelText: 'رقم الهاتف',
+            prefixIcon: Icons.phone_android_rounded,
           ),
         ],
       ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => controller.updateUser(
+            user.copyWith(
+              name: nameController.text,
+              phone: phoneController.text,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KasbyColors.primaryGold,
+            foregroundColor: Colors.black,
+          ),
+          child: const Text('حفظ التعديلات'),
+        ),
+      ],
     );
   }
 
-  void _showVerifyConfirmation(
-    BuildContext context,
-    UserController controller,
-  ) {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text(
-          'تأكيد التوثيق',
-          style: TextStyle(color: Colors.white),
+  Widget _buildCommunicationButton({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withValues(alpha: 0.5)),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
         ),
-        content: Text(
-          'هل أنت متأكد من قبول وثائق "${user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
-          style: const TextStyle(color: KasbyColors.textSecondary),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: KasbyColors.textSecondary,
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              controller.verifyDocuments(user.id);
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KasbyColors.success,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('توثيق'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRejectDialog(BuildContext context, UserController controller) {
-    final reasonController = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: KasbyColors.surface,
-        title: const Text('رفض الوثائق', style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'يرجى ذكر سبب رفض الوثائق لإشعار المستخدم.',
-              style: TextStyle(color: KasbyColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            KasbyTextField(
-              controller: reasonController,
-              hintText: 'سبب الرفض (مثلاً: الصورة غير واضحة)',
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(color: KasbyColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (reasonController.text.isNotEmpty) {
-                controller.rejectDocuments(user.id, reasonController.text);
-                Get.back();
-              } else {
-                Get.snackbar('Hata', 'يرجى كتابة سبب الرفض');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KasbyColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('رفض'),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
