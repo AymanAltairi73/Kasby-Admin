@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction_model.dart';
 import '../../users/controllers/user_controller.dart';
 import '../../../core/controllers/settings_controller.dart';
@@ -25,10 +27,28 @@ class TransactionController extends GetxController {
   /// Load transactions
   Future<void> loadTransactions() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    transactions.value = Transaction.getMockTransactions();
+    final prefs = await SharedPreferences.getInstance();
+    final transData = prefs.getString('transactions');
+
+    if (transData != null) {
+      final List decoded = jsonDecode(transData);
+      transactions.assignAll(
+        decoded.map((e) => Transaction.fromJson(e)).toList(),
+      );
+    } else {
+      transactions.assignAll(Transaction.getMockTransactions());
+      saveTransactions();
+    }
     _applyFilters();
     isLoading.value = false;
+  }
+
+  Future<void> saveTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'transactions',
+      jsonEncode(transactions.map((e) => e.toJson()).toList()),
+    );
   }
 
   /// Apply all filters
@@ -130,7 +150,12 @@ class TransactionController extends GetxController {
       }
 
       isLoading.value = true;
-      await Future.delayed(const Duration(seconds: 1));
+
+      // Update transaction status
+      transactions[index] = transaction.copyWith(
+        status: 'Approved',
+        processedAt: DateTime.now(),
+      );
 
       // If it's an adjustment, update the user wallet
       if (transaction.type == 'Adjustment') {
@@ -143,8 +168,14 @@ class TransactionController extends GetxController {
           userController.users[userIndex] = user.copyWith(
             walletBalance: user.walletBalance + transaction.amount,
           );
+          // UserController _saveUsers will be called inside updateUser or similar if we use that,
+          // but here we are directly modifying the list.
+          // We should ideally call a method on userController to update and save.
+          await userController.updateUser(userController.users[userIndex]);
         }
       }
+
+      await saveTransactions();
 
       // Log action
       await AuditLogger.log(
@@ -159,28 +190,42 @@ class TransactionController extends GetxController {
         'تم الاعتماد والمصادقة على المعاملة',
         snackPosition: SnackPosition.BOTTOM,
       );
-    }
 
-    isLoading.value = false;
-    loadTransactions();
+      _applyFilters();
+      isLoading.value = false;
+    }
   }
 
   /// Reject transaction
   Future<void> rejectTransaction(String transactionId, String reason) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    final index = transactions.indexWhere((t) => t.id == transactionId);
+    if (index != -1) {
+      isLoading.value = true;
 
-    // Log action
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'رفض معاملة',
-      details: 'تم رفض المعاملة $transactionId. السبب: $reason',
-    );
+      transactions[index] = transactions[index].copyWith(
+        status: 'Rejected',
+        reason: reason,
+        processedAt: DateTime.now(),
+      );
 
-    Get.snackbar('نجح', 'تم رفض المعاملة', snackPosition: SnackPosition.BOTTOM);
+      await saveTransactions();
 
-    isLoading.value = false;
-    loadTransactions();
+      // Log action
+      await AuditLogger.log(
+        adminName: 'Admin',
+        action: 'رفض معاملة',
+        details: 'تم رفض المعاملة $transactionId. السبب: $reason',
+      );
+
+      Get.snackbar(
+        'نجح',
+        'تم رفض المعاملة',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+
+      _applyFilters();
+      isLoading.value = false;
+    }
   }
 
   /// Filter transactions by status

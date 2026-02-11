@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/settings_models.dart';
 import '../../../core/services/audit_logger.dart';
 
@@ -11,14 +13,106 @@ class SettingsManagementController extends GetxController {
   final currencies = <CurrencyItem>[].obs;
   final limits = <LimitItem>[].obs;
 
+  // Maintenance State
+  final isMaintenanceMode = false.obs;
+  final maintenanceMessage =
+      'النظام حالياً في مرحلة التحديث الدوري لضمان أعلى معايير الأمان والامتثال. سنعود قريباً.'
+          .obs;
+
+  final isLoading = true.obs;
+
   @override
   void onInit() {
     super.onInit();
-    _loadInitialData();
+    loadSettings();
   }
 
-  void _loadInitialData() {
-    // FAQ Initial Data
+  Future<void> loadSettings() async {
+    isLoading.value = true;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load FAQs
+    final faqData = prefs.getString('faqs');
+    if (faqData != null) {
+      final List decoded = jsonDecode(faqData);
+      faqs.assignAll(decoded.map((e) => FAQItem.fromJson(e)).toList());
+    } else {
+      _loadDefaultFAQs();
+    }
+
+    // Load Terms
+    final termsData = prefs.getString('terms');
+    if (termsData != null) {
+      final List decoded = jsonDecode(termsData);
+      terms.assignAll(decoded.map((e) => TermSection.fromJson(e)).toList());
+    } else {
+      _loadDefaultTerms();
+    }
+
+    // Load Fees
+    final feesData = prefs.getString('fees');
+    if (feesData != null) {
+      final List decoded = jsonDecode(feesData);
+      fees.assignAll(decoded.map((e) => FeeItem.fromJson(e)).toList());
+    } else {
+      _loadDefaultFees();
+    }
+
+    // Load Currencies
+    final currenciesData = prefs.getString('currencies');
+    if (currenciesData != null) {
+      final List decoded = jsonDecode(currenciesData);
+      currencies.assignAll(
+        decoded.map((e) => CurrencyItem.fromJson(e)).toList(),
+      );
+    } else {
+      _loadDefaultCurrencies();
+    }
+
+    // Load Limits
+    final limitsData = prefs.getString('limits');
+    if (limitsData != null) {
+      final List decoded = jsonDecode(limitsData);
+      limits.assignAll(decoded.map((e) => LimitItem.fromJson(e)).toList());
+    } else {
+      _loadDefaultLimits();
+    }
+
+    // Load Maintenance
+    isMaintenanceMode.value = prefs.getBool('isMaintenanceMode') ?? false;
+    maintenanceMessage.value =
+        prefs.getString('maintenanceMessage') ?? maintenanceMessage.value;
+
+    isLoading.value = false;
+  }
+
+  Future<void> saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'faqs',
+      jsonEncode(faqs.map((e) => e.toJson()).toList()),
+    );
+    await prefs.setString(
+      'terms',
+      jsonEncode(terms.map((e) => e.toJson()).toList()),
+    );
+    await prefs.setString(
+      'fees',
+      jsonEncode(fees.map((e) => e.toJson()).toList()),
+    );
+    await prefs.setString(
+      'currencies',
+      jsonEncode(currencies.map((e) => e.toJson()).toList()),
+    );
+    await prefs.setString(
+      'limits',
+      jsonEncode(limits.map((e) => e.toJson()).toList()),
+    );
+    await prefs.setBool('isMaintenanceMode', isMaintenanceMode.value);
+    await prefs.setString('maintenanceMessage', maintenanceMessage.value);
+  }
+
+  void _loadDefaultFAQs() {
     faqs.assignAll([
       FAQItem(
         id: '1',
@@ -38,63 +132,10 @@ class SettingsManagementController extends GetxController {
         answer:
             'تستخدم Kasby Panel أنظمة تشفير متطورة (End-to-End Encryption) لضمان عدم وصول أي طرف غير مصرح له لبيانات المستخدمين أو الحركات المالية.',
       ),
-      FAQItem(
-        id: '4',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '5',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '6',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '7',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '8',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '9',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '10',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '11',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
-      FAQItem(
-        id: '12',
-        question: 'كيف يمكنني إضافة مشرف جديد لوحدة التحكم؟',
-        answer:
-            'يمكنك ذلك من خلال قسم "إدارة المشرفين" في الإعدادات، ثم النقر على زر الإضافة وتعبئة بيانات المشرف الجديد مع تحديد الصلاحيات المطلوبة.',
-      ),
     ]);
+  }
 
-    // Terms Initial Data
+  void _loadDefaultTerms() {
     terms.assignAll([
       TermSection(
         id: '1',
@@ -111,8 +152,9 @@ class SettingsManagementController extends GetxController {
         order: 2,
       ),
     ]);
+  }
 
-    // Fees Initial Data
+  void _loadDefaultFees() {
     fees.assignAll([
       FeeItem(
         id: '1',
@@ -139,8 +181,9 @@ class SettingsManagementController extends GetxController {
         category: 'Investment',
       ),
     ]);
+  }
 
-    // Currencies Initial Data
+  void _loadDefaultCurrencies() {
     currencies.assignAll([
       CurrencyItem(
         id: '1',
@@ -159,8 +202,9 @@ class SettingsManagementController extends GetxController {
         icon: FontAwesomeIcons.briefcase,
       ),
     ]);
+  }
 
-    // Limits Initial Data
+  void _loadDefaultLimits() {
     limits.assignAll([
       LimitItem(
         id: '1',
@@ -191,6 +235,19 @@ class SettingsManagementController extends GetxController {
 
   // --- CRUD Actions ---
 
+  // Maintenance
+  void toggleMaintenance(bool value) {
+    isMaintenanceMode.value = value;
+    saveSettings();
+    _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
+  }
+
+  void updateMaintenanceMessage(String message) {
+    maintenanceMessage.value = message;
+    saveSettings();
+    _logAction('تحديث رسالة الصيانة');
+  }
+
   // FAQ
   void addFAQ(String question, String answer) {
     faqs.add(
@@ -200,6 +257,7 @@ class SettingsManagementController extends GetxController {
         answer: answer,
       ),
     );
+    saveSettings();
     _logAction('إضافة سؤال شائع: $question');
   }
 
@@ -207,12 +265,14 @@ class SettingsManagementController extends GetxController {
     int index = faqs.indexWhere((e) => e.id == id);
     if (index != -1) {
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
+      saveSettings();
       _logAction('تحديث سؤال شائع: $question');
     }
   }
 
   void deleteFAQ(String id) {
     faqs.removeWhere((e) => e.id == id);
+    saveSettings();
     _logAction('حذف سؤال شائع');
   }
 
@@ -226,6 +286,7 @@ class SettingsManagementController extends GetxController {
         order: terms.length + 1,
       ),
     );
+    saveSettings();
     _logAction('إضافة بند شروط: $title');
   }
 
@@ -233,12 +294,14 @@ class SettingsManagementController extends GetxController {
     int index = terms.indexWhere((e) => e.id == id);
     if (index != -1) {
       terms[index] = terms[index].copyWith(title: title, content: content);
+      saveSettings();
       _logAction('تحديث بند شروط: $title');
     }
   }
 
   void deleteTerm(String id) {
     terms.removeWhere((e) => e.id == id);
+    saveSettings();
     _logAction('حذف بند شروط');
   }
 
@@ -247,10 +310,10 @@ class SettingsManagementController extends GetxController {
     final item = terms.removeAt(oldIndex);
     terms.insert(newIndex, item);
 
-    // Update order property for all items
     for (int i = 0; i < terms.length; i++) {
       terms[i] = terms[i].copyWith(order: i + 1);
     }
+    saveSettings();
     _logAction('إعادة ترتيب بنود الشروط');
   }
 
@@ -259,6 +322,7 @@ class SettingsManagementController extends GetxController {
     int index = fees.indexWhere((e) => e.id == id);
     if (index != -1) {
       fees[index] = fees[index].copyWith(value: newValue);
+      saveSettings();
       _logAction('تحديث قيمة الرسوم: ${fees[index].label}');
     }
   }
@@ -271,11 +335,13 @@ class SettingsManagementController extends GetxController {
       }
     }
     currencies.add(currency);
+    saveSettings();
     _logAction('إضافة عملة جديدة: ${currency.name}');
   }
 
   void deleteCurrency(String id) {
     currencies.removeWhere((e) => e.id == id);
+    saveSettings();
     _logAction('حذف عملة');
   }
 
@@ -284,6 +350,7 @@ class SettingsManagementController extends GetxController {
     int index = limits.indexWhere((e) => e.id == id);
     if (index != -1) {
       limits[index] = limits[index].copyWith(value: newValue);
+      saveSettings();
       _logAction('تحديث حد المعاملة: ${limits[index].label}');
     }
   }

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/agent_model.dart';
 import '../../../core/models/time_filter.dart';
 
@@ -19,11 +21,28 @@ class AgentController extends GetxController {
 
   /// Load agents
   Future<void> loadAgents() async {
-    if (agents.isNotEmpty) return; // Prevent overwriting local changes
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    agents.value = Agent.getMockAgents();
+    final prefs = await SharedPreferences.getInstance();
+    final agentsData = prefs.getString('agents');
+
+    if (agentsData != null) {
+      final List decoded = jsonDecode(agentsData);
+      agents.assignAll(decoded.map((e) => Agent.fromJson(e)).toList());
+    } else {
+      // Fallback to mock data if no saved data
+      agents.assignAll(Agent.getMockAgents());
+      saveAgents(); // Initial save
+    }
     isLoading.value = false;
+  }
+
+  /// Save agents to persistent storage
+  Future<void> saveAgents() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'agents',
+      jsonEncode(agents.map((e) => e.toJson()).toList()),
+    );
   }
 
   /// Search agents
@@ -99,7 +118,6 @@ class AgentController extends GetxController {
     List<String> supportedMethods = const ['WhatsApp', 'Telegram', 'Call'],
   }) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     final newAgent = Agent(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -121,6 +139,7 @@ class AgentController extends GetxController {
     );
 
     agents.add(newAgent);
+    await saveAgents();
 
     Get.snackbar(
       'نجح',
@@ -134,7 +153,6 @@ class AgentController extends GetxController {
   /// Update agent
   Future<void> updateAgent(String agentId, Map<String, dynamic> updates) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     final index = agents.indexWhere((a) => a.id == agentId);
     if (index != -1) {
@@ -158,6 +176,8 @@ class AgentController extends GetxController {
         createdAt: old.createdAt,
       );
 
+      await saveAgents();
+
       Get.snackbar(
         'نجح',
         'تم تحديث بيانات الوكيل',
@@ -171,31 +191,15 @@ class AgentController extends GetxController {
   /// Toggle agent status
   Future<void> toggleAgentStatus(String agentId) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     final index = agents.indexWhere((a) => a.id == agentId);
     if (index != -1) {
       final old = agents[index];
       final newStatus = old.status == 'Active' ? 'Inactive' : 'Active';
 
-      agents[index] = Agent(
-        id: old.id,
-        name: old.name,
-        country: old.country,
-        province: old.province,
-        city: old.city,
-        address: old.address,
-        phone: old.phone,
-        whatsapp: old.whatsapp,
-        telegram: old.telegram,
-        email: old.email,
-        status: newStatus,
-        isAvailableNow: old.isAvailableNow,
-        supportedMethods: old.supportedMethods,
-        successRate: old.successRate,
-        totalTransactions: old.totalTransactions,
-        createdAt: old.createdAt,
-      );
+      agents[index] = old.copyWith(status: newStatus);
+
+      await saveAgents();
 
       Get.snackbar(
         'نجح',
@@ -210,9 +214,9 @@ class AgentController extends GetxController {
   /// Delete agent
   Future<void> deleteAgent(String agentId) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     agents.removeWhere((a) => a.id == agentId);
+    await saveAgents();
 
     Get.snackbar('نجح', 'تم حذف الوكيل', snackPosition: SnackPosition.BOTTOM);
 

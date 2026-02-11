@@ -24,6 +24,28 @@ class Transaction {
     this.processedAt,
   });
 
+  Transaction copyWith({
+    String? status,
+    String? reason,
+    String? proofUrl,
+    DateTime? processedAt,
+    String? userName,
+    double? amount,
+  }) {
+    return Transaction(
+      id: id,
+      userId: userId,
+      userName: userName ?? this.userName,
+      type: type,
+      amount: amount ?? this.amount,
+      status: status ?? this.status,
+      reason: reason ?? this.reason,
+      proofUrl: proofUrl ?? this.proofUrl,
+      createdAt: createdAt,
+      processedAt: processedAt ?? this.processedAt,
+    );
+  }
+
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
       id: json['id'] ?? '',

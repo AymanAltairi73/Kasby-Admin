@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/audit_logger.dart';
 import '../models/system_settings_model.dart';
 
@@ -13,7 +15,32 @@ class SettingsController extends GetxController {
     updatedBy: 'Admin',
   ).obs;
 
-  final isLoading = false.obs;
+  final isLoading = true.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadSettings();
+  }
+
+  Future<void> loadSettings() async {
+    isLoading.value = true;
+    final prefs = await SharedPreferences.getInstance();
+    final settingsData = prefs.getString('system_settings');
+
+    if (settingsData != null) {
+      settings.value = SystemSettings.fromJson(jsonDecode(settingsData));
+    }
+    isLoading.value = false;
+  }
+
+  Future<void> saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'system_settings',
+      jsonEncode(settings.value.toJson()),
+    );
+  }
 
   bool get pauseWithdrawals => settings.value.pauseWithdrawals;
   bool get pauseProfits => settings.value.pauseProfits;
@@ -22,7 +49,6 @@ class SettingsController extends GetxController {
   /// Toggle emergency control
   Future<void> toggleControl(String controlKey) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
 
     String action = '';
     SystemSettings current = settings.value;
@@ -56,6 +82,8 @@ class SettingsController extends GetxController {
             : 'إلغاء تجميد النظام';
         break;
     }
+
+    await saveSettings();
 
     await AuditLogger.log(
       adminName: 'SuperAdmin',

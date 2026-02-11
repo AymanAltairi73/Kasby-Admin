@@ -155,6 +155,31 @@ class UserInvestment {
     required this.status,
   });
 
+  UserInvestment copyWith({
+    String? userName,
+    String? planName,
+    double? amount,
+    double? profitPercentage,
+    double? expectedProfit,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+  }) {
+    return UserInvestment(
+      id: id,
+      userId: userId,
+      userName: userName ?? this.userName,
+      planId: planId,
+      planName: planName ?? this.planName,
+      amount: amount ?? this.amount,
+      profitPercentage: profitPercentage ?? this.profitPercentage,
+      expectedProfit: expectedProfit ?? this.expectedProfit,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+    );
+  }
+
   factory UserInvestment.fromJson(Map<String, dynamic> json) {
     return UserInvestment(
       id: json['id'] ?? '',

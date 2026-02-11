@@ -5,23 +5,18 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../controllers/settings_management_controller.dart';
 
-class MaintenanceScreen extends StatefulWidget {
+class MaintenanceScreen extends StatelessWidget {
   const MaintenanceScreen({super.key});
 
   @override
-  State<MaintenanceScreen> createState() => _MaintenanceScreenState();
-}
-
-class _MaintenanceScreenState extends State<MaintenanceScreen> {
-  bool _isMaintenanceActive = false;
-  final _messageController = TextEditingController(
-    text:
-        'النظام حالياً في مرحلة التحديث الدوري لضمان أعلى معايير الأمان والامتثال. سنعود قريباً.',
-  );
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<SettingsManagementController>();
+    final messageController = TextEditingController(
+      text: controller.maintenanceMessage.value,
+    );
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -37,136 +32,149 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
         children: [
           RepaintBoundary(child: _buildCelestialBackground()),
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  _buildControlHeader(),
-                  const SizedBox(height: 32),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                  // Main Toggle Card
-                  KasbyGlassCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'تفعيل وضع الصيانة',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    _buildControlHeader(controller.isMaintenanceMode.value),
+                    const SizedBox(height: 32),
+
+                    // Main Toggle Card
+                    KasbyGlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'تفعيل وضع الصيانة',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'سيتم حظر وصول المستخدمين للتطبيق',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: KasbyColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Switch(
+                                value: controller.isMaintenanceMode.value,
+                                onChanged: (value) =>
+                                    controller.toggleMaintenance(value),
+                                activeThumbColor: KasbyColors.primaryGold,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn().slideY(begin: 0.1),
+
+                    const SizedBox(height: 24),
+
+                    // Message Card
+                    KasbyGlassCard(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'رسالة التنبيه للمستخدمين',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: KasbyColors.primaryGold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              KasbyTextField(
+                                controller: messageController,
+                                hintText: 'اكتب رسالة الصيانة هنا...',
+                                maxLines: 4,
+                                onChanged: (val) =>
+                                    controller.maintenanceMessage.value = val,
+                              ),
+                              const SizedBox(height: 24),
+                              const Text(
+                                'معاينة الرسالة:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: KasbyColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.1),
                                   ),
                                 ),
-                                Text(
-                                  'سيتم حظر وصول المستخدمين للتطبيق',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: KasbyColors.textSecondary,
+                                child: Obx(
+                                  () => Text(
+                                    controller.maintenanceMessage.value,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            Switch(
-                              value: _isMaintenanceActive,
-                              onChanged: (value) =>
-                                  setState(() => _isMaintenanceActive = value),
-                              activeThumbColor: KasbyColors.primaryGold,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn().slideY(begin: 0.1),
-
-                  const SizedBox(height: 24),
-
-                  // Message Card
-                  KasbyGlassCard(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'رسالة التنبيه للمستخدمين',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: KasbyColors.primaryGold,
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            KasbyTextField(
-                              controller: _messageController,
-                              hintText: 'اكتب رسالة الصيانة هنا...',
-                              maxLines: 4,
-                            ),
-                            const SizedBox(height: 24),
-                            const Text(
-                              'معاينة الرسالة:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: KasbyColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: Text(
-                                _messageController.text,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(delay: const Duration(milliseconds: 200))
-                      .slideY(begin: 0.1),
+                            ],
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(delay: const Duration(milliseconds: 200))
+                        .slideY(begin: 0.1),
 
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
-                  // Action Buttons
-                  KasbyButton(
-                        text: 'حفظ و تحديث الحالة',
-                        onPressed: () {
-                          Get.snackbar(
-                            'تم الحفظ',
-                            'تم تحديث إعدادات وضع الصيانة بنجاح',
-                            backgroundColor: KasbyColors.success.withValues(
-                              alpha: 0.8,
-                            ),
-                            colorText: Colors.white,
-                          );
-                        },
-                      )
-                      .animate()
-                      .fadeIn(delay: const Duration(milliseconds: 400))
-                      .scale(),
-                ],
-              ),
-            ),
+                    // Action Buttons
+                    KasbyButton(
+                          text: 'حفظ و تحديث الحالة',
+                          onPressed: () {
+                            controller.updateMaintenanceMessage(
+                              messageController.text,
+                            );
+                            Get.snackbar(
+                              'تم الحفظ',
+                              'تم تحديث إعدادات وضع الصيانة بنجاح',
+                              backgroundColor: KasbyColors.success.withValues(
+                                alpha: 0.8,
+                              ),
+                              colorText: Colors.white,
+                            );
+                          },
+                        )
+                        .animate()
+                        .fadeIn(delay: const Duration(milliseconds: 400))
+                        .scale(),
+                  ],
+                ),
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildControlHeader() {
+  Widget _buildControlHeader(bool isMaintenanceActive) {
     return Column(
       children: [
         Stack(
@@ -178,7 +186,7 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color:
-                        (_isMaintenanceActive
+                        (isMaintenanceActive
                                 ? KasbyColors.error
                                 : KasbyColors.primaryGold)
                             .withValues(alpha: 0.1),
@@ -192,11 +200,11 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
                 ),
 
             Icon(
-              _isMaintenanceActive
+              isMaintenanceActive
                   ? Icons.engineering_rounded
                   : Icons.lock_open_rounded,
               size: 50,
-              color: _isMaintenanceActive
+              color: isMaintenanceActive
                   ? KasbyColors.error
                   : KasbyColors.primaryGold,
             ),
@@ -204,13 +212,13 @@ class _MaintenanceScreenState extends State<MaintenanceScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          _isMaintenanceActive
+          isMaintenanceActive
               ? 'وضع الصيانة نشط حالياً'
               : 'النظام يعمل بشكل طبيعي',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: _isMaintenanceActive
+            color: isMaintenanceActive
                 ? KasbyColors.error
                 : KasbyColors.primaryGold,
           ),

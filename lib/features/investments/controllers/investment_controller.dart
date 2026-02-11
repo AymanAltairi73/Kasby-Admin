@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../models/investment_model.dart';
 
@@ -19,17 +21,51 @@ class InvestmentController extends GetxController {
   /// Load investment plans
   Future<void> loadPlans() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    plans.value = InvestmentPlan.getMockPlans();
+    final prefs = await SharedPreferences.getInstance();
+    final plansData = prefs.getString('investment_plans');
+
+    if (plansData != null) {
+      final List decoded = jsonDecode(plansData);
+      plans.assignAll(decoded.map((e) => InvestmentPlan.fromJson(e)).toList());
+    } else {
+      plans.assignAll(InvestmentPlan.getMockPlans());
+      savePlans();
+    }
     isLoading.value = false;
   }
 
   /// Load user investments
   Future<void> loadUserInvestments() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-    userInvestments.value = UserInvestment.getMockInvestments();
+    final prefs = await SharedPreferences.getInstance();
+    final userInvData = prefs.getString('user_investments');
+
+    if (userInvData != null) {
+      final List decoded = jsonDecode(userInvData);
+      userInvestments.assignAll(
+        decoded.map((e) => UserInvestment.fromJson(e)).toList(),
+      );
+    } else {
+      userInvestments.assignAll(UserInvestment.getMockInvestments());
+      saveUserInvestments();
+    }
     isLoading.value = false;
+  }
+
+  Future<void> savePlans() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'investment_plans',
+      jsonEncode(plans.map((e) => e.toJson()).toList()),
+    );
+  }
+
+  Future<void> saveUserInvestments() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'user_investments',
+      jsonEncode(userInvestments.map((e) => e.toJson()).toList()),
+    );
   }
 
   /// Create new plan
@@ -43,7 +79,6 @@ class InvestmentController extends GetxController {
     String? imagePath,
   }) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     final newPlan = InvestmentPlan(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -59,6 +94,7 @@ class InvestmentController extends GetxController {
     );
 
     plans.add(newPlan);
+    await savePlans();
 
     Get.snackbar(
       'نجح',
@@ -74,7 +110,6 @@ class InvestmentController extends GetxController {
   /// Update plan
   Future<void> updatePlan(String planId, Map<String, dynamic> updates) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     final index = plans.indexWhere((p) => p.id == planId);
     if (index != -1) {
@@ -88,6 +123,8 @@ class InvestmentController extends GetxController {
         availableAmounts: updates['availableAmounts'],
         imagePath: updates['imagePath'],
       );
+
+      await savePlans();
 
       Get.snackbar(
         'نجح',
@@ -104,9 +141,9 @@ class InvestmentController extends GetxController {
   /// Delete plan
   Future<void> deletePlan(String planId) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
 
     plans.removeWhere((p) => p.id == planId);
+    await savePlans();
 
     Get.snackbar(
       'نجح',

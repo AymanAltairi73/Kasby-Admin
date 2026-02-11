@@ -36,6 +36,43 @@ class Agent {
     required this.createdAt,
   });
 
+  Agent copyWith({
+    String? name,
+    String? country,
+    String? province,
+    String? city,
+    String? address,
+    String? phone,
+    String? whatsapp,
+    String? telegram,
+    String? email,
+    String? status,
+    bool? isAvailableNow,
+    List<String>? supportedMethods,
+    double? successRate,
+    int? totalTransactions,
+    DateTime? createdAt,
+  }) {
+    return Agent(
+      id: id,
+      name: name ?? this.name,
+      country: country ?? this.country,
+      province: province ?? this.province,
+      city: city ?? this.city,
+      address: address ?? this.address,
+      phone: phone ?? this.phone,
+      whatsapp: whatsapp ?? this.whatsapp,
+      telegram: telegram ?? this.telegram,
+      email: email ?? this.email,
+      status: status ?? this.status,
+      isAvailableNow: isAvailableNow ?? this.isAvailableNow,
+      supportedMethods: supportedMethods ?? this.supportedMethods,
+      successRate: successRate ?? this.successRate,
+      totalTransactions: totalTransactions ?? this.totalTransactions,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   factory Agent.fromJson(Map<String, dynamic> json) {
     return Agent(
       id: json['id'] ?? '',

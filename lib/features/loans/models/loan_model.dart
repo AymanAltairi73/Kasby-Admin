@@ -19,6 +19,23 @@ class Loan {
     required this.status,
   });
 
+  Loan copyWith({
+    String? userName,
+    double? amount,
+    DateTime? loanDate,
+    DateTime? repaymentDate,
+    LoanStatus? status,
+  }) {
+    return Loan(
+      id: id,
+      userName: userName ?? this.userName,
+      amount: amount ?? this.amount,
+      loanDate: loanDate ?? this.loanDate,
+      repaymentDate: repaymentDate ?? this.repaymentDate,
+      status: status ?? this.status,
+    );
+  }
+
   String get statusText {
     switch (status) {
       case LoanStatus.current:
