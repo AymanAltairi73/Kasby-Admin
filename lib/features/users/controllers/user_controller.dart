@@ -125,6 +125,8 @@ class UserController extends GetxController {
     String province = 'Unknown',
     String city = 'Unknown',
     String address = 'Unknown',
+    String whatsapp = '',
+    String telegram = '',
     String accountType = 'Free',
     String kycStatus = 'Unverified',
   }) async {
@@ -141,6 +143,8 @@ class UserController extends GetxController {
       province: province,
       city: city,
       address: address,
+      whatsapp: whatsapp,
+      telegram: telegram,
       accountType: accountType,
       kycStatus: kycStatus,
       walletBalance: 0.0,

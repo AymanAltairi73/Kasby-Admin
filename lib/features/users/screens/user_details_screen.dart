@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
@@ -244,6 +245,45 @@ class UserDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  // Communication Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (user.whatsapp.isNotEmpty)
+                        _buildCommunicationButton(
+                          icon: FontAwesomeIcons.whatsapp,
+                          color: const Color(0xFF25D366),
+                          label: 'واتساب',
+                          onTap: () => _launchUrl(
+                            'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
+                            fallbackMessage:
+                                'يرجى التأكد من تثبيت واتساب على جهازك',
+                          ),
+                        ),
+                      if (user.whatsapp.isNotEmpty) const SizedBox(width: 20),
+                      if (user.telegram.isNotEmpty)
+                        _buildCommunicationButton(
+                          icon: FontAwesomeIcons.telegram,
+                          color: const Color(0xFF24A1DE),
+                          label: 'تيليجرام',
+                          onTap: () => _launchUrl(
+                            user.telegram.startsWith('http')
+                                ? user.telegram
+                                : 'https://t.me/${user.telegram.replaceAll('@', '')}',
+                            fallbackMessage:
+                                'يرجى التأكد من تثبيت تليجرام على جهازك',
+                          ),
+                        ),
+                      if (user.telegram.isNotEmpty) const SizedBox(width: 20),
+                      _buildCommunicationButton(
+                        icon: Icons.phone_forwarded_rounded,
+                        color: KasbyColors.info,
+                        label: 'اتصال',
+                        onTap: () => _launchUrl('tel:${user.phone}'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
                   // Status Badges Row
                   Wrap(
@@ -353,17 +393,23 @@ class UserDetailsScreen extends StatelessWidget {
                         icon: FontAwesomeIcons.whatsapp,
                         color: const Color(0xFF25D366),
                         label: 'واتساب',
-                        onPressed: () {
-                          // Placeholder for WhatsApp logic
-                        },
+                        onTap: () => _launchUrl(
+                          'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
+                          fallbackMessage:
+                              'يرجى التأكد من تثبيت واتساب على جهازك',
+                        ),
                       ),
                       _buildCommunicationButton(
                         icon: FontAwesomeIcons.telegram,
                         color: const Color(0xFF24A1DE),
                         label: 'تليجرام',
-                        onPressed: () {
-                          // Placeholder for Telegram logic
-                        },
+                        onTap: () => _launchUrl(
+                          user.telegram.startsWith('http')
+                              ? user.telegram
+                              : 'https://t.me/${user.telegram.replaceAll('@', '')}',
+                          fallbackMessage:
+                              'يرجى التأكد من تثبيت تليجرام على جهازك',
+                        ),
                       ),
                     ],
                   ),
@@ -979,41 +1025,169 @@ class UserDetailsScreen extends StatelessWidget {
   }
 
   void _showEditUserDialog(BuildContext context, UserController controller) {
-    // Basic edit dialog for common fields
+    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: user.name);
+    final countryController = TextEditingController(text: user.country);
+    final cityController = TextEditingController(text: user.city);
     final phoneController = TextEditingController(text: user.phone);
-    KasbyDialog.show(
-      title: 'تحديث البيانات',
-      content: Column(
-        children: [
-          KasbyTextField(
-            controller: nameController,
-            labelText: 'الاسم الكامل',
-            prefixIcon: Icons.person_rounded,
-          ),
-          const SizedBox(height: 16),
-          KasbyTextField(
-            controller: phoneController,
-            labelText: 'رقم الهاتف',
-            prefixIcon: Icons.phone_android_rounded,
-          ),
-        ],
-      ),
-      actions: [
-        ElevatedButton(
-          onPressed: () => controller.updateUser(
-            user.copyWith(
-              name: nameController.text,
-              phone: phoneController.text,
+    final whatsappController = TextEditingController(text: user.whatsapp);
+    final telegramController = TextEditingController(text: user.telegram);
+    final emailController = TextEditingController(text: user.email);
+
+    final isFormValid = true.obs;
+
+    void validate() {
+      isFormValid.value = formKey.currentState?.validate() ?? false;
+    }
+
+    Get.dialog(
+      BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: KasbyGlassCard(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                onChanged: validate,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'تعديل بيانات المستخدم',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    KasbyTextField(
+                      controller: nameController,
+                      hintText: 'الاسم الكامل للمستخدم',
+                      prefixIcon: Icons.person_outline,
+                      validator: (v) =>
+                          ValidationUtils.validateRequired(v, 'الاسم'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KasbyTextField(
+                            controller: countryController,
+                            hintText: 'الدولة',
+                            prefixIcon: Icons.public_rounded,
+                            validator: (v) =>
+                                ValidationUtils.validateRequired(v, 'الدولة'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: KasbyTextField(
+                            controller: cityController,
+                            hintText: 'المدينة',
+                            prefixIcon: Icons.location_city_rounded,
+                            validator: (v) =>
+                                ValidationUtils.validateRequired(v, 'المدينة'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: phoneController,
+                      hintText: 'رقم الهاتف (إلزامي)',
+                      prefixIcon: Icons.phone_android_outlined,
+                      keyboardType: TextInputType.phone,
+                      validator: ValidationUtils.validatePhone,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: whatsappController,
+                      hintText: 'رقم واتساب (اختياري)',
+                      prefixIcon: FontAwesomeIcons.whatsapp,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: telegramController,
+                      hintText: 'معرف تيليجرام (اختياري)',
+                      prefixIcon: FontAwesomeIcons.telegram,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: emailController,
+                      hintText: 'البريد الإلكتروني (اختياري)',
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) => v != null && v.isNotEmpty
+                          ? ValidationUtils.validateEmail(v)
+                          : null,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text(
+                            'إلغاء',
+                            style: TextStyle(color: KasbyColors.textSecondary),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Obx(
+                          () => ElevatedButton(
+                            onPressed: isFormValid.value
+                                ? () {
+                                    KasbyConfirmationDialog.show(
+                                      title: 'تأكيد العملية',
+                                      message:
+                                          'هل أنت متأكد من تعديل بيانات المستخدم؟',
+                                      confirmText: 'تأكيد',
+                                      onConfirm: () async {
+                                        final updatedUser = user.copyWith(
+                                          name: nameController.text,
+                                          country: countryController.text,
+                                          city: cityController.text,
+                                          phone: phoneController.text,
+                                          whatsapp: whatsappController.text,
+                                          telegram: telegramController.text,
+                                          email: emailController.text,
+                                        );
+                                        await controller.updateUser(
+                                          updatedUser,
+                                        );
+                                        Get.back(); // Close dialog
+                                      },
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.primaryGold,
+                              foregroundColor: Colors.black,
+                              disabledBackgroundColor: Colors.white12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'حفظ التعديلات',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: KasbyColors.primaryGold,
-            foregroundColor: Colors.black,
-          ),
-          child: const Text('حفظ التعديلات'),
         ),
-      ],
+      ),
     );
   }
 
@@ -1021,13 +1195,13 @@ class UserDetailsScreen extends StatelessWidget {
     required IconData icon,
     required Color color,
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback onTap,
   }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
-          onTap: onPressed,
+          onTap: onTap,
           borderRadius: BorderRadius.circular(50),
           child: Container(
             padding: const EdgeInsets.all(12),
@@ -1049,5 +1223,25 @@ class UserDetailsScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar(
+          'تنبيه',
+          fallbackMessage ??
+              'لا يمكن فتح الرابط، يرجى التأكد من تثبيت التطبيق المطلوب',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: KasbyColors.warning.withValues(alpha: 0.8),
+          colorText: Colors.black,
+        );
+      }
+    } catch (e) {
+      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط');
+    }
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -544,26 +546,103 @@ class UserListScreen extends StatelessWidget {
             ),
           ),
 
-          // Action Indicator
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 14,
-            color: KasbyColors.textSecondary.withValues(alpha: 0.5),
+          // Action Indicator & Contact Buttons
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (user.whatsapp.isNotEmpty)
+                    _buildQuickAction(
+                      icon: FontAwesomeIcons.whatsapp,
+                      color: const Color(0xFF25D366),
+                      onTap: () => _launchUrl(
+                        'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
+                        fallbackMessage:
+                            'يرجى التأكد من تثبيت واتساب على جهازك',
+                      ),
+                    ),
+                  if (user.telegram.isNotEmpty)
+                    _buildQuickAction(
+                      icon: FontAwesomeIcons.telegram,
+                      color: const Color(0xFF24A1DE),
+                      onTap: () => _launchUrl(
+                        user.telegram.startsWith('http')
+                            ? user.telegram
+                            : 'https://t.me/${user.telegram.replaceAll('@', '')}',
+                        fallbackMessage:
+                            'يرجى التأكد من تثبيت تليجرام على جهازك',
+                      ),
+                    ),
+                  _buildQuickAction(
+                    icon: Icons.phone_forwarded_rounded,
+                    color: KasbyColors.info,
+                    onTap: () => _launchUrl('tel:${user.phone}'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: KasbyColors.textSecondary.withValues(alpha: 0.5),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  Widget _buildQuickAction({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 14, color: color),
+      ),
+    );
+  }
+
+  static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar(
+          'تنبيه',
+          fallbackMessage ??
+              'لا يمكن فتح الرابط، يرجى التأكد من تثبيت التطبيق المطلوب',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: KasbyColors.warning.withValues(alpha: 0.8),
+          colorText: Colors.black,
+        );
+      }
+    } catch (e) {
+      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط');
+    }
+  }
+
   void _showAddUserDialog(BuildContext context, UserController controller) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final phoneController = TextEditingController();
-    final countryController = TextEditingController(text: 'اليمن');
-    final provinceController = TextEditingController();
+    final countryController = TextEditingController();
     final cityController = TextEditingController();
-    final addressController = TextEditingController();
+    final phoneController = TextEditingController();
+    final whatsappController = TextEditingController();
+    final telegramController = TextEditingController();
+    final emailController = TextEditingController();
 
     final isFormValid = false.obs;
 
@@ -571,98 +650,151 @@ class UserListScreen extends StatelessWidget {
       isFormValid.value = formKey.currentState?.validate() ?? false;
     }
 
-    KasbyDialog.show(
-      title: 'إضافة مستخدم جديد',
-      content: Form(
-        key: formKey,
-        onChanged: validate,
-        child: Column(
-          children: [
-            KasbyTextField(
-              controller: nameController,
-              labelText: 'الاسم الكامل',
-              prefixIcon: Icons.person_outline,
-              validator: (v) => ValidationUtils.validateRequired(v, 'الاسم'),
-            ),
-            const SizedBox(height: 16),
-            KasbyTextField(
-              controller: emailController,
-              labelText: 'البريد الإلكتروني',
-              prefixIcon: Icons.email_rounded,
-              keyboardType: TextInputType.emailAddress,
-              validator: ValidationUtils.validateEmail,
-            ),
-            const SizedBox(height: 16),
-            KasbyTextField(
-              controller: phoneController,
-              labelText: 'رقم الهاتف',
-              prefixIcon: Icons.phone_android_outlined,
-              keyboardType: TextInputType.phone,
-              validator: ValidationUtils.validatePhone,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: KasbyTextField(
-                    controller: countryController,
-                    labelText: 'الدولة',
-                    prefixIcon: Icons.public_rounded,
-                    validator: (v) =>
-                        ValidationUtils.validateRequired(v, 'الدولة'),
-                  ),
+    Get.dialog(
+      BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: KasbyGlassCard(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                onChanged: validate,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'إضافة مستخدم جديد',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    KasbyTextField(
+                      controller: nameController,
+                      hintText: 'الاسم الكامل للمستخدم',
+                      prefixIcon: Icons.person_outline,
+                      validator: (v) =>
+                          ValidationUtils.validateRequired(v, 'الاسم'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: KasbyTextField(
+                            controller: countryController,
+                            hintText: 'الدولة',
+                            prefixIcon: Icons.public_rounded,
+                            validator: (v) =>
+                                ValidationUtils.validateRequired(v, 'الدولة'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: KasbyTextField(
+                            controller: cityController,
+                            hintText: 'المدينة',
+                            prefixIcon: Icons.location_city_rounded,
+                            validator: (v) =>
+                                ValidationUtils.validateRequired(v, 'المدينة'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: phoneController,
+                      hintText: 'رقم الهاتف (إلزامي)',
+                      prefixIcon: Icons.phone_android_outlined,
+                      keyboardType: TextInputType.phone,
+                      validator: ValidationUtils.validatePhone,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: whatsappController,
+                      hintText: 'رقم واتساب (اختياري)',
+                      prefixIcon: FontAwesomeIcons.whatsapp,
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: telegramController,
+                      hintText: 'معرف تيليجرام (اختياري)',
+                      prefixIcon: FontAwesomeIcons.telegram,
+                    ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: emailController,
+                      hintText: 'البريد الإلكتروني (اختياري)',
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) => v != null && v.isNotEmpty
+                          ? ValidationUtils.validateEmail(v)
+                          : null,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text(
+                            'إلغاء',
+                            style: TextStyle(color: KasbyColors.textSecondary),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Obx(
+                          () => ElevatedButton(
+                            onPressed: isFormValid.value
+                                ? () {
+                                    KasbyConfirmationDialog.show(
+                                      title: 'تأكيد العملية',
+                                      message:
+                                          'هل أنت متأكد من إضافة هذا المستخدم؟',
+                                      confirmText: 'تأكيد',
+                                      onConfirm: () async {
+                                        await controller.addUser(
+                                          name: nameController.text,
+                                          country: countryController.text,
+                                          city: cityController.text,
+                                          phone: phoneController.text,
+                                          whatsapp: whatsappController.text,
+                                          telegram: telegramController.text,
+                                          email: emailController.text,
+                                        );
+                                        Get.back(); // Close dialog
+                                      },
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.primaryGold,
+                              foregroundColor: Colors.black,
+                              disabledBackgroundColor: Colors.white12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'إضافة',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: KasbyTextField(
-                    controller: cityController,
-                    labelText: 'المدينة',
-                    prefixIcon: Icons.location_city_rounded,
-                    validator: (v) =>
-                        ValidationUtils.validateRequired(v, 'المدينة'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        Obx(
-          () => ElevatedButton(
-            onPressed: isFormValid.value
-                ? () {
-                    KasbyConfirmationDialog.show(
-                      message: 'هل أنت متأكد من إضافة هذا المستخدم؟',
-                      onConfirm: () {
-                        controller.addUser(
-                          name: nameController.text,
-                          email: emailController.text,
-                          phone: phoneController.text,
-                          country: countryController.text,
-                          province: provinceController.text,
-                          city: cityController.text,
-                          address: addressController.text,
-                        );
-                      },
-                    );
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: KasbyColors.primaryGold,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: Colors.white12,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            child: const Text(
-              'إضافة',
-              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

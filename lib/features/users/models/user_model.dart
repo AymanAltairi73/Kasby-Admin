@@ -17,6 +17,8 @@ class User {
   final double investedAmount;
   final double pendingAmount;
   final DateTime createdAt;
+  final String whatsapp; // New
+  final String telegram; // New
   final List<String> documents; // List of document URLs (images) // New
   final List<UserActivity> activityLog; // User history // New
 
@@ -36,6 +38,8 @@ class User {
     required this.investedAmount,
     required this.pendingAmount,
     required this.createdAt,
+    this.whatsapp = '',
+    this.telegram = '',
     this.documents = const [],
     this.activityLog = const [],
   });
@@ -56,6 +60,8 @@ class User {
     double? investedAmount,
     double? pendingAmount,
     DateTime? createdAt,
+    String? whatsapp,
+    String? telegram,
     List<String>? documents,
     List<UserActivity>? activityLog,
   }) {
@@ -75,6 +81,8 @@ class User {
       investedAmount: investedAmount ?? this.investedAmount,
       pendingAmount: pendingAmount ?? this.pendingAmount,
       createdAt: createdAt ?? this.createdAt,
+      whatsapp: whatsapp ?? this.whatsapp,
+      telegram: telegram ?? this.telegram,
       documents: documents ?? this.documents,
       activityLog: activityLog ?? this.activityLog,
     );
@@ -99,6 +107,8 @@ class User {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
+      whatsapp: json['whatsapp'] ?? '',
+      telegram: json['telegram'] ?? '',
       documents: List<String>.from(json['documents'] ?? []),
       activityLog: json['activityLog'] != null
           ? List<UserActivity>.from(
@@ -125,6 +135,8 @@ class User {
       'investedAmount': investedAmount,
       'pendingAmount': pendingAmount,
       'createdAt': createdAt.toIso8601String(),
+      'whatsapp': whatsapp,
+      'telegram': telegram,
       'documents': documents,
       'activityLog': activityLog.map((x) => x.toJson()).toList(),
     };
@@ -150,6 +162,8 @@ class User {
         investedAmount: 15000.0,
         pendingAmount: 500.0,
         createdAt: now.subtract(const Duration(minutes: 30)), // Today
+        whatsapp: '+966501234567',
+        telegram: 'ahmed_mo',
         activityLog: [
           UserActivity(
             id: 'a1',
@@ -196,6 +210,8 @@ class User {
             type: 'System',
           ),
         ],
+        whatsapp: '+971507654321',
+        telegram: 'fatima_dxb',
         documents: ['assets/images/passport.jpg'],
       ),
       User(
@@ -214,6 +230,8 @@ class User {
         investedAmount: 0.0,
         pendingAmount: 0.0,
         createdAt: now.subtract(const Duration(days: 10)), // This Month
+        whatsapp: '+965509876543',
+        telegram: 'khaled_kwt',
       ),
       User(
         id: '4',
@@ -231,15 +249,9 @@ class User {
         investedAmount: 25000.0,
         pendingAmount: 1200.0,
         createdAt: now.subtract(const Duration(hours: 5)), // Today
-        activityLog: [
-          UserActivity(
-            id: 'a4',
-            action: 'استثمار جديد',
-            details: 'شراء أسهم في صندوق النمو',
-            timestamp: now.subtract(const Duration(hours: 4)),
-            type: 'Transaction',
-          ),
-        ],
+
+        whatsapp: '+966502345678',
+        telegram: 'noura_abd',
       ),
       User(
         id: '5',
@@ -257,6 +269,8 @@ class User {
         investedAmount: 18000.0,
         pendingAmount: 300.0,
         createdAt: now.subtract(const Duration(days: 4)), // This Week
+        whatsapp: '+201508765432',
+        telegram: 'omar_cairo',
         documents: ['assets/images/national_id.jpg'], // Pending verification
       ),
       User(
@@ -275,6 +289,8 @@ class User {
         investedAmount: 5000.0,
         pendingAmount: 100.0,
         createdAt: now.subtract(const Duration(days: 40)), // Older
+        whatsapp: '+968501112223',
+        telegram: 'layla_mus',
       ),
     ];
   }
