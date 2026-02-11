@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../../transactions/controllers/transaction_controller.dart';
@@ -16,6 +18,7 @@ class UserController extends GetxController {
   final selectedAccountType = 'All'.obs; // New
   final selectedTimeFilter = TimeFilter.all.obs;
   final isLoading = false.obs;
+  static const String _storageKey = 'saved_users';
 
   @override
   void onInit() {
@@ -23,16 +26,36 @@ class UserController extends GetxController {
     loadUsers();
   }
 
-  /// Load users from API (mock)
+  /// Load users from API or Local Storage
   Future<void> loadUsers() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    users.value = User.getMockUsers();
+    final prefs = await SharedPreferences.getInstance();
+    final List<String>? savedUsers = prefs.getStringList(_storageKey);
+
+    if (savedUsers != null && savedUsers.isNotEmpty) {
+      users.value = savedUsers
+          .map((u) => User.fromJson(jsonDecode(u)))
+          .toList();
+    } else {
+      // First time: load mocks and save them
+      users.value = User.getMockUsers();
+      await _saveUsers();
+    }
+
     filteredUsers.value = users;
-
     isLoading.value = false;
     _applyFilters();
+  }
+
+  /// Save users to local storage
+  Future<void> _saveUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> userStrings = users
+        .map((u) => jsonEncode(u.toJson()))
+        .toList();
+    await prefs.setStringList(_storageKey, userStrings);
   }
 
   /// Search users by name, email, or phone
@@ -154,6 +177,7 @@ class UserController extends GetxController {
     );
 
     users.add(newUser);
+    await _saveUsers();
 
     await AuditLogger.log(
       adminName: 'Admin',
@@ -175,6 +199,7 @@ class UserController extends GetxController {
     if (index != -1) {
       final oldUser = users[index];
       users[index] = updatedUser;
+      await _saveUsers();
 
       await AuditLogger.log(
         adminName: 'Admin',
@@ -198,6 +223,7 @@ class UserController extends GetxController {
     if (index != -1) {
       final userName = users[index].name;
       users.removeAt(index);
+      await _saveUsers();
 
       await AuditLogger.log(
         adminName: 'Admin',
@@ -290,6 +316,7 @@ class UserController extends GetxController {
     if (index != -1) {
       final user = users[index];
       users[index] = user.copyWith(status: 'Blocked'); // Update local state
+      await _saveUsers();
 
       // Log action
       await AuditLogger.log(
@@ -313,6 +340,7 @@ class UserController extends GetxController {
     if (index != -1) {
       final user = users[index];
       users[index] = user.copyWith(status: 'Active'); // Update local state
+      await _saveUsers();
 
       // Log action
       await AuditLogger.log(
@@ -339,6 +367,7 @@ class UserController extends GetxController {
         kycStatus: 'Verified',
         accountType: 'Verified', // Auto upgrade to Verified
       );
+      await _saveUsers();
 
       // Update Activity Log
       // In a real app, we would append to the list, but for now we rely on the object update (if mutable) or just log it
@@ -370,6 +399,7 @@ class UserController extends GetxController {
       final user = users[index];
       // Reset to Unverified or keep Pending depending on logic. Usually 'Unverified' allows re-upload.
       users[index] = user.copyWith(kycStatus: 'Unverified');
+      await _saveUsers();
 
       await AuditLogger.log(
         adminName: 'Admin',
@@ -394,6 +424,7 @@ class UserController extends GetxController {
     if (index != -1) {
       final user = users[index];
       users[index] = user.copyWith(accountType: 'VIP');
+      await _saveUsers();
 
       await AuditLogger.log(
         adminName: 'Admin',

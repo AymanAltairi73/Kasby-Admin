@@ -36,98 +36,87 @@ class UserListScreen extends StatelessWidget {
             icon: const Icon(Icons.search_rounded),
             onPressed: () => _showSearchDialog(context, userController),
           ),
-          // Time Filter Dropdown
-          PopupMenuButton<TimeFilter>(
+
+          // Consolidated Filters Dropdown
+          PopupMenuButton<dynamic>(
             icon: const Icon(Icons.filter_list_rounded),
-            tooltip: 'تصفية حسب الوقت',
-            onSelected: (TimeFilter filter) {
-              userController.selectedTimeFilter.value = filter;
+            tooltip: 'تصفية المستخدمين',
+            onSelected: (value) {
+              if (value is TimeFilter) {
+                userController.selectedTimeFilter.value = value;
+              } else if (value is Map<String, String>) {
+                final type = value['type'];
+                final val = value['value']!;
+                if (type == 'status') {
+                  userController.filterByStatus(val);
+                } else if (type == 'country') {
+                  userController.filterByCountry(val);
+                } else if (type == 'accountType') {
+                  userController.filterByAccountType(val);
+                }
+              }
             },
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: TimeFilter.all,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.all_inclusive,
-                      size: 18,
-                      color:
-                          userController.selectedTimeFilter.value ==
-                              TimeFilter.all
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('الكل'),
-                  ],
+              // --- Time Filter Section ---
+              const PopupMenuItem(
+                enabled: false,
+                child: Text(
+                  'التصفية حسب الوقت',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
+                  ),
+                ),
+              ),
+              ...TimeFilter.values.map((filter) {
+                String label = 'الكل';
+                IconData icon = Icons.all_inclusive;
+                if (filter == TimeFilter.daily) {
+                  label = 'اليوم';
+                  icon = Icons.today;
+                } else if (filter == TimeFilter.weekly) {
+                  label = 'هذا الأسبوع';
+                  icon = Icons.date_range;
+                } else if (filter == TimeFilter.monthly) {
+                  label = 'هذا الشهر';
+                  icon = Icons.calendar_month;
+                }
+
+                return PopupMenuItem(
+                  value: filter,
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 18,
+                        color: userController.selectedTimeFilter.value == filter
+                            ? KasbyColors.primaryGold
+                            : Colors.white60,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(label),
+                    ],
+                  ),
+                );
+              }),
+
+              const PopupMenuDivider(),
+
+              // --- Status Filter Section ---
+              const PopupMenuItem(
+                enabled: false,
+                child: Text(
+                  'حالة المستخدم',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
+                  ),
                 ),
               ),
               PopupMenuItem(
-                value: TimeFilter.daily,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.today,
-                      size: 18,
-                      color:
-                          userController.selectedTimeFilter.value ==
-                              TimeFilter.daily
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('اليوم'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: TimeFilter.weekly,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.date_range,
-                      size: 18,
-                      color:
-                          userController.selectedTimeFilter.value ==
-                              TimeFilter.weekly
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('هذا الأسبوع'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: TimeFilter.monthly,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_month,
-                      size: 18,
-                      color:
-                          userController.selectedTimeFilter.value ==
-                              TimeFilter.monthly
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('هذا الشهر'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          // Status Filter Dropdown
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.people_outline_rounded),
-            tooltip: 'تصفية حسب الحالة',
-            onSelected: (String status) {
-              userController.filterByStatus(status);
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'All',
+                value: {'type': 'status', 'value': 'All'},
                 child: Row(
                   children: [
                     Icon(
@@ -138,12 +127,12 @@ class UserListScreen extends StatelessWidget {
                           : Colors.white60,
                     ),
                     const SizedBox(width: 8),
-                    Text('جميع الحالات'),
+                    const Text('جميع الحالات'),
                   ],
                 ),
               ),
               PopupMenuItem(
-                value: 'Active',
+                value: {'type': 'status', 'value': 'Active'},
                 child: Row(
                   children: [
                     Icon(
@@ -154,12 +143,12 @@ class UserListScreen extends StatelessWidget {
                           : Colors.white60,
                     ),
                     const SizedBox(width: 8),
-                    Text('النشطين'),
+                    const Text('النشطين'),
                   ],
                 ),
               ),
               PopupMenuItem(
-                value: 'Blocked',
+                value: {'type': 'status', 'value': 'Blocked'},
                 child: Row(
                   children: [
                     Icon(
@@ -170,23 +159,27 @@ class UserListScreen extends StatelessWidget {
                           : Colors.white60,
                     ),
                     const SizedBox(width: 8),
-                    Text('المحظورين'),
+                    const Text('المحظورين'),
                   ],
                 ),
               ),
-            ],
-          ),
 
-          // Country Filter
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.public_rounded),
-            tooltip: 'تصفية حسب الدولة',
-            onSelected: (String country) {
-              userController.filterByCountry(country);
-            },
-            itemBuilder: (context) => [
+              const PopupMenuDivider(),
+
+              // --- Country Filter Section ---
+              const PopupMenuItem(
+                enabled: false,
+                child: Text(
+                  'الدولة',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
+                  ),
+                ),
+              ),
               PopupMenuItem(
-                value: 'All',
+                value: {'type': 'country', 'value': 'All'},
                 child: Text(
                   'كل الدول',
                   style: TextStyle(
@@ -198,7 +191,7 @@ class UserListScreen extends StatelessWidget {
               ),
               ...['Saudi Arabia', 'UAE', 'Kuwait', 'Egypt', 'Oman'].map(
                 (country) => PopupMenuItem(
-                  value: country,
+                  value: {'type': 'country', 'value': country},
                   child: Text(
                     country,
                     style: TextStyle(
@@ -209,19 +202,23 @@ class UserListScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
 
-          // Account Type Filter
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.verified_user_rounded),
-            tooltip: 'تصفية حسب نوع الحساب',
-            onSelected: (String type) {
-              userController.filterByAccountType(type);
-            },
-            itemBuilder: (context) => [
+              const PopupMenuDivider(),
+
+              // --- Account Type Filter Section ---
+              const PopupMenuItem(
+                enabled: false,
+                child: Text(
+                  'نوع الحساب',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
+                  ),
+                ),
+              ),
               PopupMenuItem(
-                value: 'All',
+                value: {'type': 'accountType', 'value': 'All'},
                 child: Text(
                   'كل الحسابات',
                   style: TextStyle(
@@ -233,7 +230,7 @@ class UserListScreen extends StatelessWidget {
               ),
               ...['Free', 'Verified', 'VIP'].map(
                 (type) => PopupMenuItem(
-                  value: type,
+                  value: {'type': 'accountType', 'value': type},
                   child: Text(
                     type,
                     style: TextStyle(
