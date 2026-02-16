@@ -260,7 +260,7 @@ class UserController extends GetxController {
   Future<void> rejectDocuments(String userId, [String reason = '']) =>
       rejectKyc(userId);
 
-  /// Add balance to user wallet
+  /// Add balance to user wallet — MUST use RPC only (atomic)
   Future<void> addBalance(
     String userId,
     double amount, [
@@ -279,37 +279,15 @@ class UserController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      // Fallback: update wallet directly
-      try {
-        final wallet = await SupabaseService.client
-            .from('wallets')
-            .select()
-            .eq('user_id', userId)
-            .single();
-
-        final currentBalance = (wallet['available_balance'] ?? 0.0).toDouble();
-        await SupabaseService.client
-            .from('wallets')
-            .update({'available_balance': currentBalance + amount})
-            .eq('user_id', userId);
-
-        await loadUsers();
-        Get.snackbar(
-          'تم',
-          'تم إضافة الرصيد بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } catch (e2) {
-        Get.snackbar(
-          'خطأ',
-          'فشل في إضافة الرصيد: $e2',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      Get.snackbar(
+        'خطأ',
+        'فشل في إضافة الرصيد: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
-  /// Deduct balance from user wallet
+  /// Deduct balance from user wallet — MUST use RPC only (atomic)
   Future<void> deductBalance(
     String userId,
     double amount, [
@@ -328,42 +306,11 @@ class UserController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      // Fallback: update wallet directly
-      try {
-        final wallet = await SupabaseService.client
-            .from('wallets')
-            .select()
-            .eq('user_id', userId)
-            .single();
-
-        final currentBalance = (wallet['available_balance'] ?? 0.0).toDouble();
-        final newBalance = currentBalance - amount;
-        if (newBalance < 0) {
-          Get.snackbar(
-            'خطأ',
-            'الرصيد غير كافي',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-          return;
-        }
-        await SupabaseService.client
-            .from('wallets')
-            .update({'available_balance': newBalance})
-            .eq('user_id', userId);
-
-        await loadUsers();
-        Get.snackbar(
-          'تم',
-          'تم خصم الرصيد بنجاح',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      } catch (e2) {
-        Get.snackbar(
-          'خطأ',
-          'فشل في خصم الرصيد: $e2',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+      Get.snackbar(
+        'خطأ',
+        'فشل في خصم الرصيد: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

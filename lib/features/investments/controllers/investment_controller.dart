@@ -144,20 +144,20 @@ class InvestmentController extends GetxController {
     isLoading.value = false;
   }
 
-  /// Delete plan
+  /// Soft-delete plan (set is_active = false to preserve referential integrity)
   Future<void> deletePlan(String planId) async {
     isLoading.value = true;
     try {
       await SupabaseService.client
           .from('investment_plans')
-          .delete()
+          .update({'is_active': false})
           .eq('id', planId);
 
       plans.removeWhere((p) => p.id == planId);
 
       Get.snackbar(
         'نجح',
-        'تم حذف الخطة نهائياً من العرض',
+        'تم إلغاء تفعيل الخطة',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
         colorText: KasbyColors.error,
@@ -165,7 +165,7 @@ class InvestmentController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'خطأ',
-        'فشل في حذف الخطة: $e',
+        'فشل في إلغاء تفعيل الخطة: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

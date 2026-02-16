@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/reward_model.dart';
 import '../../../core/services/audit_logger.dart';
+import '../../../core/services/supabase_service.dart';
 
 /// Rewards and Gamification Controller
 /// Manages settings for daily rewards, spin wheel prizes, and points rules
+/// All data stored in Supabase — Single Source of Truth
 class RewardsController extends GetxController {
   // Observables
   final rewards = <Reward>[].obs;
@@ -14,69 +14,118 @@ class RewardsController extends GetxController {
   final pointsRedeemRules = <PointRule>[].obs;
   final isLoading = false.obs;
 
-  static const String _storageKey = 'gamification_settings';
-
   @override
   void onInit() {
     super.onInit();
     loadSettings();
   }
 
-  /// Load settings from Local Storage
+  /// Load settings from Supabase
   Future<void> loadSettings() async {
     isLoading.value = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? savedData = prefs.getString(_storageKey);
-
-      if (savedData != null) {
-        final Map<String, dynamic> data = jsonDecode(savedData);
-
-        rewards.value = (data['rewards'] as List)
-            .map((e) => Reward.fromJson(e))
-            .toList();
-
-        prizes.value = (data['prizes'] as List)
-            .map((e) => Prize.fromJson(e))
-            .toList();
-
-        final allRules = (data['rules'] as List)
-            .map((e) => PointRule.fromJson(e))
-            .toList();
-
-        pointsEarnRules.value = allRules
-            .where((r) => r.type == 'Earn')
-            .toList();
-        pointsRedeemRules.value = allRules
-            .where((r) => r.type == 'Redeem')
-            .toList();
-      } else {
-        _loadDefaultSettings();
-        await saveSettings();
-      }
-    } catch (e) {
+      await Future.wait([_loadRewards(), _loadPrizes(), _loadPointRules()]);
+    } catch (_) {
       _loadDefaultSettings();
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Save settings to local storage
-  Future<void> saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = {
-      'rewards': rewards.map((e) => e.toJson()).toList(),
-      'prizes': prizes.map((e) => e.toJson()).toList(),
-      'rules': [
-        ...pointsEarnRules.map((e) => e.toJson()),
-        ...pointsRedeemRules.map((e) => e.toJson()),
-      ],
-    };
-    await prefs.setString(_storageKey, jsonEncode(data));
+  Future<void> _loadRewards() async {
+    try {
+      final response = await SupabaseService.client
+          .from('gamification_rewards')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        rewards.assignAll(
+          response.map(
+            (e) => Reward(
+              id: e['id'].toString(),
+              title: e['title'] ?? '',
+              description: e['description'] ?? '',
+              points: (e['points'] ?? 0).toInt(),
+              icon: e['icon'] ?? 'calendar-check',
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultRewards();
+      }
+    } catch (_) {
+      _loadDefaultRewards();
+    }
   }
 
-  /// Load initial mock/default settings
+  Future<void> _loadPrizes() async {
+    try {
+      final response = await SupabaseService.client
+          .from('gamification_prizes')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        prizes.assignAll(
+          response.map(
+            (e) => Prize(
+              id: e['id'].toString(),
+              label: e['label'] ?? '',
+              value: e['value'] ?? '',
+              type: e['type'] ?? 'Points',
+              probability: (e['probability'] ?? 0.0).toDouble(),
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultPrizes();
+      }
+    } catch (_) {
+      _loadDefaultPrizes();
+    }
+  }
+
+  Future<void> _loadPointRules() async {
+    try {
+      final response = await SupabaseService.client
+          .from('gamification_point_rules')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        final allRules = response
+            .map(
+              (e) => PointRule(
+                id: e['id'].toString(),
+                action: e['action'] ?? '',
+                points: e['points'] ?? '',
+                type: e['type'] ?? 'Earn',
+              ),
+            )
+            .toList();
+        pointsEarnRules.assignAll(allRules.where((r) => r.type == 'Earn'));
+        pointsRedeemRules.assignAll(allRules.where((r) => r.type == 'Redeem'));
+      } else {
+        _loadDefaultPointRules();
+      }
+    } catch (_) {
+      _loadDefaultPointRules();
+    }
+  }
+
+  /// Save settings to Supabase (batch update)
+  Future<void> saveSettings() async {
+    // Individual updates are handled through CRUD methods
+    // This method is kept for backward compatibility with batch operations
+  }
+
+  // ─────────── Defaults (fallback) ───────────
+
   void _loadDefaultSettings() {
+    _loadDefaultRewards();
+    _loadDefaultPrizes();
+    _loadDefaultPointRules();
+  }
+
+  void _loadDefaultRewards() {
     rewards.value = [
       Reward(
         id: 'daily_checkin',
@@ -86,7 +135,9 @@ class RewardsController extends GetxController {
         icon: 'calendar-check',
       ),
     ];
+  }
 
+  void _loadDefaultPrizes() {
     prizes.value = [
       Prize(
         id: '1',
@@ -124,7 +175,9 @@ class RewardsController extends GetxController {
         probability: 0.02,
       ),
     ];
+  }
 
+  void _loadDefaultPointRules() {
     pointsEarnRules.value = [
       PointRule(
         id: 'e1',
@@ -174,6 +227,8 @@ class RewardsController extends GetxController {
     ];
   }
 
+  // ─────────── CRUD → Supabase ───────────
+
   /// Update a specific point rule
   Future<void> updatePointRule(PointRule updatedRule) async {
     if (updatedRule.type == 'Earn') {
@@ -184,7 +239,13 @@ class RewardsController extends GetxController {
       if (index != -1) pointsRedeemRules[index] = updatedRule;
     }
 
-    await saveSettings();
+    try {
+      await SupabaseService.client
+          .from('gamification_point_rules')
+          .update({'action': updatedRule.action, 'points': updatedRule.points})
+          .eq('id', updatedRule.id);
+    } catch (_) {}
+
     await AuditLogger.log(
       adminName: 'Admin',
       action: 'تعديل قواعد النقاط',
@@ -198,7 +259,16 @@ class RewardsController extends GetxController {
     final index = rewards.indexWhere((r) => r.id == updatedReward.id);
     if (index != -1) {
       rewards[index] = updatedReward;
-      await saveSettings();
+      try {
+        await SupabaseService.client
+            .from('gamification_rewards')
+            .update({
+              'title': updatedReward.title,
+              'description': updatedReward.description,
+              'points': updatedReward.points,
+            })
+            .eq('id', updatedReward.id);
+      } catch (_) {}
       await AuditLogger.log(
         adminName: 'Admin',
         action: 'تعديل قيمة المكافأة',
@@ -213,7 +283,17 @@ class RewardsController extends GetxController {
     final index = prizes.indexWhere((p) => p.id == updatedPrize.id);
     if (index != -1) {
       prizes[index] = updatedPrize;
-      await saveSettings();
+      try {
+        await SupabaseService.client
+            .from('gamification_prizes')
+            .update({
+              'label': updatedPrize.label,
+              'value': updatedPrize.value,
+              'type': updatedPrize.type,
+              'probability': updatedPrize.probability,
+            })
+            .eq('id', updatedPrize.id);
+      } catch (_) {}
       await AuditLogger.log(
         adminName: 'Admin',
         action: 'تعديل جوائز العجلة',
@@ -236,7 +316,17 @@ class RewardsController extends GetxController {
     pointsEarnRules.assignAll(updatedEarnRules);
     pointsRedeemRules.assignAll(updatedRedeemRules);
 
-    await saveSettings();
+    // Batch update each to Supabase
+    for (final r in updatedRewards) {
+      await updateReward(r);
+    }
+    for (final p in updatedPrizes) {
+      await updatePrize(p);
+    }
+    for (final rule in [...updatedEarnRules, ...updatedRedeemRules]) {
+      await updatePointRule(rule);
+    }
+
     await AuditLogger.log(
       adminName: 'Admin',
       action: 'تحديث شامل لإعدادات المكافآت',

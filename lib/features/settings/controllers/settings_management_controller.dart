@@ -1,10 +1,12 @@
-import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/settings_models.dart';
 import '../../../core/services/audit_logger.dart';
+import '../../../core/services/supabase_service.dart';
 
+/// Settings Management Controller
+/// Manages FAQs, Terms, Fees, Currencies, Limits, and Maintenance
+/// All data stored in Supabase — Single Source of Truth
 class SettingsManagementController extends GetxController {
   // Reactive Lists
   final faqs = <FAQItem>[].obs;
@@ -27,90 +29,170 @@ class SettingsManagementController extends GetxController {
     loadSettings();
   }
 
+  /// Load all settings from Supabase
   Future<void> loadSettings() async {
     isLoading.value = true;
-    final prefs = await SharedPreferences.getInstance();
-
-    // Load FAQs
-    final faqData = prefs.getString('faqs');
-    if (faqData != null) {
-      final List decoded = jsonDecode(faqData);
-      faqs.assignAll(decoded.map((e) => FAQItem.fromJson(e)).toList());
-    } else {
-      _loadDefaultFAQs();
-    }
-
-    // Load Terms
-    final termsData = prefs.getString('terms');
-    if (termsData != null) {
-      final List decoded = jsonDecode(termsData);
-      terms.assignAll(decoded.map((e) => TermSection.fromJson(e)).toList());
-    } else {
-      _loadDefaultTerms();
-    }
-
-    // Load Fees
-    final feesData = prefs.getString('fees');
-    if (feesData != null) {
-      final List decoded = jsonDecode(feesData);
-      fees.assignAll(decoded.map((e) => FeeItem.fromJson(e)).toList());
-    } else {
-      _loadDefaultFees();
-    }
-
-    // Load Currencies
-    final currenciesData = prefs.getString('currencies');
-    if (currenciesData != null) {
-      final List decoded = jsonDecode(currenciesData);
-      currencies.assignAll(
-        decoded.map((e) => CurrencyItem.fromJson(e)).toList(),
-      );
-    } else {
-      _loadDefaultCurrencies();
-    }
-
-    // Load Limits
-    final limitsData = prefs.getString('limits');
-    if (limitsData != null) {
-      final List decoded = jsonDecode(limitsData);
-      limits.assignAll(decoded.map((e) => LimitItem.fromJson(e)).toList());
-    } else {
-      _loadDefaultLimits();
-    }
-
-    // Load Maintenance
-    isMaintenanceMode.value = prefs.getBool('isMaintenanceMode') ?? false;
-    maintenanceMessage.value =
-        prefs.getString('maintenanceMessage') ?? maintenanceMessage.value;
-
+    await Future.wait([
+      _loadFAQs(),
+      _loadTerms(),
+      _loadFees(),
+      _loadCurrencies(),
+      _loadLimits(),
+      _loadMaintenance(),
+    ]);
     isLoading.value = false;
   }
 
-  Future<void> saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'faqs',
-      jsonEncode(faqs.map((e) => e.toJson()).toList()),
-    );
-    await prefs.setString(
-      'terms',
-      jsonEncode(terms.map((e) => e.toJson()).toList()),
-    );
-    await prefs.setString(
-      'fees',
-      jsonEncode(fees.map((e) => e.toJson()).toList()),
-    );
-    await prefs.setString(
-      'currencies',
-      jsonEncode(currencies.map((e) => e.toJson()).toList()),
-    );
-    await prefs.setString(
-      'limits',
-      jsonEncode(limits.map((e) => e.toJson()).toList()),
-    );
-    await prefs.setBool('isMaintenanceMode', isMaintenanceMode.value);
-    await prefs.setString('maintenanceMessage', maintenanceMessage.value);
+  // ─────────── Loaders ───────────
+
+  Future<void> _loadFAQs() async {
+    try {
+      final response = await SupabaseService.client
+          .from('app_faqs')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        faqs.assignAll(
+          response.map(
+            (e) => FAQItem(
+              id: e['id'].toString(),
+              question: e['question'] ?? '',
+              answer: e['answer'] ?? '',
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultFAQs();
+      }
+    } catch (_) {
+      _loadDefaultFAQs();
+    }
   }
+
+  Future<void> _loadTerms() async {
+    try {
+      final response = await SupabaseService.client
+          .from('app_terms')
+          .select()
+          .order('sort_order', ascending: true);
+      if ((response as List).isNotEmpty) {
+        terms.assignAll(
+          response.map(
+            (e) => TermSection(
+              id: e['id'].toString(),
+              title: e['title'] ?? '',
+              content: e['content'] ?? '',
+              order: e['sort_order'] ?? 0,
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultTerms();
+      }
+    } catch (_) {
+      _loadDefaultTerms();
+    }
+  }
+
+  Future<void> _loadFees() async {
+    try {
+      final response = await SupabaseService.client
+          .from('fee_config')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        fees.assignAll(
+          response.map(
+            (e) => FeeItem(
+              id: e['id'].toString(),
+              label: e['label'] ?? '',
+              value: e['value'] ?? '',
+              category: e['category'] ?? '',
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultFees();
+      }
+    } catch (_) {
+      _loadDefaultFees();
+    }
+  }
+
+  Future<void> _loadCurrencies() async {
+    try {
+      final response = await SupabaseService.client
+          .from('currency_config')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        currencies.assignAll(
+          response.map(
+            (e) => CurrencyItem(
+              id: e['id'].toString(),
+              name: e['name'] ?? '',
+              code: e['code'] ?? '',
+              rate: e['rate']?.toString() ?? '0',
+              isBase: e['is_base'] ?? false,
+              iconCode: e['icon_code'] ?? FontAwesomeIcons.dollarSign.codePoint,
+              iconFamily: e['icon_family'],
+              iconPackage: e['icon_package'],
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultCurrencies();
+      }
+    } catch (_) {
+      _loadDefaultCurrencies();
+    }
+  }
+
+  Future<void> _loadLimits() async {
+    try {
+      final response = await SupabaseService.client
+          .from('limit_config')
+          .select()
+          .order('created_at', ascending: true);
+      if ((response as List).isNotEmpty) {
+        limits.assignAll(
+          response.map(
+            (e) => LimitItem(
+              id: e['id'].toString(),
+              label: e['label'] ?? '',
+              value: e['value']?.toString() ?? '0',
+              tier: e['tier'] ?? 'Normal',
+            ),
+          ),
+        );
+      } else {
+        _loadDefaultLimits();
+      }
+    } catch (_) {
+      _loadDefaultLimits();
+    }
+  }
+
+  Future<void> _loadMaintenance() async {
+    try {
+      final response = await SupabaseService.client
+          .from('system_settings')
+          .select('maintenance_mode, maintenance_message')
+          .eq('id', 'global')
+          .maybeSingle();
+      if (response != null) {
+        isMaintenanceMode.value = response['maintenance_mode'] ?? false;
+        if (response['maintenance_message'] != null &&
+            (response['maintenance_message'] as String).isNotEmpty) {
+          maintenanceMessage.value = response['maintenance_message'];
+        }
+      }
+    } catch (_) {
+      // Keep defaults
+    }
+  }
+
+  // ─────────── Defaults (fallback only) ───────────
 
   void _loadDefaultFAQs() {
     faqs.assignAll([
@@ -237,79 +319,116 @@ class SettingsManagementController extends GetxController {
     ]);
   }
 
-  // --- CRUD Actions ---
+  // ─────────── CRUD Actions → Supabase ───────────
 
   // Maintenance
-  void toggleMaintenance(bool value) {
+  void toggleMaintenance(bool value) async {
     isMaintenanceMode.value = value;
-    saveSettings();
+    try {
+      await SupabaseService.client
+          .from('system_settings')
+          .update({
+            'maintenance_mode': value,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', 'global');
+    } catch (_) {}
     _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
   }
 
-  void updateMaintenanceMessage(String message) {
+  void updateMaintenanceMessage(String message) async {
     maintenanceMessage.value = message;
-    saveSettings();
+    try {
+      await SupabaseService.client
+          .from('system_settings')
+          .update({
+            'maintenance_message': message,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', 'global');
+    } catch (_) {}
     _logAction('تحديث رسالة الصيانة');
   }
 
-  // FAQ
-  void addFAQ(String question, String answer) {
-    faqs.add(
-      FAQItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        question: question,
-        answer: answer,
-      ),
-    );
-    saveSettings();
+  // FAQ — CRUD to Supabase
+  void addFAQ(String question, String answer) async {
+    final newId = DateTime.now().millisecondsSinceEpoch.toString();
+    faqs.add(FAQItem(id: newId, question: question, answer: answer));
+    try {
+      await SupabaseService.client.from('app_faqs').insert({
+        'question': question,
+        'answer': answer,
+      });
+    } catch (_) {}
     _logAction('إضافة سؤال شائع: $question');
   }
 
-  void updateFAQ(String id, String question, String answer) {
+  void updateFAQ(String id, String question, String answer) async {
     int index = faqs.indexWhere((e) => e.id == id);
     if (index != -1) {
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
-      saveSettings();
+      try {
+        await SupabaseService.client
+            .from('app_faqs')
+            .update({'question': question, 'answer': answer})
+            .eq('id', id);
+      } catch (_) {}
       _logAction('تحديث سؤال شائع: $question');
     }
   }
 
-  void deleteFAQ(String id) {
+  void deleteFAQ(String id) async {
     faqs.removeWhere((e) => e.id == id);
-    saveSettings();
+    try {
+      await SupabaseService.client.from('app_faqs').delete().eq('id', id);
+    } catch (_) {}
     _logAction('حذف سؤال شائع');
   }
 
-  // Terms
-  void addTerm(String title, String content) {
+  // Terms — CRUD to Supabase
+  void addTerm(String title, String content) async {
+    final newId = DateTime.now().millisecondsSinceEpoch.toString();
     terms.add(
       TermSection(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: newId,
         title: title,
         content: content,
         order: terms.length + 1,
       ),
     );
-    saveSettings();
+    try {
+      await SupabaseService.client.from('app_terms').insert({
+        'title': title,
+        'content': content,
+        'sort_order': terms.length,
+      });
+    } catch (_) {}
     _logAction('إضافة بند شروط: $title');
   }
 
-  void updateTerm(String id, String title, String content) {
+  void updateTerm(String id, String title, String content) async {
     int index = terms.indexWhere((e) => e.id == id);
     if (index != -1) {
       terms[index] = terms[index].copyWith(title: title, content: content);
-      saveSettings();
+      try {
+        await SupabaseService.client
+            .from('app_terms')
+            .update({'title': title, 'content': content})
+            .eq('id', id);
+      } catch (_) {}
       _logAction('تحديث بند شروط: $title');
     }
   }
 
-  void deleteTerm(String id) {
+  void deleteTerm(String id) async {
     terms.removeWhere((e) => e.id == id);
-    saveSettings();
+    try {
+      await SupabaseService.client.from('app_terms').delete().eq('id', id);
+    } catch (_) {}
     _logAction('حذف بند شروط');
   }
 
-  void reorderTerms(int oldIndex, int newIndex) {
+  void reorderTerms(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) newIndex -= 1;
     final item = terms.removeAt(oldIndex);
     terms.insert(newIndex, item);
@@ -317,44 +436,77 @@ class SettingsManagementController extends GetxController {
     for (int i = 0; i < terms.length; i++) {
       terms[i] = terms[i].copyWith(order: i + 1);
     }
-    saveSettings();
+    // Batch update sort_order in Supabase
+    for (int i = 0; i < terms.length; i++) {
+      try {
+        await SupabaseService.client
+            .from('app_terms')
+            .update({'sort_order': i + 1})
+            .eq('id', terms[i].id);
+      } catch (_) {}
+    }
     _logAction('إعادة ترتيب بنود الشروط');
   }
 
-  // Fees
-  void updateFee(String id, String newValue) {
+  // Fees — update to Supabase
+  void updateFee(String id, String newValue) async {
     int index = fees.indexWhere((e) => e.id == id);
     if (index != -1) {
       fees[index] = fees[index].copyWith(value: newValue);
-      saveSettings();
+      try {
+        await SupabaseService.client
+            .from('fee_config')
+            .update({'value': newValue})
+            .eq('id', id);
+      } catch (_) {}
       _logAction('تحديث قيمة الرسوم: ${fees[index].label}');
     }
   }
 
-  // Currencies
-  void addCurrency(CurrencyItem currency) {
+  // Currencies — CRUD to Supabase
+  void addCurrency(CurrencyItem currency) async {
     if (currency.isBase) {
       for (int i = 0; i < currencies.length; i++) {
         currencies[i] = currencies[i].copyWith(isBase: false);
       }
     }
     currencies.add(currency);
-    saveSettings();
+    try {
+      await SupabaseService.client.from('currency_config').insert({
+        'name': currency.name,
+        'code': currency.code,
+        'rate': currency.rate,
+        'is_base': currency.isBase,
+        'icon_code': currency.iconCode,
+        'icon_family': currency.iconFamily,
+        'icon_package': currency.iconPackage,
+      });
+    } catch (_) {}
     _logAction('إضافة عملة جديدة: ${currency.name}');
   }
 
-  void deleteCurrency(String id) {
+  void deleteCurrency(String id) async {
     currencies.removeWhere((e) => e.id == id);
-    saveSettings();
+    try {
+      await SupabaseService.client
+          .from('currency_config')
+          .delete()
+          .eq('id', id);
+    } catch (_) {}
     _logAction('حذف عملة');
   }
 
-  // Limits
-  void updateLimit(String id, String newValue) {
+  // Limits — update to Supabase
+  void updateLimit(String id, String newValue) async {
     int index = limits.indexWhere((e) => e.id == id);
     if (index != -1) {
       limits[index] = limits[index].copyWith(value: newValue);
-      saveSettings();
+      try {
+        await SupabaseService.client
+            .from('limit_config')
+            .update({'value': newValue})
+            .eq('id', id);
+      } catch (_) {}
       _logAction('تحديث حد المعاملة: ${limits[index].label}');
     }
   }

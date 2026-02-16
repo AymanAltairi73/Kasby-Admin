@@ -3,6 +3,7 @@ import '../models/loan_model.dart';
 import '../../../core/services/supabase_service.dart';
 
 /// Loan Controller — manages loans from Supabase `loans` table
+/// All status changes use RPCs for atomicity and ledger integrity
 class LoanController extends GetxController {
   final loans = <Loan>[].obs;
   final isLoading = false.obs;
@@ -56,9 +57,43 @@ class LoanController extends GetxController {
     searchQuery.value = query;
   }
 
-  /// Update loan status (Admin Action)
+  /// Approve a pending loan via RPC (atomic: credits wallet + logs transaction)
+  Future<void> approveLoan(String loanId) async {
+    try {
+      isLoading.value = true;
+      final adminId = SupabaseService.auth.currentUser?.id;
+
+      await SupabaseService.client.rpc(
+        'fn_approve_loan',
+        params: {'p_loan_id': loanId, 'p_admin_id': adminId},
+      );
+
+      await loadLoans();
+      Get.snackbar('نجح', 'تم الموافقة على القرض بنجاح');
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في الموافقة على القرض: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Update loan status (Admin Action) — uses RPC for financial actions
   Future<void> updateLoanStatus(String loanId, LoanStatus newStatus) async {
     try {
+      isLoading.value = true;
+
+      if (newStatus == LoanStatus.current) {
+        // Approving a loan: use RPC
+        await approveLoan(loanId);
+        return;
+      }
+
+      // For non-financial status changes (delayed, etc.)
+      // These don't affect wallets so direct update is acceptable
       String statusStr;
       switch (newStatus) {
         case LoanStatus.paid:
@@ -88,6 +123,8 @@ class LoanController extends GetxController {
         'فشل في تحديث حالة القرض: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 }

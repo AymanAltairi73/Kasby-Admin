@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/audit_logger.dart';
+import '../../core/services/supabase_service.dart';
 import '../models/system_settings_model.dart';
 
 /// Settings Controller
-/// Manages system-wide emergency controls and settings
+/// Manages system-wide emergency controls from Supabase `system_settings` table
+/// (Single Source of Truth — no local storage)
 class SettingsController extends GetxController {
   final settings = SystemSettings(
     pauseWithdrawals: false,
@@ -23,23 +23,76 @@ class SettingsController extends GetxController {
     loadSettings();
   }
 
+  /// Load settings from Supabase `system_settings` table
   Future<void> loadSettings() async {
     isLoading.value = true;
-    final prefs = await SharedPreferences.getInstance();
-    final settingsData = prefs.getString('system_settings');
+    try {
+      final response = await SupabaseService.client
+          .from('system_settings')
+          .select()
+          .eq('id', 'global')
+          .maybeSingle();
 
-    if (settingsData != null) {
-      settings.value = SystemSettings.fromJson(jsonDecode(settingsData));
+      if (response != null) {
+        settings.value = SystemSettings(
+          pauseWithdrawals: response['pause_withdrawals'] ?? false,
+          pauseProfits: response['pause_profits'] ?? false,
+          systemFreeze: response['system_freeze'] ?? false,
+          updatedAt:
+              DateTime.tryParse(response['updated_at'] ?? '') ?? DateTime.now(),
+          updatedBy: response['updated_by'] ?? 'Admin',
+        );
+      } else {
+        // Create initial row if not exists
+        await _createInitialSettings();
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحميل إعدادات النظام: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
     isLoading.value = false;
   }
 
-  Future<void> saveSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'system_settings',
-      jsonEncode(settings.value.toJson()),
-    );
+  /// Create initial settings row in Supabase
+  Future<void> _createInitialSettings() async {
+    try {
+      await SupabaseService.client.from('system_settings').insert({
+        'id': 'global',
+        'pause_withdrawals': false,
+        'pause_profits': false,
+        'system_freeze': false,
+        'updated_by': 'System',
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+    } catch (_) {
+      // Row may already exist, ignore
+    }
+  }
+
+  /// Save settings to Supabase
+  Future<void> _saveSettings() async {
+    try {
+      final adminId = SupabaseService.auth.currentUser?.id ?? 'Admin';
+      await SupabaseService.client
+          .from('system_settings')
+          .update({
+            'pause_withdrawals': settings.value.pauseWithdrawals,
+            'pause_profits': settings.value.pauseProfits,
+            'system_freeze': settings.value.systemFreeze,
+            'updated_by': adminId,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', 'global');
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في حفظ الإعدادات: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   bool get pauseWithdrawals => settings.value.pauseWithdrawals;
@@ -83,7 +136,7 @@ class SettingsController extends GetxController {
         break;
     }
 
-    await saveSettings();
+    await _saveSettings();
 
     await AuditLogger.log(
       adminName: 'SuperAdmin',
