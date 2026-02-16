@@ -1,21 +1,21 @@
-/// Agent Model
+/// Agent Model — maps to `agents` table in Supabase
 class Agent {
   final String id;
   final String name;
   final String country;
-  final String province; // New
+  final String province;
   final String city;
-  final String address; // New
+  final String address;
   final String phone;
-  final String whatsapp; // New
-  final String telegram; // New
+  final String whatsapp;
+  final String telegram;
   final String email;
   final String status; // Active, Inactive
   final bool isAvailableNow;
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
   final double successRate;
   final int totalTransactions;
-  final String notes; // New
+  final String notes;
   final DateTime createdAt;
 
   Agent({
@@ -77,10 +77,11 @@ class Agent {
     );
   }
 
-  factory Agent.fromJson(Map<String, dynamic> json) {
+  /// Construct from Supabase row
+  factory Agent.fromSupabase(Map<String, dynamic> json) {
     return Agent(
       id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? '',
       country: json['country'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',
@@ -90,14 +91,48 @@ class Agent {
       telegram: json['telegram'] ?? '',
       email: json['email'] ?? '',
       status: json['status'] ?? 'Active',
-      isAvailableNow: json['isAvailableNow'] ?? false,
-      supportedMethods: List<String>.from(json['supportedMethods'] ?? []),
-      successRate: (json['successRate'] ?? 0.0).toDouble(),
-      totalTransactions: json['totalTransactions'] ?? 0,
+      isAvailableNow: json['is_available_now'] ?? false,
+      supportedMethods: json['supported_methods'] != null
+          ? List<String>.from(json['supported_methods'])
+          : [],
+      successRate: (json['success_rate'] ?? 0.0).toDouble(),
+      totalTransactions: json['total_transactions'] ?? 0,
+      notes: json['notes'] ?? '',
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+    );
+  }
+
+  /// Legacy fromJson for backward compat
+  factory Agent.fromJson(Map<String, dynamic> json) {
+    return Agent(
+      id: json['id'] ?? '',
+      name: json['name'] ?? json['full_name'] ?? '',
+      country: json['country'] ?? '',
+      province: json['province'] ?? '',
+      city: json['city'] ?? '',
+      address: json['address'] ?? '',
+      phone: json['phone'] ?? '',
+      whatsapp: json['whatsapp'] ?? (json['phone'] ?? ''),
+      telegram: json['telegram'] ?? '',
+      email: json['email'] ?? '',
+      status: json['status'] ?? 'Active',
+      isAvailableNow:
+          json['isAvailableNow'] ?? json['is_available_now'] ?? false,
+      supportedMethods: List<String>.from(
+        json['supportedMethods'] ?? json['supported_methods'] ?? [],
+      ),
+      successRate: (json['successRate'] ?? json['success_rate'] ?? 0.0)
+          .toDouble(),
+      totalTransactions:
+          json['totalTransactions'] ?? json['total_transactions'] ?? 0,
       notes: json['notes'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+          : (json['created_at'] != null
+                ? DateTime.parse(json['created_at'])
+                : DateTime.now()),
     );
   }
 
@@ -123,99 +158,22 @@ class Agent {
     };
   }
 
-  static List<Agent> getMockAgents() {
-    return [
-      Agent(
-        id: '1',
-        name: 'وكيل بغداد',
-        country: 'العراق',
-        province: 'بغداد',
-        city: 'بغداد',
-        address: 'شارع المنصور، قرب المتنبي',
-        phone: '+9647701234567',
-        whatsapp: '+9647701234567',
-        telegram: 'baghdad_agent',
-        email: 'baghdad@kasby.com',
-        status: 'Active',
-        isAvailableNow: true,
-        supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
-        successRate: 98.5,
-        totalTransactions: 1250,
-        notes: 'وكيل معتمد في منطقة المنصور، يتميز بسرعة الاستجابة.',
-        createdAt: DateTime.now().subtract(const Duration(days: 180)),
-      ),
-      Agent(
-        id: '2',
-        name: 'وكيل البصرة',
-        country: 'العراق',
-        province: 'البصرة',
-        city: 'البصرة',
-        address: 'شارع الجزائر، المعقل',
-        phone: '+9647801234567',
-        whatsapp: '+9647801234567',
-        telegram: 'basra_agent',
-        email: 'basra@kasby.com',
-        status: 'Active',
-        isAvailableNow: true,
-        supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
-        successRate: 98.5,
-        totalTransactions: 980,
-        createdAt: DateTime.now().subtract(const Duration(days: 150)),
-      ),
-      Agent(
-        id: '3',
-        name: 'وكيل أربيل',
-        country: 'العراق',
-        province: 'أربيل',
-        city: 'أربيل',
-        address: 'طريق عينكاوة، حي بختياري',
-        phone: '+9647501234567',
-        whatsapp: '+9647501234567',
-        telegram: 'erbil_agent',
-        email: 'erbil@kasby.com',
-        status: 'Active',
-        isAvailableNow: true,
-        supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
-        successRate: 98.5,
-        totalTransactions: 750,
-        createdAt: DateTime.now().subtract(const Duration(days: 120)),
-      ),
-      Agent(
-        id: '4',
-        name: 'وكيل كربلاء',
-        country: 'العراق',
-        province: 'كربلاء',
-        city: 'كربلاء',
-        address: 'حي البلدي، مقابل القبلة',
-        phone: '+9647711234567',
-        whatsapp: '+9647711234567',
-        telegram: 'karbala_agent',
-        email: 'karbala@kasby.com',
-        status: 'Active',
-        isAvailableNow: true,
-        supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
-        successRate: 98.5,
-        totalTransactions: 320,
-        createdAt: DateTime.now().subtract(const Duration(days: 90)),
-      ),
-      Agent(
-        id: '5',
-        name: 'وكيل النجف الأشرف',
-        country: 'العراق',
-        province: 'النجف',
-        city: 'النجف الأشرف',
-        address: 'حي السعد، شارع الكوفة',
-        phone: '+9647811234567',
-        whatsapp: '+9647811234567',
-        telegram: 'najaf_agent',
-        email: 'najaf@kasby.com',
-        status: 'Active',
-        isAvailableNow: true,
-        supportedMethods: ['WhatsApp', 'Telegram', 'Call'],
-        successRate: 98.5,
-        totalTransactions: 1500,
-        createdAt: DateTime.now().subtract(const Duration(days: 200)),
-      ),
-    ];
+  /// Convert to Supabase-compatible map for insert/update
+  Map<String, dynamic> toSupabase() {
+    return {
+      'full_name': name,
+      'country': country,
+      'province': province,
+      'city': city,
+      'address': address,
+      'phone': phone,
+      'whatsapp': whatsapp,
+      'telegram': telegram,
+      'email': email,
+      'status': status,
+      'is_available_now': isAvailableNow,
+      'supported_methods': supportedMethods,
+      'notes': notes,
+    };
   }
 }

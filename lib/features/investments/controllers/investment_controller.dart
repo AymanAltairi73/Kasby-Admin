@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/kasby_colors.dart';
+import '../../../core/services/supabase_service.dart';
 import '../models/investment_model.dart';
 
-/// Investment Controller
-/// Manages investment plans and user investments
+/// Investment Controller — manages investment plans & user investments from Supabase
 class InvestmentController extends GetxController {
   final plans = <InvestmentPlan>[].obs;
   final userInvestments = <UserInvestment>[].obs;
@@ -18,54 +16,50 @@ class InvestmentController extends GetxController {
     loadUserInvestments();
   }
 
-  /// Load investment plans
+  /// Load investment plans from Supabase
   Future<void> loadPlans() async {
     isLoading.value = true;
-    final prefs = await SharedPreferences.getInstance();
-    final plansData = prefs.getString('investment_plans');
+    try {
+      final response = await SupabaseService.client
+          .from('investment_plans')
+          .select()
+          .order('created_at', ascending: false);
 
-    if (plansData != null) {
-      final List decoded = jsonDecode(plansData);
-      plans.assignAll(decoded.map((e) => InvestmentPlan.fromJson(e)).toList());
-    } else {
-      plans.assignAll(InvestmentPlan.getMockPlans());
-      savePlans();
+      plans.assignAll(
+        (response as List).map((e) => InvestmentPlan.fromSupabase(e)).toList(),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحميل خطط الاستثمار: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
     isLoading.value = false;
   }
 
-  /// Load user investments
+  /// Load user investments from Supabase
   Future<void> loadUserInvestments() async {
     isLoading.value = true;
-    final prefs = await SharedPreferences.getInstance();
-    final userInvData = prefs.getString('user_investments');
+    try {
+      final response = await SupabaseService.client
+          .from('user_investments')
+          .select(
+            '*, profiles!user_investments_user_id_fkey(full_name), investment_plans!user_investments_plan_id_fkey(name_ar)',
+          )
+          .order('created_at', ascending: false);
 
-    if (userInvData != null) {
-      final List decoded = jsonDecode(userInvData);
       userInvestments.assignAll(
-        decoded.map((e) => UserInvestment.fromJson(e)).toList(),
+        (response as List).map((e) => UserInvestment.fromSupabase(e)).toList(),
       );
-    } else {
-      userInvestments.assignAll(UserInvestment.getMockInvestments());
-      saveUserInvestments();
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحميل استثمارات المستخدمين: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
     isLoading.value = false;
-  }
-
-  Future<void> savePlans() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'investment_plans',
-      jsonEncode(plans.map((e) => e.toJson()).toList()),
-    );
-  }
-
-  Future<void> saveUserInvestments() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'user_investments',
-      jsonEncode(userInvestments.map((e) => e.toJson()).toList()),
-    );
   }
 
   /// Create new plan
@@ -79,52 +73,59 @@ class InvestmentController extends GetxController {
     String? imagePath,
   }) async {
     isLoading.value = true;
+    try {
+      await SupabaseService.client.from('investment_plans').insert({
+        'name_ar': nameAr,
+        'description_ar': descriptionAr,
+        'profit_percentage': profitPercentage,
+        'min_amount': minAmount,
+        'max_amount': maxAmount,
+        'is_active': true,
+      });
 
-    final newPlan = InvestmentPlan(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      nameAr: nameAr,
-      descriptionAr: descriptionAr,
-      profitPercentage: profitPercentage,
-      minAmount: minAmount,
-      maxAmount: maxAmount,
-      availableAmounts: availableAmounts,
-      imagePath: imagePath,
-      isActive: true,
-      createdAt: DateTime.now(),
-    );
+      await loadPlans();
 
-    plans.add(newPlan);
-    await savePlans();
-
-    Get.snackbar(
-      'نجح',
-      'تم إنشاء الخطة بنجاح',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
-      colorText: KasbyColors.success,
-    );
-
+      Get.snackbar(
+        'نجح',
+        'تم إنشاء الخطة بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
+        colorText: KasbyColors.success,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في إنشاء الخطة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
     isLoading.value = false;
   }
 
   /// Update plan
   Future<void> updatePlan(String planId, Map<String, dynamic> updates) async {
     isLoading.value = true;
+    try {
+      final supabaseUpdates = <String, dynamic>{};
+      if (updates['nameAr'] != null)
+        supabaseUpdates['name_ar'] = updates['nameAr'];
+      if (updates['descriptionAr'] != null)
+        supabaseUpdates['description_ar'] = updates['descriptionAr'];
+      if (updates['profitPercentage'] != null)
+        supabaseUpdates['profit_percentage'] = updates['profitPercentage'];
+      if (updates['minAmount'] != null)
+        supabaseUpdates['min_amount'] = updates['minAmount'];
+      if (updates['maxAmount'] != null)
+        supabaseUpdates['max_amount'] = updates['maxAmount'];
+      if (updates['imagePath'] != null)
+        supabaseUpdates['image_path'] = updates['imagePath'];
 
-    final index = plans.indexWhere((p) => p.id == planId);
-    if (index != -1) {
-      final oldPlan = plans[index];
-      plans[index] = oldPlan.copyWith(
-        nameAr: updates['nameAr'],
-        descriptionAr: updates['descriptionAr'],
-        profitPercentage: updates['profitPercentage'],
-        minAmount: updates['minAmount'],
-        maxAmount: updates['maxAmount'],
-        availableAmounts: updates['availableAmounts'],
-        imagePath: updates['imagePath'],
-      );
+      await SupabaseService.client
+          .from('investment_plans')
+          .update(supabaseUpdates)
+          .eq('id', planId);
 
-      await savePlans();
+      await loadPlans();
 
       Get.snackbar(
         'نجح',
@@ -133,36 +134,51 @@ class InvestmentController extends GetxController {
         backgroundColor: KasbyColors.primaryGold.withValues(alpha: 0.1),
         colorText: KasbyColors.primaryGold,
       );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحديث الخطة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
-
     isLoading.value = false;
   }
 
   /// Delete plan
   Future<void> deletePlan(String planId) async {
     isLoading.value = true;
+    try {
+      await SupabaseService.client
+          .from('investment_plans')
+          .delete()
+          .eq('id', planId);
 
-    plans.removeWhere((p) => p.id == planId);
-    await savePlans();
+      plans.removeWhere((p) => p.id == planId);
 
-    Get.snackbar(
-      'نجح',
-      'تم حذف الخطة نهائياً من العرض',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
-      colorText: KasbyColors.error,
-    );
-
+      Get.snackbar(
+        'نجح',
+        'تم حذف الخطة نهائياً من العرض',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
+        colorText: KasbyColors.error,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في حذف الخطة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
     isLoading.value = false;
   }
 
   /// Get active investments
   List<UserInvestment> get activeInvestments {
-    return userInvestments.where((inv) => inv.status == 'Active').toList();
+    return userInvestments.where((inv) => inv.status == 'active').toList();
   }
 
   /// Get completed investments
   List<UserInvestment> get completedInvestments {
-    return userInvestments.where((inv) => inv.status == 'Completed').toList();
+    return userInvestments.where((inv) => inv.status == 'matured').toList();
   }
 }

@@ -59,6 +59,13 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة السلف والقروض',
               onTap: () => Get.toNamed('/loans'),
             ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: Icons.subscriptions_rounded,
+              title: 'اشتراكات المستخدمين',
+              subtitle: 'إدارة خطط الاشتراك (أساسي / احترافي)',
+              onTap: () => Get.toNamed('/subscriptions'),
+            ),
             const SizedBox(height: 24),
 
             // Notifications Section

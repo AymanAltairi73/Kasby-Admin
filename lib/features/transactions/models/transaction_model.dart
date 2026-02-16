@@ -1,11 +1,12 @@
-/// Transaction Model
+/// Transaction Model — maps to `transactions` table in Supabase
 class Transaction {
   final String id;
   final String userId;
   final String userName;
-  final String type; // Deposit, Withdrawal, Adjustment
+  final String
+  type; // deposit, withdrawal, transfer_in, transfer_out, investment, profit, etc.
   final double amount;
-  final String status; // Pending, Approved, Rejected
+  final String status; // pending, processing, completed, rejected, failed
   final String? reason;
   final String? proofUrl;
   final DateTime createdAt;
@@ -46,22 +47,54 @@ class Transaction {
     );
   }
 
+  /// Construct from Supabase row (with optional nested profiles for userName)
+  factory Transaction.fromSupabase(Map<String, dynamic> json) {
+    // Extract user name from nested profile join
+    String uName = '';
+    final profile = json['profiles'];
+    if (profile is Map) {
+      uName = profile['full_name'] ?? '';
+    }
+
+    return Transaction(
+      id: json['id'] ?? '',
+      userId: json['user_id'] ?? '',
+      userName: uName,
+      type: json['type'] ?? 'deposit',
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      status: json['status'] ?? 'pending',
+      reason: json['rejection_reason'],
+      proofUrl: json['proof_url'],
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      processedAt: json['processed_at'] != null
+          ? DateTime.parse(json['processed_at'])
+          : null,
+    );
+  }
+
+  /// Legacy fromJson for backward compat
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
       id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
+      userId: json['userId'] ?? json['user_id'] ?? '',
       userName: json['userName'] ?? '',
-      type: json['type'] ?? 'Deposit',
+      type: json['type'] ?? 'deposit',
       amount: (json['amount'] ?? 0.0).toDouble(),
-      status: json['status'] ?? 'Pending',
-      reason: json['reason'],
-      proofUrl: json['proofUrl'],
+      status: json['status'] ?? 'pending',
+      reason: json['reason'] ?? json['rejection_reason'],
+      proofUrl: json['proofUrl'] ?? json['proof_url'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+          : (json['created_at'] != null
+                ? DateTime.parse(json['created_at'])
+                : DateTime.now()),
       processedAt: json['processedAt'] != null
           ? DateTime.parse(json['processedAt'])
-          : null,
+          : (json['processed_at'] != null
+                ? DateTime.parse(json['processed_at'])
+                : null),
     );
   }
 
@@ -78,62 +111,5 @@ class Transaction {
       'createdAt': createdAt.toIso8601String(),
       'processedAt': processedAt?.toIso8601String(),
     };
-  }
-
-  static List<Transaction> getMockTransactions() {
-    return [
-      Transaction(
-        id: '1',
-        userId: '1',
-        userName: 'أحمد محمد',
-        type: 'Deposit',
-        amount: 1000,
-        status: 'Pending',
-        proofUrl: 'https://example.com/proof1.jpg',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      Transaction(
-        id: '2',
-        userId: '4',
-        userName: 'نورة عبدالله',
-        type: 'Withdrawal',
-        amount: 500,
-        status: 'Pending',
-        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-      Transaction(
-        id: '3',
-        userId: '2',
-        userName: 'فاطمة علي',
-        type: 'Deposit',
-        amount: 2000,
-        status: 'Approved',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        processedAt: DateTime.now().subtract(const Duration(hours: 20)),
-      ),
-      Transaction(
-        id: '4',
-        userId: '5',
-        userName: 'عمر حسن',
-        type: 'Withdrawal',
-        amount: 750,
-        status: 'Approved',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        processedAt: DateTime.now().subtract(
-          const Duration(days: 1, hours: 12),
-        ),
-      ),
-      Transaction(
-        id: '5',
-        userId: '3',
-        userName: 'خالد سعيد',
-        type: 'Deposit',
-        amount: 300,
-        status: 'Rejected',
-        reason: 'إثبات الدفع غير واضح',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        processedAt: DateTime.now().subtract(const Duration(days: 2, hours: 8)),
-      ),
-    ];
   }
 }

@@ -37,9 +37,15 @@ import 'features/loans/controllers/loan_controller.dart';
 import 'features/loans/screens/loans_screen.dart';
 import 'features/settings/controllers/settings_management_controller.dart';
 import 'features/gamification/controllers/rewards_controller.dart';
+import 'core/services/supabase_service.dart';
+import 'features/subscriptions/controllers/subscription_controller.dart';
+import 'features/subscriptions/screens/subscriptions_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Supabase
+  await SupabaseService.init();
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
@@ -60,6 +66,7 @@ Future<void> main() async {
   Get.put(AudioService());
   Get.put(ChatController());
   Get.put(RewardsController());
+  Get.put(SubscriptionController());
 
   runApp(const KasbyAdminApp());
 }
@@ -117,6 +124,10 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),
         GetPage(name: '/chat-list', page: () => const ChatListScreen()),
         GetPage(name: '/chat-details', page: () => const ChatDetailsScreen()),
+        GetPage(
+          name: '/subscriptions',
+          page: () => const SubscriptionsScreen(),
+        ),
       ],
 
       // Check if user is already logged in

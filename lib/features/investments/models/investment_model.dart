@@ -1,4 +1,4 @@
-/// Investment Plan Model
+/// Investment Plan Model — maps to `investment_plans` table in Supabase
 class InvestmentPlan {
   final String id;
   final String nameAr;
@@ -10,6 +10,7 @@ class InvestmentPlan {
   final bool isActive;
   final DateTime createdAt;
   final String? imagePath;
+  final int? durationDays;
 
   InvestmentPlan({
     required this.id,
@@ -22,6 +23,7 @@ class InvestmentPlan {
     required this.isActive,
     required this.createdAt,
     this.imagePath,
+    this.durationDays,
   });
 
   InvestmentPlan copyWith({
@@ -35,6 +37,7 @@ class InvestmentPlan {
     bool? isActive,
     DateTime? createdAt,
     String? imagePath,
+    int? durationDays,
   }) {
     return InvestmentPlan(
       id: id ?? this.id,
@@ -47,25 +50,57 @@ class InvestmentPlan {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       imagePath: imagePath ?? this.imagePath,
+      durationDays: durationDays ?? this.durationDays,
     );
   }
 
+  /// Construct from Supabase row
+  factory InvestmentPlan.fromSupabase(Map<String, dynamic> json) {
+    return InvestmentPlan(
+      id: json['id'] ?? '',
+      nameAr: json['name_ar'] ?? json['name'] ?? '',
+      profitPercentage: (json['profit_percentage'] ?? 0.0).toDouble(),
+      minAmount: (json['min_amount'] ?? 0.0).toDouble(),
+      maxAmount: (json['max_amount'] ?? 0.0).toDouble(),
+      availableAmounts: json['available_amounts'] != null
+          ? List<double>.from(
+              (json['available_amounts'] as List).map(
+                (x) => (x as num).toDouble(),
+              ),
+            )
+          : null,
+      descriptionAr: json['description_ar'] ?? json['description'] ?? '',
+      isActive: json['is_active'] ?? true,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      imagePath: json['image_path'],
+      durationDays: json['duration_days'],
+    );
+  }
+
+  /// Legacy fromJson
   factory InvestmentPlan.fromJson(Map<String, dynamic> json) {
     return InvestmentPlan(
       id: json['id'] ?? '',
-      nameAr: json['nameAr'] ?? '',
-      profitPercentage: (json['profitPercentage'] ?? 0.0).toDouble(),
-      minAmount: (json['minAmount'] ?? 0.0).toDouble(),
-      maxAmount: (json['maxAmount'] ?? 0.0).toDouble(),
+      nameAr: json['nameAr'] ?? json['name_ar'] ?? '',
+      profitPercentage:
+          (json['profitPercentage'] ?? json['profit_percentage'] ?? 0.0)
+              .toDouble(),
+      minAmount: (json['minAmount'] ?? json['min_amount'] ?? 0.0).toDouble(),
+      maxAmount: (json['maxAmount'] ?? json['max_amount'] ?? 0.0).toDouble(),
       availableAmounts: json['availableAmounts'] != null
           ? List<double>.from(json['availableAmounts'].map((x) => x.toDouble()))
           : null,
-      descriptionAr: json['descriptionAr'] ?? '',
-      isActive: json['isActive'] ?? true,
+      descriptionAr: json['descriptionAr'] ?? json['description_ar'] ?? '',
+      isActive: json['isActive'] ?? json['is_active'] ?? true,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
-      imagePath: json['imagePath'],
+          : (json['created_at'] != null
+                ? DateTime.parse(json['created_at'])
+                : DateTime.now()),
+      imagePath: json['imagePath'] ?? json['image_path'],
+      durationDays: json['durationDays'] ?? json['duration_days'],
     );
   }
 
@@ -81,53 +116,25 @@ class InvestmentPlan {
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
       'imagePath': imagePath,
+      'durationDays': durationDays,
     };
   }
 
-  static List<InvestmentPlan> getMockPlans() {
-    return [
-      InvestmentPlan(
-        id: '1',
-        nameAr: 'خطة الفضة',
-        profitPercentage: 6.0,
-        minAmount: 100,
-        maxAmount: 500,
-        availableAmounts: [100, 200, 300, 400, 500],
-        descriptionAr: 'خطة استثمار متوسطة تهدف إلى نمو رأس المال بشكل مستقر.',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 60)),
-        imagePath: 'assets/images/sliver.png',
-      ),
-      InvestmentPlan(
-        id: '2',
-        nameAr: 'خطة الذهب',
-        profitPercentage: 12.0,
-        minAmount: 500,
-        maxAmount: 2500,
-        availableAmounts: [500, 1000, 1500, 2000, 2500],
-        descriptionAr:
-            'استثمار آمن في أصول الذهب مع حماية وتشفير عالي للبيانات.',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        imagePath: 'assets/images/gold.png',
-      ),
-      InvestmentPlan(
-        id: '3',
-        nameAr: 'خطة العقارات',
-        profitPercentage: 18.0,
-        minAmount: 2000,
-        maxAmount: 10000,
-        descriptionAr:
-            'أعلى العوائد من خلال الاستثمار في الأصول العقارية الموثوقة.',
-        isActive: true,
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        imagePath: 'assets/images/real_estate.png',
-      ),
-    ];
+  /// Supabase-compatible map for insert/update
+  Map<String, dynamic> toSupabase() {
+    return {
+      'name_ar': nameAr,
+      'profit_percentage': profitPercentage,
+      'min_amount': minAmount,
+      'max_amount': maxAmount,
+      'is_active': isActive,
+      'description_ar': descriptionAr,
+      'duration_days': durationDays,
+    };
   }
 }
 
-/// User Investment Model
+/// User Investment Model — maps to `user_investments` table in Supabase
 class UserInvestment {
   final String id;
   final String userId;
@@ -139,7 +146,7 @@ class UserInvestment {
   final double expectedProfit;
   final DateTime startDate;
   final DateTime endDate;
-  final String status; // Active, Completed, Cancelled
+  final String status; // active, matured, cancelled
 
   UserInvestment({
     required this.id,
@@ -180,23 +187,63 @@ class UserInvestment {
     );
   }
 
+  /// Construct from Supabase row with nested profiles + investment_plans
+  factory UserInvestment.fromSupabase(Map<String, dynamic> json) {
+    String uName = '';
+    final profile = json['profiles'];
+    if (profile is Map) {
+      uName = profile['full_name'] ?? '';
+    }
+    String pName = '';
+    final plan = json['investment_plans'];
+    if (plan is Map) {
+      pName = plan['name_ar'] ?? plan['name'] ?? '';
+    }
+
+    return UserInvestment(
+      id: json['id'] ?? '',
+      userId: json['user_id'] ?? '',
+      userName: uName,
+      planId: json['plan_id'] ?? '',
+      planName: pName,
+      amount: (json['amount'] ?? 0.0).toDouble(),
+      profitPercentage: (json['profit_percentage'] ?? 0.0).toDouble(),
+      expectedProfit: (json['expected_profit'] ?? 0.0).toDouble(),
+      startDate: json['start_date'] != null
+          ? DateTime.parse(json['start_date'])
+          : DateTime.now(),
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'])
+          : DateTime.now(),
+      status: json['status'] ?? 'active',
+    );
+  }
+
+  /// Legacy fromJson
   factory UserInvestment.fromJson(Map<String, dynamic> json) {
     return UserInvestment(
       id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
+      userId: json['userId'] ?? json['user_id'] ?? '',
       userName: json['userName'] ?? '',
-      planId: json['planId'] ?? '',
+      planId: json['planId'] ?? json['plan_id'] ?? '',
       planName: json['planName'] ?? '',
       amount: (json['amount'] ?? 0.0).toDouble(),
-      profitPercentage: (json['profitPercentage'] ?? 0.0).toDouble(),
-      expectedProfit: (json['expectedProfit'] ?? 0.0).toDouble(),
+      profitPercentage:
+          (json['profitPercentage'] ?? json['profit_percentage'] ?? 0.0)
+              .toDouble(),
+      expectedProfit: (json['expectedProfit'] ?? json['expected_profit'] ?? 0.0)
+          .toDouble(),
       startDate: json['startDate'] != null
           ? DateTime.parse(json['startDate'])
-          : DateTime.now(),
+          : (json['start_date'] != null
+                ? DateTime.parse(json['start_date'])
+                : DateTime.now()),
       endDate: json['endDate'] != null
           ? DateTime.parse(json['endDate'])
-          : DateTime.now(),
-      status: json['status'] ?? 'Active',
+          : (json['end_date'] != null
+                ? DateTime.parse(json['end_date'])
+                : DateTime.now()),
+      status: json['status'] ?? 'active',
     );
   }
 
@@ -214,36 +261,5 @@ class UserInvestment {
       'endDate': endDate.toIso8601String(),
       'status': status,
     };
-  }
-
-  static List<UserInvestment> getMockInvestments() {
-    return [
-      UserInvestment(
-        id: '1',
-        userId: '1',
-        userName: 'أحمد محمد',
-        planId: '2',
-        planName: 'الخطة الفضية',
-        amount: 3000,
-        profitPercentage: 8.5,
-        expectedProfit: 255,
-        startDate: DateTime.now().subtract(const Duration(days: 20)),
-        endDate: DateTime.now().add(const Duration(days: 40)),
-        status: 'Active',
-      ),
-      UserInvestment(
-        id: '2',
-        userId: '4',
-        userName: 'نورة عبدالله',
-        planId: '3',
-        planName: 'الخطة الذهبية',
-        amount: 10000,
-        profitPercentage: 12.0,
-        expectedProfit: 1200,
-        startDate: DateTime.now().subtract(const Duration(days: 45)),
-        endDate: DateTime.now().add(const Duration(days: 45)),
-        status: 'Active',
-      ),
-    ];
   }
 }

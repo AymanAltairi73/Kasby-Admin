@@ -18,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authController = Get.find<AuthController>();
   bool _obscurePassword = true;
@@ -28,13 +28,13 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     // Pre-fill username if remembered
     if (_authController.rememberMe.value) {
-      _usernameController.text = _authController.savedUsername.value;
+      _emailController.text = _authController.savedEmail.value;
     }
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -42,12 +42,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final success = await _authController.login(
-        _usernameController.text,
+        _emailController.text.trim(),
         _passwordController.text,
       );
 
       if (success) {
-        Get.toNamed('/otp');
+        Get.offAllNamed('/main');
       }
     }
   }
@@ -122,13 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                     // Username Field
                                     KasbyTextField(
-                                          controller: _usernameController,
-                                          hintText: 'اسم المستخدم',
-                                          prefixIcon: Icons.person_outline,
+                                          controller: _emailController,
+                                          hintText: 'البريد الإلكتروني',
+                                          prefixIcon: Icons.email_outlined,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
-                                              return 'الرجاء إدخال اسم المستخدم';
+                                              return 'الرجاء إدخال البريد الإلكتروني';
                                             }
                                             return null;
                                           },

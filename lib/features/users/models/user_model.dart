@@ -1,26 +1,26 @@
 import 'user_activity_model.dart';
 
-/// Mock User Model
+/// User Model — maps to `profiles` + `wallets` tables in Supabase
 class User {
   final String id;
   final String name;
   final String email;
   final String phone;
-  final String status; // Active, Blocked
+  final String status; // active, blocked, suspended, deleted
   final String country;
-  final String province; // New
-  final String city; // New
-  final String address; // New
-  final String accountType; // Free, Verified, VIP // New
-  final String kycStatus; // Unverified, Pending, Verified // New
+  final String province;
+  final String city;
+  final String address;
+  final String accountType; // Free, Premium
+  final String kycStatus; // Unverified, Pending, Verified, Rejected
   final double walletBalance;
   final double investedAmount;
   final double pendingAmount;
   final DateTime createdAt;
-  final String whatsapp; // New
-  final String telegram; // New
-  final List<String> documents; // List of document URLs (images) // New
-  final List<UserActivity> activityLog; // User history // New
+  final String whatsapp;
+  final String telegram;
+  final List<String> documents;
+  final List<UserActivity> activityLog;
 
   User({
     required this.id,
@@ -29,14 +29,14 @@ class User {
     required this.phone,
     required this.status,
     required this.country,
-    required this.province,
-    required this.city,
-    required this.address,
+    this.province = '',
+    this.city = '',
+    this.address = '',
     required this.accountType,
     required this.kycStatus,
     required this.walletBalance,
-    required this.investedAmount,
-    required this.pendingAmount,
+    this.investedAmount = 0.0,
+    this.pendingAmount = 0.0,
     required this.createdAt,
     this.whatsapp = '',
     this.telegram = '',
@@ -88,31 +88,70 @@ class User {
     );
   }
 
-  factory User.fromJson(Map<String, dynamic> json) {
+  /// Construct from Supabase `profiles` row (with optional nested `wallets`)
+  factory User.fromSupabase(Map<String, dynamic> json) {
+    // Wallet data may be nested as a list or object
+    final wallet = json['wallets'];
+    double availBal = 0.0;
+    double investBal = 0.0;
+    if (wallet is List && wallet.isNotEmpty) {
+      availBal = (wallet[0]['available_balance'] ?? 0).toDouble();
+      investBal = (wallet[0]['invested_balance'] ?? 0).toDouble();
+    } else if (wallet is Map) {
+      availBal = (wallet['available_balance'] ?? 0).toDouble();
+      investBal = (wallet['invested_balance'] ?? 0).toDouble();
+    }
+
     return User(
       id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: json['full_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      status: json['status'] ?? 'Active',
+      status: json['status'] ?? 'active',
       country: json['country'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',
       address: json['address'] ?? '',
-      accountType: json['accountType'] ?? 'Free',
-      kycStatus: json['kycStatus'] ?? 'Unverified',
+      accountType: json['account_type'] ?? 'Free',
+      kycStatus: json['kyc_status'] ?? 'Unverified',
+      walletBalance: availBal,
+      investedAmount: investBal,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      whatsapp: json['whatsapp'] ?? '',
+      telegram: json['telegram'] ?? '',
+    );
+  }
+
+  /// Legacy fromJson for backward compat with SharedPreferences cache
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'] ?? '',
+      name: json['name'] ?? json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      status: json['status'] ?? 'active',
+      country: json['country'] ?? '',
+      province: json['province'] ?? '',
+      city: json['city'] ?? '',
+      address: json['address'] ?? '',
+      accountType: json['accountType'] ?? json['account_type'] ?? 'Free',
+      kycStatus: json['kycStatus'] ?? json['kyc_status'] ?? 'Unverified',
       walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
       investedAmount: (json['investedAmount'] ?? 0.0).toDouble(),
       pendingAmount: (json['pendingAmount'] ?? 0.0).toDouble(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+          : (json['created_at'] != null
+                ? DateTime.parse(json['created_at'])
+                : DateTime.now()),
       whatsapp: json['whatsapp'] ?? '',
       telegram: json['telegram'] ?? '',
       documents: List<String>.from(json['documents'] ?? []),
       activityLog: json['activityLog'] != null
           ? List<UserActivity>.from(
-              json['activityLog'].map((x) => UserActivity.fromJson(x)),
+              json['activityLog'].map((a) => UserActivity.fromJson(a)),
             )
           : [],
     );
@@ -138,160 +177,25 @@ class User {
       'whatsapp': whatsapp,
       'telegram': telegram,
       'documents': documents,
-      'activityLog': activityLog.map((x) => x.toJson()).toList(),
+      'activityLog': activityLog.map((a) => a.toJson()).toList(),
     };
   }
 
-  // Mock data generator
-  static List<User> getMockUsers() {
-    final now = DateTime.now();
-    return [
-      User(
-        id: '1',
-        name: 'أحمد محمد',
-        email: 'ahmed@example.com',
-        phone: '+966501234567',
-        status: 'Active',
-        country: 'Saudi Arabia',
-        province: 'Riyadh Province',
-        city: 'الرياض',
-        address: 'شارع التخصصي، حي العليا',
-        accountType: 'VIP',
-        kycStatus: 'Verified',
-        walletBalance: 5000.0,
-        investedAmount: 15000.0,
-        pendingAmount: 500.0,
-        createdAt: now.subtract(const Duration(minutes: 30)), // Today
-        whatsapp: '+966501234567',
-        telegram: 'ahmed_mo',
-        activityLog: [
-          UserActivity(
-            id: 'a1',
-            action: 'تسجيل دخول',
-            details: 'تم تسجيل الدخول من الرياض',
-            timestamp: now.subtract(const Duration(hours: 1)),
-            type: 'Security',
-          ),
-          UserActivity(
-            id: 'a2',
-            action: 'إيداع',
-            details: 'إيداع بنكي بقيمة 5000 ريال',
-            timestamp: now.subtract(const Duration(days: 1)),
-            type: 'Transaction',
-          ),
-        ],
-        documents: [
-          'assets/images/id_card_front.jpg',
-          'assets/images/id_card_back.jpg',
-        ],
-      ),
-      User(
-        id: '2',
-        name: 'فاطمة علي',
-        email: 'fatima@example.com',
-        phone: '+971507654321',
-        status: 'Active',
-        country: 'UAE',
-        province: 'Dubai',
-        city: 'دبي',
-        address: 'شارع الشيخ زايد، داون تاون',
-        accountType: 'Verified',
-        kycStatus: 'Verified',
-        walletBalance: 3200.0,
-        investedAmount: 8000.0,
-        pendingAmount: 0.0,
-        createdAt: now.subtract(const Duration(days: 2)), // This Week
-        activityLog: [
-          UserActivity(
-            id: 'a3',
-            action: 'تحديث البيانات',
-            details: 'تحديث رقم الهاتف',
-            timestamp: now.subtract(const Duration(days: 3)),
-            type: 'System',
-          ),
-        ],
-        whatsapp: '+971507654321',
-        telegram: 'fatima_dxb',
-        documents: ['assets/images/passport.jpg'],
-      ),
-      User(
-        id: '3',
-        name: 'خالد سعيد',
-        email: 'khaled@example.com',
-        phone: '+965509876543',
-        status: 'Blocked',
-        country: 'Kuwait',
-        province: 'Kuwait City',
-        city: 'الكويت',
-        address: 'منطقة السالمية، شارع الخليج العربي',
-        accountType: 'Free',
-        kycStatus: 'Unverified',
-        walletBalance: 0.0,
-        investedAmount: 0.0,
-        pendingAmount: 0.0,
-        createdAt: now.subtract(const Duration(days: 10)), // This Month
-        whatsapp: '+965509876543',
-        telegram: 'khaled_kwt',
-      ),
-      User(
-        id: '4',
-        name: 'نورة عبدالله',
-        email: 'noura@example.com',
-        phone: '+966502345678',
-        status: 'Active',
-        country: 'Saudi Arabia',
-        province: 'Makkah Province',
-        city: 'جدة',
-        address: 'شارع فلسطين، مقابل الحمراء',
-        accountType: 'VIP',
-        kycStatus: 'Verified',
-        walletBalance: 12000.0,
-        investedAmount: 25000.0,
-        pendingAmount: 1200.0,
-        createdAt: now.subtract(const Duration(hours: 5)), // Today
-
-        whatsapp: '+966502345678',
-        telegram: 'noura_abd',
-      ),
-      User(
-        id: '5',
-        name: 'عمر حسن',
-        email: 'omar@example.com',
-        phone: '+201508765432',
-        status: 'Active',
-        country: 'Egypt',
-        province: 'Cairo',
-        city: 'القاهرة',
-        address: 'حي المعادي، شارع 9',
-        accountType: 'Verified',
-        kycStatus: 'Pending',
-        walletBalance: 7500.0,
-        investedAmount: 18000.0,
-        pendingAmount: 300.0,
-        createdAt: now.subtract(const Duration(days: 4)), // This Week
-        whatsapp: '+201508765432',
-        telegram: 'omar_cairo',
-        documents: ['assets/images/national_id.jpg'], // Pending verification
-      ),
-      User(
-        id: '6',
-        name: 'ليلى يوسف',
-        email: 'layla@example.com',
-        phone: '+968501112223',
-        status: 'Active',
-        country: 'Oman',
-        province: 'Muscat',
-        city: 'مسقط',
-        address: 'روي، شارع الفرسان',
-        accountType: 'Free',
-        kycStatus: 'Unverified',
-        walletBalance: 1500.0,
-        investedAmount: 5000.0,
-        pendingAmount: 100.0,
-        createdAt: now.subtract(const Duration(days: 40)), // Older
-        whatsapp: '+968501112223',
-        telegram: 'layla_mus',
-      ),
-    ];
+  /// Convert to Supabase-compatible map for insert/update on profiles table
+  Map<String, dynamic> toSupabase() {
+    return {
+      'full_name': name,
+      'email': email,
+      'phone': phone.isNotEmpty ? phone : null,
+      'status': status,
+      'country': country,
+      'province': province,
+      'city': city,
+      'address': address,
+      'account_type': accountType,
+      'kyc_status': kycStatus,
+      'whatsapp': whatsapp,
+      'telegram': telegram,
+    };
   }
 }

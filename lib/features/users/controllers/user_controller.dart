@@ -1,24 +1,19 @@
-import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
-import '../../transactions/models/transaction_model.dart';
-import '../../transactions/controllers/transaction_controller.dart';
-import '../../../core/services/audit_logger.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/models/time_filter.dart';
 
-/// User Management Controller
-/// Handles user list, search, filter, and admin actions
+/// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
   final users = <User>[].obs;
   final filteredUsers = <User>[].obs;
-  final searchQuery = ''.obs;
-  final selectedStatus = 'All'.obs; // All, Active, Blocked
-  final selectedCountry = 'All'.obs; // New
-  final selectedAccountType = 'All'.obs; // New
-  final selectedTimeFilter = TimeFilter.all.obs;
   final isLoading = false.obs;
-  static const String _storageKey = 'saved_users';
+  final searchQuery = ''.obs;
+  final selectedStatus = 'all'.obs;
+  final selectedKyc = 'all'.obs;
+  final selectedTimeFilter = TimeFilter.all.obs;
+  final selectedCountry = ''.obs;
+  final selectedAccountType = ''.obs;
 
   @override
   void onInit() {
@@ -26,437 +21,447 @@ class UserController extends GetxController {
     loadUsers();
   }
 
-  /// Load users from API or Local Storage
+  /// Load users from Supabase
   Future<void> loadUsers() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final response = await SupabaseService.client
+          .from('profiles')
+          .select('*, wallets(*)')
+          .order('created_at', ascending: false);
 
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? savedUsers = prefs.getStringList(_storageKey);
-
-    if (savedUsers != null && savedUsers.isNotEmpty) {
-      users.value = savedUsers
-          .map((u) => User.fromJson(jsonDecode(u)))
+      users.value = (response as List)
+          .map((json) => User.fromSupabase(json))
           .toList();
-    } else {
-      // First time: load mocks and save them
-      users.value = User.getMockUsers();
-      await _saveUsers();
+      _applyFilters();
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحميل المستخدمين: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
     }
-
-    filteredUsers.value = users;
-    isLoading.value = false;
-    _applyFilters();
   }
 
-  /// Save users to local storage
-  Future<void> _saveUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> userStrings = users
-        .map((u) => jsonEncode(u.toJson()))
-        .toList();
-    await prefs.setStringList(_storageKey, userStrings);
-  }
-
-  /// Search users by name, email, or phone
+  /// Search users
   void searchUsers(String query) {
     searchQuery.value = query;
     _applyFilters();
   }
 
-  /// Filter users by status
+  /// Filter by status
   void filterByStatus(String status) {
     selectedStatus.value = status;
     _applyFilters();
   }
 
-  /// Filter users by country
+  /// Filter by KYC status
+  void filterByKyc(String kyc) {
+    selectedKyc.value = kyc;
+    _applyFilters();
+  }
+
+  /// Filter by country
   void filterByCountry(String country) {
     selectedCountry.value = country;
     _applyFilters();
   }
 
-  /// Filter users by account type
+  /// Filter by account type
   void filterByAccountType(String type) {
     selectedAccountType.value = type;
     _applyFilters();
   }
 
-  /// Apply search and filter
   void _applyFilters() {
-    var result = users.toList();
+    List<User> result = List.from(users);
 
-    // Apply time filter
-    final now = DateTime.now();
-    if (selectedTimeFilter.value != TimeFilter.all) {
-      result = result.where((user) {
-        final difference = now.difference(user.createdAt);
-        switch (selectedTimeFilter.value) {
-          case TimeFilter.daily:
-            return difference.inDays == 0 && user.createdAt.day == now.day;
-          case TimeFilter.weekly:
-            return difference.inDays <= 7;
-          case TimeFilter.monthly:
-            return difference.inDays <= 30;
-          default:
-            return true;
-        }
-      }).toList();
+    // Apply search
+    if (searchQuery.value.isNotEmpty) {
+      final q = searchQuery.value.toLowerCase();
+      result = result
+          .where(
+            (u) =>
+                u.name.toLowerCase().contains(q) ||
+                u.email.toLowerCase().contains(q) ||
+                u.phone.contains(q),
+          )
+          .toList();
     }
 
     // Apply status filter
-    if (selectedStatus.value != 'All') {
+    if (selectedStatus.value != 'all') {
       result = result
-          .where((user) => user.status == selectedStatus.value)
-          //    .where((user) => user.status.toLowerCase() == selectedStatus.value.toLowerCase()) // Case insensitive if needed
+          .where(
+            (u) => u.status.toLowerCase() == selectedStatus.value.toLowerCase(),
+          )
+          .toList();
+    }
+
+    // Apply KYC filter
+    if (selectedKyc.value != 'all') {
+      result = result
+          .where(
+            (u) => u.kycStatus.toLowerCase() == selectedKyc.value.toLowerCase(),
+          )
           .toList();
     }
 
     // Apply country filter
-    if (selectedCountry.value != 'All') {
+    if (selectedCountry.value.isNotEmpty) {
       result = result
-          .where((user) => user.country == selectedCountry.value)
+          .where(
+            (u) =>
+                u.country.toLowerCase() == selectedCountry.value.toLowerCase(),
+          )
           .toList();
     }
 
     // Apply account type filter
-    if (selectedAccountType.value != 'All') {
+    if (selectedAccountType.value.isNotEmpty) {
       result = result
-          .where((user) => user.accountType == selectedAccountType.value)
+          .where(
+            (u) =>
+                u.accountType.toLowerCase() ==
+                selectedAccountType.value.toLowerCase(),
+          )
           .toList();
-    }
-
-    // Apply search filter
-    if (searchQuery.value.isNotEmpty) {
-      result = result.where((user) {
-        final query = searchQuery.value.toLowerCase();
-        return user.name.toLowerCase().contains(query) ||
-            user.email.toLowerCase().contains(query) ||
-            user.phone.contains(query);
-      }).toList();
     }
 
     filteredUsers.value = result;
   }
 
-  /// Add new user
-  Future<void> addUser({
-    required String name,
-    required String email,
-    required String phone,
-    String country = 'Unknown',
-    String province = 'Unknown',
-    String city = 'Unknown',
-    String address = 'Unknown',
-    String whatsapp = '',
-    String telegram = '',
-    String accountType = 'Free',
-    String kycStatus = 'Unverified',
-  }) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final newUser = User(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: name,
-      email: email,
-      phone: phone,
-      status: 'Active',
-      country: country,
-      province: province,
-      city: city,
-      address: address,
-      whatsapp: whatsapp,
-      telegram: telegram,
-      accountType: accountType,
-      kycStatus: kycStatus,
-      walletBalance: 0.0,
-      investedAmount: 0.0,
-      pendingAmount: 0.0,
-      createdAt: DateTime.now(),
-    );
-
-    users.add(newUser);
-    await _saveUsers();
-
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'إضافة مستخدم جديد',
-      details: 'تم إضافة المستخدم $name ($email)',
-    );
-
-    isLoading.value = false;
-    _applyFilters();
-    Get.snackbar('نجح', 'تم إضافة المستخدم بنجاح');
-  }
-
-  /// Update user
-  Future<void> updateUser(User updatedUser) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final index = users.indexWhere((u) => u.id == updatedUser.id);
-    if (index != -1) {
-      final oldUser = users[index];
-      users[index] = updatedUser;
-      await _saveUsers();
-
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'تعديل بيانات مستخدم',
-        details: 'تم تعديل بيانات المستخدم ${oldUser.name}',
-      );
-
-      Get.snackbar('نجح', 'تم تحديث بيانات المستخدم');
-    }
-
-    isLoading.value = false;
-    _applyFilters();
-  }
-
-  /// Delete user
-  Future<void> deleteUser(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final userName = users[index].name;
-      users.removeAt(index);
-      await _saveUsers();
-
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'حذف مستخدم',
-        details: 'تم حذف المستخدم $userName ($userId)',
-      );
-
-      Get.snackbar('نجح', 'تم حذف المستخدم بنجاح');
-      if (Get.currentRoute.contains('user_details')) {
-        Get.back();
-      }
-    }
-
-    isLoading.value = false;
-    _applyFilters();
-  }
-
-  /// Create a transaction request to add balance (No direct modification)
-  Future<void> addBalance(String userId, double amount, String reason) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final user = users.firstWhere((u) => u.id == userId);
-    final transactionController = Get.find<TransactionController>();
-
-    final transaction = Transaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: userId,
-      userName: user.name,
-      type: 'Adjustment',
-      amount: amount,
-      status: 'Pending',
-      reason: 'إضافة رصيد: $reason',
-      createdAt: DateTime.now(),
-    );
-
-    transactionController.transactions.add(transaction);
-
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'طلب إضافة رصيد',
-      details: 'تم طلب إضافة $amount للمستخدم ${user.name}. السبب: $reason',
-    );
-
-    isLoading.value = false;
-    Get.snackbar('طلب معلق', 'تم إنشاء طلب إضافة الرصيد، بانتظار الموافقة');
-  }
-
-  /// Create a transaction request to deduct balance (No direct modification)
-  Future<void> deductBalance(
-    String userId,
-    double amount,
-    String reason,
-  ) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final user = users.firstWhere((u) => u.id == userId);
-    final transactionController = Get.find<TransactionController>();
-
-    final transaction = Transaction(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: userId,
-      userName: user.name,
-      type: 'Adjustment',
-      amount: -amount, // Negative for deduction
-      status: 'Pending',
-      reason: 'خصم رصيد: $reason',
-      createdAt: DateTime.now(),
-    );
-
-    transactionController.transactions.add(transaction);
-
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'طلب خصم رصيد',
-      details: 'تم طلب خصم $amount من المستخدم ${user.name}. السبب: $reason',
-    );
-
-    isLoading.value = false;
-    Get.snackbar('طلب معلق', 'تم إنشاء طلب خصم الرصيد، بانتظار الموافقة');
-  }
-
   /// Block user
   Future<void> blockUser(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await SupabaseService.client
+          .from('profiles')
+          .update({'status': 'blocked'})
+          .eq('id', userId);
 
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final user = users[index];
-      users[index] = user.copyWith(status: 'Blocked'); // Update local state
-      await _saveUsers();
+      final idx = users.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        users[idx] = users[idx].copyWith(status: 'blocked');
+        _applyFilters();
+      }
 
-      // Log action
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'حظر مستخدم',
-        details: 'تم حظر المستخدم $userId',
+      Get.snackbar(
+        'تم',
+        'تم حظر المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في حظر المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
-
-    isLoading.value = false;
-    _applyFilters(); // Re-apply filters
-    update(); // Force update if needed
   }
 
   /// Activate user
   Future<void> activateUser(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      await SupabaseService.client
+          .from('profiles')
+          .update({'status': 'active'})
+          .eq('id', userId);
 
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final user = users[index];
-      users[index] = user.copyWith(status: 'Active'); // Update local state
-      await _saveUsers();
+      final idx = users.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        users[idx] = users[idx].copyWith(status: 'active');
+        _applyFilters();
+      }
 
-      // Log action
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'تفعيل مستخدم',
-        details: 'تم تفعيل المستخدم $userId',
+      Get.snackbar(
+        'تم',
+        'تم تفعيل المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تفعيل المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
-
-    isLoading.value = false;
-    _applyFilters(); // Re-apply filters
-    update();
   }
 
-  /// Verify User Documents (KYC)
-  Future<void> verifyDocuments(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final user = users[index];
-      users[index] = user.copyWith(
-        kycStatus: 'Verified',
-        accountType: 'Verified', // Auto upgrade to Verified
+  /// Toggle block (convenience method)
+  Future<void> toggleBlockUser(String userId) async {
+    try {
+      final user = users.firstWhere((u) => u.id == userId);
+      if (user.status == 'blocked') {
+        await activateUser(userId);
+      } else {
+        await blockUser(userId);
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحديث حالة المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
       );
-      await _saveUsers();
-
-      // Update Activity Log
-      // In a real app, we would append to the list, but for now we rely on the object update (if mutable) or just log it
-      // Since the list in model is final, we should ideally construct a new list.
-      // For this mock, we are just updating the main user object in the list.
-      // Let's assume we maintain local state only.
-
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'توثيق حساب',
-        details: 'تم توثيق حساب المستخدم ${user.name}',
-      );
-
-      Get.snackbar('نجح', 'تم توثيق الحساب بنجاح');
     }
-
-    isLoading.value = false;
-    _applyFilters();
-    update();
   }
 
-  /// Reject User Documents (KYC)
-  Future<void> rejectDocuments(String userId, String reason) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+  /// Verify KYC / documents
+  Future<void> verifyKyc(String userId) async {
+    try {
+      await SupabaseService.client
+          .from('profiles')
+          .update({'kyc_status': 'Verified'})
+          .eq('id', userId);
 
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final user = users[index];
-      // Reset to Unverified or keep Pending depending on logic. Usually 'Unverified' allows re-upload.
-      users[index] = user.copyWith(kycStatus: 'Unverified');
-      await _saveUsers();
+      final idx = users.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        users[idx] = users[idx].copyWith(kycStatus: 'Verified');
+        _applyFilters();
+      }
 
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'رفض وثائق',
-        details: 'تم رفض وثائق المستخدم ${user.name}. السبب: $reason',
+      Get.snackbar(
+        'تم',
+        'تم التحقق من المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar('خطأ', 'فشل في التحقق', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  /// Verify documents (alias for verifyKyc used by UI)
+  Future<void> verifyDocuments(String userId) => verifyKyc(userId);
+
+  /// Reject KYC
+  Future<void> rejectKyc(String userId) async {
+    try {
+      await SupabaseService.client
+          .from('profiles')
+          .update({'kyc_status': 'Rejected'})
+          .eq('id', userId);
+
+      final idx = users.indexWhere((u) => u.id == userId);
+      if (idx != -1) {
+        users[idx] = users[idx].copyWith(kycStatus: 'Rejected');
+        _applyFilters();
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في رفض KYC',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  /// Reject documents (alias for rejectKyc used by UI)
+  Future<void> rejectDocuments(String userId, [String reason = '']) =>
+      rejectKyc(userId);
+
+  /// Add balance to user wallet
+  Future<void> addBalance(
+    String userId,
+    double amount, [
+    String reason = '',
+  ]) async {
+    try {
+      await SupabaseService.client.rpc(
+        'fn_admin_add_balance',
+        params: {'p_user_id': userId, 'p_amount': amount},
       );
 
-      Get.snackbar('تم', 'تم رفض الوثائق وإشعار المستخدم');
-    }
+      await loadUsers();
+      Get.snackbar(
+        'تم',
+        'تم إضافة الرصيد بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      // Fallback: update wallet directly
+      try {
+        final wallet = await SupabaseService.client
+            .from('wallets')
+            .select()
+            .eq('user_id', userId)
+            .single();
 
-    isLoading.value = false;
-    _applyFilters();
-    update();
+        final currentBalance = (wallet['available_balance'] ?? 0.0).toDouble();
+        await SupabaseService.client
+            .from('wallets')
+            .update({'available_balance': currentBalance + amount})
+            .eq('user_id', userId);
+
+        await loadUsers();
+        Get.snackbar(
+          'تم',
+          'تم إضافة الرصيد بنجاح',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } catch (e2) {
+        Get.snackbar(
+          'خطأ',
+          'فشل في إضافة الرصيد: $e2',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    }
   }
 
-  /// Promote user to VIP
-  Future<void> promoteToVIP(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
-
-    final index = users.indexWhere((u) => u.id == userId);
-    if (index != -1) {
-      final user = users[index];
-      users[index] = user.copyWith(accountType: 'VIP');
-      await _saveUsers();
-
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'ترقية إلى VIP',
-        details: 'تم ترقية المستخدم ${user.name} إلى فئة VIP',
+  /// Deduct balance from user wallet
+  Future<void> deductBalance(
+    String userId,
+    double amount, [
+    String reason = '',
+  ]) async {
+    try {
+      await SupabaseService.client.rpc(
+        'fn_admin_deduct_balance',
+        params: {'p_user_id': userId, 'p_amount': amount},
       );
 
-      Get.snackbar('نجح', 'تمت ترقية المستخدم إلى VIP بنجاح');
-    }
+      await loadUsers();
+      Get.snackbar(
+        'تم',
+        'تم خصم الرصيد بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      // Fallback: update wallet directly
+      try {
+        final wallet = await SupabaseService.client
+            .from('wallets')
+            .select()
+            .eq('user_id', userId)
+            .single();
 
-    isLoading.value = false;
-    _applyFilters();
-    update();
+        final currentBalance = (wallet['available_balance'] ?? 0.0).toDouble();
+        final newBalance = currentBalance - amount;
+        if (newBalance < 0) {
+          Get.snackbar(
+            'خطأ',
+            'الرصيد غير كافي',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+        await SupabaseService.client
+            .from('wallets')
+            .update({'available_balance': newBalance})
+            .eq('user_id', userId);
+
+        await loadUsers();
+        Get.snackbar(
+          'تم',
+          'تم خصم الرصيد بنجاح',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } catch (e2) {
+        Get.snackbar(
+          'خطأ',
+          'فشل في خصم الرصيد: $e2',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    }
   }
 
-  /// Reset Password (Mock)
-  Future<void> resetPassword(String userId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+  /// Add user from named parameters (matches UI call site)
+  Future<void> addUser({
+    required String name,
+    required String country,
+    required String city,
+    required String phone,
+    String whatsapp = '',
+    String telegram = '',
+    String email = '',
+  }) async {
+    try {
+      await SupabaseService.client.from('profiles').insert({
+        'full_name': name,
+        'country': country,
+        'city': city,
+        'phone': phone,
+        'whatsapp': whatsapp,
+        'telegram': telegram,
+        'email': email,
+        'status': 'active',
+        'kyc_status': 'none',
+        'account_type': 'Free',
+      });
 
-    final user = users.firstWhere((u) => u.id == userId);
+      await loadUsers();
+      Get.snackbar(
+        'تم',
+        'تم إضافة المستخدم بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في إضافة المستخدم: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
 
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'إعادة تعيين كلمة مرور',
-      details: 'تم إرسال رابط إعادة تعيين كلمة المرور للمستخدم ${user.name}',
-    );
+  /// Update user profile
+  Future<void> updateUser(User user) async {
+    try {
+      await SupabaseService.client
+          .from('profiles')
+          .update(user.toSupabase())
+          .eq('id', user.id);
 
-    isLoading.value = false;
-    Get.snackbar(
-      'تم الإرسال',
-      'تم إرسال رابط إعادة تعيين كلمة المرور للمستخدم',
-    );
+      final idx = users.indexWhere((u) => u.id == user.id);
+      if (idx != -1) {
+        users[idx] = user;
+        _applyFilters();
+      }
+
+      Get.snackbar(
+        'تم',
+        'تم تحديث بيانات المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحديث البيانات',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  /// Delete user
+  Future<void> deleteUser(String userId) async {
+    try {
+      await SupabaseService.client.from('profiles').delete().eq('id', userId);
+
+      users.removeWhere((u) => u.id == userId);
+      _applyFilters();
+
+      Get.snackbar(
+        'تم',
+        'تم حذف المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في حذف المستخدم',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  /// Get user by ID
+  User? getUserById(String userId) {
+    try {
+      return users.firstWhere((u) => u.id == userId);
+    } catch (e) {
+      return null;
+    }
   }
 }

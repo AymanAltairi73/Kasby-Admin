@@ -28,10 +28,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _handleVerifyOtp() async {
     if (_currentOtp.length == 6) {
-      final success = await _authController.verifyOtp(_currentOtp);
-      if (success) {
-        Get.offAllNamed('/dashboard');
-      }
+      // OTP flow is no longer used — auth goes directly to main
+      Get.offAllNamed('/main');
     } else {
       Get.snackbar(
         'خطأ',
@@ -111,7 +109,7 @@ class _OtpScreenState extends State<OtpScreen> {
                                         ),
                                       ),
                                       child: Text(
-                                        _authController.generatedOtp.value,
+                                        '------',
                                         style: const TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.w900,

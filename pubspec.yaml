@@ -46,6 +46,9 @@ dependencies:
   # Charts & Data Visualization
   fl_chart: ^0.69.0
   
+  # Supabase
+  supabase_flutter: ^2.8.4
+
   # Utilities
   intl: ^0.19.0
   shared_preferences: ^2.2.3

@@ -1,22 +1,22 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/transaction_model.dart';
-import '../../users/controllers/user_controller.dart';
-import '../../../core/controllers/settings_controller.dart';
-import '../../../core/services/audit_logger.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/models/time_filter.dart';
 
-/// Transaction Controller
-/// Manages deposits and withdrawals
+/// Transaction Controller — manages financial transactions from Supabase
 class TransactionController extends GetxController {
   final transactions = <Transaction>[].obs;
   final filteredTransactions = <Transaction>[].obs;
-  final selectedStatus = 'All'.obs;
-  final selectedType = 'Both'.obs;
-  final selectedTimeFilter = TimeFilter.all.obs;
   final isLoading = false.obs;
+  final searchQuery = ''.obs;
+  final selectedType = 'Both'.obs;
+  final selectedStatus = 'all'.obs;
+  final selectedTimeFilter = TimeFilter.all.obs;
+
+  // Stats
+  final totalDeposits = 0.0.obs;
+  final totalWithdrawals = 0.0.obs;
+  final pendingCount = 0.obs;
 
   @override
   void onInit() {
@@ -24,217 +24,228 @@ class TransactionController extends GetxController {
     loadTransactions();
   }
 
-  /// Load transactions
+  /// Pending deposits getter
+  List<Transaction> get pendingDeposits => transactions
+      .where((t) => t.status == 'Pending' && t.type == 'Deposit')
+      .toList();
+
+  /// Pending withdrawals getter
+  List<Transaction> get pendingWithdrawals => transactions
+      .where((t) => t.status == 'Pending' && t.type == 'Withdrawal')
+      .toList();
+
+  /// Load transactions from Supabase with user names
   Future<void> loadTransactions() async {
     isLoading.value = true;
-    final prefs = await SharedPreferences.getInstance();
-    final transData = prefs.getString('transactions');
+    try {
+      final response = await SupabaseService.client
+          .from('transactions')
+          .select('*, profiles!transactions_user_id_fkey(full_name)')
+          .order('created_at', ascending: false);
 
-    if (transData != null) {
-      final List decoded = jsonDecode(transData);
-      transactions.assignAll(
-        decoded.map((e) => Transaction.fromJson(e)).toList(),
+      transactions.value = (response as List)
+          .map((json) => Transaction.fromSupabase(json))
+          .toList();
+      _applyFilters();
+      _calculateStats();
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في تحميل المعاملات: $e',
+        snackPosition: SnackPosition.BOTTOM,
       );
-    } else {
-      transactions.assignAll(Transaction.getMockTransactions());
-      saveTransactions();
+    } finally {
+      isLoading.value = false;
     }
-    _applyFilters();
-    isLoading.value = false;
   }
 
-  Future<void> saveTransactions() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'transactions',
-      jsonEncode(transactions.map((e) => e.toJson()).toList()),
-    );
+  void _calculateStats() {
+    totalDeposits.value = transactions
+        .where((t) => t.type == 'Deposit' && t.status == 'Approved')
+        .fold(0.0, (sum, t) => sum + t.amount);
+    totalWithdrawals.value = transactions
+        .where((t) => t.type == 'Withdrawal' && t.status == 'Approved')
+        .fold(0.0, (sum, t) => sum + t.amount);
+    pendingCount.value = transactions
+        .where((t) => t.status == 'Pending')
+        .length;
   }
 
-  /// Apply all filters
-  void _applyFilters() {
-    var result = transactions.toList();
-
-    // Time Filter
-    final now = DateTime.now();
-    if (selectedTimeFilter.value != TimeFilter.all) {
-      result = result.where((t) {
-        final difference = now.difference(t.createdAt);
-        switch (selectedTimeFilter.value) {
-          case TimeFilter.daily:
-            return difference.inDays == 0 && t.createdAt.day == now.day;
-          case TimeFilter.weekly:
-            return difference.inDays <= 7;
-          case TimeFilter.monthly:
-            return difference.inDays <= 30;
-          default:
-            return true;
-        }
-      }).toList();
-    }
-
-    // Status Filter
-    if (selectedStatus.value != 'All') {
-      result = result.where((t) => t.status == selectedStatus.value).toList();
-    }
-
-    // Type Filter
-    if (selectedType.value != 'Both') {
-      result = result.where((t) => t.type == selectedType.value).toList();
-    }
-
-    filteredTransactions.value = result;
-  }
-
-  /// Change Status Filter
-  void setStatusFilter(String status) {
-    selectedStatus.value = status;
+  /// Search transactions
+  void searchTransactions(String query) {
+    searchQuery.value = query;
     _applyFilters();
   }
 
-  /// Change Type Filter
+  /// Filter by type
+  void filterByType(String type) {
+    selectedType.value = type;
+    _applyFilters();
+  }
+
+  /// Set type filter (alias used by UI)
   void setTypeFilter(String type) {
     selectedType.value = type;
     _applyFilters();
   }
 
-  /// Change Time Filter
+  /// Filter by status
+  void filterByStatus(String status) {
+    selectedStatus.value = status;
+    _applyFilters();
+  }
+
+  /// Set time filter
   void setTimeFilter(TimeFilter filter) {
     selectedTimeFilter.value = filter;
     _applyFilters();
   }
 
-  /// Get pending deposits
-  List<Transaction> get pendingDeposits {
-    return transactions
-        .where((t) => t.type == 'Deposit' && t.status == 'Pending')
-        .toList();
+  void _applyFilters() {
+    List<Transaction> result = List.from(transactions);
+
+    if (searchQuery.value.isNotEmpty) {
+      final q = searchQuery.value.toLowerCase();
+      result = result
+          .where(
+            (t) => t.userName.toLowerCase().contains(q) || t.id.contains(q),
+          )
+          .toList();
+    }
+
+    if (selectedType.value != 'Both' && selectedType.value != 'all') {
+      result = result.where((t) => t.type == selectedType.value).toList();
+    }
+
+    if (selectedStatus.value != 'all') {
+      result = result.where((t) => t.status == selectedStatus.value).toList();
+    }
+
+    // Apply time filter
+    final now = DateTime.now();
+    switch (selectedTimeFilter.value) {
+      case TimeFilter.daily:
+        result = result
+            .where(
+              (t) =>
+                  t.createdAt.year == now.year &&
+                  t.createdAt.month == now.month &&
+                  t.createdAt.day == now.day,
+            )
+            .toList();
+        break;
+      case TimeFilter.weekly:
+        final weekAgo = now.subtract(const Duration(days: 7));
+        result = result.where((t) => t.createdAt.isAfter(weekAgo)).toList();
+        break;
+      case TimeFilter.monthly:
+        final monthAgo = now.subtract(const Duration(days: 30));
+        result = result.where((t) => t.createdAt.isAfter(monthAgo)).toList();
+        break;
+      case TimeFilter.all:
+        break;
+    }
+
+    filteredTransactions.value = result;
   }
 
-  /// Get pending withdrawals
-  List<Transaction> get pendingWithdrawals {
-    return transactions
-        .where((t) => t.type == 'Withdrawal' && t.status == 'Pending')
-        .toList();
-  }
-
-  /// Get all deposits
-  List<Transaction> get allDeposits {
-    return transactions.where((t) => t.type == 'Deposit').toList();
-  }
-
-  /// Get all withdrawals
-  List<Transaction> get allWithdrawals {
-    return transactions.where((t) => t.type == 'Withdrawal').toList();
-  }
-
-  /// Approve transaction
-  Future<void> approveTransaction(String transactionId) async {
-    final settingsController = Get.find<SettingsController>();
-
-    final index = transactions.indexWhere((t) => t.id == transactionId);
-    if (index != -1) {
-      final transaction = transactions[index];
-
-      // Check for emergency pause if it's a withdrawal
-      if (transaction.type == 'Withdrawal' &&
-          settingsController.pauseWithdrawals) {
-        Get.snackbar(
-          'تنبيه النظام',
-          'لا يمكن الموافقة على السحب حالياً بسبب إيقاف عمليات السحب من الإعدادات',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withValues(alpha: 0.8),
-          colorText: Colors.white,
-        );
-        return;
-      }
-
+  /// Approve a deposit transaction via RPC
+  Future<void> approveDeposit(String txnId) async {
+    try {
       isLoading.value = true;
+      final adminId = SupabaseService.auth.currentUser?.id;
 
-      // Update transaction status
-      transactions[index] = transaction.copyWith(
-        status: 'Approved',
-        processedAt: DateTime.now(),
+      await SupabaseService.client.rpc(
+        'fn_process_deposit',
+        params: {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
-      // If it's an adjustment, update the user wallet
-      if (transaction.type == 'Adjustment') {
-        final userController = Get.find<UserController>();
-        final userIndex = userController.users.indexWhere(
-          (u) => u.id == transaction.userId,
-        );
-        if (userIndex != -1) {
-          final user = userController.users[userIndex];
-          userController.users[userIndex] = user.copyWith(
-            walletBalance: user.walletBalance + transaction.amount,
-          );
-          // UserController _saveUsers will be called inside updateUser or similar if we use that,
-          // but here we are directly modifying the list.
-          // We should ideally call a method on userController to update and save.
-          await userController.updateUser(userController.users[userIndex]);
-        }
-      }
-
-      await saveTransactions();
-
-      // Log action
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'موافقة على معاملة',
-        details:
-            'تم الاعتماد والمصادقة على المعاملة $transactionId من نوع ${transaction.type} بمبلغ ${transaction.amount}',
-      );
-
+      await loadTransactions();
       Get.snackbar(
-        'نجح',
-        'تم الاعتماد والمصادقة على المعاملة',
+        'تم',
+        'تمت الموافقة على الإيداع',
         snackPosition: SnackPosition.BOTTOM,
       );
-
-      _applyFilters();
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في الموافقة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
       isLoading.value = false;
     }
   }
 
-  /// Reject transaction
-  Future<void> rejectTransaction(String transactionId, String reason) async {
-    final index = transactions.indexWhere((t) => t.id == transactionId);
-    if (index != -1) {
+  /// Approve a withdrawal transaction via RPC
+  Future<void> approveWithdrawal(String txnId) async {
+    try {
       isLoading.value = true;
+      final adminId = SupabaseService.auth.currentUser?.id;
 
-      transactions[index] = transactions[index].copyWith(
-        status: 'Rejected',
-        reason: reason,
-        processedAt: DateTime.now(),
+      await SupabaseService.client.rpc(
+        'fn_process_withdrawal',
+        params: {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
-      await saveTransactions();
-
-      // Log action
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'رفض معاملة',
-        details: 'تم رفض المعاملة $transactionId. السبب: $reason',
-      );
-
+      await loadTransactions();
       Get.snackbar(
-        'نجح',
+        'تم',
+        'تمت الموافقة على السحب',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في الموافقة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Approve transaction (auto-detects type)
+  Future<void> approveTransaction(String txnId) async {
+    final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
+    if (txn == null) return;
+
+    if (txn.type == 'Deposit') {
+      await approveDeposit(txnId);
+    } else if (txn.type == 'Withdrawal') {
+      await approveWithdrawal(txnId);
+    }
+  }
+
+  /// Reject a transaction via RPC — positional reason parameter for UI compat
+  Future<void> rejectTransaction(String txnId, [String reason = '']) async {
+    try {
+      isLoading.value = true;
+      final adminId = SupabaseService.auth.currentUser?.id;
+
+      await SupabaseService.client.rpc(
+        'fn_reject_transaction',
+        params: {
+          'p_txn_id': txnId,
+          'p_admin_id': adminId,
+          'p_reason': reason.isNotEmpty ? reason : 'رفض بواسطة المدير',
+        },
+      );
+
+      await loadTransactions();
+      Get.snackbar(
+        'تم',
         'تم رفض المعاملة',
         snackPosition: SnackPosition.BOTTOM,
       );
-
-      _applyFilters();
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل في رفض المعاملة: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
       isLoading.value = false;
     }
-  }
-
-  /// Filter transactions by status
-  List<Transaction> filterByStatus(String status) {
-    return transactions.where((t) => t.status == status).toList();
-  }
-
-  /// Filter transactions by type
-  List<Transaction> filterByType(String type) {
-    return transactions.where((t) => t.type == type).toList();
   }
 }

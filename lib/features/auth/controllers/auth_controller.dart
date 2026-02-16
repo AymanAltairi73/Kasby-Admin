@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
+import '../../../core/services/supabase_service.dart';
 
 /// Authentication Controller
-/// Manages login, OTP verification, and session state
+/// Manages login via Supabase Auth and session state
 class AuthController extends GetxController {
   // Observable state
   final isLoading = false.obs;
@@ -11,10 +12,9 @@ class AuthController extends GetxController {
   final isCheckingAuth = true.obs;
   final userRole = ''.obs;
   final userName = ''.obs;
-  final generatedOtp = ''.obs;
   final isBiometricAvailable = false.obs;
   final rememberMe = false.obs;
-  final savedUsername = ''.obs;
+  final savedEmail = ''.obs;
   final LocalAuthentication _localAuth = LocalAuthentication();
 
   @override
@@ -24,25 +24,50 @@ class AuthController extends GetxController {
     _loadRememberedCredentials();
   }
 
-  /// Check if user is already logged in
+  /// Check if user is already logged in via Supabase session
   Future<void> _checkLoginStatus() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final role = prefs.getString('user_role');
-
-      if (token != null && token.isNotEmpty) {
-        isLoggedIn.value = true;
-        userRole.value = role ?? 'Admin';
+      final session = SupabaseService.auth.currentSession;
+      if (session != null) {
+        // Verify admin status
+        final isAdmin = await _checkIsAdmin();
+        if (isAdmin) {
+          isLoggedIn.value = true;
+          userRole.value = 'Admin';
+          userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
+        } else {
+          // Not an admin — sign out
+          await SupabaseService.auth.signOut();
+        }
       }
+    } catch (e) {
+      // Session expired or invalid — silently ignore
     } finally {
       isCheckingAuth.value = false;
     }
 
     // Check biometric availability
-    isBiometricAvailable.value =
-        await _localAuth.canCheckBiometrics ||
-        await _localAuth.isDeviceSupported();
+    try {
+      isBiometricAvailable.value =
+          await _localAuth.canCheckBiometrics ||
+          await _localAuth.isDeviceSupported();
+    } catch (_) {}
+  }
+
+  /// Check if current user is an admin
+  Future<bool> _checkIsAdmin() async {
+    try {
+      final response = await SupabaseService.client.rpc('is_admin');
+      return response == true;
+    } catch (e) {
+      // Fallback: check user metadata
+      final user = SupabaseService.auth.currentUser;
+      if (user != null) {
+        final isAdmin = user.appMetadata['is_admin'];
+        return isAdmin == true || isAdmin == 'true';
+      }
+      return false;
+    }
   }
 
   /// Load remembered credentials from SharedPreferences
@@ -50,7 +75,7 @@ class AuthController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     rememberMe.value = prefs.getBool('remember_me') ?? false;
     if (rememberMe.value) {
-      savedUsername.value = prefs.getString('saved_username') ?? '';
+      savedEmail.value = prefs.getString('saved_email') ?? '';
     }
   }
 
@@ -60,7 +85,7 @@ class AuthController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('remember_me', value);
     if (!value) {
-      await prefs.remove('saved_username');
+      await prefs.remove('saved_email');
     }
   }
 
@@ -72,112 +97,111 @@ class AuthController extends GetxController {
       );
 
       if (authenticated) {
-        // Auto-login if previously logged in (simplified for demo)
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('auth_token');
-        if (token != null) {
+        final session = SupabaseService.auth.currentSession;
+        if (session != null) {
           isLoggedIn.value = true;
           return true;
         }
       }
       return false;
     } catch (e) {
-      // debugPrint('Biometric Error: $e');
       return false;
     }
   }
 
-  /// Login with username and password
-  Future<bool> login(String username, String password) async {
+  /// Login with email and password via Supabase Auth
+  Future<bool> login(String email, String password) async {
     isLoading.value = true;
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final response = await SupabaseService.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-    // Mock authentication
-    if (username == 'admin' && password == 'admin123') {
+      if (response.session == null) {
+        isLoading.value = false;
+        Get.snackbar(
+          'خطأ في تسجيل الدخول',
+          'لم يتم إنشاء جلسة. حاول مرة أخرى.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
+      }
+
+      // Verify admin status
+      final isAdmin = await _checkIsAdmin();
+      if (!isAdmin) {
+        await SupabaseService.auth.signOut();
+        isLoading.value = false;
+        Get.snackbar(
+          'غير مصرح',
+          'هذا الحساب ليس حساب مدير. لا يمكنك الوصول إلى لوحة التحكم.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
+      }
+
       // Save credentials if remember me is on
       if (rememberMe.value) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('saved_username', username);
-        savedUsername.value = username;
+        await prefs.setString('saved_email', email);
+        savedEmail.value = email;
       }
-
-      // Generate OTP
-      generatedOtp.value = _generateOtp();
-      isLoading.value = false;
-      return true;
-    } else {
-      isLoading.value = false;
-      Get.snackbar(
-        'خطأ في تسجيل الدخول',
-        'اسم المستخدم أو كلمة المرور غير صحيحة',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-  }
-
-  /// Verify OTP
-  Future<bool> verifyOtp(String enteredOtp) async {
-    isLoading.value = true;
-
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (enteredOtp == generatedOtp.value) {
-      // Save session
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        'auth_token',
-        'mock_token_${DateTime.now().millisecondsSinceEpoch}',
-      );
-      await prefs.setString('user_role', 'Admin');
 
       isLoggedIn.value = true;
       userRole.value = 'Admin';
-      userName.value = 'المدير'; // Mock name
+      userName.value = response.user?.userMetadata?['full_name'] ?? 'المدير';
       isLoading.value = false;
       return true;
-    } else {
+    } catch (e) {
       isLoading.value = false;
+      String errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('invalid login credentials') ||
+          msg.contains('invalid_credentials')) {
+        errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      } else if (msg.contains('network') || msg.contains('socket')) {
+        errorMessage = 'تحقق من اتصالك بالإنترنت';
+      }
+
       Get.snackbar(
-        'خطأ في التحقق',
-        'رمز التحقق غير صحيح',
+        'خطأ في تسجيل الدخول',
+        errorMessage,
         snackPosition: SnackPosition.BOTTOM,
       );
       return false;
     }
-  }
-
-  /// Generate random 6-digit OTP
-  String _generateOtp() {
-    final random = DateTime.now().millisecondsSinceEpoch % 900000 + 100000;
-    return random.toString();
   }
 
   /// Logout
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Only clear session data, keep preferences
-    await prefs.remove('auth_token');
-    await prefs.remove('user_role');
+    try {
+      await SupabaseService.auth.signOut();
+    } catch (_) {}
 
     isLoggedIn.value = false;
     userRole.value = '';
     Get.offAllNamed('/login');
   }
 
-  /// Forgot password (mock)
+  /// Forgot password — sends reset email via Supabase
   Future<void> forgotPassword(String email) async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await SupabaseService.auth.resetPasswordForEmail(email);
+      Get.snackbar(
+        'تم الإرسال',
+        'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء إرسال رابط إعادة التعيين',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
     isLoading.value = false;
-
-    Get.snackbar(
-      'تم الإرسال',
-      'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 }
