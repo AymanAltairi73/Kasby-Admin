@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/loan_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Loan Controller — manages loans from Supabase `loans` table
 /// All status changes use RPCs for atomicity and ledger integrity
@@ -27,10 +28,16 @@ class LoanController extends GetxController {
       loans.assignAll(
         (response as List).map((e) => Loan.fromSupabase(e)).toList(),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'loadLoans',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل القروض: $e',
+        'فشل في تحميل القروض',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -70,10 +77,16 @@ class LoanController extends GetxController {
 
       await loadLoans();
       Get.snackbar('نجح', 'تم الموافقة على القرض بنجاح');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'approveLoan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في الموافقة على القرض: $e',
+        'فشل في الموافقة على القرض',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -117,10 +130,16 @@ class LoanController extends GetxController {
       }
 
       Get.snackbar('نجح', 'تم تحديث حالة القرض بنجاح');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'updateLoanStatus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحديث حالة القرض: $e',
+        'فشل في تحديث حالة القرض',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {

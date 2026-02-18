@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/agent_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 
 /// Agent Controller — manages agent data from Supabase `agents` table
@@ -35,10 +36,16 @@ class AgentController extends GetxController {
           .map((json) => Agent.fromSupabase(json))
           .toList();
       _applyFilters();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'loadAgents',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل الوكلاء: $e',
+        'فشل في تحميل الوكلاء',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -158,10 +165,16 @@ class AgentController extends GetxController {
         'تم إنشاء الوكيل بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'createAgent',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إنشاء الوكيل: $e',
+        'فشل في إنشاء الوكيل',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -184,7 +197,13 @@ class AgentController extends GetxController {
         'تم تحديث بيانات الوكيل',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'updateAgent',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحديث بيانات الوكيل',
@@ -202,10 +221,16 @@ class AgentController extends GetxController {
       _applyFilters();
 
       Get.snackbar('تم', 'تم حذف الوكيل', snackPosition: SnackPosition.BOTTOM);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'deleteAgent',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في حذف الوكيل: $e',
+        'فشل في حذف الوكيل',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -227,7 +252,13 @@ class AgentController extends GetxController {
         agents[idx] = agents[idx].copyWith(isAvailableNow: newVal);
         _applyFilters();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'toggleAvailability',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحديث الحالة',
@@ -252,7 +283,13 @@ class AgentController extends GetxController {
         agents[idx] = agents[idx].copyWith(status: newStatus);
         _applyFilters();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AgentController',
+        method: 'toggleStatus',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحديث الحالة',

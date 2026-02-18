@@ -261,7 +261,7 @@ class AuditLogsScreen extends StatelessWidget {
                         alignment: Alignment.center,
                         children: [
                           Icon(
-                            log.icon,
+                            _getTypeIcon(log.type),
                             color: _getTypeColor(log.type),
                             size: 22,
                           ),
@@ -610,6 +610,21 @@ class AuditLogsScreen extends StatelessWidget {
         return KasbyColors.warning;
       case AuditLogStatus.failure:
         return KasbyColors.error;
+    }
+  }
+
+  IconData _getTypeIcon(AuditLogType type) {
+    switch (type) {
+      case AuditLogType.security:
+        return FontAwesomeIcons.shieldHalved;
+      case AuditLogType.financial:
+        return FontAwesomeIcons.moneyBillTransfer;
+      case AuditLogType.userManagement:
+        return FontAwesomeIcons.userGear;
+      case AuditLogType.investment:
+        return FontAwesomeIcons.chartLine;
+      case AuditLogType.system:
+        return FontAwesomeIcons.gears;
     }
   }
 }

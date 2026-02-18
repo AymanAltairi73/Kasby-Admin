@@ -66,6 +66,13 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة خطط الاشتراك (أساسي / احترافي)',
               onTap: () => Get.toNamed('/subscriptions'),
             ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: Icons.bug_report_rounded,
+              title: 'سجلات الأخطاء',
+              subtitle: 'مراقبة الأخطاء الفنية للنظام',
+              onTap: () => Get.toNamed('/error-logs'),
+            ),
             const SizedBox(height: 24),
 
             // Notifications Section

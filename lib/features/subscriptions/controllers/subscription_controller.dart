@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/subscription_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Subscription Controller — manages subscription plans from Supabase
 class SubscriptionController extends GetxController {
@@ -30,7 +31,13 @@ class SubscriptionController extends GetxController {
         // Fallback to default plans if table is empty
         plans.assignAll(SubscriptionPlan.getDefaultPlans());
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SubscriptionController',
+        method: 'loadPlans',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // Fallback to default plans on error
       plans.assignAll(SubscriptionPlan.getDefaultPlans());
     }
@@ -52,10 +59,16 @@ class SubscriptionController extends GetxController {
         'تم إضافة الخطة الجديدة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SubscriptionController',
+        method: 'createPlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إضافة الخطة: $e',
+        'فشل في إضافة الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -78,10 +91,16 @@ class SubscriptionController extends GetxController {
         'تم حذف الخطة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SubscriptionController',
+        method: 'deletePlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في حذف الخطة: $e',
+        'فشل في حذف الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -124,10 +143,16 @@ class SubscriptionController extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SubscriptionController',
+        method: 'updatePlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحديث الخطة: $e',
+        'فشل في تحديث الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

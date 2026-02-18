@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/notification_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Notification Controller — manages notifications via Supabase
 /// Notifications are persisted and can be audited
@@ -36,7 +37,13 @@ class NotificationController extends GetxController {
           ),
         ),
       );
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'NotificationController',
+        method: 'loadNotifications',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // Keep existing list if load fails
     }
     isLoading.value = false;
@@ -68,7 +75,13 @@ class NotificationController extends GetxController {
         'status': 'Sent',
         'sent_by': SupabaseService.auth.currentUser?.id,
       });
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'NotificationController',
+        method: 'sendNotification',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // Notification is still shown locally even if persist fails
     }
   }
@@ -100,6 +113,13 @@ class NotificationController extends GetxController {
         'status': 'Scheduled',
         'sent_by': SupabaseService.auth.currentUser?.id,
       });
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'NotificationController',
+        method: 'scheduleNotification',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
   }
 }

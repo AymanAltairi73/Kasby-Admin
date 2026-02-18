@@ -1,5 +1,6 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
+import 'app_logger_service.dart';
 
 class AudioService extends GetxService {
   late AudioPlayer _player;
@@ -14,7 +15,13 @@ class AudioService extends GetxService {
     try {
       await _player.stop();
       await _player.play(AssetSource('sounds/message_sent.mp3'));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AudioService',
+        method: 'playMessageSent',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.log('Error playing sound: $e');
     }
   }
@@ -23,7 +30,13 @@ class AudioService extends GetxService {
     try {
       await _player.stop();
       await _player.play(AssetSource('sounds/notification.mp3'));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AudioService',
+        method: 'playNotification',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.log('Error playing sound: $e');
     }
   }

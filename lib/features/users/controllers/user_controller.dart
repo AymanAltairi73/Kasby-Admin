@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
@@ -34,10 +35,16 @@ class UserController extends GetxController {
           .map((json) => User.fromSupabase(json))
           .toList();
       _applyFilters();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'loadUsers',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل المستخدمين: $e',
+        'فشل في تحميل المستخدمين',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -152,7 +159,13 @@ class UserController extends GetxController {
         'تم حظر المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'blockUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في حظر المستخدم',
@@ -180,7 +193,13 @@ class UserController extends GetxController {
         'تم تفعيل المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'activateUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تفعيل المستخدم',
@@ -198,7 +217,13 @@ class UserController extends GetxController {
       } else {
         await blockUser(userId);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'toggleBlockUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحديث حالة المستخدم',
@@ -226,7 +251,13 @@ class UserController extends GetxController {
         'تم التحقق من المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'verifyKyc',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar('خطأ', 'فشل في التحقق', snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -247,7 +278,13 @@ class UserController extends GetxController {
         users[idx] = users[idx].copyWith(kycStatus: 'Rejected');
         _applyFilters();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'rejectKyc',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في رفض KYC',
@@ -278,10 +315,16 @@ class UserController extends GetxController {
         'تم إضافة الرصيد بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'addBalance',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إضافة الرصيد: $e',
+        'فشل في إضافة الرصيد',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -305,10 +348,16 @@ class UserController extends GetxController {
         'تم خصم الرصيد بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'deductBalance',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في خصم الرصيد: $e',
+        'فشل في خصم الرصيد',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -344,10 +393,16 @@ class UserController extends GetxController {
         'تم إضافة المستخدم بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'addUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إضافة المستخدم: $e',
+        'فشل في إضافة المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -372,7 +427,13 @@ class UserController extends GetxController {
         'تم تحديث بيانات المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'updateUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحديث البيانات',
@@ -394,7 +455,13 @@ class UserController extends GetxController {
         'تم حذف المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'deleteUser',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في حذف المستخدم',

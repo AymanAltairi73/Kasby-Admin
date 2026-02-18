@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Authentication Controller
 /// Manages login via Supabase Auth and session state
@@ -40,8 +41,13 @@ class AuthController extends GetxController {
           await SupabaseService.auth.signOut();
         }
       }
-    } catch (e) {
-      // Session expired or invalid — silently ignore
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuthController',
+        method: '_checkLoginStatus',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       isCheckingAuth.value = false;
     }
@@ -59,7 +65,13 @@ class AuthController extends GetxController {
     try {
       final response = await SupabaseService.client.rpc('is_admin');
       return response == true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuthController',
+        method: '_checkIsAdmin',
+        error: e,
+        stackTrace: stackTrace,
+      );
       // Fallback: check user metadata
       final user = SupabaseService.auth.currentUser;
       if (user != null) {
@@ -104,7 +116,13 @@ class AuthController extends GetxController {
         }
       }
       return false;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuthController',
+        method: 'authenticateWithBiometrics',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -154,7 +172,13 @@ class AuthController extends GetxController {
       userName.value = response.user?.userMetadata?['full_name'] ?? 'المدير';
       isLoading.value = false;
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuthController',
+        method: 'login',
+        error: e,
+        stackTrace: stackTrace,
+      );
       isLoading.value = false;
       String errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
       final msg = e.toString().toLowerCase();
@@ -195,7 +219,13 @@ class AuthController extends GetxController {
         'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuthController',
+        method: 'forgotPassword',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'حدث خطأ أثناء إرسال رابط إعادة التعيين',

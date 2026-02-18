@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 
 /// Transaction Controller — manages financial transactions from Supabase
@@ -48,10 +49,16 @@ class TransactionController extends GetxController {
           .toList();
       _applyFilters();
       _calculateStats();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'TransactionController',
+        method: 'loadTransactions',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل المعاملات: $e',
+        'فشل في تحميل المعاملات',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -166,10 +173,16 @@ class TransactionController extends GetxController {
         'تمت الموافقة على الإيداع',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'TransactionController',
+        method: 'approveDeposit',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في الموافقة: $e',
+        'فشل في الموافقة على الإيداع',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -194,10 +207,16 @@ class TransactionController extends GetxController {
         'تمت الموافقة على السحب',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'TransactionController',
+        method: 'approveWithdrawal',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في الموافقة: $e',
+        'فشل في الموافقة على السحب',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -238,10 +257,16 @@ class TransactionController extends GetxController {
         'تم رفض المعاملة',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'TransactionController',
+        method: 'rejectTransaction',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في رفض المعاملة: $e',
+        'فشل في رفض المعاملة',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {

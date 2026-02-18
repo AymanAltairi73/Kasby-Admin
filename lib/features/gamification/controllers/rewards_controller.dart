@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../models/reward_model.dart';
 import '../../../core/services/audit_logger.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Rewards and Gamification Controller
 /// Manages settings for daily rewards, spin wheel prizes, and points rules
@@ -25,7 +26,13 @@ class RewardsController extends GetxController {
     isLoading.value = true;
     try {
       await Future.wait([_loadRewards(), _loadPrizes(), _loadPointRules()]);
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'RewardsController',
+        method: 'loadSettings',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultSettings();
     } finally {
       isLoading.value = false;
@@ -53,7 +60,13 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultRewards();
       }
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'RewardsController',
+        method: '_loadRewards',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultRewards();
     }
   }
@@ -79,7 +92,13 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultPrizes();
       }
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'RewardsController',
+        method: '_loadPrizes',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultPrizes();
     }
   }
@@ -106,7 +125,13 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultPointRules();
       }
-    } catch (_) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'RewardsController',
+        method: '_loadPointRules',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultPointRules();
     }
   }
@@ -244,7 +269,14 @@ class RewardsController extends GetxController {
           .from('gamification_point_rules')
           .update({'action': updatedRule.action, 'points': updatedRule.points})
           .eq('id', updatedRule.id);
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'RewardsController',
+        method: 'updatePointRule',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
 
     await AuditLogger.log(
       adminName: 'Admin',
@@ -268,7 +300,14 @@ class RewardsController extends GetxController {
               'points': updatedReward.points,
             })
             .eq('id', updatedReward.id);
-      } catch (_) {}
+      } catch (e, stackTrace) {
+        AppLoggerService.logError(
+          controller: 'RewardsController',
+          method: 'updateReward',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
       await AuditLogger.log(
         adminName: 'Admin',
         action: 'تعديل قيمة المكافأة',
@@ -293,7 +332,14 @@ class RewardsController extends GetxController {
               'probability': updatedPrize.probability,
             })
             .eq('id', updatedPrize.id);
-      } catch (_) {}
+      } catch (e, stackTrace) {
+        AppLoggerService.logError(
+          controller: 'RewardsController',
+          method: 'updatePrize',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
       await AuditLogger.log(
         adminName: 'Admin',
         action: 'تعديل جوائز العجلة',

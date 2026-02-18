@@ -1,7 +1,9 @@
 import 'package:get/get.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../models/audit_log_model.dart';
 import '../../../core/models/time_filter.dart';
+import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 class AuditController extends GetxController {
   final _allLogs = <AuditLog>[].obs;
@@ -75,97 +77,26 @@ class AuditController extends GetxController {
 
   Future<void> fetchLogs() async {
     isLoading.value = true;
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await SupabaseService.client
+          .from('audit_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(200);
 
-    _allLogs.value = [
-      AuditLog(
-        id: '1',
-        action: 'اعتماد تسوية مالية',
-        adminName: 'أحمد علي (المدير العام)',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-        details:
-            'تم الاعتماد والمصادقة على تسوية مالية بقيمة \$500.00 للمستخدم محمد حسن',
-        type: AuditLogType.financial,
-        status: AuditLogStatus.success,
-        icon: FontAwesomeIcons.moneyBillTransfer,
-        ipAddress: '192.168.1.45',
-        device: 'macOS Monterey (Chrome)',
-        targetId: 'TXN_99283',
-        targetType: 'Transaction',
-        metadata: {'amount': 500.0, 'currency': 'USD', 'user_id': 'USR_552'},
-      ),
-      AuditLog(
-        id: '2',
-        action: 'حظر مستخدم',
-        adminName: 'سارة خالد',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        details: 'تم حظر المستخدم خالد محمود بسبب نشاط مشبوه',
-        type: AuditLogType.userManagement,
-        status: AuditLogStatus.warning,
-        icon: FontAwesomeIcons.userSlash,
-        ipAddress: '10.5.0.22',
-        device: 'iPhone 15 Pro (App)',
-        targetId: 'USR_112',
-        targetType: 'User',
-        metadata: {'reason': 'Suspicious Activity', 'duration': 'Permanent'},
-      ),
-      AuditLog(
-        id: '6',
-        action: 'إضافة وكيل جديد',
-        adminName: 'ناصر فهد',
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-        details: 'تمت إضافة الوكيل "سالم العلي" إلى شبكة الوكلاء في دبي',
-        type: AuditLogType.userManagement,
-        status: AuditLogStatus.success,
-        icon: FontAwesomeIcons.userPlus,
-        ipAddress: '45.12.88.9',
-        device: 'Windows 11 (Firefox)',
-        targetId: 'AGENT_771',
-        targetType: 'Agent',
-      ),
-      AuditLog(
-        id: '3',
-        action: 'تعديل خطة استثمار',
-        adminName: 'أحمد علي (المدير العام)',
-        timestamp: DateTime.now().subtract(const Duration(days: 5)),
-        details: 'تحديث العائد السنوي لخطة "النمو الذكي" إلى 12%',
-        type: AuditLogType.investment,
-        status: AuditLogStatus.success,
-        icon: FontAwesomeIcons.chartLine,
-        ipAddress: '192.168.1.45',
-        device: 'macOS Monterey (Chrome)',
-        targetId: 'PLAN_002',
-        targetType: 'InvestmentPlan',
-        metadata: {'old_rate': 10.5, 'new_rate': 12.0},
-      ),
-      AuditLog(
-        id: '4',
-        action: 'فشل تسجيل دخول مسؤول',
-        adminName: 'ناصر فهد',
-        timestamp: DateTime.now().subtract(const Duration(days: 10)),
-        details: 'محاولة فاشلة لتسجيل الدخول بكلمة مرور خاطئة 3 مرات',
-        type: AuditLogType.security,
-        status: AuditLogStatus.failure,
-        icon: FontAwesomeIcons.shieldHalved,
-        ipAddress: '45.12.88.9',
-        device: 'Windows 11 (Firefox)',
-        metadata: {'attempts': 3, 'location': 'Dubai, UAE'},
-      ),
-      AuditLog(
-        id: '5',
-        action: 'إرسال إشعار عام',
-        adminName: 'سارة خالد',
-        timestamp: DateTime.now().subtract(const Duration(days: 25)),
-        details: 'تم إرسال إشعار لجميع المستخدمين بخصوص الصيانة الدورية',
-        type: AuditLogType.system,
-        status: AuditLogStatus.success,
-        icon: FontAwesomeIcons.bullhorn,
-        ipAddress: '10.5.0.22',
-        device: 'iPhone 15 Pro (App)',
-        metadata: {'recipient_count': 12543, 'template_id': 'maint_01'},
-      ),
-    ];
-
-    isLoading.value = false;
+      _allLogs.assignAll(
+        (response as List).map((json) => AuditLog.fromJson(json)).toList(),
+      );
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'AuditController',
+        method: 'fetchLogs',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      Get.snackbar('خطأ', 'فشل تحميل سجل العمليات');
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

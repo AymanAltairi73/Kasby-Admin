@@ -21,6 +21,7 @@ import 'features/settings/screens/faq_screen.dart';
 import 'features/settings/screens/maintenance_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/dashboard/screens/audit_logs_screen.dart';
+import 'features/dashboard/screens/error_log_screen.dart';
 import 'core/controllers/theme_controller.dart';
 import 'core/controllers/settings_controller.dart';
 import 'features/users/controllers/user_controller.dart';
@@ -29,6 +30,7 @@ import 'features/investments/controllers/investment_controller.dart';
 import 'features/agents/controllers/agent_controller.dart';
 import 'features/dashboard/controllers/main_controller.dart';
 import 'features/dashboard/controllers/audit_controller.dart';
+import 'features/dashboard/controllers/error_log_controller.dart';
 import 'features/chat/controllers/chat_controller.dart';
 import 'features/chat/screens/chat_list_screen.dart';
 import 'features/chat/screens/chat_details_screen.dart';
@@ -38,14 +40,16 @@ import 'features/loans/screens/loans_screen.dart';
 import 'features/settings/controllers/settings_management_controller.dart';
 import 'features/gamification/controllers/rewards_controller.dart';
 import 'core/services/supabase_service.dart';
+import 'core/services/app_logger_service.dart';
 import 'features/subscriptions/controllers/subscription_controller.dart';
 import 'features/subscriptions/screens/subscriptions_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
+  // Initialize Services
   await SupabaseService.init();
+  await AppLoggerService.init();
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
@@ -63,6 +67,7 @@ Future<void> main() async {
   Get.put(LoanController());
   Get.put(MainController());
   Get.put(AuditController());
+  Get.put(ErrorLogController());
   Get.put(AudioService());
   Get.put(ChatController());
   Get.put(RewardsController());
@@ -119,6 +124,7 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(name: '/settings', page: () => const SettingsScreen()),
         GetPage(name: '/profile', page: () => const ProfileScreen()),
         GetPage(name: '/audit-logs', page: () => const AuditLogsScreen()),
+        GetPage(name: '/error-logs', page: () => const ErrorLogScreen()),
         GetPage(name: '/terms', page: () => const TermsScreen()),
         GetPage(name: '/faq', page: () => const FaqScreen()),
         GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),

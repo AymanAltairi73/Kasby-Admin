@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../core/services/audit_logger.dart';
 import '../../core/services/supabase_service.dart';
+import '../../core/services/app_logger_service.dart';
 import '../models/system_settings_model.dart';
 
 /// Settings Controller
@@ -46,10 +47,16 @@ class SettingsController extends GetxController {
         // Create initial row if not exists
         await _createInitialSettings();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SettingsController',
+        method: 'loadSettings',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل إعدادات النظام: $e',
+        'فشل في تحميل إعدادات النظام',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -86,10 +93,16 @@ class SettingsController extends GetxController {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', 'global');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SettingsController',
+        method: '_saveSettings',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في حفظ الإعدادات: $e',
+        'فشل في حفظ الإعدادات',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../models/investment_model.dart';
 
 /// Investment Controller — manages investment plans & user investments from Supabase
@@ -28,10 +29,16 @@ class InvestmentController extends GetxController {
       plans.assignAll(
         (response as List).map((e) => InvestmentPlan.fromSupabase(e)).toList(),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'loadPlans',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل خطط الاستثمار: $e',
+        'فشل في تحميل خطط الاستثمار',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -52,10 +59,16 @@ class InvestmentController extends GetxController {
       userInvestments.assignAll(
         (response as List).map((e) => UserInvestment.fromSupabase(e)).toList(),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'loadUserInvestments',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل استثمارات المستخدمين: $e',
+        'فشل في تحميل استثمارات المستخدمين',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -92,10 +105,16 @@ class InvestmentController extends GetxController {
         backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
         colorText: KasbyColors.success,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'createPlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إنشاء الخطة: $e',
+        'فشل في إنشاء الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -134,10 +153,16 @@ class InvestmentController extends GetxController {
         backgroundColor: KasbyColors.primaryGold.withValues(alpha: 0.1),
         colorText: KasbyColors.primaryGold,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'updatePlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في تحديث الخطة: $e',
+        'فشل في تحديث الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -162,10 +187,16 @@ class InvestmentController extends GetxController {
         backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
         colorText: KasbyColors.error,
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'deletePlan',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
-        'فشل في إلغاء تفعيل الخطة: $e',
+        'فشل في إلغاء تفعيل الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
