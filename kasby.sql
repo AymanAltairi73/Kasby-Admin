@@ -44,11 +44,12 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN COALESCE(
         (SELECT role = 'admin' FROM public.profiles WHERE id = auth.uid()),
-        (SELECT raw_app_meta_data ->> 'is_admin' FROM auth.users WHERE id = auth.uid())::BOOLEAN,
+        (auth.jwt() -> 'app_metadata' ->> 'is_admin')::BOOLEAN,
         FALSE
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
+
 
 -- ============================================================
 -- SECTION 1: IDENTITY & AUTHENTICATION
@@ -1023,7 +1024,9 @@ CREATE POLICY p_user_select_terms ON terms_sections FOR SELECT USING (is_active 
 -- SECTION 12: VIEWS
 -- ============================================================
 
+DROP VIEW IF EXISTS v_user_dashboard CASCADE;
 CREATE OR REPLACE VIEW v_user_dashboard AS
+
 SELECT p.id AS user_id, p.full_name, p.account_tier, p.kyc_status,
     w.available_balance, w.profit_balance, w.invested_balance, w.pending_balance,
     w.is_frozen, w.currency, up.current_balance AS point_balance,

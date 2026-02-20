@@ -35,12 +35,9 @@ DROP POLICY IF EXISTS "Admin users can read error_logs" ON error_logs;
 CREATE POLICY "Admin users can read error_logs"
   ON error_logs FOR SELECT
   USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE id = auth.uid()
-      AND raw_app_meta_data->>'is_admin' = 'true'
-    )
+    (auth.jwt() -> 'app_metadata' ->> 'is_admin')::BOOLEAN = true
   );
+
 
 -- Index for fast queries by controller and time
 CREATE INDEX IF NOT EXISTS idx_error_logs_controller ON error_logs (controller_name, created_at DESC);

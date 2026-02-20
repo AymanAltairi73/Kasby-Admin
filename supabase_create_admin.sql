@@ -97,16 +97,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM auth.users
-    WHERE id = auth.uid()
-    AND (
-      raw_app_meta_data->>'is_admin' = 'true'
-      OR raw_app_meta_data->>'is_admin' = 'True'
-    )
-  );
+  RETURN (auth.jwt() -> 'app_metadata' ->> 'is_admin')::BOOLEAN = true;
 END;
 $$;
+
 
 -- ═══════════════════════════════════════════════════════════════
 -- Done! You can now login with:
