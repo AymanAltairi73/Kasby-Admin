@@ -14,33 +14,36 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================
 -- CUSTOM TYPES
 -- ============================================================
-CREATE TYPE user_status          AS ENUM ('active', 'blocked', 'suspended');
-CREATE TYPE account_tier         AS ENUM ('free', 'verified', 'vip');
-CREATE TYPE kyc_status           AS ENUM ('unverified', 'pending', 'verified', 'rejected');
-CREATE TYPE txn_type             AS ENUM ('deposit', 'withdrawal', 'transfer_in', 'transfer_out', 'investment', 'investment_return', 'loan_disbursement', 'loan_repayment', 'reward', 'adjustment', 'profit', 'fee');
-CREATE TYPE txn_status           AS ENUM ('pending', 'processing', 'completed', 'approved', 'rejected', 'cancelled', 'failed');
-CREATE TYPE investment_status    AS ENUM ('active', 'completed', 'cancelled', 'matured');
-CREATE TYPE loan_status          AS ENUM ('pending', 'current', 'paid', 'delayed', 'defaulted');
-CREATE TYPE agent_status         AS ENUM ('active', 'inactive', 'suspended');
-CREATE TYPE audit_log_type       AS ENUM ('security', 'financial', 'user_management', 'investment', 'system', 'config');
-CREATE TYPE audit_log_status     AS ENUM ('success', 'warning', 'failure');
-CREATE TYPE notification_status  AS ENUM ('sent', 'scheduled', 'failed', 'read');
-CREATE TYPE message_type         AS ENUM ('text', 'image', 'file', 'voice');
-CREATE TYPE kyc_doc_type         AS ENUM ('id_card_front', 'id_card_back', 'passport', 'selfie', 'proof_of_address', 'other');
-CREATE TYPE fee_category         AS ENUM ('deposit', 'withdraw', 'investment', 'transfer', 'loan');
-CREATE TYPE prize_type           AS ENUM ('points', 'cash', 'bonus');
-CREATE TYPE point_rule_type      AS ENUM ('earn', 'redeem');
-CREATE TYPE limit_tier           AS ENUM ('normal', 'vip');
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN CREATE TYPE user_status AS ENUM ('active', 'blocked', 'suspended'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN CREATE TYPE user_role AS ENUM ('user', 'admin'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_tier') THEN CREATE TYPE account_tier AS ENUM ('free', 'verified', 'vip'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kyc_status') THEN CREATE TYPE kyc_status AS ENUM ('unverified', 'pending', 'verified', 'rejected'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'txn_type') THEN CREATE TYPE txn_type AS ENUM ('deposit', 'withdrawal', 'transfer_in', 'transfer_out', 'investment', 'investment_return', 'loan_disbursement', 'loan_repayment', 'reward', 'adjustment', 'profit', 'fee'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'txn_status') THEN CREATE TYPE txn_status AS ENUM ('pending', 'processing', 'completed', 'approved', 'rejected', 'cancelled', 'failed'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'investment_status') THEN CREATE TYPE investment_status AS ENUM ('active', 'completed', 'cancelled', 'matured'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'loan_status') THEN CREATE TYPE loan_status AS ENUM ('pending', 'current', 'paid', 'delayed', 'defaulted'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agent_status') THEN CREATE TYPE agent_status AS ENUM ('active', 'inactive', 'suspended'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_log_type') THEN CREATE TYPE audit_log_type AS ENUM ('security', 'financial', 'user_management', 'investment', 'system', 'config'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_log_status') THEN CREATE TYPE audit_log_status AS ENUM ('success', 'warning', 'failure'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_status') THEN CREATE TYPE notification_status AS ENUM ('sent', 'scheduled', 'failed', 'read'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'message_type') THEN CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'voice'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kyc_doc_type') THEN CREATE TYPE kyc_doc_type AS ENUM ('id_card_front', 'id_card_back', 'passport', 'selfie', 'proof_of_address', 'other'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'fee_category') THEN CREATE TYPE fee_category AS ENUM ('deposit', 'withdraw', 'investment', 'transfer', 'loan'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'prize_type') THEN CREATE TYPE prize_type AS ENUM ('points', 'cash', 'bonus'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'point_rule_type') THEN CREATE TYPE point_rule_type AS ENUM ('earn', 'redeem'); END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'limit_tier') THEN CREATE TYPE limit_tier AS ENUM ('normal', 'vip'); END IF; END $$;
 
 -- ============================================================
 -- HELPER: Check if current user is admin
 -- Reads from auth.users.raw_app_meta_data -> 'is_admin'
 -- CANNOT be spoofed by client (unlike current_setting)
 -- ============================================================
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
     RETURN COALESCE(
+        (SELECT role = 'admin' FROM public.profiles WHERE id = auth.uid()),
         (SELECT raw_app_meta_data ->> 'is_admin' FROM auth.users WHERE id = auth.uid())::BOOLEAN,
         FALSE
     );
@@ -52,7 +55,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
 -- ============================================================
 
 -- 1.1 PROFILES (Linked to auth.users – CRITICAL)
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name       TEXT NOT NULL DEFAULT '',
     email           TEXT UNIQUE NOT NULL,
@@ -61,6 +64,7 @@ CREATE TABLE profiles (
     status          user_status DEFAULT 'active',
     account_tier    account_tier DEFAULT 'free',
     kyc_status      kyc_status DEFAULT 'unverified',
+    role            user_role DEFAULT 'user',
     country_code    TEXT,
     province        TEXT DEFAULT '',
     city            TEXT DEFAULT '',
@@ -73,36 +77,21 @@ CREATE TABLE profiles (
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_profiles_status ON profiles(status);
-CREATE INDEX idx_profiles_kyc ON profiles(kyc_status);
-CREATE INDEX idx_profiles_country ON profiles(country_code);
+-- Ensure 'role' column exists (for backward compatibility if table already existed)
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'profiles' AND COLUMN_NAME = 'role') THEN
+        ALTER TABLE profiles ADD COLUMN role user_role DEFAULT 'user';
+    END IF;
+END $$;
 
--- 1.2 ADMIN PROFILES (Extension of auth.users with is_admin=true)
-CREATE TABLE admin_profiles (
-    id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name       TEXT NOT NULL,
-    role            TEXT DEFAULT 'viewer' CHECK (role IN ('superadmin', 'admin', 'viewer')),
-    is_active       BOOLEAN DEFAULT TRUE,
-    last_login_at   TIMESTAMPTZ,
-    last_login_ip   TEXT,
-    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
+CREATE INDEX IF NOT EXISTS idx_profiles_status ON profiles(status);
+CREATE INDEX IF NOT EXISTS idx_profiles_kyc ON profiles(kyc_status);
+CREATE INDEX IF NOT EXISTS idx_profiles_country ON profiles(country_code);
 
--- 1.3 ADMIN SESSIONS
-CREATE TABLE admin_sessions (
-    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id        UUID NOT NULL REFERENCES admin_profiles(id) ON DELETE CASCADE,
-    ip_address      TEXT NOT NULL,
-    user_agent      TEXT,
-    login_at        TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    logout_at       TIMESTAMPTZ,
-    is_active       BOOLEAN DEFAULT TRUE
-);
-CREATE INDEX idx_admin_sessions_admin ON admin_sessions(admin_id);
+-- SECTION 1 IDENTITY & AUTHENTICATION CLEANUP (Consolidated to profiles)
 
 -- 1.4 COUNTRIES
-CREATE TABLE countries (
+CREATE TABLE IF NOT EXISTS countries (
     code            TEXT PRIMARY KEY,
     name            TEXT NOT NULL,
     dial_code       TEXT NOT NULL,
@@ -110,30 +99,34 @@ CREATE TABLE countries (
     is_supported    BOOLEAN DEFAULT TRUE
 );
 
-ALTER TABLE profiles ADD CONSTRAINT fk_profiles_country
-    FOREIGN KEY (country_code) REFERENCES countries(code) ON DELETE SET NULL;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_profiles_country') THEN
+        ALTER TABLE profiles ADD CONSTRAINT fk_profiles_country
+            FOREIGN KEY (country_code) REFERENCES countries(code) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- 1.5 KYC DOCUMENTS
-CREATE TABLE kyc_documents (
+CREATE TABLE IF NOT EXISTS kyc_documents (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     document_type   kyc_doc_type NOT NULL,
     document_url    TEXT NOT NULL,
     status          kyc_status DEFAULT 'pending',
-    reviewed_by     UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    reviewed_by     UUID REFERENCES profiles(id) ON DELETE SET NULL,
     reviewed_at     TIMESTAMPTZ,
     rejection_reason TEXT,
     uploaded_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_kyc_user ON kyc_documents(user_id);
-CREATE INDEX idx_kyc_status ON kyc_documents(status);
+CREATE INDEX IF NOT EXISTS idx_kyc_user ON kyc_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_kyc_status ON kyc_documents(status);
 
 -- ============================================================
 -- SECTION 2: FINANCIAL CORE
 -- ============================================================
 
 -- 2.1 WALLETS
-CREATE TABLE wallets (
+CREATE TABLE IF NOT EXISTS wallets (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id             UUID UNIQUE NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     available_balance   NUMERIC(18, 4) NOT NULL DEFAULT 0.0000 CHECK (available_balance >= 0),
@@ -144,14 +137,14 @@ CREATE TABLE wallets (
     is_frozen           BOOLEAN DEFAULT FALSE,
     frozen_reason       TEXT,
     frozen_at           TIMESTAMPTZ,
-    frozen_by           UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    frozen_by           UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_wallets_user ON wallets(user_id);
+CREATE INDEX IF NOT EXISTS idx_wallets_user ON wallets(user_id);
 
 -- 2.2 TRANSACTIONS (Immutable Ledger)
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     idempotency_key TEXT UNIQUE,
     user_id         UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
@@ -168,23 +161,23 @@ CREATE TABLE transactions (
     reason          TEXT,
     description     TEXT,
     proof_url       TEXT,
-    processed_by    UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    processed_by    UUID REFERENCES profiles(id) ON DELETE SET NULL,
     processed_at    TIMESTAMPTZ,
     rejection_reason TEXT,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_txn_user ON transactions(user_id);
-CREATE INDEX idx_txn_wallet ON transactions(wallet_id);
-CREATE INDEX idx_txn_status ON transactions(status);
-CREATE INDEX idx_txn_type ON transactions(type);
-CREATE INDEX idx_txn_created ON transactions(created_at DESC);
-CREATE INDEX idx_txn_counterpart ON transactions(counterpart_user_id) WHERE counterpart_user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_txn_user ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_txn_wallet ON transactions(wallet_id);
+CREATE INDEX IF NOT EXISTS idx_txn_status ON transactions(status);
+CREATE INDEX IF NOT EXISTS idx_txn_type ON transactions(type);
+CREATE INDEX IF NOT EXISTS idx_txn_created ON transactions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_txn_counterpart ON transactions(counterpart_user_id) WHERE counterpart_user_id IS NOT NULL;
 
 -- ============================================================
 -- SECTION 3: INVESTMENT & LOANS
 -- ============================================================
 
-CREATE TABLE investment_plans (
+CREATE TABLE IF NOT EXISTS investment_plans (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name_ar             TEXT NOT NULL,
     name_en             TEXT,
@@ -199,12 +192,12 @@ CREATE TABLE investment_plans (
     risk_level          TEXT DEFAULT 'medium' CHECK (risk_level IN ('low', 'medium', 'high')),
     is_active           BOOLEAN DEFAULT TRUE,
     version             INTEGER DEFAULT 1,
-    created_by          UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    created_by          UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_investments (
+CREATE TABLE IF NOT EXISTS user_investments (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id             UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     plan_id             UUID NOT NULL REFERENCES investment_plans(id) ON DELETE RESTRICT,
@@ -217,14 +210,14 @@ CREATE TABLE user_investments (
     start_date          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     end_date            TIMESTAMPTZ,
     matured_at          TIMESTAMPTZ,
-    approved_by         UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    approved_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_inv_user ON user_investments(user_id);
-CREATE INDEX idx_inv_plan ON user_investments(plan_id);
-CREATE INDEX idx_inv_status ON user_investments(status);
+CREATE INDEX IF NOT EXISTS idx_inv_user ON user_investments(user_id);
+CREATE INDEX IF NOT EXISTS idx_inv_plan ON user_investments(plan_id);
+CREATE INDEX IF NOT EXISTS idx_inv_status ON user_investments(status);
 
-CREATE TABLE loans (
+CREATE TABLE IF NOT EXISTS loans (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id             UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     amount              NUMERIC(18, 4) NOT NULL CHECK (amount > 0),
@@ -234,19 +227,19 @@ CREATE TABLE loans (
     status              loan_status DEFAULT 'pending',
     loan_date           TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     repayment_date      TIMESTAMPTZ NOT NULL,
-    approved_by         UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    approved_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
     approved_at         TIMESTAMPTZ,
     paid_at             TIMESTAMPTZ,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_loans_user ON loans(user_id);
-CREATE INDEX idx_loans_status ON loans(status);
-CREATE INDEX idx_loans_repay ON loans(repayment_date) WHERE status IN ('current', 'delayed');
+CREATE INDEX IF NOT EXISTS idx_loans_user ON loans(user_id);
+CREATE INDEX IF NOT EXISTS idx_loans_status ON loans(status);
+CREATE INDEX IF NOT EXISTS idx_loans_repay ON loans(repayment_date) WHERE status IN ('current', 'delayed');
 
 -- ============================================================
 -- SECTION 4: AGENTS
 -- ============================================================
-CREATE TABLE agents (
+CREATE TABLE IF NOT EXISTS agents (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id             UUID UNIQUE REFERENCES profiles(id) ON DELETE SET NULL,
     name                TEXT NOT NULL,
@@ -266,15 +259,15 @@ CREATE TABLE agents (
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_agents_status ON agents(status);
+CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
 
 -- ============================================================
 -- SECTION 5: AUDIT & COMPLIANCE
 -- ============================================================
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    admin_id        UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    admin_id        UUID REFERENCES profiles(id) ON DELETE SET NULL,
     action          TEXT NOT NULL,
     details         TEXT DEFAULT '',
     type            audit_log_type DEFAULT 'system',
@@ -288,11 +281,11 @@ CREATE TABLE audit_logs (
     metadata        JSONB,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_audit_type ON audit_logs(type);
-CREATE INDEX idx_audit_admin ON audit_logs(admin_id);
-CREATE INDEX idx_audit_created ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_type ON audit_logs(type);
+CREATE INDEX IF NOT EXISTS idx_audit_admin ON audit_logs(admin_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC);
 
-CREATE TABLE user_activities (
+CREATE TABLE IF NOT EXISTS user_activities (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     action          TEXT NOT NULL,
@@ -302,18 +295,18 @@ CREATE TABLE user_activities (
     device          TEXT,
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_activities_user ON user_activities(user_id);
-CREATE INDEX idx_activities_created ON user_activities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_user ON user_activities(user_id);
+CREATE INDEX IF NOT EXISTS idx_activities_created ON user_activities(created_at DESC);
 
 -- ============================================================
 -- SECTION 6: COMMUNICATION
 -- ============================================================
 
-CREATE TABLE chat_conversations (
+CREATE TABLE IF NOT EXISTS chat_conversations (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id             UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     agent_id            UUID REFERENCES agents(id) ON DELETE SET NULL,
-    assigned_admin_id   UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    assigned_admin_id   UUID REFERENCES profiles(id) ON DELETE SET NULL,
     is_agent_chat       BOOLEAN DEFAULT FALSE,
     last_message        TEXT DEFAULT '',
     last_message_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -323,9 +316,9 @@ CREATE TABLE chat_conversations (
     closed_at           TIMESTAMPTZ,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_conv_user ON chat_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_conv_user ON chat_conversations(user_id);
 
-CREATE TABLE chat_messages (
+CREATE TABLE IF NOT EXISTS chat_messages (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id     UUID NOT NULL REFERENCES chat_conversations(id) ON DELETE RESTRICT,
     sender_id           UUID NOT NULL,
@@ -339,29 +332,29 @@ CREATE TABLE chat_messages (
     reactions           TEXT[] DEFAULT '{}',
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_msg_conv ON chat_messages(conversation_id);
-CREATE INDEX idx_msg_created ON chat_messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_msg_conv ON chat_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_msg_created ON chat_messages(created_at DESC);
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title           TEXT NOT NULL,
     message         TEXT NOT NULL,
     target          TEXT DEFAULT 'all',
     target_user_id  UUID REFERENCES profiles(id) ON DELETE CASCADE,
     status          notification_status DEFAULT 'sent',
-    sent_by         UUID REFERENCES admin_profiles(id) ON DELETE SET NULL,
+    sent_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
     scheduled_at    TIMESTAMPTZ,
     sent_at         TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     read_at         TIMESTAMPTZ
 );
-CREATE INDEX idx_notif_target ON notifications(target_user_id) WHERE target_user_id IS NOT NULL;
-CREATE INDEX idx_notif_status ON notifications(status);
+CREATE INDEX IF NOT EXISTS idx_notif_target ON notifications(target_user_id) WHERE target_user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_notif_status ON notifications(status);
 
 -- ============================================================
 -- SECTION 7: GAMIFICATION
 -- ============================================================
 
-CREATE TABLE rewards (
+CREATE TABLE IF NOT EXISTS rewards (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title           TEXT NOT NULL,
     description     TEXT DEFAULT '',
@@ -371,7 +364,7 @@ CREATE TABLE rewards (
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE prizes (
+CREATE TABLE IF NOT EXISTS prizes (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     label           TEXT NOT NULL,
     value           TEXT NOT NULL,
@@ -381,7 +374,7 @@ CREATE TABLE prizes (
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE point_rules (
+CREATE TABLE IF NOT EXISTS point_rules (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     action          TEXT NOT NULL,
     points          INTEGER NOT NULL CHECK (points > 0),
@@ -390,7 +383,7 @@ CREATE TABLE point_rules (
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_points (
+CREATE TABLE IF NOT EXISTS user_points (
     user_id         UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE RESTRICT,
     total_earned    INTEGER DEFAULT 0 CHECK (total_earned >= 0),
     total_spent     INTEGER DEFAULT 0 CHECK (total_spent >= 0),
@@ -398,7 +391,7 @@ CREATE TABLE user_points (
     updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE point_history (
+CREATE TABLE IF NOT EXISTS point_history (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
     rule_id         UUID REFERENCES point_rules(id) ON DELETE SET NULL,
@@ -407,13 +400,13 @@ CREATE TABLE point_history (
     description     TEXT DEFAULT '',
     created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX idx_point_hist_user ON point_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_point_hist_user ON point_history(user_id);
 
 -- ============================================================
 -- SECTION 8: SYSTEM CONFIGURATION
 -- ============================================================
 
-CREATE TABLE system_settings (
+CREATE TABLE IF NOT EXISTS system_settings (
     id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pause_deposits        BOOLEAN DEFAULT FALSE,
     pause_withdrawals     BOOLEAN DEFAULT FALSE,
@@ -424,17 +417,45 @@ CREATE TABLE system_settings (
     is_maintenance_mode   BOOLEAN DEFAULT FALSE,
     maintenance_message   TEXT DEFAULT '',
     updated_at            TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_by            UUID REFERENCES admin_profiles(id) ON DELETE SET NULL
+    updated_by            UUID REFERENCES profiles(id) ON DELETE SET NULL
 );
 
-CREATE TABLE faqs (
+-- Ensure all columns exist for system_settings
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'pause_deposits') THEN
+        ALTER TABLE system_settings ADD COLUMN pause_deposits BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'pause_withdrawals') THEN
+        ALTER TABLE system_settings ADD COLUMN pause_withdrawals BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'pause_profits') THEN
+        ALTER TABLE system_settings ADD COLUMN pause_profits BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'pause_investments') THEN
+        ALTER TABLE system_settings ADD COLUMN pause_investments BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'pause_loans') THEN
+        ALTER TABLE system_settings ADD COLUMN pause_loans BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'system_freeze') THEN
+        ALTER TABLE system_settings ADD COLUMN system_freeze BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'is_maintenance_mode') THEN
+        ALTER TABLE system_settings ADD COLUMN is_maintenance_mode BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'system_settings' AND COLUMN_NAME = 'maintenance_message') THEN
+        ALTER TABLE system_settings ADD COLUMN maintenance_message TEXT DEFAULT '';
+    END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS faqs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     question TEXT NOT NULL, answer TEXT NOT NULL,
     sort_order INTEGER DEFAULT 0, is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE terms_sections (
+CREATE TABLE IF NOT EXISTS terms_sections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL, content TEXT NOT NULL,
     sort_order INTEGER DEFAULT 0, is_active BOOLEAN DEFAULT TRUE,
@@ -442,7 +463,7 @@ CREATE TABLE terms_sections (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE fees (
+CREATE TABLE IF NOT EXISTS fees (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     label TEXT NOT NULL, value TEXT NOT NULL,
     percentage NUMERIC(6,3), fixed_amount NUMERIC(18,4),
@@ -450,16 +471,16 @@ CREATE TABLE fees (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE currencies (
+CREATE TABLE IF NOT EXISTS currencies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL, code TEXT UNIQUE NOT NULL, symbol TEXT DEFAULT '',
     rate NUMERIC(18, 8) NOT NULL, decimal_places INTEGER DEFAULT 2,
     is_base BOOLEAN DEFAULT FALSE, is_active BOOLEAN DEFAULT TRUE,
     flag TEXT DEFAULT '', updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX idx_currencies_base ON currencies(is_base) WHERE is_base = TRUE;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_currencies_base ON currencies(is_base) WHERE is_base = TRUE;
 
-CREATE TABLE transaction_limits (
+CREATE TABLE IF NOT EXISTS transaction_limits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     label TEXT NOT NULL, value NUMERIC(18,4),
     is_unlimited BOOLEAN DEFAULT FALSE, tier limit_tier NOT NULL,
@@ -471,22 +492,38 @@ CREATE TABLE transaction_limits (
 -- ============================================================
 
 -- 9.1 Auto-update updated_at
+DROP FUNCTION IF EXISTS fn_update_timestamp() CASCADE;
 CREATE OR REPLACE FUNCTION fn_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = CURRENT_TIMESTAMP; RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_profiles_ts ON profiles;
 CREATE TRIGGER trg_profiles_ts       BEFORE UPDATE ON profiles         FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
-CREATE TRIGGER trg_admins_ts         BEFORE UPDATE ON admin_profiles   FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_wallets_ts ON wallets;
 CREATE TRIGGER trg_wallets_ts        BEFORE UPDATE ON wallets          FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_agents_ts ON agents;
 CREATE TRIGGER trg_agents_ts         BEFORE UPDATE ON agents           FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_inv_plans_ts ON investment_plans;
 CREATE TRIGGER trg_inv_plans_ts      BEFORE UPDATE ON investment_plans FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_terms_ts ON terms_sections;
 CREATE TRIGGER trg_terms_ts          BEFORE UPDATE ON terms_sections   FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_currencies_ts ON currencies;
 CREATE TRIGGER trg_currencies_ts     BEFORE UPDATE ON currencies       FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_points_ts ON user_points;
 CREATE TRIGGER trg_points_ts         BEFORE UPDATE ON user_points      FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
+
+DROP TRIGGER IF EXISTS trg_settings_ts ON system_settings;
 CREATE TRIGGER trg_settings_ts       BEFORE UPDATE ON system_settings  FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
 
 -- 9.2 Transaction IMMUTABILITY
+DROP FUNCTION IF EXISTS fn_prevent_txn_mutation() CASCADE;
 CREATE OR REPLACE FUNCTION fn_prevent_txn_mutation()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -505,41 +542,54 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_txn_immutable ON transactions;
 CREATE TRIGGER trg_txn_immutable
     BEFORE UPDATE OR DELETE ON transactions
     FOR EACH ROW EXECUTE FUNCTION fn_prevent_txn_mutation();
 
 -- 9.3 Audit Log IMMUTABILITY
+DROP FUNCTION IF EXISTS fn_prevent_audit_mutation() CASCADE;
 CREATE OR REPLACE FUNCTION fn_prevent_audit_mutation()
 RETURNS TRIGGER AS $$
 BEGIN RAISE EXCEPTION 'FORBIDDEN: Audit logs are immutable.'; END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_audit_immutable ON audit_logs;
 CREATE TRIGGER trg_audit_immutable
     BEFORE UPDATE OR DELETE ON audit_logs
     FOR EACH ROW EXECUTE FUNCTION fn_prevent_audit_mutation();
 
 -- 9.4 Auto-create profile + wallet on auth.users signup
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_role user_role := 'user';
 BEGIN
-    INSERT INTO public.profiles (id, full_name, email, phone)
+    IF (NEW.raw_app_meta_data ->> 'is_admin')::BOOLEAN = TRUE THEN
+        v_role := 'admin';
+    END IF;
+
+    INSERT INTO public.profiles (id, full_name, email, phone, role)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', ''),
         COALESCE(NEW.email, ''),
-        COALESCE(NEW.phone, NULL)
+        COALESCE(NEW.phone, NULL),
+        v_role
     );
     -- Wallet + points auto-created by trg_auto_wallet below
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- 9.5 Auto-create wallet + user_points when profile is created
+DROP FUNCTION IF EXISTS fn_create_wallet_for_user() CASCADE;
 CREATE OR REPLACE FUNCTION fn_create_wallet_for_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -549,6 +599,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+DROP TRIGGER IF EXISTS trg_auto_wallet ON profiles;
 CREATE TRIGGER trg_auto_wallet
     AFTER INSERT ON profiles
     FOR EACH ROW EXECUTE FUNCTION fn_create_wallet_for_user();
@@ -559,6 +610,7 @@ CREATE TRIGGER trg_auto_wallet
 -- ============================================================
 
 -- 10.1 PROCESS DEPOSIT
+DROP FUNCTION IF EXISTS fn_process_deposit(UUID, UUID);
 CREATE OR REPLACE FUNCTION fn_process_deposit(p_txn_id UUID, p_admin_id UUID)
 RETURNS VOID AS $$
 DECLARE
@@ -588,6 +640,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 10.2 PROCESS WITHDRAWAL
+DROP FUNCTION IF EXISTS fn_process_withdrawal(UUID, UUID);
 CREATE OR REPLACE FUNCTION fn_process_withdrawal(p_txn_id UUID, p_admin_id UUID)
 RETURNS VOID AS $$
 DECLARE
@@ -618,6 +671,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 10.3 REJECT TRANSACTION
+DROP FUNCTION IF EXISTS fn_reject_transaction(UUID, UUID, TEXT);
 CREATE OR REPLACE FUNCTION fn_reject_transaction(p_txn_id UUID, p_admin_id UUID, p_reason TEXT)
 RETURNS VOID AS $$
 BEGIN
@@ -632,6 +686,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 10.4 P2P TRANSFER (Deadlock-safe: locks wallets in UUID order)
+DROP FUNCTION IF EXISTS fn_transfer(UUID, UUID, NUMERIC, TEXT);
 CREATE OR REPLACE FUNCTION fn_transfer(
     p_sender_id UUID, p_receiver_id UUID, p_amount NUMERIC(18,4), p_idempotency_key TEXT
 ) RETURNS UUID AS $$
@@ -680,6 +735,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 10.5 CREATE INVESTMENT
+DROP FUNCTION IF EXISTS fn_create_investment(UUID, UUID, NUMERIC, TEXT);
 CREATE OR REPLACE FUNCTION fn_create_investment(
     p_user_id UUID, p_plan_id UUID, p_amount NUMERIC(18,4), p_idempotency_key TEXT
 ) RETURNS UUID AS $$
@@ -723,6 +779,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 10.6 CREDIT PROFIT (Admin credits profit to a matured investment)
+DROP FUNCTION IF EXISTS fn_credit_profit(UUID, UUID, NUMERIC);
 CREATE OR REPLACE FUNCTION fn_credit_profit(
     p_investment_id UUID, p_admin_id UUID, p_profit_amount NUMERIC(18,4)
 ) RETURNS VOID AS $$
@@ -771,6 +828,40 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+-- 10.7 APPROVE LOAN
+DROP FUNCTION IF EXISTS fn_approve_loan(UUID, UUID);
+CREATE OR REPLACE FUNCTION fn_approve_loan(p_loan_id UUID, p_admin_id UUID)
+RETURNS VOID AS $$
+DECLARE
+    v_user_id UUID; v_amount NUMERIC(18,4); v_status loan_status;
+    v_wid UUID; v_new_bal NUMERIC(18,4);
+BEGIN
+    SELECT user_id, amount, status INTO v_user_id, v_amount, v_status
+    FROM loans WHERE id = p_loan_id FOR UPDATE;
+    
+    IF NOT FOUND THEN RAISE EXCEPTION 'Loan not found.'; END IF;
+    IF v_status != 'pending' THEN RAISE EXCEPTION 'Loan is not in pending status.'; END IF;
+
+    SELECT id INTO v_wid FROM wallets WHERE user_id = v_user_id FOR UPDATE;
+
+    -- Update loan status
+    UPDATE loans SET status = 'current', approved_by = p_admin_id, approved_at = CURRENT_TIMESTAMP
+    WHERE id = p_loan_id;
+
+    -- Credit user wallet
+    UPDATE wallets SET available_balance = available_balance + v_amount WHERE id = v_wid;
+    SELECT available_balance INTO v_new_bal FROM wallets WHERE id = v_wid;
+
+    -- Log transaction
+    INSERT INTO transactions (user_id, wallet_id, type, amount, status, running_balance, processed_by, processed_at, description)
+    VALUES (v_user_id, v_wid, 'loan_disbursement', v_amount, 'completed', v_new_bal, p_admin_id, CURRENT_TIMESTAMP, 'Loan disbursement');
+
+    -- Log audit
+    INSERT INTO audit_logs (admin_id, action, details, type, status, target_id, target_type)
+    VALUES (p_admin_id, 'approve_loan', 'Loan amount: ' || v_amount, 'financial', 'success', p_loan_id::TEXT, 'loan');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- ============================================================
 -- SECTION 11: ROW-LEVEL SECURITY (auth.uid() based)
 -- ============================================================
@@ -786,68 +877,147 @@ ALTER TABLE user_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE investment_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE point_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE point_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prizes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rewards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE currencies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transaction_limits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE terms_sections ENABLE ROW LEVEL SECURITY;
 
 -- === USER Policies (granular per operation) ===
 
--- profiles: SELECT + UPDATE own only
+-- profiles
+DROP POLICY IF EXISTS p_user_select_profile ON profiles;
 CREATE POLICY p_user_select_profile ON profiles FOR SELECT USING (id = auth.uid());
-CREATE POLICY p_user_update_profile ON profiles FOR UPDATE USING (id = auth.uid())
-    WITH CHECK (id = auth.uid());
+DROP POLICY IF EXISTS p_user_update_profile ON profiles;
+CREATE POLICY p_user_update_profile ON profiles FOR UPDATE USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 
--- wallets: SELECT own only (NO insert/update/delete by user)
+-- wallets
+DROP POLICY IF EXISTS p_user_select_wallet ON wallets;
 CREATE POLICY p_user_select_wallet ON wallets FOR SELECT USING (user_id = auth.uid());
 
--- transactions: SELECT own + INSERT requests (deposit/withdrawal)
+-- transactions
+DROP POLICY IF EXISTS p_user_select_txn ON transactions;
 CREATE POLICY p_user_select_txn ON transactions FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY p_user_insert_txn ON transactions FOR INSERT
-    WITH CHECK (user_id = auth.uid() AND type IN ('deposit', 'withdrawal'));
+DROP POLICY IF EXISTS p_user_insert_txn ON transactions;
+CREATE POLICY p_user_insert_txn ON transactions FOR INSERT WITH CHECK (user_id = auth.uid() AND type IN ('deposit', 'withdrawal'));
 
--- user_investments: SELECT own only
+-- investments
+DROP POLICY IF EXISTS p_user_select_inv ON user_investments;
 CREATE POLICY p_user_select_inv ON user_investments FOR SELECT USING (user_id = auth.uid());
 
--- loans: SELECT own only
+-- loans
+DROP POLICY IF EXISTS p_user_select_loans ON loans;
 CREATE POLICY p_user_select_loans ON loans FOR SELECT USING (user_id = auth.uid());
 
--- kyc_documents: SELECT + INSERT own
+-- KYC
+DROP POLICY IF EXISTS p_user_select_kyc ON kyc_documents;
 CREATE POLICY p_user_select_kyc ON kyc_documents FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS p_user_insert_kyc ON kyc_documents;
 CREATE POLICY p_user_insert_kyc ON kyc_documents FOR INSERT WITH CHECK (user_id = auth.uid());
 
--- user_activities: SELECT own only
+-- Activity
+DROP POLICY IF EXISTS p_user_select_activity ON user_activities;
 CREATE POLICY p_user_select_activity ON user_activities FOR SELECT USING (user_id = auth.uid());
 
--- user_points: SELECT own only
+-- Points
+DROP POLICY IF EXISTS p_user_select_points ON user_points;
 CREATE POLICY p_user_select_points ON user_points FOR SELECT USING (user_id = auth.uid());
 
--- chat: SELECT + INSERT own conversations/messages
+-- Chat
+DROP POLICY IF EXISTS p_user_select_conv ON chat_conversations;
 CREATE POLICY p_user_select_conv ON chat_conversations FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY p_user_select_msg ON chat_messages FOR SELECT USING (
-    conversation_id IN (SELECT id FROM chat_conversations WHERE user_id = auth.uid())
-);
-CREATE POLICY p_user_insert_msg ON chat_messages FOR INSERT WITH CHECK (
-    sender_id = auth.uid() AND sender_type = 'user'
-    AND conversation_id IN (SELECT id FROM chat_conversations WHERE user_id = auth.uid())
-);
+DROP POLICY IF EXISTS p_user_select_msg ON chat_messages;
+CREATE POLICY p_user_select_msg ON chat_messages FOR SELECT USING (conversation_id IN (SELECT id FROM chat_conversations WHERE user_id = auth.uid()));
+DROP POLICY IF EXISTS p_user_insert_msg ON chat_messages;
+CREATE POLICY p_user_insert_msg ON chat_messages FOR INSERT WITH CHECK (sender_id = auth.uid() AND sender_type = 'user' AND conversation_id IN (SELECT id FROM chat_conversations WHERE user_id = auth.uid()));
 
--- notifications: SELECT own + global
-CREATE POLICY p_user_select_notif ON notifications FOR SELECT USING (
-    target = 'all' OR target_user_id = auth.uid()
-);
+-- Notifications
+DROP POLICY IF EXISTS p_user_select_notif ON notifications;
+CREATE POLICY p_user_select_notif ON notifications FOR SELECT USING (target = 'all' OR target_user_id = auth.uid());
 
--- === ADMIN Policies (is_admin() check – CANNOT be spoofed) ===
-
+-- === ADMIN Policies ===
+DROP POLICY IF EXISTS p_admin_profiles ON profiles;
 CREATE POLICY p_admin_profiles ON profiles FOR ALL USING (is_admin()) WITH CHECK (is_admin());
-CREATE POLICY p_admin_wallets ON wallets FOR SELECT USING (is_admin());  -- SELECT only! No direct balance edit
-CREATE POLICY p_admin_txns_select ON transactions FOR SELECT USING (is_admin());
-CREATE POLICY p_admin_txns_insert ON transactions FOR INSERT WITH CHECK (is_admin());
--- NOTE: UPDATE on transactions handled by SECURITY DEFINER RPCs only
+DROP POLICY IF EXISTS p_admin_wallets ON wallets;
+CREATE POLICY p_admin_wallets ON wallets FOR SELECT USING (is_admin());
+DROP POLICY IF EXISTS p_admin_txns ON transactions;
+CREATE POLICY p_admin_txns ON transactions FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_investments ON user_investments;
 CREATE POLICY p_admin_investments ON user_investments FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_loans ON loans;
 CREATE POLICY p_admin_loans ON loans FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_kyc ON kyc_documents;
 CREATE POLICY p_admin_kyc ON kyc_documents FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_activities ON user_activities;
 CREATE POLICY p_admin_activities ON user_activities FOR SELECT USING (is_admin());
+DROP POLICY IF EXISTS p_admin_points ON user_points;
 CREATE POLICY p_admin_points ON user_points FOR SELECT USING (is_admin());
+DROP POLICY IF EXISTS p_admin_convs ON chat_conversations;
 CREATE POLICY p_admin_convs ON chat_conversations FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_msgs ON chat_messages;
 CREATE POLICY p_admin_msgs ON chat_messages FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_notif ON notifications;
 CREATE POLICY p_admin_notif ON notifications FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_audit ON audit_logs;
+CREATE POLICY p_admin_audit ON audit_logs FOR SELECT USING (is_admin());
+DROP POLICY IF EXISTS p_admin_inv_plans ON investment_plans;
+CREATE POLICY p_admin_inv_plans ON investment_plans FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_agents ON agents;
+CREATE POLICY p_admin_agents ON agents FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_settings ON system_settings;
+CREATE POLICY p_admin_settings ON system_settings FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_point_hist ON point_history;
+CREATE POLICY p_admin_point_hist ON point_history FOR SELECT USING (is_admin());
+DROP POLICY IF EXISTS p_admin_point_rules ON point_rules;
+CREATE POLICY p_admin_point_rules ON point_rules FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_prizes ON prizes;
+CREATE POLICY p_admin_prizes ON prizes FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_rewards ON rewards;
+CREATE POLICY p_admin_rewards ON rewards FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_fees ON fees;
+CREATE POLICY p_admin_fees ON fees FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_currencies ON currencies;
+CREATE POLICY p_admin_currencies ON currencies FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_limits ON transaction_limits;
+CREATE POLICY p_admin_limits ON transaction_limits FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_faqs ON faqs;
+CREATE POLICY p_admin_faqs ON faqs FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+DROP POLICY IF EXISTS p_admin_terms ON terms_sections;
+CREATE POLICY p_admin_terms ON terms_sections FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+
+-- === USER ReadOnly Policies ===
+DROP POLICY IF EXISTS p_user_select_inv_plans ON investment_plans;
+CREATE POLICY p_user_select_inv_plans ON investment_plans FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_agents ON agents;
+CREATE POLICY p_user_select_agents ON agents FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS p_user_select_settings ON system_settings;
+CREATE POLICY p_user_select_settings ON system_settings FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS p_user_select_point_hist ON point_history;
+CREATE POLICY p_user_select_point_hist ON point_history FOR SELECT USING (user_id = auth.uid());
+DROP POLICY IF EXISTS p_user_select_point_rules ON point_rules;
+CREATE POLICY p_user_select_point_rules ON point_rules FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_prizes ON prizes;
+CREATE POLICY p_user_select_prizes ON prizes FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_rewards ON rewards;
+CREATE POLICY p_user_select_rewards ON rewards FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_fees ON fees;
+CREATE POLICY p_user_select_fees ON fees FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_currencies ON currencies;
+CREATE POLICY p_user_select_currencies ON currencies FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_limits ON transaction_limits;
+CREATE POLICY p_user_select_limits ON transaction_limits FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS p_user_select_faqs ON faqs;
+CREATE POLICY p_user_select_faqs ON faqs FOR SELECT USING (is_active = TRUE);
+DROP POLICY IF EXISTS p_user_select_terms ON terms_sections;
+CREATE POLICY p_user_select_terms ON terms_sections FOR SELECT USING (is_active = TRUE);
 
 -- ============================================================
 -- SECTION 12: VIEWS
@@ -864,6 +1034,7 @@ JOIN wallets w ON w.user_id = p.id
 LEFT JOIN user_points up ON up.user_id = p.id;
 
 -- Admin dashboard as SECURITY DEFINER function (bypasses RLS)
+DROP FUNCTION IF EXISTS fn_admin_dashboard();
 CREATE OR REPLACE FUNCTION fn_admin_dashboard()
 RETURNS TABLE (
     total_users BIGINT, active_users BIGINT, pending_kyc BIGINT,
@@ -899,15 +1070,14 @@ INSERT INTO currencies (name, code, symbol, rate, decimal_places, is_base, is_ac
     ('الليرة التركية', 'TRY', '₺', 15.59000000, 2, FALSE, TRUE, '🇹🇷'),
     ('اليورو', 'EUR', '€', 0.84610000, 2, FALSE, TRUE, '🇪🇺'),
     ('الفرنك السويسري', 'CHF', 'CHF', 0.77540000, 2, FALSE, TRUE, '🇨🇭'),
-    ('الين الياباني', 'JPY', '¥', 155.90000000, 0, FALSE, TRUE, '🇯🇵');
+    ('الين الياباني', 'JPY', '¥', 155.90000000, 0, FALSE, TRUE, '🇯🇵')
+ON CONFLICT (code) DO NOTHING;
 
 INSERT INTO system_settings (
     pause_deposits, pause_withdrawals, pause_profits, pause_investments,
     pause_loans, system_freeze, is_maintenance_mode, maintenance_message
-) VALUES (
-    FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-    'النظام حالياً في مرحلة التحديث الدوري لضمان أعلى معايير الأمان والامتثال. سنعود قريباً.'
-);
+) SELECT FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, 'النظام حالياً في مرحلة التحديث الدوري لضمان أعلى معايير الأمان والامتثال. سنعود قريباً.'
+WHERE NOT EXISTS (SELECT 1 FROM system_settings);
 
 INSERT INTO countries (code, name, dial_code, flag, is_supported) VALUES
     ('IQ', 'العراق', '+964', '🇮🇶', TRUE),
@@ -921,7 +1091,8 @@ INSERT INTO countries (code, name, dial_code, flag, is_supported) VALUES
     ('QA', 'قطر', '+974', '🇶🇦', TRUE),
     ('TR', 'تركيا', '+90', '🇹🇷', TRUE),
     ('SY', 'سوريا', '+963', '🇸🇾', TRUE),
-    ('LB', 'لبنان', '+961', '🇱🇧', TRUE);
+    ('LB', 'لبنان', '+961', '🇱🇧', TRUE)
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================
 -- END OF SCHEMA v3.1 (Audit-Corrected)
