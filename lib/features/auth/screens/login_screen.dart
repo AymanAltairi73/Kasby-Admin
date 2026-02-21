@@ -6,6 +6,7 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/auth_controller.dart';
+import 'register_screen.dart';
 
 /// Login Screen
 /// Admin authentication with username and password
@@ -252,6 +253,34 @@ class _LoginScreenState extends State<LoginScreen> {
                             .animate()
                             .fadeIn(delay: const Duration(milliseconds: 300))
                             .slideY(begin: 0.1),
+
+                        const SizedBox(height: 32),
+
+                        // Register Link
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'ليس لديك حساب؟',
+                              style: TextStyle(
+                                color: KasbyColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Get.to(() => const RegisterScreen()),
+                              child: const Text(
+                                'إنشاء حساب جديد',
+                                style: TextStyle(
+                                  color: KasbyColors.primaryGold,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ).animate().fadeIn(delay: 1000.ms),
                       ],
                     ),
                   ),
