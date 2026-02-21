@@ -11,9 +11,10 @@ class User {
   final String province;
   final String city;
   final String address;
-  final String accountType; // Free, Premium
+  final String accountType; // Free, Premium (Maps to account_tier in SQL)
   final String kycStatus; // Unverified, Pending, Verified, Rejected
   final double walletBalance;
+  final double profitBalance;
   final double investedAmount;
   final double pendingAmount;
   final String role; // user, admin
@@ -37,6 +38,7 @@ class User {
     required this.accountType,
     required this.kycStatus,
     required this.walletBalance,
+    this.profitBalance = 0.0,
     this.investedAmount = 0.0,
     this.pendingAmount = 0.0,
     required this.createdAt,
@@ -82,6 +84,7 @@ class User {
       accountType: accountType ?? this.accountType,
       kycStatus: kycStatus ?? this.kycStatus,
       walletBalance: walletBalance ?? this.walletBalance,
+      profitBalance: profitBalance ?? this.profitBalance,
       investedAmount: investedAmount ?? this.investedAmount,
       pendingAmount: pendingAmount ?? this.pendingAmount,
       createdAt: createdAt ?? this.createdAt,
@@ -97,14 +100,17 @@ class User {
     // Wallet data may be nested as a list or object
     final wallet = json['wallets'];
     double availBal = 0.0;
+    double profBal = 0.0;
     double investBal = 0.0;
     double pendingBal = 0.0;
     if (wallet is List && wallet.isNotEmpty) {
       availBal = (wallet[0]['available_balance'] ?? 0).toDouble();
+      profBal = (wallet[0]['profit_balance'] ?? 0).toDouble();
       investBal = (wallet[0]['invested_balance'] ?? 0).toDouble();
       pendingBal = (wallet[0]['pending_balance'] ?? 0).toDouble();
     } else if (wallet is Map) {
       availBal = (wallet['available_balance'] ?? 0).toDouble();
+      profBal = (wallet['profit_balance'] ?? 0).toDouble();
       investBal = (wallet['invested_balance'] ?? 0).toDouble();
       pendingBal = (wallet['pending_balance'] ?? 0).toDouble();
     }
@@ -120,9 +126,10 @@ class User {
       province: json['province'] ?? '',
       city: json['city'] ?? '',
       address: json['address'] ?? '',
-      accountType: json['account_type'] ?? 'Free',
+      accountType: json['account_type'] ?? json['account_tier'] ?? 'Free',
       kycStatus: json['kyc_status'] ?? 'Unverified',
       walletBalance: availBal,
+      profitBalance: profBal,
       investedAmount: investBal,
       pendingAmount: pendingBal,
       createdAt: json['created_at'] != null
@@ -143,12 +150,17 @@ class User {
       status: json['status'] ?? 'active',
       role: json['role'] ?? 'user',
       country: json['country'] ?? '',
-      province: json['province'] ?? '', 
+      province: json['province'] ?? '',
       city: json['city'] ?? '',
       address: json['address'] ?? '',
-      accountType: json['accountType'] ?? json['account_type'] ?? 'Free',
+      accountType:
+          json['accountType'] ??
+          json['account_type'] ??
+          json['account_tier'] ??
+          'Free',
       kycStatus: json['kycStatus'] ?? json['kyc_status'] ?? 'Unverified',
       walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
+      profitBalance: (json['profitBalance'] ?? 0.0).toDouble(),
       investedAmount: (json['investedAmount'] ?? 0.0).toDouble(),
       pendingAmount: (json['pendingAmount'] ?? 0.0).toDouble(),
       createdAt: json['createdAt'] != null
@@ -182,6 +194,7 @@ class User {
       'accountType': accountType,
       'kycStatus': kycStatus,
       'walletBalance': walletBalance,
+      'profitBalance': profitBalance,
       'investedAmount': investedAmount,
       'pendingAmount': pendingAmount,
       'createdAt': createdAt.toIso8601String(),
@@ -204,7 +217,7 @@ class User {
       'province': province,
       'city': city,
       'address': address,
-      'account_type': accountType,
+      'account_tier': accountType, // Using database column name
       'kyc_status': kycStatus,
       'whatsapp': whatsapp,
       'telegram': telegram,

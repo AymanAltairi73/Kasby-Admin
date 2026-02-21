@@ -408,6 +408,18 @@ CREATE TABLE IF NOT EXISTS point_history (
 );
 CREATE INDEX IF NOT EXISTS idx_point_hist_user ON point_history(user_id);
 
+-- 7.X SUBSCRIPTION PLANS
+CREATE TABLE IF NOT EXISTS subscription_plans (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            TEXT NOT NULL,
+    price_monthly   NUMERIC(18, 4),
+    price_yearly    NUMERIC(18, 4),
+    features        JSONB DEFAULT '[]',
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ============================================================
 -- SECTION 8: SYSTEM CONFIGURATION
 -- ============================================================

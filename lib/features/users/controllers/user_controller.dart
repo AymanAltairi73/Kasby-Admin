@@ -385,8 +385,8 @@ class UserController extends GetxController {
         'email': email,
         'status': 'active',
         'role': 'user',
-        'kyc_status': 'none',
-        'account_type': 'Free',
+        'kyc_status': 'unverified',
+        'account_tier': 'free',
       });
 
       await loadUsers();
