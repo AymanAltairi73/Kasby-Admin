@@ -141,29 +141,19 @@ class AuthController extends GetxController {
       );
 
       if (response.session == null) {
-        isLoading.value = false;
-        Get.snackbar(
-          'خطأ في تسجيل الدخول',
-          'لم يتم إنشاء جلسة. حاول مرة أخرى.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return false;
+        throw AuthException('لم يتم إنشاء جلسة. حاول مرة أخرى.');
       }
 
-      // Verify admin status
+      // 1. Verify admin status via RPC and Metadata
       final isAdmin = await _checkIsAdmin();
       if (!isAdmin) {
         await SupabaseService.auth.signOut();
-        isLoading.value = false;
-        Get.snackbar(
-          'غير مصرح',
+        throw AuthException(
           'هذا الحساب ليس حساب مدير. لا يمكنك الوصول إلى لوحة التحكم.',
-          snackPosition: SnackPosition.BOTTOM,
         );
-        return false;
       }
 
-      // Save credentials if remember me is on
+      // 2. Clear sensitive state and set local status
       if (rememberMe.value) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('saved_email', email);
@@ -173,8 +163,23 @@ class AuthController extends GetxController {
       isLoggedIn.value = true;
       userRole.value = 'Admin';
       userName.value = response.user?.userMetadata?['full_name'] ?? 'المدير';
+
       isLoading.value = false;
       return true;
+    } on AuthException catch (e) {
+      isLoading.value = false;
+      String message = e.message;
+      if (message.contains('Invalid login credentials')) {
+        message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      }
+      Get.snackbar(
+        'خطأ في الدخول',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return false;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'AuthController',
@@ -183,19 +188,12 @@ class AuthController extends GetxController {
         stackTrace: stackTrace,
       );
       isLoading.value = false;
-      String errorMessage = 'حدث خطأ أثناء تسجيل الدخول';
-      final msg = e.toString().toLowerCase();
-      if (msg.contains('invalid login credentials') ||
-          msg.contains('invalid_credentials')) {
-        errorMessage = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-      } else if (msg.contains('network') || msg.contains('socket')) {
-        errorMessage = 'تحقق من اتصالك بالإنترنت';
-      }
-
       Get.snackbar(
-        'خطأ في تسجيل الدخول',
-        errorMessage,
+        'خطأ غير متوقع',
+        'حدث خطأ أثناء الاتصال بالخادم',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
       );
       return false;
     }
@@ -221,40 +219,45 @@ class AuthController extends GetxController {
   }) async {
     isLoading.value = true;
     try {
+      // We set is_admin: true in user metadata.
+      // The database trigger 'handle_new_user' in kasby.sql will pick this up.
       final response = await SupabaseService.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName, 'phone': phone},
+        data: {
+          'full_name': fullName,
+          'phone': phone,
+          'is_admin': true, // This app is only for admins
+        },
       );
 
       if (response.user == null) {
-        isLoading.value = false;
-        Get.snackbar(
-          'خطأ في إنشاء الحساب',
-          'لم يتم إنشاء المستخدم. حاول مرة أخرى.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return false;
+        throw AuthException('فشل إنشاء المستخدم');
       }
-
-      // Note: The database trigger 'on_auth_user_created' will use the metadata
-      // to create a profile. However, to ensure they are an admin, we might need
-      // additional logic if the trigger doesn't automatically set it based on some flag.
-      // In kasby.sql, the trigger checks NEW.raw_app_meta_data ->> 'is_admin'
-
-      // Since we can't set app_metadata directly from the client during signup for security reasons,
-      // typically an existing admin or a special RPC would be needed, OR the first user becomes admin.
-      // For this specific request, we'll assume the trigger handles it or we'll need to update metadata via RPC if allowed.
 
       isLoading.value = false;
       Get.snackbar(
-        'تم إنشاء الحساب',
-        'تم إنشاء حساب المدير بنجاح. يمكنك الآن تسجيل الدخول.',
+        'تم بنجاح',
+        'تم إنشاء حساب المدير. يرجى تسجيل الدخول الآن.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: KasbyColors.success.withValues(alpha: 0.7),
+        backgroundColor: KasbyColors.success,
         colorText: Colors.white,
       );
       return true;
+    } on AuthApiException catch (e) {
+      isLoading.value = false;
+      String message = e.message;
+      if (e.code == 'user_already_exists') {
+        message = 'هذا البريد الإلكتروني مسجل بالفعل. حاول تسجيل الدخول.';
+      }
+      Get.snackbar(
+        'خطأ في التسجيل',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return false;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'AuthController',
@@ -263,29 +266,10 @@ class AuthController extends GetxController {
         stackTrace: stackTrace,
       );
       isLoading.value = false;
-
-      String errorMessage = 'حدث خطأ أثناء إنشاء الحساب';
-
-      if (e is AuthApiException) {
-        if (e.code == 'user_already_exists') {
-          errorMessage =
-              'هذا البريد الإلكتروني مسجل بالفعل. حاول تسجيل الدخول.';
-        } else {
-          errorMessage = e.message;
-        }
-      } else {
-        final msg = e.toString().toLowerCase();
-        if (msg.contains('network') || msg.contains('socket')) {
-          errorMessage = 'تحقق من اتصالك بالإنترنت';
-        }
-      }
-
       Get.snackbar(
         'خطأ',
-        errorMessage,
+        'حدث خطأ غير متوقع أثناء التسجيل',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.7),
-        colorText: Colors.white,
       );
       return false;
     }

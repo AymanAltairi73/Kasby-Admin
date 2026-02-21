@@ -42,10 +42,15 @@ DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN COALESCE(
-        (SELECT role = 'admin' FROM public.profiles WHERE id = auth.uid()),
-        (auth.jwt() -> 'app_metadata' ->> 'is_admin')::BOOLEAN,
-        FALSE
+    -- 1. Check JWT claims (fastest, primary method for RLS)
+    IF (auth.jwt() -> 'app_metadata' ->> 'is_admin')::BOOLEAN = TRUE THEN
+        RETURN TRUE;
+    END IF;
+
+    -- 2. Fallback: Check profiles table (ensures consistency if JWT is old)
+    RETURN EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE id = auth.uid() AND role = 'admin'
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
@@ -567,7 +572,10 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_role user_role := 'user';
 BEGIN
-    IF (NEW.raw_app_meta_data ->> 'is_admin')::BOOLEAN = TRUE THEN
+    -- Check for is_admin flag in app_metadata (set by server) 
+    -- OR user_metadata (passed from client during signup for this admin app)
+    IF (NEW.raw_app_meta_data ->> 'is_admin')::BOOLEAN = TRUE OR 
+       (NEW.raw_user_meta_data ->> 'is_admin')::BOOLEAN = TRUE THEN
         v_role := 'admin';
     END IF;
 
@@ -579,7 +587,6 @@ BEGIN
         COALESCE(NEW.phone, NULL),
         v_role
     );
-    -- Wallet + points auto-created by trg_auto_wallet below
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
