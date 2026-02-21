@@ -437,7 +437,7 @@ class UserListScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    user.name[0],
+                    user.name.isNotEmpty ? user.name[0] : '?',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -476,6 +476,36 @@ class UserListScreen extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Role Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: user.role == 'admin'
+                            ? KasbyColors.primaryGold.withValues(alpha: 0.2)
+                            : KasbyColors.info.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: user.role == 'admin'
+                              ? KasbyColors.primaryGold.withValues(alpha: 0.5)
+                              : KasbyColors.info.withValues(alpha: 0.5),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        user.role == 'admin' ? 'مدير' : 'مستخدم',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: user.role == 'admin'
+                              ? KasbyColors.primaryGold
+                              : KasbyColors.info,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

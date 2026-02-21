@@ -21,7 +21,9 @@ class UserActivity {
       id: json['id'] ?? '',
       action: json['action'] ?? '',
       details: json['details'] ?? '',
-      timestamp: DateTime.parse(json['timestamp']),
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'])
+          : DateTime.now(),
       type: json['type'] ?? 'System',
     );
   }

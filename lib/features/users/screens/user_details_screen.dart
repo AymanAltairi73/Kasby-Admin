@@ -160,7 +160,7 @@ class UserDetailsScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        user.name[0],
+                        user.name.isNotEmpty ? user.name[0] : '?',
                         style: const TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,

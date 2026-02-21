@@ -16,6 +16,7 @@ class User {
   final double walletBalance;
   final double investedAmount;
   final double pendingAmount;
+  final String role; // user, admin
   final DateTime createdAt;
   final String whatsapp;
   final String telegram;
@@ -28,6 +29,7 @@ class User {
     required this.email,
     required this.phone,
     required this.status,
+    required this.role,
     required this.country,
     this.province = '',
     this.city = '',
@@ -50,6 +52,7 @@ class User {
     String? email,
     String? phone,
     String? status,
+    String? role,
     String? country,
     String? province,
     String? city,
@@ -71,6 +74,7 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       status: status ?? this.status,
+      role: role ?? this.role,
       country: country ?? this.country,
       province: province ?? this.province,
       city: city ?? this.city,
@@ -94,12 +98,15 @@ class User {
     final wallet = json['wallets'];
     double availBal = 0.0;
     double investBal = 0.0;
+    double pendingBal = 0.0;
     if (wallet is List && wallet.isNotEmpty) {
       availBal = (wallet[0]['available_balance'] ?? 0).toDouble();
       investBal = (wallet[0]['invested_balance'] ?? 0).toDouble();
+      pendingBal = (wallet[0]['pending_balance'] ?? 0).toDouble();
     } else if (wallet is Map) {
       availBal = (wallet['available_balance'] ?? 0).toDouble();
       investBal = (wallet['invested_balance'] ?? 0).toDouble();
+      pendingBal = (wallet['pending_balance'] ?? 0).toDouble();
     }
 
     return User(
@@ -108,6 +115,7 @@ class User {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       status: json['status'] ?? 'active',
+      role: json['role'] ?? 'user',
       country: json['country'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',
@@ -116,6 +124,7 @@ class User {
       kycStatus: json['kyc_status'] ?? 'Unverified',
       walletBalance: availBal,
       investedAmount: investBal,
+      pendingAmount: pendingBal,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -132,8 +141,9 @@ class User {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       status: json['status'] ?? 'active',
+      role: json['role'] ?? 'user',
       country: json['country'] ?? '',
-      province: json['province'] ?? '',
+      province: json['province'] ?? '', 
       city: json['city'] ?? '',
       address: json['address'] ?? '',
       accountType: json['accountType'] ?? json['account_type'] ?? 'Free',
@@ -164,6 +174,7 @@ class User {
       'email': email,
       'phone': phone,
       'status': status,
+      'role': role,
       'country': country,
       'province': province,
       'city': city,
@@ -188,6 +199,7 @@ class User {
       'email': email,
       'phone': phone.isNotEmpty ? phone : null,
       'status': status,
+      'role': role,
       'country': country,
       'province': province,
       'city': city,
