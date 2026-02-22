@@ -373,7 +373,7 @@ class AgentsScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        agent.name[0],
+                        agent.name.isNotEmpty ? agent.name[0] : '؟',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,

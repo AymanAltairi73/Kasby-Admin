@@ -62,6 +62,7 @@ class User {
     String? accountType,
     String? kycStatus,
     double? walletBalance,
+    double? profitBalance,
     double? investedAmount,
     double? pendingAmount,
     DateTime? createdAt,
