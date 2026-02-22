@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
@@ -31,13 +30,10 @@ class UserListScreen extends StatelessWidget {
         elevation: 0,
         title: const Text('إدارة المستخدمين'),
         actions: [
-          // Search Icon
           IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: () => _showSearchDialog(context, userController),
           ),
-
-          // Consolidated Filters Dropdown
           PopupMenuButton<dynamic>(
             icon: const Icon(Icons.filter_list_rounded),
             tooltip: 'تصفية المستخدمين',
@@ -57,7 +53,6 @@ class UserListScreen extends StatelessWidget {
               }
             },
             itemBuilder: (context) => [
-              // --- Time Filter Section ---
               const PopupMenuItem(
                 enabled: false,
                 child: Text(
@@ -100,10 +95,7 @@ class UserListScreen extends StatelessWidget {
                   ),
                 );
               }),
-
               const PopupMenuDivider(),
-
-              // --- Status Filter Section ---
               const PopupMenuItem(
                 enabled: false,
                 child: Text(
@@ -163,10 +155,7 @@ class UserListScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const PopupMenuDivider(),
-
-              // --- Country Filter Section ---
               const PopupMenuItem(
                 enabled: false,
                 child: Text(
@@ -202,10 +191,7 @@ class UserListScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const PopupMenuDivider(),
-
-              // --- Account Type Filter Section ---
               const PopupMenuItem(
                 enabled: false,
                 child: Text(
@@ -243,7 +229,6 @@ class UserListScreen extends StatelessWidget {
               ),
             ],
           ),
-
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_outlined),
             onPressed: () => _showAddUserDialog(context, userController),
@@ -252,7 +237,6 @@ class UserListScreen extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Background Glow
           Positioned(
             bottom: -50,
             right: -50,
@@ -264,11 +248,9 @@ class UserListScreen extends StatelessWidget {
                 color: KasbyColors.info.withValues(alpha: 0.1),
               ),
             ),
-          ).animate().fadeIn(duration: const Duration(seconds: 1)),
-
+          ),
           Column(
             children: [
-              // Radiant Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(24, 120, 24, 30),
@@ -285,15 +267,6 @@ class UserListScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // const Text(
-                    //   'دليل المعاملات والمستخدمين',
-                    //   style: TextStyle(
-                    //     fontSize: 28,
-                    //     fontWeight: FontWeight.w900,
-                    //     letterSpacing: -0.5,
-                    //   ),
-                    // ).animate().fadeIn().slideX(begin: -0.2),
-                    // const SizedBox(height: 8),
                     Obx(
                       () => Text(
                         'إجمالي المسجلين: ${userController.filteredUsers.length} مستخدم',
@@ -302,16 +275,10 @@ class UserListScreen extends StatelessWidget {
                           color: KasbyColors.textSecondary,
                         ),
                       ),
-                    ).animate().fadeIn(
-                      delay: const Duration(milliseconds: 200),
                     ),
                   ],
                 ),
               ),
-
-              // Removed - Filters now in AppBar
-
-              // User List
               Expanded(
                 child: Obx(() {
                   if (userController.isLoading.value) {
@@ -354,10 +321,7 @@ class UserListScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final user = userController.filteredUsers[index];
-                      return _buildDazzlingUserCard(user)
-                          .animate()
-                          .fadeIn(delay: Duration(milliseconds: 50 * index))
-                          .slideX(begin: index % 2 == 0 ? -0.05 : 0.05);
+                      return _buildDazzlingUserCard(user);
                     },
                   );
                 }),
@@ -403,26 +367,20 @@ class UserListScreen extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          // Avatar with Aura
           Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: statusColor.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                  )
-                  .animate(onPlay: (c) => c.repeat())
-                  .shimmer(
-                    duration: const Duration(seconds: 2),
-                    color: statusColor.withValues(alpha: 0.1),
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.3),
+                    width: 2,
                   ),
+                ),
+              ),
               Container(
                 width: 44,
                 height: 44,
@@ -446,7 +404,6 @@ class UserListScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Account Type Badge
               if (user.accountType != 'Free')
                 Positioned(
                   bottom: 0,
@@ -463,8 +420,6 @@ class UserListScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-
-          // User Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +434,6 @@ class UserListScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // Role Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -509,7 +463,6 @@ class UserListScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // Country Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -554,7 +507,6 @@ class UserListScreen extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // KYC Status
                     if (user.kycStatus == 'Verified')
                       const Icon(
                         Icons.check_circle,
@@ -572,8 +524,6 @@ class UserListScreen extends StatelessWidget {
               ],
             ),
           ),
-
-          // Action Indicator & Contact Buttons
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -802,15 +752,8 @@ class UserListScreen extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: KasbyColors.primaryGold,
                               foregroundColor: Colors.black,
-                              disabledBackgroundColor: Colors.white12,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
                             ),
-                            child: const Text(
-                              'إضافة',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                            child: const Text('إضافة'),
                           ),
                         ),
                       ],

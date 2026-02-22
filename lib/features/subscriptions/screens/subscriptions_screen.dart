@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -31,13 +30,13 @@ class SubscriptionsScreen extends StatelessWidget {
             top: -50,
             right: -50,
             size: 300,
-            color: KasbyColors.primaryGold.withOpacity(0.05),
+            color: KasbyColors.primaryGold.withValues(alpha: 0.05),
           ),
           _buildOrb(
             bottom: -100,
             left: -100,
             size: 400,
-            color: KasbyColors.info.withOpacity(0.05),
+            color: KasbyColors.info.withValues(alpha: 0.05),
           ),
 
           Padding(
@@ -118,7 +117,7 @@ class SubscriptionsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: color, size: 32),
@@ -141,7 +140,7 @@ class SubscriptionsScreen extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -149,22 +148,38 @@ class SubscriptionsScreen extends StatelessWidget {
           ),
           Icon(
             Icons.arrow_forward_ios_rounded,
-            color: Colors.white.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.3),
             size: 18,
           ),
         ],
       ),
-    ).animate().fadeIn().slideX(begin: 0.1);
+    );
   }
 
-  static void showPlanDialog(BuildContext context, SubscriptionPlan? plan, SubscriptionController controller) {
+  static void showPlanDialog(
+    BuildContext context,
+    SubscriptionPlan? plan,
+    SubscriptionController controller,
+  ) {
     final isEdit = plan != null;
-    final nameArController = TextEditingController(text: plan?.displayNameAr ?? '');
-    final nameEnController = TextEditingController(text: plan?.displayNameEn ?? '');
-    final priceController = TextEditingController(text: plan?.price.toString() ?? '');
-    final durationController = TextEditingController(text: plan?.duration ?? '');
-    final maxInvestmentsController = TextEditingController(text: plan?.maxActiveInvestments.toString() ?? '');
-    final withdrawalTimeController = TextEditingController(text: plan?.withdrawalProcessTime.toString() ?? '');
+    final nameArController = TextEditingController(
+      text: plan?.displayNameAr ?? '',
+    );
+    final nameEnController = TextEditingController(
+      text: plan?.displayNameEn ?? '',
+    );
+    final priceController = TextEditingController(
+      text: plan?.price.toString() ?? '',
+    );
+    final durationController = TextEditingController(
+      text: plan?.duration ?? '',
+    );
+    final maxInvestmentsController = TextEditingController(
+      text: plan?.maxActiveInvestments.toString() ?? '',
+    );
+    final withdrawalTimeController = TextEditingController(
+      text: plan?.withdrawalProcessTime.toString() ?? '',
+    );
     final tier = (plan?.tier ?? 'premium').obs;
     final status = (plan?.status ?? 'Active').obs;
     final features = (plan?.features ?? <String>[]).obs;
@@ -175,40 +190,88 @@ class SubscriptionsScreen extends StatelessWidget {
       content: SingleChildScrollView(
         child: Column(
           children: [
-            Obx(() => SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'free', label: Text('مجانية')),
-                ButtonSegment(value: 'premium', label: Text('مميزة')),
-              ],
-              selected: {tier.value},
-              onSelectionChanged: (set) => tier.value = set.first,
-            )),
+            Obx(
+              () => SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'free', label: Text('مجانية')),
+                  ButtonSegment(value: 'premium', label: Text('مميزة')),
+                ],
+                selected: {tier.value},
+                onSelectionChanged: (set) => tier.value = set.first,
+              ),
+            ),
             const SizedBox(height: 20),
-            KasbyTextField(controller: nameArController, labelText: 'الاسم (عربي)', prefixIcon: Icons.title_rounded),
+            KasbyTextField(
+              controller: nameArController,
+              labelText: 'الاسم (عربي)',
+              prefixIcon: Icons.title_rounded,
+            ),
             const SizedBox(height: 16),
-            KasbyTextField(controller: nameEnController, labelText: 'Name (English)', prefixIcon: Icons.translate_rounded),
+            KasbyTextField(
+              controller: nameEnController,
+              labelText: 'Name (English)',
+              prefixIcon: Icons.translate_rounded,
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: KasbyTextField(controller: priceController, labelText: 'السعر (\$)', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money_rounded)),
+                Expanded(
+                  child: KasbyTextField(
+                    controller: priceController,
+                    labelText: 'السعر (\$)',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.attach_money_rounded,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: KasbyTextField(controller: durationController, labelText: 'المدة (مثلاً: 1 Month)', prefixIcon: Icons.timer_rounded)),
+                Expanded(
+                  child: KasbyTextField(
+                    controller: durationController,
+                    labelText: 'المدة (مثلاً: 1 Month)',
+                    prefixIcon: Icons.timer_rounded,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: KasbyTextField(controller: maxInvestmentsController, labelText: 'الاستثمارات', keyboardType: TextInputType.number, prefixIcon: Icons.account_balance_wallet_rounded)),
+                Expanded(
+                  child: KasbyTextField(
+                    controller: maxInvestmentsController,
+                    labelText: 'الاستثمارات',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.account_balance_wallet_rounded,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: KasbyTextField(controller: withdrawalTimeController, labelText: 'ساعات السحب', keyboardType: TextInputType.number, prefixIcon: Icons.history_rounded)),
+                Expanded(
+                  child: KasbyTextField(
+                    controller: withdrawalTimeController,
+                    labelText: 'ساعات السحب',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.history_rounded,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            const Text('المميزات:', style: TextStyle(color: KasbyColors.primaryGold, fontWeight: FontWeight.bold)),
+            const Text(
+              'المميزات:',
+              style: TextStyle(
+                color: KasbyColors.primaryGold,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: KasbyTextField(controller: featureController, labelText: 'أضف ميزة')),
+                Expanded(
+                  child: KasbyTextField(
+                    controller: featureController,
+                    labelText: 'أضف ميزة',
+                  ),
+                ),
                 IconButton(
                   onPressed: () {
                     if (featureController.text.isNotEmpty) {
@@ -216,16 +279,38 @@ class SubscriptionsScreen extends StatelessWidget {
                       featureController.clear();
                     }
                   },
-                  icon: const Icon(Icons.add_circle_rounded, color: KasbyColors.primaryGold),
+                  icon: const Icon(
+                    Icons.add_circle_rounded,
+                    color: KasbyColors.primaryGold,
+                  ),
                 ),
               ],
             ),
-            Obx(() => Column(
-              children: features.map((f) => ListTile(
-                title: Text(f, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                trailing: IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20), onPressed: () => features.remove(f)),
-              )).toList(),
-            )),
+            Obx(
+              () => Column(
+                children: features
+                    .map(
+                      (f) => ListTile(
+                        title: Text(
+                          f,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          onPressed: () => features.remove(f),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
           ],
         ),
       ),
@@ -233,15 +318,22 @@ class SubscriptionsScreen extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             final newPlan = SubscriptionPlan(
-              id: isEdit ? plan!.id : DateTime.now().millisecondsSinceEpoch.toString(),
+              id: isEdit
+                  ? plan.id
+                  : DateTime.now().millisecondsSinceEpoch.toString(),
               tier: tier.value,
-              technicalName: nameEnController.text.toLowerCase().replaceAll(' ', '_'),
+              technicalName: nameEnController.text.toLowerCase().replaceAll(
+                ' ',
+                '_',
+              ),
               displayNameAr: nameArController.text,
               displayNameEn: nameEnController.text,
               price: double.tryParse(priceController.text) ?? 0.0,
               duration: durationController.text,
-              maxActiveInvestments: int.tryParse(maxInvestmentsController.text) ?? 0,
-              withdrawalProcessTime: int.tryParse(withdrawalTimeController.text) ?? 0,
+              maxActiveInvestments:
+                  int.tryParse(maxInvestmentsController.text) ?? 0,
+              withdrawalProcessTime:
+                  int.tryParse(withdrawalTimeController.text) ?? 0,
               status: status.value,
               icon: 'stars_rounded',
               features: features.toList(),
@@ -255,18 +347,28 @@ class SubscriptionsScreen extends StatelessWidget {
             }
             Get.back();
           },
-          style: ElevatedButton.styleFrom(backgroundColor: KasbyColors.primaryGold, foregroundColor: Colors.black),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: KasbyColors.primaryGold,
+            foregroundColor: Colors.black,
+          ),
           child: Text(isEdit ? 'حفظ' : 'إضافة'),
         ),
       ],
     );
   }
 
-  void _showAddPlanDialog(BuildContext context, SubscriptionController controller) {
+  void _showAddPlanDialog(
+    BuildContext context,
+    SubscriptionController controller,
+  ) {
     SubscriptionsScreen.showPlanDialog(context, null, controller);
   }
 
-  void _showEditPlanDialog(BuildContext context, SubscriptionPlan plan, SubscriptionController controller) {
+  void _showEditPlanDialog(
+    BuildContext context,
+    SubscriptionPlan plan,
+    SubscriptionController controller,
+  ) {
     SubscriptionsScreen.showPlanDialog(context, plan, controller);
   }
 
@@ -283,20 +385,16 @@ class SubscriptionsScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: const Duration(seconds: 4))
-              .moveX(begin: -20, end: 20, duration: const Duration(seconds: 5)),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -317,7 +415,8 @@ class PremiumDetailsScreen extends StatelessWidget {
         title: const Text('خطط الحساب المميز'),
         actions: [
           IconButton(
-            onPressed: () => SubscriptionsScreen.showPlanDialog(context, null, controller),
+            onPressed: () =>
+                SubscriptionsScreen.showPlanDialog(context, null, controller),
             icon: const Icon(Icons.add_rounded, color: KasbyColors.primaryGold),
           ),
         ],
@@ -329,15 +428,15 @@ class PremiumDetailsScreen extends StatelessWidget {
             top: -50,
             right: -50,
             size: 300,
-            color: KasbyColors.primaryGold.withOpacity(0.05),
+            color: KasbyColors.primaryGold.withValues(alpha: 0.05),
           ),
           SubscriptionsScreen._buildOrb(
             bottom: -100,
             left: -100,
             size: 400,
-            color: KasbyColors.info.withOpacity(0.05),
+            color: KasbyColors.info.withValues(alpha: 0.05),
           ),
-          
+
           Obx(() {
             final premiumPlans = controller.plans
                 .where((p) => p.tier == 'premium')
@@ -395,7 +494,7 @@ class PremiumDetailsScreen extends StatelessWidget {
                     plan.duration,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                 ],

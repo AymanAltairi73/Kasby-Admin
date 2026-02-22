@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../controllers/main_controller.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../../users/screens/user_list_screen.dart';
@@ -59,14 +58,7 @@ class _MainWrapperState extends State<MainWrapper> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(), // Only via Nav Bar
-        children: screens
-            .map(
-              (screen) => screen
-                  .animate()
-                  .fadeIn(duration: const Duration(milliseconds: 400))
-                  .scale(begin: const Offset(0.98, 0.98)),
-            )
-            .toList(),
+        children: screens,
       ),
       bottomNavigationBar: Obx(
         () => KasbyLegendaryNavBar(

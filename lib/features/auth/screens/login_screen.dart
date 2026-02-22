@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -76,17 +75,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         // Title Section
                         const Text(
-                              'Kasby Panel',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1,
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(duration: const Duration(milliseconds: 800))
-                            .slideY(begin: 0.2),
+                          'Kasby Panel',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         const Text(
                           'مرحباً بك في لوحة التحكم ',
@@ -95,164 +91,135 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 16,
                             color: KasbyColors.textSecondary,
                           ),
-                        ).animate().fadeIn(
-                          delay: const Duration(milliseconds: 200),
                         ),
                         const SizedBox(height: 48),
 
                         // Crystal Login Form
                         KasbyGlassCard(
-                              padding: const EdgeInsets.all(24),
-                              opacity: 0.1,
-                              child: Form(
-                                key: _formKey,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(
-                                      'تسجيل الدخول',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: KasbyColors.primaryGold
-                                            .withValues(alpha: 0.8),
-                                      ),
+                          padding: const EdgeInsets.all(24),
+                          opacity: 0.1,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'تسجيل الدخول',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: KasbyColors.primaryGold.withValues(
+                                      alpha: 0.8,
                                     ),
-                                    const SizedBox(height: 24),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
 
-                                    // Username Field
-                                    KasbyTextField(
-                                          controller: _emailController,
-                                          hintText: 'البريد الإلكتروني',
-                                          prefixIcon: Icons.email_outlined,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'الرجاء إدخال البريد الإلكتروني';
-                                            }
-                                            return null;
-                                          },
-                                        )
-                                        .animate()
-                                        .fadeIn(
-                                          delay: const Duration(
-                                            milliseconds: 400,
-                                          ),
-                                        )
-                                        .slideX(begin: -0.1),
-                                    const SizedBox(height: 16),
+                                // Username Field
+                                KasbyTextField(
+                                  controller: _emailController,
+                                  hintText: 'البريد الإلكتروني',
+                                  prefixIcon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال البريد الإلكتروني';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
 
-                                    // Password Field
-                                    KasbyTextField(
-                                          controller: _passwordController,
-                                          hintText: 'كلمة المرور',
-                                          prefixIcon: Icons.lock_outline,
-                                          suffixIcon: _obscurePassword
-                                              ? Icons.visibility_outlined
-                                              : Icons.visibility_off_outlined,
-                                          onSuffixIconTap: () {
-                                            setState(() {
-                                              _obscurePassword =
-                                                  !_obscurePassword;
-                                            });
-                                          },
-                                          obscureText: _obscurePassword,
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'الرجاء إدخال كلمة المرور';
-                                            }
-                                            return null;
-                                          },
-                                        )
-                                        .animate()
-                                        .fadeIn(
-                                          delay: const Duration(
-                                            milliseconds: 500,
-                                          ),
-                                        )
-                                        .slideX(begin: -0.1),
-                                    const SizedBox(height: 12),
+                                // Password Field
+                                KasbyTextField(
+                                  controller: _passwordController,
+                                  hintText: 'كلمة المرور',
+                                  prefixIcon: Icons.lock_outline,
+                                  suffixIcon: _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  onSuffixIconTap: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  obscureText: _obscurePassword,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'الرجاء إدخال كلمة المرور';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 12),
 
-                                    // Remember me & Forgot Password
+                                // Remember me & Forgot Password
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Obx(
-                                              () => SizedBox(
-                                                width: 24,
-                                                height: 24,
-                                                child: Checkbox(
-                                                  value: _authController
-                                                      .rememberMe
-                                                      .value,
-                                                  onChanged: (value) =>
-                                                      _authController
-                                                          .toggleRememberMe(
-                                                            value ?? false,
-                                                          ),
-                                                  activeColor:
-                                                      KasbyColors.primaryGold,
-                                                  checkColor: Colors.black,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                ),
+                                        Obx(
+                                          () => SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: Checkbox(
+                                              value: _authController
+                                                  .rememberMe
+                                                  .value,
+                                              onChanged: (value) =>
+                                                  _authController
+                                                      .toggleRememberMe(
+                                                        value ?? false,
+                                                      ),
+                                              activeColor:
+                                                  KasbyColors.primaryGold,
+                                              checkColor: Colors.black,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            const Text(
-                                              'تذكرني',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color:
-                                                    KasbyColors.textSecondary,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Get.toNamed('/forgot-password'),
-                                          child: const Text(
-                                            'نسيت كلمة المرور؟',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: KasbyColors.primaryGold,
-                                            ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'تذكرني',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: KasbyColors.textSecondary,
                                           ),
                                         ),
                                       ],
-                                    ).animate().fadeIn(
-                                      delay: const Duration(milliseconds: 600),
                                     ),
-                                    const SizedBox(height: 24),
-
-                                    // Login Button
-                                    Obx(
-                                      () => KasbyButton(
-                                        text: 'تسجيل دخول',
-                                        onPressed: _handleLogin,
-                                        isLoading:
-                                            _authController.isLoading.value,
+                                    TextButton(
+                                      onPressed: () =>
+                                          Get.toNamed('/forgot-password'),
+                                      child: const Text(
+                                        'نسيت كلمة المرور؟',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: KasbyColors.primaryGold,
+                                        ),
                                       ),
-                                    ).animate().fadeIn(delay: 700.ms).scale(),
+                                    ),
                                   ],
                                 ),
-                              ),
-                            )
-                            .animate()
-                            .fadeIn(delay: const Duration(milliseconds: 300))
-                            .slideY(begin: 0.1),
+                                const SizedBox(height: 24),
+
+                                // Login Button
+                                Obx(
+                                  () => KasbyButton(
+                                    text: 'تسجيل دخول',
+                                    onPressed: _handleLogin,
+                                    isLoading: _authController.isLoading.value,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                         const SizedBox(height: 32),
 
@@ -280,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-                        ).animate().fadeIn(delay: 1000.ms),
+                        ),
                       ],
                     ),
                   ),
@@ -335,51 +302,41 @@ class _LoginScreenState extends State<LoginScreen> {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -30, end: 30, duration: const Duration(seconds: 6))
-              .moveX(begin: -30, end: 30, duration: const Duration(seconds: 8)),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildRadiantLogo() {
     return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+            blurRadius: 40,
+            spreadRadius: 10,
+          ),
+        ],
+      ),
+      child: ClipPath(
+        clipper: BottomArchClipper(),
+        child: Image.asset(
+          'assets/images/logoo.png',
           width: double.infinity,
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                blurRadius: 40,
-                spreadRadius: 10,
-              ),
-            ],
-          ),
-          child: ClipPath(
-            clipper: BottomArchClipper(),
-            child: Image.asset(
-              'assets/images/logoo.png',
-              width: double.infinity,
-              height: 350,
-              fit: BoxFit.cover,
-            ),
-          ),
-        )
-        .animate()
-        .fadeIn(duration: 800.ms)
-        .shimmer(
-          duration: const Duration(seconds: 3),
-          color: Colors.white.withValues(alpha: 0.2),
-        );
+          height: 350,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
   }
 }
 

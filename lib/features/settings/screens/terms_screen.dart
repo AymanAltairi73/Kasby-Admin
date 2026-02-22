@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
@@ -35,14 +34,15 @@ class TermsScreen extends StatelessWidget {
           'إضافة بند جديد',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-      ).animate().scale(delay: 500.ms).fadeIn(),
+      ),
       body: Stack(
         children: [
           _buildCelestialBackground(),
           SafeArea(
             child: Obx(() {
-              if (controller.terms.isEmpty)
+              if (controller.terms.isEmpty) {
                 return _buildEmptyState(context, controller);
+              }
 
               return ReorderableListView.builder(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 80),
@@ -51,8 +51,9 @@ class TermsScreen extends StatelessWidget {
                   return Material(color: Colors.transparent, child: widget);
                 },
                 onReorder: (oldIndex, newIndex) {
-                  if (oldIndex < 1 || newIndex < 1)
+                  if (oldIndex < 1 || newIndex < 1) {
                     return; // Header cannot be reordered
+                  }
                   controller.reorderTerms(oldIndex - 1, newIndex - 1);
                 },
                 itemBuilder: (context, index) {
@@ -111,7 +112,7 @@ class TermsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ).animate().fadeIn(),
+      ),
     );
   }
 
@@ -146,7 +147,7 @@ class TermsScreen extends StatelessWidget {
             size: 40,
             color: KasbyColors.primaryGold,
           ),
-        ).animate().scale(duration: 600.ms).shimmer(delay: 1000.ms),
+        ),
         const SizedBox(height: 20),
         const Text(
           'ميثاق السياسات والضوابط',
@@ -156,7 +157,7 @@ class TermsScreen extends StatelessWidget {
             color: Colors.white,
             letterSpacing: 1,
           ),
-        ).animate().fadeIn(delay: 200.ms),
+        ),
         const SizedBox(height: 8),
         Container(
           width: 60,
@@ -165,7 +166,7 @@ class TermsScreen extends StatelessWidget {
             color: KasbyColors.primaryGold,
             borderRadius: BorderRadius.circular(2),
           ),
-        ).animate().scaleX(delay: 400.ms),
+        ),
         const SizedBox(height: 40),
       ],
     );
@@ -281,7 +282,7 @@ class TermsScreen extends StatelessWidget {
           ),
         ),
       ),
-    ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: 0.05);
+    );
   }
 
   Widget _buildActionButton({
@@ -583,20 +584,16 @@ class TermsScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -30, end: 30, duration: 6000.ms)
-              .moveX(begin: -30, end: 30, duration: 8000.ms),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 }

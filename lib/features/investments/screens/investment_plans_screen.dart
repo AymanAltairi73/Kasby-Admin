@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:ui' as ui;
-import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -38,16 +38,16 @@ class InvestmentPlansScreen extends StatelessWidget {
           // Background Glow
           Positioned(
             top: -100,
-            left: -50,
+            right: -100,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 400,
+              height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                color: KasbyColors.primaryGold.withValues(alpha: 0.05),
               ),
             ),
-          ).animate().fadeIn(duration: const Duration(milliseconds: 800)),
+          ),
 
           Obx(() {
             if (controller.isLoading.value && controller.plans.isEmpty) {
@@ -98,26 +98,25 @@ class InvestmentPlansScreen extends StatelessWidget {
                         end: Alignment.bottomCenter,
                       ),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'باقات الاستثمار والنمو الذكي',
+                        Text(
+                          'مستويات الاستثمار النخبوية',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
+                            color: Colors.white,
                             letterSpacing: -0.5,
                           ),
-                        ).animate().fadeIn().slideX(begin: -0.2),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'قم بإدارة وتخصيص باقات الاستثمار المتاحة للمستخدمين',
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'اختر الباقة المناسبة لاستراتيجيتك المالية',
                           style: TextStyle(
                             fontSize: 14,
                             color: KasbyColors.textSecondary,
                           ),
-                        ).animate().fadeIn(
-                          delay: const Duration(milliseconds: 200),
                         ),
                       ],
                     ),
@@ -144,10 +143,11 @@ class InvestmentPlansScreen extends StatelessWidget {
                         tierColor = const Color(0xFFC0C0C0); // Silver
                       }
 
-                      return _buildDazzlingPlanCard(plan, controller, tierColor)
-                          .animate()
-                          .fadeIn(delay: Duration(milliseconds: 100 * index))
-                          .slideY(begin: 0.1);
+                      return _buildDazzlingPlanCard(
+                        plan,
+                        controller,
+                        tierColor,
+                      );
                     },
                   ),
                 ],
@@ -177,70 +177,49 @@ class InvestmentPlansScreen extends StatelessWidget {
                   children: [
                     // Glow Aura
                     Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: tierColor.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: tierColor.withValues(alpha: 0.15),
+                            blurRadius: 20,
+                            spreadRadius: 5,
                           ),
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(0.8, 0.8),
-                          end: const Offset(1.2, 1.2),
-                          duration: const Duration(seconds: 3),
-                        ),
+                        ],
+                      ),
+                    ),
                     // Image Container
                     Container(
-                          width: 80,
-                          height: 80,
-                          margin: const EdgeInsets.only(left: 16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                tierColor.withValues(alpha: 0.15),
-                                tierColor.withValues(alpha: 0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: tierColor.withValues(alpha: 0.3),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          child: Image.asset(
-                            plan.imagePath!,
-                            fit: BoxFit.contain,
-                          ),
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .moveY(
-                          begin: -3,
-                          end: 3,
-                          duration: const Duration(seconds: 2),
-                          curve: Curves.easeInOut,
-                        )
-                        .shimmer(
-                          delay: const Duration(seconds: 3),
-                          duration: const Duration(seconds: 2),
-                          color: tierColor.withValues(alpha: 0.1),
+                      width: 80,
+                      height: 80,
+                      margin: const EdgeInsets.only(left: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            tierColor.withValues(alpha: 0.15),
+                            tierColor.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: tierColor.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(plan.imagePath!, fit: BoxFit.contain),
+                    ),
                   ],
                 ),
               Expanded(

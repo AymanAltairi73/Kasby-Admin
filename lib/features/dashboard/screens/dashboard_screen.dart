@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -71,25 +71,17 @@ class DashboardScreen extends StatelessWidget {
                       const _SectionHeader(
                         title: 'مركز التحليلات المالية والتدفقات',
                         subtitle: 'مؤشرات الأداء الأسبوعية للمحافظ الاستثمارية',
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 800),
                       ),
                       const SizedBox(height: 16),
                       RepaintBoundary(
-                        child:
-                            KasbyGlassCard(
-                                  padding: const EdgeInsets.all(16),
-                                  opacity: 0.08,
-                                  child: SizedBox(
-                                    height: 180,
-                                    child: _buildNebulaChart(),
-                                  ),
-                                )
-                                .animate()
-                                .fadeIn(
-                                  delay: const Duration(milliseconds: 600),
-                                )
-                                .scale(begin: const Offset(0.95, 0.95)),
+                        child: KasbyGlassCard(
+                          padding: const EdgeInsets.all(16),
+                          opacity: 0.08,
+                          child: SizedBox(
+                            height: 180,
+                            child: _buildNebulaChart(),
+                          ),
+                        ),
                       ),
 
                       SizedBox(height: 25),
@@ -98,8 +90,6 @@ class DashboardScreen extends StatelessWidget {
                       const _SectionHeader(
                         title: 'مركز القيادة والتحكم',
                         subtitle: 'وصول فوري لكافة أركان المنظومة',
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 900),
                       ),
                       SizedBox(height: 25),
                       _buildMagicalActionHub(),
@@ -134,8 +124,6 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-                      ).animate().fadeIn(
-                        delay: const Duration(milliseconds: 1100),
                       ),
                       const SizedBox(height: 8),
                       Obx(() {
@@ -207,7 +195,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
         ),
-      ).animate().shake(hz: 4, curve: Curves.easeInOutCubic).fadeIn();
+      );
     });
   }
 
@@ -290,21 +278,15 @@ class DashboardScreen extends StatelessWidget {
             backgroundColor: Colors.white.withValues(alpha: 0.02),
             elevation: 0,
             centerTitle: true,
-            title:
-                const Text(
-                      'لوحة تحكم',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                        color: Colors.white,
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat())
-                    .shimmer(
-                      duration: const Duration(seconds: 3),
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                    ),
+            title: const Text(
+              'لوحة تحكم',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+                color: Colors.white,
+              ),
+            ),
             leadingWidth: 70,
             leading: Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -348,19 +330,13 @@ class DashboardScreen extends StatelessWidget {
                 () => Stack(
                   children: [
                     IconButton(
-                          icon: const Icon(
-                            FontAwesomeIcons.commentDots,
-                            color: KasbyColors.primaryGold,
-                            size: 20,
-                          ),
-                          onPressed: () => Get.toNamed('/chat-list'),
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(1, 1),
-                          end: const Offset(1.1, 1.1),
-                          duration: const Duration(seconds: 2),
-                        ),
+                      icon: const Icon(
+                        FontAwesomeIcons.commentDots,
+                        color: KasbyColors.primaryGold,
+                        size: 20,
+                      ),
+                      onPressed: () => Get.toNamed('/chat-list'),
+                    ),
                     if (chatController.unreadTotal.value > 0)
                       Positioned(
                         right: 8,
@@ -384,7 +360,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                             textAlign: TextAlign.center,
                           ),
-                        ).animate().scale().shake(),
+                        ),
                       ),
                   ],
                 ),
@@ -432,24 +408,17 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ).animate().fadeIn().slideX(begin: -0.2),
+          ),
           Row(
             children: [
               Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: KasbyColors.success,
-                      shape: BoxShape.circle,
-                    ),
-                  )
-                  .animate(onPlay: (c) => c.repeat())
-                  .scale(
-                    begin: const Offset(1, 1),
-                    end: const Offset(1.5, 1.5),
-                    duration: const Duration(seconds: 1),
-                  )
-                  .fadeOut(duration: const Duration(seconds: 1)),
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: KasbyColors.success,
+                  shape: BoxShape.circle,
+                ),
+              ),
               const SizedBox(width: 8),
               Text(
                 'حساب نشط',
@@ -461,7 +430,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ).animate().fadeIn(delay: const Duration(milliseconds: 500)),
+          ),
         ],
       ),
     );
@@ -553,84 +522,78 @@ class DashboardScreen extends StatelessWidget {
     required int index,
   }) {
     return KasbyGlassCard(
-          padding: const EdgeInsets.all(12),
-          opacity: 0.08,
-          child: Stack(
-            children: [
-              // Inner Glow
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: RadialGradient(
-                      colors: [
-                        glowColor.withValues(alpha: 0.1),
-                        Colors.transparent,
-                      ],
-                      center: Alignment.topLeft,
-                      radius: 1.2,
-                    ),
-                  ),
+      padding: const EdgeInsets.all(12),
+      opacity: 0.08,
+      child: Stack(
+        children: [
+          // Inner Glow
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: RadialGradient(
+                  colors: [
+                    glowColor.withValues(alpha: 0.1),
+                    Colors.transparent,
+                  ],
+                  center: Alignment.topLeft,
+                  radius: 1.2,
                 ),
               ),
+            ),
+          ),
 
-              Positioned(
-                right: -10,
-                bottom: -10,
-                child: Icon(
-                  icon,
-                  size: 70,
-                  color: glowColor.withValues(alpha: 0.03),
-                ),
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: Icon(
+              icon,
+              size: 70,
+              color: glowColor.withValues(alpha: 0.03),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildGlowingIcon(icon: icon, color: glowColor, size: 18),
+                  Icon(
+                    Icons.trending_up_rounded,
+                    size: 14,
+                    color: glowColor.withValues(alpha: 0.5),
+                  ),
+                ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildGlowingIcon(icon: icon, color: glowColor, size: 18),
-                      Icon(
-                        Icons.trending_up_rounded,
-                        size: 14,
-                        color: glowColor.withValues(alpha: 0.5),
-                      ),
-                    ],
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1,
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -1,
-                        ),
-                      ).animate().shimmer(
-                        duration: const Duration(seconds: 3),
-                        color: Colors.white24,
-                      ),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.4),
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-        )
-        .animate(delay: Duration(milliseconds: 100 * index))
-        .fadeIn(duration: const Duration(milliseconds: 800))
-        .slideY(begin: 0.2, curve: Curves.easeOutBack);
+        ],
+      ),
+    );
   }
 
   Widget _buildMagicalActionHub() {
@@ -700,48 +663,45 @@ class DashboardScreen extends StatelessWidget {
         final action = actions[index];
         final color = action['color'] as Color;
         return KasbyGlassCard(
-              onTap: () {
-                if (action.containsKey('page')) {
-                  Get.find<MainController>().changePage(action['page'] as int);
-                } else if (action.containsKey('route')) {
-                  Get.toNamed(action['route'] as String);
-                }
-              },
-              padding: const EdgeInsets.all(8),
-              opacity: 0.08,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildGlowingIcon(
-                    icon: action['icon'] as IconData,
-                    color: color,
-                    size: 20,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    action['title'] as String,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    action['sub'] as String,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ],
+          onTap: () {
+            if (action.containsKey('page')) {
+              Get.find<MainController>().changePage(action['page'] as int);
+            } else if (action.containsKey('route')) {
+              Get.toNamed(action['route'] as String);
+            }
+          },
+          padding: const EdgeInsets.all(8),
+          opacity: 0.08,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildGlowingIcon(
+                icon: action['icon'] as IconData,
+                color: color,
+                size: 20,
               ),
-            )
-            .animate(delay: Duration(milliseconds: 200 + index * 50))
-            .fadeIn()
-            .scale(begin: const Offset(0.8, 0.8));
+              const SizedBox(height: 8),
+              Text(
+                action['title'] as String,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                action['sub'] as String,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 8,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
@@ -777,7 +737,6 @@ class DashboardScreen extends StatelessWidget {
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, percent, barData, index) =>
-      
                   FlDotCirclePainter(
                     radius: 4,
                     color: Colors.black,
@@ -809,79 +768,72 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildCelestialLogItem(AuditLog log, int index) {
     return KasbyGlassCard(
-          padding: const EdgeInsets.all(16),
-          opacity: 0.05,
-          child: Row(
+      padding: const EdgeInsets.all(16),
+      opacity: 0.05,
+      child: Row(
+        children: [
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _getLogTypeColor(log.type).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Icon(log.icon, size: 20, color: _getLogTypeColor(log.type)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  log.action,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'بواسطة: ${log.adminName}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _getLogTypeColor(log.type).withValues(alpha: 0.2),
+              Directionality(
+                textDirection: ui.TextDirection.ltr,
+                child: Text(
+                  DateFormat('HH:mm', 'en').format(log.timestamp),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
                   ),
-                ),
-                child: Icon(
-                  log.icon,
-                  size: 20,
-                  color: _getLogTypeColor(log.type),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      log.action,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'بواسطة: ${log.adminName}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
-                    ),
-                  ],
+              Text(
+                'اليوم',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.white.withValues(alpha: 0.3),
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Directionality(
-                    textDirection: ui.TextDirection.ltr,
-                    child: Text(
-                      DateFormat('HH:mm', 'en').format(log.timestamp),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: KasbyColors.primaryGold,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'اليوم',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
-        )
-        .animate(delay: Duration(milliseconds: 100 * index))
-        .fadeIn()
-        .slideX(begin: 0.1);
+        ],
+      ),
+    );
   }
 
   Color _getLogTypeColor(AuditLogType type) {
@@ -990,139 +942,26 @@ class DashboardScreen extends StatelessWidget {
     required IconData icon,
     required Color color,
     double size = 20,
-    bool animate = true,
   }) {
     return Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 15,
-                spreadRadius: 2,
-              ),
-              BoxShadow(
-                color: color.withValues(alpha: 0.1),
-                blurRadius: 30,
-                spreadRadius: 5,
-              ),
-            ],
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
           ),
-          child: Icon(icon, color: color, size: size),
-        )
-        .animate(target: animate ? 1 : 0)
-        .shimmer(duration: const Duration(seconds: 3), color: Colors.white24);
-  }
-}
-
-class _AnimatedGlowingBorder extends StatefulWidget {
-  final Widget child;
-  final double borderRadius;
-  final Color baseColor;
-
-  const _AnimatedGlowingBorder({
-    required this.child,
-    this.borderRadius = 24,
-    required this.baseColor,
-  });
-
-  @override
-  State<_AnimatedGlowingBorder> createState() => _AnimatedGlowingBorderState();
-}
-
-class _AnimatedGlowingBorderState extends State<_AnimatedGlowingBorder>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(color: Colors.transparent),
+          BoxShadow(
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 30,
+            spreadRadius: 5,
           ),
-          child: CustomPaint(
-            painter: _GlowingBorderPainter(
-              progress: _controller.value,
-              color: widget.baseColor,
-              borderRadius: widget.borderRadius,
-            ),
-            child: widget.child,
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _GlowingBorderPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final double borderRadius;
-
-  _GlowingBorderPainter({
-    required this.progress,
-    required this.color,
-    required this.borderRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final RRect rrect = RRect.fromRectAndRadius(
-      rect,
-      Radius.circular(borderRadius),
-    );
-
-    final paint = Paint()
-      ..shader = ui.Gradient.sweep(
-        rect.center,
-        [
-          color.withValues(alpha: 0.0),
-          color.withValues(alpha: 0.8),
-          color.withValues(alpha: 0.0),
         ],
-        [0.0, 0.5, 1.0],
-        TileMode.clamp,
-        progress * 2 * 3.14159,
-        (progress * 2 * 3.14159) + 3.14159,
-      )
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    canvas.drawRRect(rrect, paint);
-
-    // Optional: Outer blur for the border
-    final blurPaint = Paint()
-      ..shader = paint.shader
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-
-    canvas.drawRRect(rrect, blurPaint);
+      ),
+      child: Icon(icon, color: color, size: size),
+    );
   }
-
-  @override
-  bool shouldRepaint(_GlowingBorderPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }
 
 class _SectionHeader extends StatelessWidget {

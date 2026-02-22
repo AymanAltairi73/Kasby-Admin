@@ -126,18 +126,24 @@ class InvestmentController extends GetxController {
     isLoading.value = true;
     try {
       final supabaseUpdates = <String, dynamic>{};
-      if (updates['nameAr'] != null)
+      if (updates['nameAr'] != null) {
         supabaseUpdates['name_ar'] = updates['nameAr'];
-      if (updates['descriptionAr'] != null)
+      }
+      if (updates['descriptionAr'] != null) {
         supabaseUpdates['description_ar'] = updates['descriptionAr'];
-      if (updates['profitPercentage'] != null)
+      }
+      if (updates['profitPercentage'] != null) {
         supabaseUpdates['profit_percentage'] = updates['profitPercentage'];
-      if (updates['minAmount'] != null)
+      }
+      if (updates['minAmount'] != null) {
         supabaseUpdates['min_amount'] = updates['minAmount'];
-      if (updates['maxAmount'] != null)
+      }
+      if (updates['maxAmount'] != null) {
         supabaseUpdates['max_amount'] = updates['maxAmount'];
-      if (updates['imagePath'] != null)
+      }
+      if (updates['imagePath'] != null) {
         supabaseUpdates['image_path'] = updates['imagePath'];
+      }
 
       await SupabaseService.client
           .from('investment_plans')

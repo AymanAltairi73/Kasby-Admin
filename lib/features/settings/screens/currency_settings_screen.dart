@@ -183,7 +183,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                     ),
                     value: isBase.value,
                     onChanged: (val) => isBase.value = val,
-                    activeColor: KasbyColors.primaryGold,
+                    activeTrackColor: KasbyColors.primaryGold,
                   ),
                 ),
                 const SizedBox(height: 32),

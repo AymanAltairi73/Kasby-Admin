@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -240,141 +240,134 @@ class AuditLogsScreen extends StatelessWidget {
   Widget _buildEnhancedLogItem(BuildContext context, AuditLog log, int index) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child:
-          KasbyGlassCard(
-                onTap: () => _showLogDetails(context, log),
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Status Icon with Glow
-                    Container(
-                      width: 50,
-                      height: 50,
+      child: KasbyGlassCard(
+        onTap: () => _showLogDetails(context, log),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Status Icon with Glow
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: _getTypeColor(log.type).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _getTypeColor(log.type).withValues(alpha: 0.2),
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    _getTypeIcon(log.type),
+                    color: _getTypeColor(log.type),
+                    size: 22,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
                       decoration: BoxDecoration(
-                        color: _getTypeColor(log.type).withValues(alpha: 0.1),
+                        color: _getStatusColor(log.status),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _getTypeColor(log.type).withValues(alpha: 0.2),
+                        border: const Border.fromBorderSide(
+                          BorderSide(color: Colors.black, width: 2),
                         ),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            _getTypeIcon(log.type),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Text Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          log.action,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Directionality(
+                        textDirection: ui.TextDirection.ltr,
+                        child: Text(
+                          DateFormat('HH:mm', 'en').format(log.timestamp),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: KasbyColors.primaryGold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    log.details,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline_rounded,
+                        size: 14,
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        log.adminName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _getTypeLabel(log.type),
+                          style: TextStyle(
+                            fontSize: 10,
                             color: _getTypeColor(log.type),
-                            size: 22,
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(log.status),
-                                shape: BoxShape.circle,
-                                border: const Border.fromBorderSide(
-                                  BorderSide(color: Colors.black, width: 2),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Text Content
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  log.action,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Directionality(
-                                textDirection: ui.TextDirection.ltr,
-                                child: Text(
-                                  DateFormat(
-                                    'HH:mm',
-                                    'en',
-                                  ).format(log.timestamp),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: KasbyColors.primaryGold,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            log.details,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.6),
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 14,
-                                color: Colors.white.withValues(alpha: 0.4),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                log.adminName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _getTypeLabel(log.type),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: _getTypeColor(log.type),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-              .animate(delay: Duration(milliseconds: 50 * index))
-              .fadeIn()
-              .slideX(begin: 0.1),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -66,92 +65,76 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const Text(
                       'استعادة الوصول',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
                       ),
-                    ).animate().fadeIn(
-                      duration: const Duration(milliseconds: 800),
                     ),
                     const SizedBox(height: 16),
 
                     // Crystal Reset Form
                     KasbyGlassCard(
-                          padding: const EdgeInsets.all(24),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const Text(
-                                  'أدخل بريدك الإلكتروني المسجل وسنرسل لك رابطاً سحرياً لاستعادة كلمة المرور',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: KasbyColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-
-                                // Email Field
-                                KasbyTextField(
-                                      controller: _emailController,
-                                      hintText: 'البريد الإلكتروني',
-                                      prefixIcon: Icons.email_outlined,
-                                      keyboardType: TextInputType.emailAddress,
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'الرجاء إدخال البريد الإلكتروني';
-                                        }
-                                        if (!GetUtils.isEmail(value)) {
-                                          return 'الرجاء إدخال بريد إلكتروني صحيح';
-                                        }
-                                        return null;
-                                      },
-                                    )
-                                    .animate()
-                                    .fadeIn(
-                                      delay: const Duration(milliseconds: 400),
-                                    )
-                                    .slideX(begin: -0.1),
-                                const SizedBox(height: 32),
-
-                                // Reset Button
-                                Obx(
-                                      () => KasbyButton(
-                                        text: 'إرسال الرابط',
-                                        onPressed: _handleResetPassword,
-                                        isLoading:
-                                            _authController.isLoading.value,
-                                      ),
-                                    )
-                                    .animate()
-                                    .fadeIn(
-                                      delay: const Duration(milliseconds: 600),
-                                    )
-                                    .scale(),
-                                const SizedBox(height: 16),
-
-                                // Back to Login
-                                TextButton(
-                                  onPressed: () => Get.back(),
-                                  child: Text(
-                                    'العودة لتسجيل الدخول',
-                                    style: TextStyle(
-                                      color: KasbyColors.primaryGold.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      padding: const EdgeInsets.all(24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'أدخل بريدك الإلكتروني المسجل وسنرسل لك رابطاً سحرياً لاستعادة كلمة المرور',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: KasbyColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        )
-                        .animate()
-                        .fadeIn(delay: const Duration(milliseconds: 200))
-                        .slideY(begin: 0.1),
+                            const SizedBox(height: 32),
+
+                            // Email Field
+                            KasbyTextField(
+                              controller: _emailController,
+                              hintText: 'البريد الإلكتروني',
+                              prefixIcon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال البريد الإلكتروني';
+                                }
+                                if (!GetUtils.isEmail(value)) {
+                                  return 'الرجاء إدخال بريد إلكتروني صحيح';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Reset Button
+                            Obx(
+                              () => KasbyButton(
+                                text: 'إرسال الرابط',
+                                onPressed: _handleResetPassword,
+                                isLoading: _authController.isLoading.value,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Back to Login
+                            TextButton(
+                              onPressed: () => Get.back(),
+                              child: Text(
+                                'العودة لتسجيل الدخول',
+                                style: TextStyle(
+                                  color: KasbyColors.primaryGold.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -195,20 +178,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: const Duration(seconds: 5))
-              .moveX(begin: -20, end: 20, duration: const Duration(seconds: 7)),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 
@@ -217,45 +196,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       alignment: Alignment.center,
       children: [
         Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: KasbyColors.primaryGold.withValues(alpha: 0.05),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat())
-            .scale(
-              begin: const Offset(0.8, 0.8),
-              end: const Offset(1.2, 1.2),
-              duration: const Duration(seconds: 3),
-            )
-            .fadeIn(duration: const Duration(seconds: 2)),
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: KasbyColors.primaryGold.withValues(alpha: 0.05),
+          ),
+        ),
 
         Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                  ),
-                ],
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                blurRadius: 20,
               ),
-              child: const Icon(
-                Icons.shield_moon_rounded,
-                size: 40,
-                color: KasbyColors.primaryGold,
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .moveY(begin: -5, end: 5, duration: const Duration(seconds: 2)),
+            ],
+          ),
+          child: const Icon(
+            Icons.shield_moon_rounded,
+            size: 40,
+            color: KasbyColors.primaryGold,
+          ),
+        ),
       ],
     );
   }

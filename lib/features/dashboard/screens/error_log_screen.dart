@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
-import 'package:flutter_animate/flutter_animate.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -244,101 +244,97 @@ class ErrorLogScreen extends StatelessWidget {
   Widget _buildLogItem(BuildContext context, ErrorLog log, int index) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child:
-          KasbyGlassCard(
-                onTap: () => _showLogDetails(context, log),
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: KasbyColors.error.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+      child: KasbyGlassCard(
+        onTap: () => _showLogDetails(context, log),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                color: KasbyColors.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.bug_report_rounded,
+                color: KasbyColors.error,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        log.controllerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: KasbyColors.primaryGold,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.bug_report_rounded,
-                        color: KasbyColors.error,
-                        size: 24,
+                      Text(
+                        DateFormat('HH:mm').format(log.createdAt),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white38,
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    log.errorMessage,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      height: 1.3,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                log.controllerName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: KasbyColors.primaryGold,
-                                ),
-                              ),
-                              Text(
-                                DateFormat('HH:mm').format(log.createdAt),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white38,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            log.errorMessage,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.code_rounded,
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                log.methodName,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.devices_rounded,
-                                size: 12,
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                log.deviceInfo?['platform'] ?? 'Unknown',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.code_rounded,
+                        size: 12,
+                        color: Colors.white.withValues(alpha: 0.3),
                       ),
-                    ),
-                  ],
-                ),
-              )
-              .animate(delay: Duration(milliseconds: 30 * index))
-              .fadeIn()
-              .slideX(begin: 0.05),
+                      const SizedBox(width: 4),
+                      Text(
+                        log.methodName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.devices_rounded,
+                        size: 12,
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        log.deviceInfo?['platform'] ?? 'Unknown',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

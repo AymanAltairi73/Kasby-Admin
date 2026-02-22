@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
-import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -115,7 +115,7 @@ class LoansScreen extends StatelessWidget {
               ),
             ),
           ],
-        ).animate().fadeIn(duration: 600.ms).scale(),
+        ),
       );
     }
 
@@ -256,7 +256,7 @@ class LoansScreen extends StatelessWidget {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.1);
+    );
   }
 
   Widget _buildDateInfo(
@@ -301,19 +301,17 @@ class LoansScreen extends StatelessWidget {
       children: [
         Container(color: const Color(0xFF0F172A)),
         Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: KasbyColors.primaryGold.withValues(alpha: 0.03),
-                ),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .moveY(begin: -20, end: 20, duration: const Duration(seconds: 4)),
+          top: -100,
+          right: -100,
+          child: Container(
+            width: 400,
+            height: 400,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: KasbyColors.primaryGold.withValues(alpha: 0.03),
+            ),
+          ),
+        ),
       ],
     );
   }

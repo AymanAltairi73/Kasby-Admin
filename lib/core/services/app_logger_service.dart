@@ -142,13 +142,13 @@ class AppLoggerService {
 
     // Remove password values
     result = result.replaceAll(
-      RegExp(r'(?i)(password|passwd|pwd)\s*[:=]\s*\S+'),
+      RegExp(r'(password|passwd|pwd)\s*[:=]\s*\S+', caseSensitive: false),
       r'$1=[REDACTED]',
     );
 
     // Remove OTP codes (4-6 digit patterns near "otp" keyword)
     result = result.replaceAll(
-      RegExp(r'(?i)(otp|code|pin)\s*[:=]\s*\d{4,6}'),
+      RegExp(r'(otp|code|pin)\s*[:=]\s*\d{4,6}', caseSensitive: false),
       r'$1=[REDACTED]',
     );
 

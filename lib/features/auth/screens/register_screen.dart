@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -85,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Icons.arrow_forward_ios,
                         color: Colors.white70,
                       ),
-                    ).animate().fadeIn().slideX(begin: 0.5),
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -99,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
-                  ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2),
+                  ),
 
                   const SizedBox(height: 8),
 
@@ -110,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 16,
                       color: KasbyColors.textSecondary,
                     ),
-                  ).animate().fadeIn(delay: 200.ms),
+                  ),
 
                   const SizedBox(height: 40),
 
@@ -128,11 +127,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             hintText: 'الاسم الكامل',
                             prefixIcon: Icons.person_outline,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'الرجاء إدخال الاسم';
+                              }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.1),
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -143,13 +143,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'الرجاء إدخال البريد الإلكتروني';
-                              if (!GetUtils.isEmail(value))
+                              }
+                              if (!GetUtils.isEmail(value)) {
                                 return 'البريد الإلكتروني غير صالح';
+                              }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1),
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -160,11 +162,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             prefixIcon: Icons.phone_outlined,
                             keyboardType: TextInputType.phone,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'الرجاء إدخال رقم الهاتف';
+                              }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 500.ms).slideX(begin: -0.1),
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -181,13 +184,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'الرجاء إدخال كلمة المرور';
-                              if (value.length < 6)
+                              }
+                              if (value.length < 6) {
                                 return 'كلمة المرور قصيرة جداً';
+                              }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.1),
+                          ),
 
                           const SizedBox(height: 16),
 
@@ -205,11 +210,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'الرجاء تأكيد كلمة المرور';
+                              }
                               return null;
                             },
-                          ).animate().fadeIn(delay: 700.ms).slideX(begin: -0.1),
+                          ),
 
                           const SizedBox(height: 32),
 
@@ -220,11 +226,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: _handleRegister,
                               isLoading: _authController.isLoading.value,
                             ),
-                          ).animate().fadeIn(delay: 800.ms).scale(),
+                          ),
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -247,7 +253,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
                     ],
-                  ).animate().fadeIn(delay: 1000.ms),
+                  ),
                 ],
               ),
             ),
@@ -290,20 +296,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -30, end: 30, duration: 6000.ms)
-              .moveX(begin: -30, end: 30, duration: 8000.ms),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 }
