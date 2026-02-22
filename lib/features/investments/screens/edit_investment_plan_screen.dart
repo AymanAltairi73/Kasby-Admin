@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -71,27 +70,21 @@ class EditInvestmentPlanScreen extends StatelessWidget {
                   children: [
                     // Glow Aura
                     Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: KasbyColors.primaryGold.withValues(
-                                  alpha: 0.1,
-                                ),
-                                blurRadius: 25,
-                                spreadRadius: 8,
-                              ),
-                            ],
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: KasbyColors.primaryGold.withValues(
+                              alpha: 0.1,
+                            ),
+                            blurRadius: 25,
+                            spreadRadius: 8,
                           ),
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(0.8, 0.8),
-                          end: const Offset(1.2, 1.2),
-                          duration: const Duration(seconds: 3),
-                        ),
+                        ],
+                      ),
+                    ),
                     // Image Container
                     Container(
                       width: 120,
@@ -116,7 +109,7 @@ class EditInvestmentPlanScreen extends StatelessWidget {
                           ? Image.asset(
                               selectedImagePath.value!,
                               fit: BoxFit.contain,
-                            ).animate().fadeIn().scale()
+                            )
                           : const Icon(
                               Icons.image_outlined,
                               size: 40,

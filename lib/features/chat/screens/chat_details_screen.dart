@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -128,7 +127,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
-    ).animate().fadeIn();
+    );
   }
 
   Widget _buildTypingIndicator() {
@@ -147,23 +146,17 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: List.generate(3, (index) {
                 return Container(
-                      width: 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: const BoxDecoration(
-                        color: KasbyColors.primaryGold,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat())
-                    .scale(
-                      duration: 600.ms,
-                      delay: (index * 200).ms,
-                      begin: const Offset(0.5, 0.5),
-                    );
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: const BoxDecoration(
+                    color: KasbyColors.primaryGold,
+                    shape: BoxShape.circle,
+                  ),
+                );
               }),
             ),
-          ).animate().fadeIn().slideX(begin: -0.1),
+          ),
         ],
       ),
     );
@@ -328,9 +321,6 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   msg.content,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
-              ).animate().fadeIn().slideY(
-                begin: 0.2,
-                curve: Curves.easeOutQuad,
               ),
               const SizedBox(height: 4),
               Row(
@@ -412,7 +402,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               icon: const Icon(Icons.send_rounded, color: Colors.black),
               onPressed: _handleSend,
             ),
-          ).animate().scale(),
+          ),
         ],
       ),
     );

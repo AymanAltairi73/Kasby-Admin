@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -81,89 +80,83 @@ class MaintenanceScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ).animate().fadeIn().slideY(begin: 0.1),
+                    ),
 
                     const SizedBox(height: 24),
 
                     // Message Card
                     KasbyGlassCard(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const Text(
-                                'رسالة التنبيه للمستخدمين',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: KasbyColors.primaryGold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              KasbyTextField(
-                                controller: messageController,
-                                hintText: 'اكتب رسالة الصيانة هنا...',
-                                maxLines: 4,
-                                onChanged: (val) =>
-                                    controller.maintenanceMessage.value = val,
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'معاينة الرسالة:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: KasbyColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                  ),
-                                ),
-                                child: Obx(
-                                  () => Text(
-                                    controller.maintenanceMessage.value,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'رسالة التنبيه للمستخدمين',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: KasbyColors.primaryGold,
+                            ),
                           ),
-                        )
-                        .animate()
-                        .fadeIn(delay: const Duration(milliseconds: 200))
-                        .slideY(begin: 0.1),
+                          const SizedBox(height: 16),
+                          KasbyTextField(
+                            controller: messageController,
+                            hintText: 'اكتب رسالة الصيانة هنا...',
+                            maxLines: 4,
+                            onChanged: (val) =>
+                                controller.maintenanceMessage.value = val,
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'معاينة الرسالة:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: KasbyColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Obx(
+                              () => Text(
+                                controller.maintenanceMessage.value,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     const SizedBox(height: 40),
 
                     // Action Buttons
                     KasbyButton(
-                          text: 'حفظ و تحديث الحالة',
-                          onPressed: () {
-                            controller.updateMaintenanceMessage(
-                              messageController.text,
-                            );
-                            Get.snackbar(
-                              'تم الحفظ',
-                              'تم تحديث إعدادات وضع الصيانة بنجاح',
-                              backgroundColor: KasbyColors.success.withValues(
-                                alpha: 0.8,
-                              ),
-                              colorText: Colors.white,
-                            );
-                          },
-                        )
-                        .animate()
-                        .fadeIn(delay: const Duration(milliseconds: 400))
-                        .scale(),
+                      text: 'حفظ و تحديث الحالة',
+                      onPressed: () {
+                        controller.updateMaintenanceMessage(
+                          messageController.text,
+                        );
+                        Get.snackbar(
+                          'تم الحفظ',
+                          'تم تحديث إعدادات وضع الصيانة بنجاح',
+                          backgroundColor: KasbyColors.success.withValues(
+                            alpha: 0.8,
+                          ),
+                          colorText: Colors.white,
+                        );
+                      },
+                    ),
                   ],
                 ),
               );
@@ -181,23 +174,17 @@ class MaintenanceScreen extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color:
-                        (isMaintenanceActive
-                                ? KasbyColors.error
-                                : KasbyColors.primaryGold)
-                            .withValues(alpha: 0.1),
-                  ),
-                )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
-                  begin: const Offset(0.8, 0.8),
-                  end: const Offset(1.2, 1.2),
-                  duration: const Duration(seconds: 2),
-                ),
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    (isMaintenanceActive
+                            ? KasbyColors.error
+                            : KasbyColors.primaryGold)
+                        .withValues(alpha: 0.1),
+              ),
+            ),
 
             Icon(
               isMaintenanceActive
@@ -261,32 +248,16 @@ class MaintenanceScreen extends StatelessWidget {
       left: left,
       right: right,
       child: RepaintBoundary(
-        child:
-            Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color,
-                        blurRadius: 100,
-                        spreadRadius: 50,
-                      ),
-                    ],
-                  ),
-                )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .moveY(
-                  begin: -30,
-                  end: 30,
-                  duration: const Duration(seconds: 8),
-                )
-                .moveX(
-                  begin: -20,
-                  end: 20,
-                  duration: const Duration(seconds: 10),
-                ),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+            ],
+          ),
+        ),
       ),
     );
   }

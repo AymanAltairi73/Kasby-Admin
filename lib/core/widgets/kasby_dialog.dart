@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui' as ui;
 import '../theme/kasby_colors.dart';
 
@@ -55,86 +54,72 @@ class KasbyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          width: isBottomSheet ? double.infinity : (Get.width * 0.9),
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: isBottomSheet ? (Get.bottomBarHeight + 24) : 24,
+      width: isBottomSheet ? double.infinity : (Get.width * 0.9),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: isBottomSheet ? (Get.bottomBarHeight + 24) : 24,
+      ),
+      decoration: BoxDecoration(
+        color: KasbyColors.surface,
+        borderRadius: isBottomSheet
+            ? const BorderRadius.vertical(top: Radius.circular(24))
+            : BorderRadius.circular(24),
+        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 40,
+            spreadRadius: 5,
           ),
-          decoration: BoxDecoration(
-            color: KasbyColors.surface,
-            borderRadius: isBottomSheet
-                ? const BorderRadius.vertical(top: Radius.circular(24))
-                : BorderRadius.circular(24),
-            border: Border.all(color: Colors.white10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 40,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isBottomSheet)
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isBottomSheet)
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: KasbyColors.primaryGold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Colors.white54,
-                      ),
-                    ),
-                  ],
                 ),
-                const SizedBox(height: 24),
-                Flexible(child: content),
-                if (actions != null) ...[
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: actions!,
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.primaryGold,
+                    letterSpacing: 0.5,
                   ),
-                ],
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                ),
               ],
             ),
-          ),
-        )
-        .animate()
-        .fadeIn(duration: const Duration(milliseconds: 400))
-        .slideY(
-          begin: isBottomSheet ? 1.0 : 0.1,
-          end: 0,
-          curve: Curves.easeOutExpo,
-          duration: const Duration(milliseconds: 600),
-        );
+            const SizedBox(height: 24),
+            Flexible(child: content),
+            if (actions != null) ...[
+              const SizedBox(height: 32),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: actions!),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

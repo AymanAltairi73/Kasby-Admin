@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -15,9 +14,7 @@ class ProfileScreen extends StatelessWidget {
     final emailController = TextEditingController(text: 'ayman@kasby.com');
     final phoneController = TextEditingController(text: '+964 77660444646');
 
-    final countryController = TextEditingController(
-      text: 'العراق',
-    );
+    final countryController = TextEditingController(text: 'العراق');
     final provinceController = TextEditingController(text: 'بغداد');
     final cityController = TextEditingController(text: 'الكرخ');
     final addressController = TextEditingController(
@@ -184,22 +181,19 @@ class ProfileScreen extends StatelessWidget {
 
                 // Save Button
                 KasbyButton(
-                      text: 'تحديث الهوية الرقمية',
-                      onPressed: () {
-                        Get.snackbar(
-                          'تم التحديث',
-                          'تم حفظ المعلومات بنجاح',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: KasbyColors.success.withValues(
-                            alpha: 0.8,
-                          ),
-                          colorText: Colors.white,
-                        );
-                      },
-                    )
-                    .animate()
-                    .fadeIn(delay: const Duration(milliseconds: 500))
-                    .scale(),
+                  text: 'تحديث الهوية الرقمية',
+                  onPressed: () {
+                    Get.snackbar(
+                      'تم التحديث',
+                      'تم حفظ المعلومات بنجاح',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: KasbyColors.success.withValues(
+                        alpha: 0.8,
+                      ),
+                      colorText: Colors.white,
+                    );
+                  },
+                ),
                 const SizedBox(height: 50),
               ],
             ),
@@ -215,43 +209,32 @@ class ProfileScreen extends StatelessWidget {
       children: [
         // Rotating Aura
         Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-                  width: 2,
-                ),
-              ),
-            )
-            .animate(onPlay: (c) => c.repeat())
-            .shimmer(
-              duration: const Duration(seconds: 3),
+          width: 160,
+          height: 160,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
               color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+              width: 2,
             ),
+          ),
+        ),
 
         // Pulsing Shadow
         Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.15),
-                    blurRadius: 40,
-                    spreadRadius: 10,
-                  ),
-                ],
+          width: 130,
+          height: 130,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: KasbyColors.primaryGold.withValues(alpha: 0.15),
+                blurRadius: 40,
+                spreadRadius: 10,
               ),
-            )
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scale(
-              begin: const Offset(0.9, 0.9),
-              end: const Offset(1.1, 1.1),
-              duration: const Duration(seconds: 2),
-            ),
+            ],
+          ),
+        ),
 
         // Avatar
         Container(
@@ -291,7 +274,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ],
-    ).animate().fadeIn().scale();
+    );
   }
 
   Widget _buildStatusBadge(String label, String value, Color color) {
@@ -381,7 +364,7 @@ class ProfileScreen extends StatelessWidget {
           ...children,
         ],
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: delay)).slideY(begin: 0.1);
+    );
   }
 
   Widget _buildOrb({
@@ -397,19 +380,16 @@ class ProfileScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: const Duration(seconds: 5)),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 }

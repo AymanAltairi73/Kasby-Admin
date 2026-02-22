@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -82,7 +81,7 @@ class FaqScreen extends StatelessWidget {
             size: 48,
             color: KasbyColors.primaryGold,
           ),
-        ).animate().scale(duration: 600.ms).shake(),
+        ),
         const SizedBox(height: 16),
         const Text(
           'هل لديك أي استفسار؟',
@@ -91,7 +90,7 @@ class FaqScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-        ).animate().fadeIn(delay: 300.ms),
+        ),
         const SizedBox(height: 32),
       ],
     );
@@ -152,7 +151,7 @@ class FaqScreen extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: (index * 150).ms).slideX(begin: 0.1);
+    );
   }
 
   void _showEditDialog(
@@ -299,20 +298,16 @@ class FaqScreen extends StatelessWidget {
       bottom: bottom,
       left: left,
       right: right,
-      child:
-          Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
-                  ],
-                ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -20, end: 20, duration: 5000.ms)
-              .moveX(begin: -20, end: 20, duration: 7000.ms),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
+          ],
+        ),
+      ),
     );
   }
 }

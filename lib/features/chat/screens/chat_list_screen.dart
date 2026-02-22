@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/chat_controller.dart';
@@ -259,7 +258,7 @@ class ChatListScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ).animate().scale().shake(),
+                        ),
                     ],
                   ),
                 ],
@@ -267,7 +266,7 @@ class ChatListScreen extends StatelessWidget {
             ),
           ],
         ),
-      ).animate(delay: (100 * index).ms).fadeIn().slideX(begin: 0.1),
+      ),
     );
   }
 
