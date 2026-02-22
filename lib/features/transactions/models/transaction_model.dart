@@ -60,9 +60,9 @@ class Transaction {
       id: json['id'] ?? '',
       userId: json['user_id'] ?? '',
       userName: uName,
-      type: json['type'] ?? 'deposit',
+      type: _capitalize(json['type'] ?? 'deposit'),
       amount: (json['amount'] ?? 0.0).toDouble(),
-      status: json['status'] ?? 'pending',
+      status: _capitalize(json['status'] ?? 'pending'),
       reason: json['rejection_reason'],
       proofUrl: json['proof_url'],
       createdAt: json['created_at'] != null
@@ -72,6 +72,11 @@ class Transaction {
           ? DateTime.parse(json['processed_at'])
           : null,
     );
+  }
+
+  static String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   /// Legacy fromJson for backward compat
