@@ -74,7 +74,7 @@ class InvestmentPlan {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
-      imagePath: json['image_path'],
+      imagePath: json['image_url'] ?? json['image_path'],
       durationDays: json['duration_days'],
     );
   }
@@ -130,6 +130,7 @@ class InvestmentPlan {
       'is_active': isActive,
       'description_ar': descriptionAr,
       'duration_days': durationDays,
+      'image_url': imagePath,
     };
   }
 }

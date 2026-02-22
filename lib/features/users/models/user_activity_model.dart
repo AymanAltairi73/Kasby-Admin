@@ -7,6 +7,8 @@ class UserActivity {
   details; // e.g., "Logged in from IP 192.168.1.1", "Sent $50 to User B"
   final DateTime timestamp;
   final String type; // e.g., "Security", "Transaction", "System", "Support"
+  final String? ipAddress;
+  final String? device;
 
   UserActivity({
     required this.id,
@@ -14,6 +16,8 @@ class UserActivity {
     required this.details,
     required this.timestamp,
     required this.type,
+    this.ipAddress,
+    this.device,
   });
 
   factory UserActivity.fromJson(Map<String, dynamic> json) {
@@ -27,6 +31,8 @@ class UserActivity {
                 ? DateTime.parse(json['created_at'])
                 : DateTime.now()),
       type: json['type'] ?? 'System',
+      ipAddress: json['ip_address'] ?? json['ipAddress'],
+      device: json['device'],
     );
   }
 
@@ -37,6 +43,8 @@ class UserActivity {
       'details': details,
       'timestamp': timestamp.toIso8601String(),
       'type': type,
+      'ip_address': ipAddress,
+      'device': device,
     };
   }
 }

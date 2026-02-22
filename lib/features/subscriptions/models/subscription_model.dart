@@ -1,7 +1,7 @@
 /// Subscription Plan Model — maps to `subscription_plans` table in Supabase
 class SubscriptionPlan {
   final String id;
-  final String tier; // 'free', 'premium'
+  final String tier; // 'free', 'premium' (inferred from price)
   final String technicalName;
   final String displayNameAr;
   final String displayNameEn;
@@ -73,24 +73,35 @@ class SubscriptionPlan {
     if (json['features'] is List) {
       feats = List<String>.from(json['features']);
     } else if (json['features'] is Map) {
-      // If features is a { "items": [...] } map
       final items = (json['features'] as Map)['items'];
       if (items is List) feats = List<String>.from(items);
     }
 
+    final double priceMonthly = (json['price_monthly'] ?? 0.0).toDouble();
+    final double priceYearly = (json['price_yearly'] ?? 0.0).toDouble();
+
+    // Logic to determine price and duration from the two DB columns
+    double usedPrice = priceMonthly;
+    String usedDuration = '1 Month';
+
+    if (priceMonthly > 0) {
+      usedPrice = priceMonthly;
+      usedDuration = '1 Month';
+    } else if (priceYearly > 0) {
+      usedPrice = priceYearly;
+      usedDuration = '1 Year';
+    }
+
     return SubscriptionPlan(
-      id: json['id'] ?? '',
-      tier: (json['price_monthly'] ?? 0) > 0 ? 'premium' : 'free',
+      id: json['id']?.toString() ?? '',
+      tier: (priceMonthly > 0 || priceYearly > 0) ? 'premium' : 'free',
       technicalName: json['name'] ?? '',
       displayNameAr: json['name'] ?? '',
       displayNameEn: json['name'] ?? '',
-      price: (json['price_monthly'] ?? 0.0).toDouble(),
-      duration:
-          (json['price_yearly'] != null && (json['price_yearly'] as num) > 0)
-          ? '1 Year'
-          : '1 Month',
-      maxActiveInvestments: 999,
-      withdrawalProcessTime: 2,
+      price: usedPrice,
+      duration: usedDuration,
+      maxActiveInvestments: (priceMonthly > 0 || priceYearly > 0) ? 999 : 2,
+      withdrawalProcessTime: (priceMonthly > 0 || priceYearly > 0) ? 2 : 72,
       status: (json['is_active'] == true) ? 'Active' : 'Inactive',
       icon: 'stars_rounded',
       features: feats,
@@ -98,10 +109,10 @@ class SubscriptionPlan {
     );
   }
 
-  /// Legacy fromJson
+  /// Legacy fromJson (Standard JSON)
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
     return SubscriptionPlan(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
       tier: json['tier'] ?? 'free',
       technicalName: json['technicalName'] ?? '',
       displayNameAr: json['displayNameAr'] ?? '',
@@ -109,10 +120,10 @@ class SubscriptionPlan {
       price: (json['price'] ?? 0.0).toDouble(),
       duration: json['duration'] ?? '',
       discountPercentage: json['discountPercentage']?.toDouble(),
-      maxActiveInvestments: json['maxActiveInvestments'] ?? 0,
-      withdrawalProcessTime: json['withdrawalProcessTime'] ?? 0,
+      maxActiveInvestments: json['maxActiveInvestments'] ?? 2,
+      withdrawalProcessTime: json['withdrawalProcessTime'] ?? 72,
       status: json['status'] ?? 'Active',
-      icon: json['icon'] ?? 'star',
+      icon: json['icon'] ?? 'stars_rounded',
       features: List<String>.from(json['features'] ?? []),
       keywords: List<String>.from(json['keywords'] ?? []),
     );
@@ -141,8 +152,8 @@ class SubscriptionPlan {
   Map<String, dynamic> toSupabase() {
     return {
       'name': displayNameEn.isNotEmpty ? displayNameEn : displayNameAr,
-      'price_monthly': duration.contains('Month') ? price : null,
-      'price_yearly': duration.contains('Year') ? price : null,
+      'price_monthly': duration.contains('Month') ? price : 0,
+      'price_yearly': duration.contains('Year') ? price : 0,
       'features': features,
       'is_active': status == 'Active',
     };

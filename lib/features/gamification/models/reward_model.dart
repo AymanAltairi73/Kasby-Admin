@@ -100,7 +100,7 @@ class Prize {
 class PointRule {
   final String id;
   final String action;
-  final String points;
+  final int points;
   final String type; // Earn, Redeem
   final bool isDefault;
 
@@ -115,7 +115,7 @@ class PointRule {
   PointRule copyWith({
     String? id,
     String? action,
-    String? points,
+    int? points,
     String? type,
     bool? isDefault,
   }) {
@@ -131,7 +131,9 @@ class PointRule {
   factory PointRule.fromJson(Map<String, dynamic> json) => PointRule(
     id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
     action: json['action'],
-    points: json['points'],
+    points: json['points'] is int
+        ? json['points']
+        : int.tryParse(json['points']?.toString() ?? '0') ?? 0,
     type: json['type'] ?? 'Earn',
     isDefault: json['isDefault'] ?? true,
   );

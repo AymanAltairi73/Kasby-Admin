@@ -115,7 +115,9 @@ class RewardsController extends GetxController {
               (e) => PointRule(
                 id: e['id'].toString(),
                 action: e['action'] ?? '',
-                points: e['points'] ?? '',
+                points: e['points'] is int
+                    ? e['points']
+                    : int.tryParse(e['points']?.toString() ?? '0') ?? 0,
                 type: e['type'] ?? 'Earn',
               ),
             )
@@ -207,48 +209,23 @@ class RewardsController extends GetxController {
       PointRule(
         id: 'e1',
         action: 'تسجيل الدخول اليومي',
-        points: '10 نقاط',
+        points: 10,
         type: 'Earn',
       ),
-      PointRule(
-        id: 'e2',
-        action: 'إحالة صديق',
-        points: '100 نقاط',
-        type: 'Earn',
-      ),
-      PointRule(
-        id: 'e3',
-        action: 'أول استثمار',
-        points: '200 نقاط',
-        type: 'Earn',
-      ),
+      PointRule(id: 'e2', action: 'إحالة صديق', points: 100, type: 'Earn'),
+      PointRule(id: 'e3', action: 'أول استثمار', points: 200, type: 'Earn'),
       PointRule(
         id: 'e4',
         action: 'إكمال الملف الشخصي',
-        points: '50 نقاط',
+        points: 50,
         type: 'Earn',
       ),
     ];
 
     pointsRedeemRules.value = [
-      PointRule(
-        id: 'r1',
-        action: '1000 نقطة',
-        points: '\$10 رصيد',
-        type: 'Redeem',
-      ),
-      PointRule(
-        id: 'r2',
-        action: '2500 نقطة',
-        points: '\$30 رصيد',
-        type: 'Redeem',
-      ),
-      PointRule(
-        id: 'r3',
-        action: '5000 نقطة',
-        points: '\$75 رصيد',
-        type: 'Redeem',
-      ),
+      PointRule(id: 'r1', action: '1000 نقطة', points: 10, type: 'Redeem'),
+      PointRule(id: 'r2', action: '2500 نقطة', points: 30, type: 'Redeem'),
+      PointRule(id: 'r3', action: '5000 نقطة', points: 75, type: 'Redeem'),
     ];
   }
 

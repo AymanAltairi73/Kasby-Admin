@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum LoanStatus { current, paid, delayed }
+enum LoanStatus { pending, current, paid, delayed, defaulted }
 
 /// Loan Model — maps to `loans` table in Supabase
 class Loan {
@@ -42,35 +42,49 @@ class Loan {
 
   String get statusText {
     switch (status) {
-      case LoanStatus.current:
+      case LoanStatus.pending:
         return 'قيد الانتظار';
+      case LoanStatus.current:
+        return 'جاري';
       case LoanStatus.paid:
         return 'تم السداد';
       case LoanStatus.delayed:
         return 'متأخر';
+      case LoanStatus.defaulted:
+        return 'متعثر';
     }
   }
 
   Color get statusColor {
     switch (status) {
+      case LoanStatus.pending:
+        return Colors.orange;
       case LoanStatus.current:
         return Colors.blue;
       case LoanStatus.paid:
         return Colors.green;
       case LoanStatus.delayed:
         return Colors.red;
+      case LoanStatus.defaulted:
+        return Colors.grey;
     }
   }
 
   static LoanStatus _parseStatus(String? status) {
     switch (status) {
+      case 'pending':
+        return LoanStatus.pending;
+      case 'current':
+        return LoanStatus.current;
       case 'paid':
         return LoanStatus.paid;
       case 'delayed':
       case 'overdue':
         return LoanStatus.delayed;
+      case 'defaulted':
+        return LoanStatus.defaulted;
       default:
-        return LoanStatus.current;
+        return LoanStatus.pending;
     }
   }
 

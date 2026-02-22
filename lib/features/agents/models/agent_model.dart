@@ -81,7 +81,7 @@ class Agent {
   factory Agent.fromSupabase(Map<String, dynamic> json) {
     return Agent(
       id: json['id'] ?? '',
-      name: json['full_name'] ?? '',
+      name: json['name'] ?? json['full_name'] ?? '',
       country: json['country'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',

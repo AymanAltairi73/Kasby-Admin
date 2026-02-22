@@ -254,7 +254,7 @@ class RewardsScreen extends StatelessWidget {
                     ...controller.pointsEarnRules.map(
                       (rule) => Column(
                         children: [
-                          _buildPointsRule(rule.action, rule.points),
+                          _buildPointsRule(rule.action, rule.points.toString()),
                           if (controller.pointsEarnRules.last != rule)
                             const Divider(color: KasbyColors.background),
                         ],
@@ -273,7 +273,7 @@ class RewardsScreen extends StatelessWidget {
                     ...controller.pointsRedeemRules.map(
                       (rule) => Column(
                         children: [
-                          _buildPointsRule(rule.action, rule.points),
+                          _buildPointsRule(rule.action, rule.points.toString()),
                           if (controller.pointsRedeemRules.last != rule)
                             const Divider(color: KasbyColors.background),
                         ],
@@ -360,13 +360,16 @@ class RewardsScreen extends StatelessWidget {
               // --- Point Rules Section ---
               _buildSectionTitle('قواعد كسب النقاط'),
               ...localEarnRules.map((PointRule rule) {
-                final valController = TextEditingController(text: rule.points);
+                final valController = TextEditingController(
+                  text: rule.points.toString(),
+                );
                 return _buildEditField(
                   label: rule.action,
                   controller: valController,
                   onSave: (val) {
+                    final points = int.tryParse(val) ?? rule.points;
                     final index = localEarnRules.indexOf(rule);
-                    localEarnRules[index] = rule.copyWith(points: val);
+                    localEarnRules[index] = rule.copyWith(points: points);
                   },
                 );
               }),
@@ -375,13 +378,16 @@ class RewardsScreen extends StatelessWidget {
               // --- Point Redemption Section ---
               _buildSectionTitle('قواعد استبدال النقاط'),
               ...localRedeemRules.map((PointRule rule) {
-                final valController = TextEditingController(text: rule.points);
+                final valController = TextEditingController(
+                  text: rule.points.toString(),
+                );
                 return _buildEditField(
                   label: rule.action,
                   controller: valController,
                   onSave: (val) {
+                    final points = int.tryParse(val) ?? rule.points;
                     final index = localRedeemRules.indexOf(rule);
-                    localRedeemRules[index] = rule.copyWith(points: val);
+                    localRedeemRules[index] = rule.copyWith(points: points);
                   },
                 );
               }),

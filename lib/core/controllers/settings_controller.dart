@@ -9,9 +9,14 @@ import '../models/system_settings_model.dart';
 /// (Single Source of Truth — no local storage)
 class SettingsController extends GetxController {
   final settings = SystemSettings(
+    pauseDeposits: false,
     pauseWithdrawals: false,
     pauseProfits: false,
+    pauseInvestments: false,
+    pauseLoans: false,
     systemFreeze: false,
+    isMaintenanceMode: false,
+    maintenanceMessage: '',
     updatedAt: DateTime.now(),
     updatedBy: 'Admin',
   ).obs;
@@ -35,14 +40,7 @@ class SettingsController extends GetxController {
           .maybeSingle();
 
       if (response != null) {
-        settings.value = SystemSettings(
-          pauseWithdrawals: response['pause_withdrawals'] ?? false,
-          pauseProfits: response['pause_profits'] ?? false,
-          systemFreeze: response['system_freeze'] ?? false,
-          updatedAt:
-              DateTime.tryParse(response['updated_at'] ?? '') ?? DateTime.now(),
-          updatedBy: response['updated_by'] ?? 'Admin',
-        );
+        settings.value = SystemSettings.fromJson(response);
       } else {
         // Create initial row if not exists
         await _createInitialSettings();
@@ -68,9 +66,14 @@ class SettingsController extends GetxController {
     try {
       await SupabaseService.client.from('system_settings').insert({
         'id': 'global',
+        'pause_deposits': false,
         'pause_withdrawals': false,
         'pause_profits': false,
+        'pause_investments': false,
+        'pause_loans': false,
         'system_freeze': false,
+        'is_maintenance_mode': false,
+        'maintenance_message': '',
         'updated_by': 'System',
         'updated_at': DateTime.now().toIso8601String(),
       });
@@ -86,9 +89,14 @@ class SettingsController extends GetxController {
       await SupabaseService.client
           .from('system_settings')
           .update({
+            'pause_deposits': settings.value.pauseDeposits,
             'pause_withdrawals': settings.value.pauseWithdrawals,
             'pause_profits': settings.value.pauseProfits,
+            'pause_investments': settings.value.pauseInvestments,
+            'pause_loans': settings.value.pauseLoans,
             'system_freeze': settings.value.systemFreeze,
+            'is_maintenance_mode': settings.value.isMaintenanceMode,
+            'maintenance_message': settings.value.maintenanceMessage,
             'updated_by': adminId,
             'updated_at': DateTime.now().toIso8601String(),
           })
@@ -120,6 +128,15 @@ class SettingsController extends GetxController {
     SystemSettings current = settings.value;
 
     switch (controlKey) {
+      case 'deposits':
+        settings.value = current.copyWith(
+          pauseDeposits: !current.pauseDeposits,
+          updatedAt: DateTime.now(),
+        );
+        action = settings.value.pauseDeposits
+            ? 'إيقاف الإيداع'
+            : 'استئناف الإيداع';
+        break;
       case 'withdrawals':
         settings.value = current.copyWith(
           pauseWithdrawals: !current.pauseWithdrawals,
@@ -138,6 +155,22 @@ class SettingsController extends GetxController {
             ? 'إيقاف توزيع الأرباح'
             : 'استئناف توزيع الأرباح';
         break;
+      case 'investments':
+        settings.value = current.copyWith(
+          pauseInvestments: !current.pauseInvestments,
+          updatedAt: DateTime.now(),
+        );
+        action = settings.value.pauseInvestments
+            ? 'إيقاف الاستثمارات'
+            : 'استئناف الاستثمارات';
+        break;
+      case 'loans':
+        settings.value = current.copyWith(
+          pauseLoans: !current.pauseLoans,
+          updatedAt: DateTime.now(),
+        );
+        action = settings.value.pauseLoans ? 'إيقاف القروض' : 'استئناف القروض';
+        break;
       case 'freeze':
         settings.value = current.copyWith(
           systemFreeze: !current.systemFreeze,
@@ -146,6 +179,15 @@ class SettingsController extends GetxController {
         action = settings.value.systemFreeze
             ? 'تجميد النظام'
             : 'إلغاء تجميد النظام';
+        break;
+      case 'maintenance':
+        settings.value = current.copyWith(
+          isMaintenanceMode: !current.isMaintenanceMode,
+          updatedAt: DateTime.now(),
+        );
+        action = settings.value.isMaintenanceMode
+            ? 'تفعيل الصيانة'
+            : 'إيقاف الصيانة';
         break;
     }
 

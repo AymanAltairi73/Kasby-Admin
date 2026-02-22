@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ErrorLog {
   final String id;
   final String? userId;
@@ -29,14 +31,25 @@ class ErrorLog {
       methodName: json['method_name'] ?? 'Unknown',
       errorMessage: json['error_message'] ?? '',
       stackTrace: json['stack_trace'],
-      deviceInfo: json['device_info'] is Map<String, dynamic>
-          ? json['device_info']
-          : null,
+      deviceInfo: _parseDeviceInfo(json['device_info']),
       appVersion: json['app_version'] ?? '1.0.0',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
     );
+  }
+
+  static Map<String, dynamic>? _parseDeviceInfo(dynamic info) {
+    if (info == null) return null;
+    if (info is Map<String, dynamic>) return info;
+    if (info is String) {
+      try {
+        return json.decode(info) as Map<String, dynamic>;
+      } catch (_) {
+        return {'raw': info};
+      }
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
