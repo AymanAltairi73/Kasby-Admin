@@ -11,12 +11,12 @@ class SupabaseService {
   /// Read from --dart-define or fallback to hardcoded (dev only)
   static const String _supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://rsegwzpnloixfpxwxywe.supabase.co',
+    defaultValue: 'https://majnuiypsgosbzsaeefc.supabase.co',
   );
   static const String _supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
     defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzZWd3enBubG9peGZweHd4eXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4NDYwNTcsImV4cCI6MjA4NjQyMjA1N30.zVjjiB0YjUpaoztzpY7_HB3Xp0KNKbKzA4GwELDMnjE',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ham51aXlwc2dvc2J6c2FlZWZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNzA5NzUsImV4cCI6MjA4NzY0Njk3NX0.M9OIGMQVdF4EACNae8G4pObbumB1fz_kR_xOz1G7chc',
   );
 
   /// Initialize Supabase — must be called before runApp().
