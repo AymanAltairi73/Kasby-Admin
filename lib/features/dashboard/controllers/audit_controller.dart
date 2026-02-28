@@ -13,6 +13,8 @@ class AuditController extends GetxController {
 
   final searchQuery = ''.obs;
   final selectedTimeFilter = TimeFilter.all.obs;
+  final selectedRoleFilter = 'الكل'.obs; // admin, agent, user, system (null)
+  final selectedSeverityFilter = 'الكل'.obs; // info, warning, critical
 
   @override
   void onInit() {
@@ -23,6 +25,8 @@ class AuditController extends GetxController {
     everAll([
       searchQuery,
       selectedTimeFilter,
+      selectedRoleFilter,
+      selectedSeverityFilter,
       _allLogs,
     ], (_) => _applyFilters());
   }
@@ -45,6 +49,27 @@ class AuditController extends GetxController {
           default:
             return true;
         }
+      }).toList();
+    }
+
+    // Role-based filtering
+    if (selectedRoleFilter.value != 'الكل') {
+      result = result.where((log) {
+        if (selectedRoleFilter.value == 'نظام') return log.actorRole == null;
+        final roleMap = {'مشرف': 'admin', 'وكيل': 'agent', 'مستخدم': 'user'};
+        return log.actorRole == roleMap[selectedRoleFilter.value];
+      }).toList();
+    }
+
+    // Severity-based filtering
+    if (selectedSeverityFilter.value != 'الكل') {
+      result = result.where((log) {
+        final severityMap = {
+          'معلومات': 'info',
+          'تحذير': 'warning',
+          'خطير': 'critical',
+        };
+        return log.severity == severityMap[selectedSeverityFilter.value];
       }).toList();
     }
 

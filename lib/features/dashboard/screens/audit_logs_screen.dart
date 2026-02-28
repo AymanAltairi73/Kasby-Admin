@@ -132,6 +132,7 @@ class AuditLogsScreen extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
+                  _buildSectionLabel('الوقت:'),
                   _buildFilterChip(
                     label: 'الكل',
                     isSelected:
@@ -166,10 +167,102 @@ class AuditLogsScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Removed legacy Type filter as it is now unified by severity and action keywords
+          const SizedBox(height: 12),
+          Obx(
+            () => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildSectionLabel('الفئة:'),
+                  _buildFilterChip(
+                    label: 'الكل',
+                    isSelected: controller.selectedRoleFilter.value == 'الكل',
+                    onTap: () => controller.selectedRoleFilter.value = 'الكل',
+                  ),
+                  _buildFilterChip(
+                    label: 'مشرف',
+                    isSelected: controller.selectedRoleFilter.value == 'مشرف',
+                    onTap: () => controller.selectedRoleFilter.value = 'مشرف',
+                  ),
+                  _buildFilterChip(
+                    label: 'وكيل',
+                    isSelected: controller.selectedRoleFilter.value == 'وكيل',
+                    onTap: () => controller.selectedRoleFilter.value = 'وكيل',
+                  ),
+                  _buildFilterChip(
+                    label: 'مستخدم',
+                    isSelected: controller.selectedRoleFilter.value == 'مستخدم',
+                    onTap: () => controller.selectedRoleFilter.value = 'مستخدم',
+                  ),
+                  _buildFilterChip(
+                    label: 'نظام',
+                    isSelected: controller.selectedRoleFilter.value == 'نظام',
+                    onTap: () => controller.selectedRoleFilter.value = 'نظام',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Obx(
+            () => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildSectionLabel('الأهمية:'),
+                  _buildFilterChip(
+                    label: 'الكل',
+                    isSelected:
+                        controller.selectedSeverityFilter.value == 'الكل',
+                    onTap: () =>
+                        controller.selectedSeverityFilter.value = 'الكل',
+                  ),
+                  _buildFilterChip(
+                    label: 'معلومات',
+                    isSelected:
+                        controller.selectedSeverityFilter.value == 'معلومات',
+                    onTap: () =>
+                        controller.selectedSeverityFilter.value = 'معلومات',
+                    activeColor: KasbyColors.success,
+                  ),
+                  _buildFilterChip(
+                    label: 'تحذير',
+                    isSelected:
+                        controller.selectedSeverityFilter.value == 'تحذير',
+                    onTap: () =>
+                        controller.selectedSeverityFilter.value = 'تحذير',
+                    activeColor: KasbyColors.warning,
+                  ),
+                  _buildFilterChip(
+                    label: 'خطير',
+                    isSelected:
+                        controller.selectedSeverityFilter.value == 'خطير',
+                    onTap: () =>
+                        controller.selectedSeverityFilter.value = 'خطير',
+                    activeColor: KasbyColors.error,
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -178,26 +271,24 @@ class AuditLogsScreen extends StatelessWidget {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    Color? activeColor,
   }) {
+    final color = activeColor ?? KasbyColors.primaryGold;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(left: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? KasbyColors.primaryGold
-              : Colors.white.withValues(alpha: 0.05),
+          color: isSelected ? color : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected
-                ? KasbyColors.primaryGold
-                : Colors.white.withValues(alpha: 0.1),
+            color: isSelected ? color : Colors.white.withValues(alpha: 0.1),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                    color: color.withValues(alpha: 0.3),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),
@@ -207,7 +298,9 @@ class AuditLogsScreen extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white70,
+            color: isSelected
+                ? (color.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                : Colors.white70,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
           ),
