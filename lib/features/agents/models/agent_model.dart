@@ -78,7 +78,18 @@ class Agent {
   }
 
   /// Construct from Supabase row
+  /// Updated: supported_methods is now JSONB in kasby_new.sql
   factory Agent.fromSupabase(Map<String, dynamic> json) {
+    // Parse supported_methods from JSONB (can be array, string, or null)
+    List<String> parseSupportedMethods(dynamic value) {
+      if (value == null) return [];
+      if (value is List) {
+        return List<String>.from(value.map((e) => e.toString()));
+      }
+      if (value is String) return [value];
+      return [];
+    }
+
     return Agent(
       id: json['id'] ?? '',
       name: json['name'] ?? json['full_name'] ?? '',
@@ -90,11 +101,9 @@ class Agent {
       whatsapp: json['whatsapp'] ?? (json['phone'] ?? ''),
       telegram: json['telegram'] ?? '',
       email: json['email'] ?? '',
-      status: json['status'] ?? 'Active',
+      status: json['status'] ?? 'active',
       isAvailableNow: json['is_available_now'] ?? false,
-      supportedMethods: json['supported_methods'] != null
-          ? List<String>.from(json['supported_methods'])
-          : [],
+      supportedMethods: parseSupportedMethods(json['supported_methods']),
       successRate: (json['success_rate'] ?? 0.0).toDouble(),
       totalTransactions: json['total_transactions'] ?? 0,
       notes: json['notes'] ?? '',
@@ -159,9 +168,10 @@ class Agent {
   }
 
   /// Convert to Supabase-compatible map for insert/update
+  /// Note: agents table in kasby_new.sql uses column 'name' not 'full_name'
   Map<String, dynamic> toSupabase() {
     return {
-      'full_name': name,
+      'name': name,
       'country': country,
       'province': province,
       'city': city,
@@ -172,8 +182,7 @@ class Agent {
       'email': email,
       'status': status,
       'is_available_now': isAvailableNow,
-      'supported_methods': supportedMethods,
-      'notes': notes,
+      'supported_methods': supportedMethods, // JSONB in kasby_new.sql
     };
   }
 }

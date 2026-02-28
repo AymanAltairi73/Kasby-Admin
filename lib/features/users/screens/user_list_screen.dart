@@ -440,24 +440,34 @@ class UserListScreen extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: user.role == 'admin'
+                        color: user.accountType.toLowerCase() == 'vip'
                             ? KasbyColors.primaryGold.withValues(alpha: 0.2)
+                            : user.accountType.toLowerCase() == 'verified'
+                            ? KasbyColors.success.withValues(alpha: 0.2)
                             : KasbyColors.info.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: user.role == 'admin'
+                          color: user.accountType.toLowerCase() == 'vip'
                               ? KasbyColors.primaryGold.withValues(alpha: 0.5)
+                              : user.accountType.toLowerCase() == 'verified'
+                              ? KasbyColors.success.withValues(alpha: 0.5)
                               : KasbyColors.info.withValues(alpha: 0.5),
                           width: 0.5,
                         ),
                       ),
                       child: Text(
-                        user.role == 'admin' ? 'مدير' : 'مستخدم',
+                        user.accountType.toLowerCase() == 'vip'
+                            ? 'VIP'
+                            : user.accountType.toLowerCase() == 'verified'
+                            ? 'موثق'
+                            : 'مجاني',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: user.role == 'admin'
+                          color: user.accountType.toLowerCase() == 'vip'
                               ? KasbyColors.primaryGold
+                              : user.accountType.toLowerCase() == 'verified'
+                              ? KasbyColors.success
                               : KasbyColors.info,
                         ),
                       ),

@@ -1,26 +1,28 @@
 import 'user_activity_model.dart';
 
 /// User Model — maps to `profiles` + `wallets` tables in Supabase
+/// Updated to align with kasby_new.sql schema (no role column, country_code, referral)
 class User {
   final String id;
   final String name;
   final String email;
   final String phone;
-  final String status; // active, blocked, suspended, deleted
-  final String country;
+  final String status; // active, blocked, suspended
+  final String country; // maps to country_code in DB
   final String province;
   final String city;
   final String address;
-  final String accountType; // Free, Premium (Maps to account_tier in SQL)
-  final String kycStatus; // Unverified, Pending, Verified, Rejected
+  final String accountType; // free, verified, vip (Maps to account_tier in SQL)
+  final String kycStatus; // unverified, pending, verified, rejected
   final double walletBalance;
   final double profitBalance;
   final double investedAmount;
   final double pendingAmount;
-  final String role; // user, admin
   final DateTime createdAt;
   final String whatsapp;
   final String telegram;
+  final String avatarUrl;
+  final String referralCode;
   final List<String> documents;
   final List<UserActivity> activityLog;
 
@@ -30,7 +32,6 @@ class User {
     required this.email,
     required this.phone,
     required this.status,
-    required this.role,
     required this.country,
     this.province = '',
     this.city = '',
@@ -44,6 +45,8 @@ class User {
     required this.createdAt,
     this.whatsapp = '',
     this.telegram = '',
+    this.avatarUrl = '',
+    this.referralCode = '',
     this.documents = const [],
     this.activityLog = const [],
   });
@@ -54,7 +57,6 @@ class User {
     String? email,
     String? phone,
     String? status,
-    String? role,
     String? country,
     String? province,
     String? city,
@@ -68,6 +70,8 @@ class User {
     DateTime? createdAt,
     String? whatsapp,
     String? telegram,
+    String? avatarUrl,
+    String? referralCode,
     List<String>? documents,
     List<UserActivity>? activityLog,
   }) {
@@ -77,7 +81,6 @@ class User {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       status: status ?? this.status,
-      role: role ?? this.role,
       country: country ?? this.country,
       province: province ?? this.province,
       city: city ?? this.city,
@@ -91,6 +94,8 @@ class User {
       createdAt: createdAt ?? this.createdAt,
       whatsapp: whatsapp ?? this.whatsapp,
       telegram: telegram ?? this.telegram,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      referralCode: referralCode ?? this.referralCode,
       documents: documents ?? this.documents,
       activityLog: activityLog ?? this.activityLog,
     );
@@ -122,13 +127,12 @@ class User {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       status: json['status'] ?? 'active',
-      role: json['role'] ?? 'user',
-      country: json['country'] ?? '',
+      country: json['country_code'] ?? json['country'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',
       address: json['address'] ?? '',
-      accountType: json['account_type'] ?? json['account_tier'] ?? 'Free',
-      kycStatus: json['kyc_status'] ?? 'Unverified',
+      accountType: json['account_tier'] ?? json['account_type'] ?? 'free',
+      kycStatus: json['kyc_status'] ?? 'unverified',
       walletBalance: availBal,
       profitBalance: profBal,
       investedAmount: investBal,
@@ -138,6 +142,8 @@ class User {
           : DateTime.now(),
       whatsapp: json['whatsapp'] ?? '',
       telegram: json['telegram'] ?? '',
+      avatarUrl: json['avatar_url'] ?? '',
+      referralCode: json['referral_code'] ?? '',
     );
   }
 
@@ -149,8 +155,7 @@ class User {
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       status: json['status'] ?? 'active',
-      role: json['role'] ?? 'user',
-      country: json['country'] ?? '',
+      country: json['country'] ?? json['country_code'] ?? '',
       province: json['province'] ?? '',
       city: json['city'] ?? '',
       address: json['address'] ?? '',
@@ -158,8 +163,8 @@ class User {
           json['accountType'] ??
           json['account_type'] ??
           json['account_tier'] ??
-          'Free',
-      kycStatus: json['kycStatus'] ?? json['kyc_status'] ?? 'Unverified',
+          'free',
+      kycStatus: json['kycStatus'] ?? json['kyc_status'] ?? 'unverified',
       walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
       profitBalance: (json['profitBalance'] ?? 0.0).toDouble(),
       investedAmount: (json['investedAmount'] ?? 0.0).toDouble(),
@@ -171,6 +176,8 @@ class User {
                 : DateTime.now()),
       whatsapp: json['whatsapp'] ?? '',
       telegram: json['telegram'] ?? '',
+      avatarUrl: json['avatarUrl'] ?? json['avatar_url'] ?? '',
+      referralCode: json['referralCode'] ?? json['referral_code'] ?? '',
       documents: List<String>.from(json['documents'] ?? []),
       activityLog: json['activityLog'] != null
           ? List<UserActivity>.from(
@@ -187,7 +194,6 @@ class User {
       'email': email,
       'phone': phone,
       'status': status,
-      'role': role,
       'country': country,
       'province': province,
       'city': city,
@@ -201,27 +207,30 @@ class User {
       'createdAt': createdAt.toIso8601String(),
       'whatsapp': whatsapp,
       'telegram': telegram,
+      'avatarUrl': avatarUrl,
+      'referralCode': referralCode,
       'documents': documents,
       'activityLog': activityLog.map((a) => a.toJson()).toList(),
     };
   }
 
   /// Convert to Supabase-compatible map for insert/update on profiles table
+  /// Aligned with kasby_new.sql schema
   Map<String, dynamic> toSupabase() {
     return {
       'full_name': name,
       'email': email,
       'phone': phone.isNotEmpty ? phone : null,
       'status': status,
-      'role': role,
-      'country': country,
+      'country_code': country.isNotEmpty ? country : null,
       'province': province,
       'city': city,
       'address': address,
-      'account_tier': accountType, // Using database column name
+      'account_tier': accountType,
       'kyc_status': kycStatus,
       'whatsapp': whatsapp,
       'telegram': telegram,
+      'avatar_url': avatarUrl.isNotEmpty ? avatarUrl : null,
     };
   }
 }

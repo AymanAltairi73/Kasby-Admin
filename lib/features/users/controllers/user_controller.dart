@@ -29,7 +29,6 @@ class UserController extends GetxController {
       final response = await SupabaseService.client
           .from('profiles')
           .select('*, wallets(*)')
-          .eq('role', 'user')
           .order('created_at', ascending: false);
 
       users.value = (response as List)
@@ -377,14 +376,13 @@ class UserController extends GetxController {
     try {
       await SupabaseService.client.from('profiles').insert({
         'full_name': name,
-        'country': country,
+        'country_code': country.isNotEmpty ? country : null,
         'city': city,
         'phone': phone,
         'whatsapp': whatsapp,
         'telegram': telegram,
         'email': email,
         'status': 'active',
-        'role': 'user',
         'kyc_status': 'unverified',
         'account_tier': 'free',
       });

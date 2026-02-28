@@ -36,7 +36,7 @@ class SettingsController extends GetxController {
       final response = await SupabaseService.client
           .from('system_settings')
           .select()
-          .eq('id', 'global')
+          .limit(1)
           .maybeSingle();
 
       if (response != null) {
@@ -64,8 +64,8 @@ class SettingsController extends GetxController {
   /// Create initial settings row in Supabase
   Future<void> _createInitialSettings() async {
     try {
+      final adminId = SupabaseService.auth.currentUser?.id;
       await SupabaseService.client.from('system_settings').insert({
-        'id': 'global',
         'pause_deposits': false,
         'pause_withdrawals': false,
         'pause_profits': false,
@@ -74,7 +74,7 @@ class SettingsController extends GetxController {
         'system_freeze': false,
         'is_maintenance_mode': false,
         'maintenance_message': '',
-        'updated_by': 'System',
+        'updated_by': adminId,
         'updated_at': DateTime.now().toIso8601String(),
       });
     } catch (_) {
@@ -85,7 +85,15 @@ class SettingsController extends GetxController {
   /// Save settings to Supabase
   Future<void> _saveSettings() async {
     try {
-      final adminId = SupabaseService.auth.currentUser?.id ?? 'Admin';
+      final adminId = SupabaseService.auth.currentUser?.id;
+      // Get the settings row ID first
+      final existing = await SupabaseService.client
+          .from('system_settings')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
+      if (existing == null) return;
+
       await SupabaseService.client
           .from('system_settings')
           .update({
@@ -100,7 +108,7 @@ class SettingsController extends GetxController {
             'updated_by': adminId,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', 'global');
+          .eq('id', existing['id']);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsController',
