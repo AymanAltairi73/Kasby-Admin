@@ -22,7 +22,7 @@ class NotificationController extends GetxController {
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
-          .from('admin_notifications')
+          .from('notifications')
           .select()
           .order('sent_at', ascending: false)
           .limit(100);
@@ -69,7 +69,7 @@ class NotificationController extends GetxController {
     sentNotifications.insert(0, notification);
 
     try {
-      await SupabaseService.client.from('admin_notifications').insert({
+      await SupabaseService.client.from('notifications').insert({
         'title': title,
         'message': message,
         'target': target,
@@ -107,7 +107,7 @@ class NotificationController extends GetxController {
     sentNotifications.insert(0, notification);
 
     try {
-      await SupabaseService.client.from('admin_notifications').insert({
+      await SupabaseService.client.from('notifications').insert({
         'title': title,
         'message': message,
         'target': target,

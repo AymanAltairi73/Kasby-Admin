@@ -51,7 +51,7 @@ class SettingsManagementController extends GetxController {
   Future<void> _loadFAQs() async {
     try {
       final response = await SupabaseService.client
-          .from('app_faqs')
+          .from('faqs')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -81,7 +81,7 @@ class SettingsManagementController extends GetxController {
   Future<void> _loadTerms() async {
     try {
       final response = await SupabaseService.client
-          .from('app_terms')
+          .from('terms_sections')
           .select()
           .order('sort_order', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -112,7 +112,7 @@ class SettingsManagementController extends GetxController {
   Future<void> _loadFees() async {
     try {
       final response = await SupabaseService.client
-          .from('fee_config')
+          .from('fees')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -143,7 +143,7 @@ class SettingsManagementController extends GetxController {
   Future<void> _loadCurrencies() async {
     try {
       final response = await SupabaseService.client
-          .from('currency_config')
+          .from('currencies')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -178,7 +178,7 @@ class SettingsManagementController extends GetxController {
   Future<void> _loadLimits() async {
     try {
       final response = await SupabaseService.client
-          .from('limit_config')
+          .from('transaction_limits')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -210,11 +210,11 @@ class SettingsManagementController extends GetxController {
     try {
       final response = await SupabaseService.client
           .from('system_settings')
-          .select('maintenance_mode, maintenance_message')
+          .select('is_maintenance_mode, maintenance_message')
           .eq('id', 'global')
           .maybeSingle();
       if (response != null) {
-        isMaintenanceMode.value = response['maintenance_mode'] ?? false;
+        isMaintenanceMode.value = response['is_maintenance_mode'] ?? false;
         if (response['maintenance_message'] != null &&
             (response['maintenance_message'] as String).isNotEmpty) {
           maintenanceMessage.value = response['maintenance_message'];
@@ -367,7 +367,7 @@ class SettingsManagementController extends GetxController {
       await SupabaseService.client
           .from('system_settings')
           .update({
-            'maintenance_mode': value,
+            'is_maintenance_mode': value,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', 'global');
@@ -408,7 +408,7 @@ class SettingsManagementController extends GetxController {
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
     faqs.add(FAQItem(id: newId, question: question, answer: answer));
     try {
-      await SupabaseService.client.from('app_faqs').insert({
+      await SupabaseService.client.from('faqs').insert({
         'question': question,
         'answer': answer,
       });
@@ -429,7 +429,7 @@ class SettingsManagementController extends GetxController {
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
       try {
         await SupabaseService.client
-            .from('app_faqs')
+            .from('faqs')
             .update({'question': question, 'answer': answer})
             .eq('id', id);
       } catch (e, stackTrace) {
@@ -447,7 +447,7 @@ class SettingsManagementController extends GetxController {
   void deleteFAQ(String id) async {
     faqs.removeWhere((e) => e.id == id);
     try {
-      await SupabaseService.client.from('app_faqs').delete().eq('id', id);
+      await SupabaseService.client.from('faqs').delete().eq('id', id);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -471,7 +471,7 @@ class SettingsManagementController extends GetxController {
       ),
     );
     try {
-      await SupabaseService.client.from('app_terms').insert({
+      await SupabaseService.client.from('terms_sections').insert({
         'title': title,
         'content': content,
         'sort_order': terms.length,
@@ -493,7 +493,7 @@ class SettingsManagementController extends GetxController {
       terms[index] = terms[index].copyWith(title: title, content: content);
       try {
         await SupabaseService.client
-            .from('app_terms')
+            .from('terms_sections')
             .update({'title': title, 'content': content})
             .eq('id', id);
       } catch (e, stackTrace) {
@@ -511,7 +511,7 @@ class SettingsManagementController extends GetxController {
   void deleteTerm(String id) async {
     terms.removeWhere((e) => e.id == id);
     try {
-      await SupabaseService.client.from('app_terms').delete().eq('id', id);
+      await SupabaseService.client.from('terms_sections').delete().eq('id', id);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -535,7 +535,7 @@ class SettingsManagementController extends GetxController {
     for (int i = 0; i < terms.length; i++) {
       try {
         await SupabaseService.client
-            .from('app_terms')
+            .from('terms_sections')
             .update({'sort_order': i + 1})
             .eq('id', terms[i].id);
       } catch (e, stackTrace) {
@@ -557,7 +557,7 @@ class SettingsManagementController extends GetxController {
       fees[index] = fees[index].copyWith(value: newValue);
       try {
         await SupabaseService.client
-            .from('fee_config')
+            .from('fees')
             .update({'value': newValue})
             .eq('id', id);
       } catch (e, stackTrace) {
@@ -581,7 +581,7 @@ class SettingsManagementController extends GetxController {
     }
     currencies.add(currency);
     try {
-      await SupabaseService.client.from('currency_config').insert({
+      await SupabaseService.client.from('currencies').insert({
         'name': currency.name,
         'code': currency.code,
         'rate': currency.rate,
@@ -604,10 +604,7 @@ class SettingsManagementController extends GetxController {
   void deleteCurrency(String id) async {
     currencies.removeWhere((e) => e.id == id);
     try {
-      await SupabaseService.client
-          .from('currency_config')
-          .delete()
-          .eq('id', id);
+      await SupabaseService.client.from('currencies').delete().eq('id', id);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -626,7 +623,7 @@ class SettingsManagementController extends GetxController {
       limits[index] = limits[index].copyWith(value: newValue);
       try {
         await SupabaseService.client
-            .from('limit_config')
+            .from('transaction_limits')
             .update({'value': newValue})
             .eq('id', id);
       } catch (e, stackTrace) {

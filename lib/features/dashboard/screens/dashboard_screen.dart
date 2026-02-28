@@ -450,14 +450,14 @@ class DashboardScreen extends StatelessWidget {
       );
 
       final totalProfits = investmentController.userInvestments
-          .where((inv) => inv.status == 'Completed')
+          .where((inv) => inv.status.toLowerCase() == 'completed')
           .fold(0.0, (sum, inv) => sum + (inv.expectedProfit));
 
       final activeUsers = userController.users
-          .where((u) => u.status == 'Active')
+          .where((u) => u.status.toLowerCase() == 'active')
           .length;
       final pendingTransactions = transactionController.transactions
-          .where((t) => t.status == 'Pending')
+          .where((t) => t.status.toLowerCase() == 'pending')
           .length;
 
       return GridView.count(
@@ -506,7 +506,7 @@ class DashboardScreen extends StatelessWidget {
           _buildMagicalStatCard(
             title: 'حجم التداول اليومي',
             value:
-                '\$${NumberFormat.compact().format(12450)}', // Placeholder estimation
+                '\$${NumberFormat.compact().format(transactionController.transactions.where((t) => t.createdAt.day == DateTime.now().day && t.createdAt.month == DateTime.now().month && t.createdAt.year == DateTime.now().year).fold(0.0, (sum, t) => sum + t.amount))}',
             icon: FontAwesomeIcons.arrowTrendUp,
             glowColor: KasbyColors.glowGold,
             index: 5,

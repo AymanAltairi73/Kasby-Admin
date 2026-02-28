@@ -44,7 +44,7 @@ class RewardsController extends GetxController {
   Future<void> _loadRewards() async {
     try {
       final response = await SupabaseService.client
-          .from('gamification_rewards')
+          .from('rewards')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -54,7 +54,7 @@ class RewardsController extends GetxController {
               id: e['id'].toString(),
               title: e['title'] ?? '',
               description: e['description'] ?? '',
-              points: (e['points'] ?? 0).toInt(),
+              points: (e['points_cost'] ?? 0).toInt(),
               icon: e['icon'] ?? 'calendar-check',
             ),
           ),
@@ -76,7 +76,7 @@ class RewardsController extends GetxController {
   Future<void> _loadPrizes() async {
     try {
       final response = await SupabaseService.client
-          .from('gamification_prizes')
+          .from('prizes')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -108,7 +108,7 @@ class RewardsController extends GetxController {
   Future<void> _loadPointRules() async {
     try {
       final response = await SupabaseService.client
-          .from('gamification_point_rules')
+          .from('point_rules')
           .select()
           .order('created_at', ascending: true);
       if ((response as List).isNotEmpty) {
@@ -245,7 +245,7 @@ class RewardsController extends GetxController {
 
     try {
       await SupabaseService.client
-          .from('gamification_point_rules')
+          .from('point_rules')
           .update({'action': updatedRule.action, 'points': updatedRule.points})
           .eq('id', updatedRule.id);
     } catch (e, stackTrace) {
@@ -272,11 +272,11 @@ class RewardsController extends GetxController {
       rewards[index] = updatedReward;
       try {
         await SupabaseService.client
-            .from('gamification_rewards')
+            .from('rewards')
             .update({
               'title': updatedReward.title,
               'description': updatedReward.description,
-              'points': updatedReward.points,
+              'points_cost': updatedReward.points,
             })
             .eq('id', updatedReward.id);
       } catch (e, stackTrace) {
@@ -303,7 +303,7 @@ class RewardsController extends GetxController {
       prizes[index] = updatedPrize;
       try {
         await SupabaseService.client
-            .from('gamification_prizes')
+            .from('prizes')
             .update({
               'label': updatedPrize.label,
               'value': updatedPrize.value,
