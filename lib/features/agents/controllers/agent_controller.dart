@@ -31,7 +31,7 @@ class AgentController extends GetxController {
     try {
       final response = await SupabaseService.client
           .from('agents')
-          .select()
+          .select('*, profiles(*)')
           .order('created_at', ascending: false);
 
       agents.value = (response as List)
@@ -121,7 +121,6 @@ class AgentController extends GetxController {
     filteredAgents.value = result;
   }
 
-  /// Create new agent from named parameters (matches UI call site)
   Future<void> createAgent({
     required String name,
     required String country,
@@ -135,38 +134,47 @@ class AgentController extends GetxController {
     String notes = '',
   }) async {
     try {
-      debugPrint('[AgentController] ▶ Creating agent: $name');
+      debugPrint('[AgentController] ▶ Creating agent in Unified system: $name');
       isLoading.value = true;
-      final agent = Agent(
-        id: '',
-        name: name,
-        country: country,
-        province: province,
-        city: city,
-        address: address,
-        phone: phone,
-        whatsapp: whatsapp,
-        telegram: telegram,
-        email: email,
-        notes: notes,
-        status: 'Active',
-        isAvailableNow: true,
-        successRate: 0.0,
-        totalTransactions: 0,
-        supportedMethods: [
+
+      // 1. Create Profile record as an 'agent' role
+      final profileResponse = await SupabaseService.client
+          .from('profiles')
+          .insert({
+            'full_name': name,
+            'country_code': country,
+            'province': province,
+            'city': city,
+            'address': address,
+            'phone': phone,
+            'whatsapp': whatsapp,
+            'telegram': telegram,
+            'email': email,
+            'role': 'agent',
+            'status': 'active',
+          })
+          .select('id')
+          .single();
+
+      final String profileId = profileResponse['id'];
+
+      // 2. Create Agent record linked to this profile
+      await SupabaseService.client.from('agents').insert({
+        'id': profileId,
+        'status': 'Active',
+        'is_available_now': true,
+        'notes': notes,
+        'supported_methods': [
           if (whatsapp.isNotEmpty) 'WhatsApp',
           if (telegram.isNotEmpty) 'Telegram',
           'Call',
         ],
-        createdAt: DateTime.now(),
-      );
-
-      await SupabaseService.client.from('agents').insert(agent.toSupabase());
+      });
 
       await loadAgents();
       Get.snackbar(
         'تم',
-        'تم إنشاء الوكيل بنجاح',
+        'تم إنشاء الوكيل بنجاح وتعيين الصلاحيات',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e, stackTrace) {
@@ -189,17 +197,58 @@ class AgentController extends GetxController {
   /// Update agent by ID and a map of fields (matches UI call site)
   Future<void> updateAgent(String agentId, Map<String, dynamic> data) async {
     try {
-      debugPrint('[AgentController] ▶ Updating agent: $agentId');
-      await SupabaseService.client
-          .from('agents')
-          .update(data)
-          .eq('id', agentId);
+      debugPrint('[AgentController] ▶ Updating agent (SSOT sync): $agentId');
+
+      // Separate profile fields from agent fields
+      final profileFields = [
+        'full_name',
+        'name',
+        'country_code',
+        'country',
+        'city',
+        'province',
+        'address',
+        'phone',
+        'whatsapp',
+        'telegram',
+        'email',
+      ];
+      final Map<String, dynamic> profileData = {};
+      final Map<String, dynamic> agentData = {};
+
+      data.forEach((key, value) {
+        if (profileFields.contains(key)) {
+          // Normalize keys for profiles table
+          String normalizedKey = key;
+          if (key == 'name') normalizedKey = 'full_name';
+          if (key == 'country') normalizedKey = 'country_code';
+          profileData[normalizedKey] = value;
+        } else {
+          agentData[key] = value;
+        }
+      });
+
+      // Update profiles if needed
+      if (profileData.isNotEmpty) {
+        await SupabaseService.client
+            .from('profiles')
+            .update(profileData)
+            .eq('id', agentId);
+      }
+
+      // Update agents if needed
+      if (agentData.isNotEmpty) {
+        await SupabaseService.client
+            .from('agents')
+            .update(agentData)
+            .eq('id', agentId);
+      }
 
       await loadAgents();
 
       Get.snackbar(
         'تم',
-        'تم تحديث بيانات الوكيل',
+        'تم تحديث بيانات الوكيل والملف الموحد',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e, stackTrace) {

@@ -7,6 +7,7 @@ class User {
   final String name;
   final String email;
   final String phone;
+  final String role; // user, admin, agent (Single source of truth)
   final String status; // active, blocked, suspended
   final String country; // maps to country_code in DB
   final String province;
@@ -31,6 +32,7 @@ class User {
     required this.name,
     required this.email,
     required this.phone,
+    required this.role,
     required this.status,
     required this.country,
     this.province = '',
@@ -56,6 +58,7 @@ class User {
     String? name,
     String? email,
     String? phone,
+    String? role,
     String? status,
     String? country,
     String? province,
@@ -80,6 +83,7 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      role: role ?? this.role,
       status: status ?? this.status,
       country: country ?? this.country,
       province: province ?? this.province,
@@ -126,6 +130,7 @@ class User {
       name: json['full_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
+      role: json['role'] ?? 'user',
       status: json['status'] ?? 'active',
       country: json['country_code'] ?? json['country'] ?? '',
       province: json['province'] ?? '',
@@ -154,6 +159,7 @@ class User {
       name: json['name'] ?? json['full_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
+      role: json['role'] ?? 'user',
       status: json['status'] ?? 'active',
       country: json['country'] ?? json['country_code'] ?? '',
       province: json['province'] ?? '',
@@ -193,6 +199,7 @@ class User {
       'name': name,
       'email': email,
       'phone': phone,
+      'role': role,
       'status': status,
       'country': country,
       'province': province,
@@ -221,6 +228,7 @@ class User {
       'full_name': name,
       'email': email,
       'phone': phone.isNotEmpty ? phone : null,
+      'role': role,
       'status': status,
       'country_code': country.isNotEmpty ? country : null,
       'province': province,

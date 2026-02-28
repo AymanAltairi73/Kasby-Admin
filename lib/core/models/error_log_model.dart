@@ -24,6 +24,41 @@ class ErrorLog {
   });
 
   factory ErrorLog.fromJson(Map<String, dynamic> json) {
+    // Check if it's coming from the NEW unified activity_logs table
+    final dynamic detailsRaw = json['details'];
+    if (detailsRaw != null && detailsRaw is Map) {
+      final details = Map<String, dynamic>.from(detailsRaw);
+      final actionStr = json['action']?.toString() ?? '';
+
+      // Parse Controller.Method from "ERROR: Controller.Method" action string
+      String ctrl = 'Unknown';
+      String mthd = 'Unknown';
+      if (actionStr.startsWith('ERROR: ')) {
+        final parts = actionStr.substring(7).split('.');
+        if (parts.length >= 2) {
+          ctrl = parts[0];
+          mthd = parts[1];
+        } else if (parts.isNotEmpty) {
+          ctrl = parts[0];
+        }
+      }
+
+      return ErrorLog(
+        id: json['id'] ?? '',
+        userId: json['actor_id'],
+        controllerName: details['controller'] ?? ctrl,
+        methodName: details['method'] ?? mthd,
+        errorMessage: details['error'] ?? details['error_message'] ?? '',
+        stackTrace: details['stack_trace'],
+        deviceInfo: _parseDeviceInfo(details['device_info']),
+        appVersion: details['app_version'] ?? '1.0.0',
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
+      );
+    }
+
+    // Fallback for legacy error_logs table
     return ErrorLog(
       id: json['id'] ?? '',
       userId: json['user_id'],

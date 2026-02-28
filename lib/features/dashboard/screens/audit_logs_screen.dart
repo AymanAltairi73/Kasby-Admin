@@ -167,28 +167,7 @@ class AuditLogsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Obx(
-            () => SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: [
-                  _buildFilterChip(
-                    label: 'كل التصنيفات',
-                    isSelected: controller.selectedType.value == null,
-                    onTap: () => controller.selectedType.value = null,
-                  ),
-                  ...AuditLogType.values.map((type) {
-                    return _buildFilterChip(
-                      label: _getTypeLabel(type),
-                      isSelected: controller.selectedType.value == type,
-                      onTap: () => controller.selectedType.value = type,
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
+          // Removed legacy Type filter as it is now unified by severity and action keywords
           const SizedBox(height: 12),
         ],
       ),
@@ -250,18 +229,18 @@ class AuditLogsScreen extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: _getTypeColor(log.type).withValues(alpha: 0.1),
+                color: _getSeverityColor(log.severity).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _getTypeColor(log.type).withValues(alpha: 0.2),
+                  color: _getSeverityColor(log.severity).withValues(alpha: 0.2),
                 ),
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    _getTypeIcon(log.type),
-                    color: _getTypeColor(log.type),
+                    _getActionIcon(log.action),
+                    color: _getSeverityColor(log.severity),
                     size: 22,
                   ),
                   Positioned(
@@ -271,7 +250,7 @@ class AuditLogsScreen extends StatelessWidget {
                       width: 14,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: _getStatusColor(log.status),
+                        color: _getSeverityColor(log.severity),
                         shape: BoxShape.circle,
                         border: const Border.fromBorderSide(
                           BorderSide(color: Colors.black, width: 2),
@@ -353,10 +332,10 @@ class AuditLogsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          _getTypeLabel(log.type),
+                          log.entityType ?? 'نظام',
                           style: TextStyle(
                             fontSize: 10,
-                            color: _getTypeColor(log.type),
+                            color: _getSeverityColor(log.severity),
                           ),
                         ),
                       ),
@@ -397,12 +376,14 @@ class AuditLogsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _getTypeColor(log.type).withValues(alpha: 0.1),
+                      color: _getSeverityColor(
+                        log.severity,
+                      ).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      log.icon,
-                      color: _getTypeColor(log.type),
+                      _getActionIcon(log.action),
+                      color: _getSeverityColor(log.severity),
                       size: 30,
                     ),
                   ),
@@ -420,8 +401,10 @@ class AuditLogsScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _getTypeLabel(log.type),
-                          style: TextStyle(color: _getTypeColor(log.type)),
+                          log.entityType ?? 'GENERAL',
+                          style: TextStyle(
+                            color: _getSeverityColor(log.severity),
+                          ),
                         ),
                       ],
                     ),
@@ -438,11 +421,10 @@ class AuditLogsScreen extends StatelessWidget {
               ),
               if (log.ipAddress != null)
                 _buildDetailItem('عنوان IP', log.ipAddress!, isLtr: true),
-              if (log.device != null) _buildDetailItem('الجهاز', log.device!),
-              if (log.targetId != null)
+              if (log.entityId != null)
                 _buildDetailItem(
-                  'المعرف المستهدف (${log.targetType ?? "Object"})',
-                  log.targetId!,
+                  'المعرف المستهدف (${log.entityType ?? "Object"})',
+                  log.entityId!,
                   isLtr: true,
                 ),
               if (log.metadata != null && log.metadata!.isNotEmpty) ...[
@@ -565,59 +547,26 @@ class AuditLogsScreen extends StatelessWidget {
     );
   }
 
-  String _getTypeLabel(AuditLogType type) {
-    switch (type) {
-      case AuditLogType.security:
-        return 'أمان';
-      case AuditLogType.financial:
-        return 'مالي';
-      case AuditLogType.userManagement:
-        return 'مستخدمين';
-      case AuditLogType.investment:
-        return 'استثمار';
-      case AuditLogType.system:
-        return 'نظام';
-    }
-  }
-
-  Color _getTypeColor(AuditLogType type) {
-    switch (type) {
-      case AuditLogType.security:
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
         return KasbyColors.error;
-      case AuditLogType.financial:
-        return KasbyColors.success;
-      case AuditLogType.userManagement:
-        return KasbyColors.info;
-      case AuditLogType.investment:
-        return KasbyColors.primaryGold;
-      case AuditLogType.system:
+      case 'warning':
         return KasbyColors.warning;
+      default:
+        return KasbyColors.success;
     }
   }
 
-  Color _getStatusColor(AuditLogStatus status) {
-    switch (status) {
-      case AuditLogStatus.success:
-        return KasbyColors.success;
-      case AuditLogStatus.warning:
-        return KasbyColors.warning;
-      case AuditLogStatus.failure:
-        return KasbyColors.error;
-    }
-  }
-
-  IconData _getTypeIcon(AuditLogType type) {
-    switch (type) {
-      case AuditLogType.security:
-        return FontAwesomeIcons.shieldHalved;
-      case AuditLogType.financial:
-        return FontAwesomeIcons.moneyBillTransfer;
-      case AuditLogType.userManagement:
-        return FontAwesomeIcons.userGear;
-      case AuditLogType.investment:
-        return FontAwesomeIcons.chartLine;
-      case AuditLogType.system:
-        return FontAwesomeIcons.gears;
-    }
+  IconData _getActionIcon(String action) {
+    final act = action.toLowerCase();
+    if (act.contains('error')) return Icons.error_outline_rounded;
+    if (act.contains('login') || act.contains('auth'))
+      return Icons.lock_outline_rounded;
+    if (act.contains('financial') || act.contains('wallet'))
+      return FontAwesomeIcons.moneyBillTransfer;
+    if (act.contains('agent')) return Icons.person_search_rounded;
+    if (act.contains('user')) return Icons.people_outline_rounded;
+    return Icons.history_rounded;
   }
 }

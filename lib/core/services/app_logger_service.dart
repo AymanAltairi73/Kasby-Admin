@@ -66,11 +66,7 @@ class AppLoggerService {
   }
 
   /// Log an error from a controller method.
-  ///
-  /// [controller] — class name (e.g. 'UserController')
-  /// [method]     — method name (e.g. 'loadUsers')
-  /// [error]      — the caught exception/error
-  /// [stackTrace] — optional stack trace for debugging
+  /// Redirected to unified `activity_logs` table.
   static Future<void> logError({
     required String controller,
     required String method,
@@ -95,38 +91,58 @@ class AppLoggerService {
       final now = DateTime.now();
       final lastLog = _recentLogs[key];
       if (lastLog != null && now.difference(lastLog) < _cooldown) {
-        // Skip — duplicate within cooldown window
         return;
       }
       _recentLogs[key] = now;
 
-      // ── Clean up old entries (keep map small) ──
-      if (_recentLogs.length > 100) {
-        _recentLogs.removeWhere(
-          (_, time) => now.difference(time) > const Duration(minutes: 5),
-        );
-      }
-
-      // ── Sanitize error message ──
       final sanitizedError = _sanitize(error.toString());
       final sanitizedStack = stackTrace != null
           ? _sanitize(stackTrace.toString())
           : null;
 
-      // ── Persist to Supabase ──
+      // ── Persist to Unified Activity Logs ──
       final userId = SupabaseService.auth.currentUser?.id;
-      await SupabaseService.client.from('error_logs').insert({
-        'user_id': userId,
-        'controller_name': controller,
-        'method_name': method,
-        'error_message': sanitizedError,
-        'stack_trace': sanitizedStack,
-        'app_version': appVersion,
-        'device_info': deviceInfo, // Store complete metadata map
-        'created_at': now.toIso8601String(),
+      await SupabaseService.client.from('activity_logs').insert({
+        'actor_id': userId,
+        'action': 'ERROR: $controller.$method',
+        'entity_type': 'technical_error',
+        'details': {
+          'error': sanitizedError,
+          'stack_trace': sanitizedStack,
+          'app_version': appVersion,
+          'device_info': deviceInfo,
+        },
+        'severity': 'critical',
       });
     } catch (_) {
       // Logging must NEVER crash the app
+    }
+  }
+
+  /// Log a general activity or business action to the unified system.
+  static Future<void> logActivity({
+    required String action,
+    String? entityType,
+    String? entityId,
+    Map<String, dynamic>? details,
+    String severity = 'info',
+  }) async {
+    try {
+      final userId = SupabaseService.auth.currentUser?.id;
+      await SupabaseService.client.from('activity_logs').insert({
+        'actor_id': userId,
+        'action': action,
+        'entity_type': entityType,
+        'entity_id': entityId,
+        'details': {
+          if (details != null) ...details,
+          'app_version': appVersion,
+          'device_info': deviceInfo,
+        },
+        'severity': severity,
+      });
+    } catch (_) {
+      // Silently fail logging
     }
   }
 

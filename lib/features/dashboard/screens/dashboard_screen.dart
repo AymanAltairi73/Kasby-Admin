@@ -453,8 +453,11 @@ class DashboardScreen extends StatelessWidget {
           .where((inv) => inv.status.toLowerCase() == 'completed')
           .fold(0.0, (sum, inv) => sum + (inv.expectedProfit));
 
+      final totalUsersCount = userController.users
+          .where((u) => u.role == 'user')
+          .length;
       final activeUsers = userController.users
-          .where((u) => u.status.toLowerCase() == 'active')
+          .where((u) => u.role == 'user' && u.status.toLowerCase() == 'active')
           .length;
       final pendingTransactions = transactionController.transactions
           .where((t) => t.status.toLowerCase() == 'pending')
@@ -470,7 +473,7 @@ class DashboardScreen extends StatelessWidget {
         children: [
           _buildMagicalStatCard(
             title: 'إجمالي المستخدمين',
-            value: NumberFormat('#,###').format(userController.users.length),
+            value: NumberFormat('#,###').format(totalUsersCount),
             icon: FontAwesomeIcons.users,
             glowColor: KasbyColors.glowGold,
             index: 0,
@@ -778,13 +781,17 @@ class DashboardScreen extends StatelessWidget {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: _getLogTypeColor(log.type).withValues(alpha: 0.1),
+              color: _getSeverityColor(log.severity).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _getLogTypeColor(log.type).withValues(alpha: 0.2),
+                color: _getSeverityColor(log.severity).withValues(alpha: 0.2),
               ),
             ),
-            child: Icon(log.icon, size: 20, color: _getLogTypeColor(log.type)),
+            child: Icon(
+              _getActionIcon(log.action),
+              size: 20,
+              color: _getSeverityColor(log.severity),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -838,19 +845,28 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Color _getLogTypeColor(AuditLogType type) {
-    switch (type) {
-      case AuditLogType.security:
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
         return KasbyColors.error;
-      case AuditLogType.financial:
-        return KasbyColors.success;
-      case AuditLogType.userManagement:
-        return KasbyColors.info;
-      case AuditLogType.investment:
-        return KasbyColors.primaryGold;
-      case AuditLogType.system:
+      case 'warning':
         return KasbyColors.warning;
+      case 'info':
+      default:
+        return KasbyColors.success;
     }
+  }
+
+  IconData _getActionIcon(String action) {
+    final act = action.toLowerCase();
+    if (act.contains('error')) return Icons.error_outline_rounded;
+    if (act.contains('login') || act.contains('auth'))
+      return Icons.lock_outline_rounded;
+    if (act.contains('financial') || act.contains('wallet'))
+      return Icons.account_balance_wallet_outlined;
+    if (act.contains('agent')) return Icons.person_search_rounded;
+    if (act.contains('user')) return Icons.people_outline_rounded;
+    return Icons.history_rounded;
   }
 
   void _showLogoutDialog(AuthController authController) {

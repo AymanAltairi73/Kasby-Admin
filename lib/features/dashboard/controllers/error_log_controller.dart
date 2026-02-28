@@ -31,12 +31,15 @@ class ErrorLogController extends GetxController {
   }
 
   Future<void> fetchLogs() async {
-    debugPrint('[ErrorLogController] ▶ Fetching error logs...');
+    debugPrint(
+      '[ErrorLogController] ▶ Fetching error logs from Unified system...',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
-          .from('error_logs')
+          .from('activity_logs')
           .select()
+          .eq('entity_type', 'technical_error')
           .order('created_at', ascending: false)
           .limit(200);
 
@@ -105,8 +108,9 @@ class ErrorLogController extends GetxController {
           .subtract(const Duration(days: 30))
           .toIso8601String();
       await SupabaseService.client
-          .from('error_logs')
+          .from('activity_logs')
           .delete()
+          .eq('entity_type', 'technical_error')
           .lt('created_at', thirtyDaysAgo);
 
       await fetchLogs();

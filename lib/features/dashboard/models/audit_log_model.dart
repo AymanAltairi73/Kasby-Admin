@@ -1,47 +1,42 @@
-import 'package:flutter/material.dart';
-
-enum AuditLogType { security, financial, userManagement, investment, system }
-
-enum AuditLogStatus { success, warning, failure }
-
 class AuditLog {
   final String id;
   final String action;
   final String adminName;
   final DateTime timestamp;
   final String details;
-  final AuditLogType type;
-  final AuditLogStatus status;
-  final IconData icon;
+  final String severity; // info, warning, critical
+  final String? actorRole; // admin, agent, user
+  final String? entityType;
+  final String? entityId;
   final String? ipAddress;
-  final String? device;
-  final String? targetId;
-  final String? targetType;
   final Map<String, dynamic>? metadata;
 
   factory AuditLog.fromJson(Map<String, dynamic> json) {
+    // Handle JOIN from profiles
+    final profile = json['profiles'] as Map<String, dynamic>?;
+    final detailsRaw = json['details'];
+    final Map<String, dynamic> detailsMap = detailsRaw is Map
+        ? Map<String, dynamic>.from(detailsRaw)
+        : <String, dynamic>{};
+
     return AuditLog(
       id: json['id'] ?? '',
       action: json['action'] ?? '',
-      adminName: json['adminName'] ?? '',
-      timestamp: json['timestamp'] != null
-          ? DateTime.parse(json['timestamp'])
-          : DateTime.now(),
-      details: json['details'] ?? '',
-      type: AuditLogType.values.firstWhere(
-        (e) => e.toString() == json['type'],
-        orElse: () => AuditLogType.system,
-      ),
-      status: AuditLogStatus.values.firstWhere(
-        (e) => e.toString() == json['status'],
-        orElse: () => AuditLogStatus.success,
-      ),
-      icon: Icons.history, // Placeholder as IconData is not easily serializable
-      ipAddress: json['ipAddress'],
-      device: json['device'],
-      targetId: json['targetId'],
-      targetType: json['targetType'],
-      metadata: json['metadata'],
+      adminName: profile?['full_name'] ?? json['adminName'] ?? 'نظام',
+      timestamp: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : (json['timestamp'] != null
+                ? DateTime.parse(json['timestamp'])
+                : DateTime.now()),
+      details: json['action'].toString().startsWith('ERROR')
+          ? (detailsMap['error'] ?? json['details'] ?? '')
+          : (json['details']?.toString() ?? ''),
+      severity: json['severity'] ?? 'info',
+      actorRole: json['actor_role'],
+      entityType: json['entity_type'],
+      entityId: json['entity_id'],
+      ipAddress: json['ip_address'],
+      metadata: detailsMap,
     );
   }
 
@@ -52,12 +47,11 @@ class AuditLog {
       'adminName': adminName,
       'timestamp': timestamp.toIso8601String(),
       'details': details,
-      'type': type.toString(),
-      'status': status.toString(),
-      'ipAddress': ipAddress,
-      'device': device,
-      'targetId': targetId,
-      'targetType': targetType,
+      'severity': severity,
+      'actor_role': actorRole,
+      'entity_type': entityType,
+      'entity_id': entityId,
+      'ip_address': ipAddress,
       'metadata': metadata,
     };
   }
@@ -68,13 +62,11 @@ class AuditLog {
     required this.adminName,
     required this.timestamp,
     required this.details,
-    required this.type,
-    this.status = AuditLogStatus.success,
-    required this.icon,
+    this.severity = 'info',
+    this.actorRole,
+    this.entityType,
+    this.entityId,
     this.ipAddress,
-    this.device,
-    this.targetId,
-    this.targetType,
     this.metadata,
   });
 }

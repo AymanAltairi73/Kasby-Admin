@@ -12,8 +12,6 @@ class AuditController extends GetxController {
   final isLoading = false.obs;
 
   final searchQuery = ''.obs;
-  final selectedType = Rxn<AuditLogType>();
-  final selectedStatus = Rxn<AuditLogStatus>();
   final selectedTimeFilter = TimeFilter.all.obs;
 
   @override
@@ -24,8 +22,6 @@ class AuditController extends GetxController {
     // Set up filtering listeners
     everAll([
       searchQuery,
-      selectedType,
-      selectedStatus,
       selectedTimeFilter,
       _allLogs,
     ], (_) => _applyFilters());
@@ -53,23 +49,14 @@ class AuditController extends GetxController {
     }
 
     if (searchQuery.value.isNotEmpty) {
+      final q = searchQuery.value.toLowerCase();
       result = result
           .where(
             (log) =>
-                log.action.contains(searchQuery.value) ||
-                log.adminName.contains(searchQuery.value) ||
-                log.details.contains(searchQuery.value),
+                log.action.toLowerCase().contains(q) ||
+                log.adminName.toLowerCase().contains(q) ||
+                log.details.toLowerCase().contains(q),
           )
-          .toList();
-    }
-
-    if (selectedType.value != null) {
-      result = result.where((log) => log.type == selectedType.value).toList();
-    }
-
-    if (selectedStatus.value != null) {
-      result = result
-          .where((log) => log.status == selectedStatus.value)
           .toList();
     }
 
@@ -77,19 +64,21 @@ class AuditController extends GetxController {
   }
 
   Future<void> fetchLogs() async {
-    debugPrint('[AuditController] ▶ Fetching audit logs...');
+    debugPrint(
+      '[AuditController] ▶ Fetching Activity logs from unified table...',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
-          .from('audit_logs')
-          .select()
+          .from('activity_logs')
+          .select('*, profiles:actor_id(full_name)')
           .order('created_at', ascending: false)
           .limit(200);
 
       _allLogs.assignAll(
         (response as List).map((json) => AuditLog.fromJson(json)).toList(),
       );
-      debugPrint('[AuditController] ✓ Loaded ${_allLogs.length} audit logs');
+      debugPrint('[AuditController] ✓ Loaded ${_allLogs.length} activity logs');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'AuditController',
@@ -97,7 +86,7 @@ class AuditController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل تحميل سجل العمليات');
+      Get.snackbar('خطأ', 'فشل تحميل سجل النشاط الموحد');
     } finally {
       isLoading.value = false;
     }

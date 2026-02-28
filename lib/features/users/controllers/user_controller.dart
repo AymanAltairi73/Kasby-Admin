@@ -88,6 +88,9 @@ class UserController extends GetxController {
   void _applyFilters() {
     List<User> result = List.from(users);
 
+    // Apply role filter - by default hide admins from general user list
+    result = result.where((u) => u.role != 'admin').toList();
+
     // Apply search
     if (searchQuery.value.isNotEmpty) {
       final q = searchQuery.value.toLowerCase();
@@ -385,6 +388,7 @@ class UserController extends GetxController {
         'whatsapp': whatsapp,
         'telegram': telegram,
         'email': email,
+        'role': 'user', // Explicitly set role for new manual users
         'status': 'active',
         'kyc_status': 'unverified',
         'account_tier': 'free',

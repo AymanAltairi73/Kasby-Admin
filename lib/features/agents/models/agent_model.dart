@@ -79,6 +79,8 @@ class Agent {
 
   /// Construct from Supabase row
   /// Updated: supported_methods is now JSONB in kasby_new.sql
+  /// Construct from Supabase row
+  /// Updated: Handles JOIN results from profiles table
   factory Agent.fromSupabase(Map<String, dynamic> json) {
     // Parse supported_methods from JSONB (can be array, string, or null)
     List<String> parseSupportedMethods(dynamic value) {
@@ -90,17 +92,25 @@ class Agent {
       return [];
     }
 
+    // Contact data might be in the root (from join) or nested
+    final profile = json['profiles'] as Map<String, dynamic>?;
+
     return Agent(
       id: json['id'] ?? '',
-      name: json['name'] ?? json['full_name'] ?? '',
-      country: json['country'] ?? '',
-      province: json['province'] ?? '',
-      city: json['city'] ?? '',
-      address: json['address'] ?? '',
-      phone: json['phone'] ?? '',
-      whatsapp: json['whatsapp'] ?? (json['phone'] ?? ''),
-      telegram: json['telegram'] ?? '',
-      email: json['email'] ?? '',
+      name: profile?['full_name'] ?? json['full_name'] ?? json['name'] ?? '',
+      country:
+          profile?['country_code'] ??
+          json['country_code'] ??
+          json['country'] ??
+          '',
+      province: profile?['province'] ?? json['province'] ?? '',
+      city: profile?['city'] ?? json['city'] ?? '',
+      address: profile?['address'] ?? json['address'] ?? '',
+      phone: profile?['phone'] ?? json['phone'] ?? '',
+      whatsapp:
+          profile?['whatsapp'] ?? json['whatsapp'] ?? (json['phone'] ?? ''),
+      telegram: profile?['telegram'] ?? json['telegram'] ?? '',
+      email: profile?['email'] ?? json['email'] ?? '',
       status: json['status'] ?? 'active',
       isAvailableNow: json['is_available_now'] ?? false,
       supportedMethods: parseSupportedMethods(json['supported_methods']),
@@ -167,22 +177,18 @@ class Agent {
     };
   }
 
-  /// Convert to Supabase-compatible map for insert/update
-  /// Note: agents table in kasby_new.sql uses column 'name' not 'full_name'
+  /// Convert to Supabase-compatible map for agents table only
+  /// Redundant contact fields (name, phone, etc) are REMOVED here
+  /// as they are now managed in the profiles table.
   Map<String, dynamic> toSupabase() {
     return {
-      'name': name,
-      'country': country,
-      'province': province,
-      'city': city,
-      'address': address,
-      'phone': phone,
-      'whatsapp': whatsapp,
-      'telegram': telegram,
-      'email': email,
+      'id': id,
       'status': status,
       'is_available_now': isAvailableNow,
       'supported_methods': supportedMethods, // JSONB in kasby_new.sql
+      'success_rate': successRate,
+      'total_transactions': totalTransactions,
+      'notes': notes,
     };
   }
 }

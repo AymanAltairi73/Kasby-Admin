@@ -64,40 +64,42 @@ class AuthController extends GetxController {
   }
 
   /// Check if current user is an admin
-  /// Priority: 1) RPC is_admin() 2) appMetadata 3) userMetadata
+  /// Uses the professional `profiles.role` column as the Single Source of Truth.
   Future<bool> _checkIsAdmin() async {
-    final user = SupabaseService.auth.currentUser;
-    debugPrint('[AuthController] _checkIsAdmin — user: ${user?.id}');
-    debugPrint(
-      '[AuthController] _checkIsAdmin — appMetadata: ${user?.appMetadata}',
-    );
-    debugPrint(
-      '[AuthController] _checkIsAdmin — userMetadata: ${user?.userMetadata}',
-    );
+    final userId = SupabaseService.auth.currentUser?.id;
+    if (userId == null) return false;
 
-    // 1. Try RPC is_admin() — checks raw_app_meta_data (most secure)
+    debugPrint('[AuthController] _checkIsAdmin — userId: $userId');
+
     try {
-      final response = await SupabaseService.client.rpc('is_admin');
-      debugPrint('[AuthController] _checkIsAdmin — RPC result: $response');
-      if (response == true) return true;
+      // 1. Direct query to profiles table for the 'role' column (Most reliable)
+      final response = await SupabaseService.client
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+
+      final role = response['role'] as String?;
+      debugPrint('[AuthController] _checkIsAdmin — DB role result: $role');
+
+      if (role == 'admin') return true;
     } catch (e) {
-      debugPrint('[AuthController] _checkIsAdmin — RPC failed: $e');
-    }
-
-    // 2. Fallback: check appMetadata (raw_app_meta_data — server-set only)
-    if (user != null) {
-      final appAdmin = user.appMetadata['is_admin'];
       debugPrint(
-        '[AuthController] _checkIsAdmin — appMetadata is_admin: $appAdmin',
+        '[AuthController] _checkIsAdmin — DB query failed: $e. Using fallback...',
       );
+
+      // 2. Fallback: Try RPC is_admin() (Checks role internally)
+      try {
+        final rpcResult = await SupabaseService.client.rpc('is_admin');
+        if (rpcResult == true) return true;
+      } catch (rpcErr) {
+        debugPrint('[AuthController] _checkIsAdmin — RPC failed: $rpcErr');
+      }
+
+      // 3. Last resort: Check appMetadata (Legacy compatibility)
+      final user = SupabaseService.auth.currentUser;
+      final appAdmin = user?.appMetadata['is_admin'];
       if (appAdmin == true || appAdmin == 'true') return true;
-
-      // 3. Fallback: check userMetadata (raw_user_meta_data — client-set)
-      final userAdmin = user.userMetadata?['is_admin'];
-      debugPrint(
-        '[AuthController] _checkIsAdmin — userMetadata is_admin: $userAdmin',
-      );
-      if (userAdmin == true || userAdmin == 'true') return true;
     }
 
     return false;
