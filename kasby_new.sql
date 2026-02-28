@@ -1257,3 +1257,41 @@ LEFT JOIN user_points up ON up.user_id = p.id;
 -- 4 Safety Triggers | auth.users Integration
 -- 22 RLS Policies (auth.uid based) | Dashboard Function
 -- ============================================================
+
+-- ============================================================
+-- SECTION: SEED DATA — Admin User
+-- Email: admin@kasby.com | Password: admin2026
+-- ============================================================
+INSERT INTO auth.users (
+    instance_id, id, aud, role, email,
+    encrypted_password, created_at,
+    raw_user_meta_data, raw_app_meta_data,
+    email_confirmed_at, updated_at
+) VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated',
+    'admin@kasby.com',
+    crypt('admin2026', gen_salt('bf')),
+    NOW(),
+    '{"full_name":"المشرف العام","is_admin":true}'::jsonb,
+    '{"is_admin":true}'::jsonb,
+    NOW(), NOW()
+) ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    encrypted_password = EXCLUDED.encrypted_password,
+    raw_user_meta_data = EXCLUDED.raw_user_meta_data,
+    raw_app_meta_data = EXCLUDED.raw_app_meta_data,
+    updated_at = NOW();
+
+-- Create admin profile
+INSERT INTO admin_profiles (id, full_name, role, is_active)
+VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    'المشرف العام',
+    'superadmin',
+    TRUE
+) ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    role = EXCLUDED.role,
+    is_active = TRUE;
