@@ -399,7 +399,9 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text: 'أيمن',
+                  text: authController.userName.value.isNotEmpty
+                      ? authController.userName.value
+                      : 'المدير',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,

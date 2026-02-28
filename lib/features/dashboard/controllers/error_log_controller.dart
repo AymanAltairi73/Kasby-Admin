@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/models/error_log_model.dart';
@@ -30,6 +31,7 @@ class ErrorLogController extends GetxController {
   }
 
   Future<void> fetchLogs() async {
+    debugPrint('[ErrorLogController] ▶ Fetching error logs...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -41,7 +43,10 @@ class ErrorLogController extends GetxController {
       _allLogs.assignAll(
         (response as List).map((json) => ErrorLog.fromJson(json)).toList(),
       );
-    } catch (e) {
+      debugPrint('[ErrorLogController] ✓ Loaded ${_allLogs.length} logs');
+    } catch (e, stackTrace) {
+      debugPrint('[ErrorLogController] ✗ FETCH ERROR: $e');
+      debugPrint('[ErrorLogController] StackTrace: $stackTrace');
       Get.snackbar('خطأ', 'فشل تحميل سجلات الأخطاء');
     } finally {
       isLoading.value = false;
@@ -93,9 +98,9 @@ class ErrorLogController extends GetxController {
   }
 
   Future<void> purgeLogs() async {
+    debugPrint('[ErrorLogController] ▶ Purging old logs...');
     try {
       isLoading.value = true;
-      // Delete logs older than 30 days
       final thirtyDaysAgo = DateTime.now()
           .subtract(const Duration(days: 30))
           .toIso8601String();
@@ -105,8 +110,11 @@ class ErrorLogController extends GetxController {
           .lt('created_at', thirtyDaysAgo);
 
       await fetchLogs();
+      debugPrint('[ErrorLogController] ✓ Purge complete');
       Get.snackbar('نجاح', 'تم تنظيف السجلات القديمة');
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[ErrorLogController] ✗ PURGE ERROR: $e');
+      debugPrint('[ErrorLogController] StackTrace: $stackTrace');
       Get.snackbar('خطأ', 'فشل في تنظيف السجلات');
     } finally {
       isLoading.value = false;

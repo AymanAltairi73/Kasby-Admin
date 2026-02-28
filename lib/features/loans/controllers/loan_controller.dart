@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/loan_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -18,6 +19,7 @@ class LoanController extends GetxController {
 
   /// Load loans from Supabase with user names
   Future<void> loadLoans() async {
+    debugPrint('[LoanController] ▶ Loading loans from Supabase...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -68,6 +70,7 @@ class LoanController extends GetxController {
   Future<void> approveLoan(String loanId) async {
     try {
       isLoading.value = true;
+      debugPrint('[LoanController] ▶ Approving loan: $loanId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await SupabaseService.client.rpc(

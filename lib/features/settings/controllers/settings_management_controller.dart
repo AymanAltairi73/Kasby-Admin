@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/settings_models.dart';
@@ -32,6 +33,7 @@ class SettingsManagementController extends GetxController {
 
   /// Load all settings from Supabase
   Future<void> loadSettings() async {
+    debugPrint('[SettingsController] ▶ Loading all settings...');
     isLoading.value = true;
     await Future.wait([
       _loadFAQs(),

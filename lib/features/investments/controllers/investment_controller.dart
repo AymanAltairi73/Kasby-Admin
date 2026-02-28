@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/services/supabase_service.dart';
@@ -19,6 +20,7 @@ class InvestmentController extends GetxController {
 
   /// Load investment plans from Supabase
   Future<void> loadPlans() async {
+    debugPrint('[InvestmentController] ▶ Loading investment plans...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -47,6 +49,7 @@ class InvestmentController extends GetxController {
 
   /// Load user investments from Supabase
   Future<void> loadUserInvestments() async {
+    debugPrint('[InvestmentController] ▶ Loading user investments...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client

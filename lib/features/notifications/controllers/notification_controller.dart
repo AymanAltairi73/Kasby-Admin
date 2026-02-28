@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/notification_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -17,6 +18,7 @@ class NotificationController extends GetxController {
 
   /// Load notifications from Supabase
   Future<void> loadNotifications() async {
+    debugPrint('[NotificationController] ▶ Loading notifications...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client

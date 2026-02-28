@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/subscription_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -16,6 +17,7 @@ class SubscriptionController extends GetxController {
 
   /// Load plans from Supabase, fallback to defaults if no data
   Future<void> loadPlans() async {
+    debugPrint('[SubscriptionController] ▶ Loading subscription plans...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -46,6 +48,9 @@ class SubscriptionController extends GetxController {
 
   /// Add a new plan
   Future<void> createPlan(SubscriptionPlan plan) async {
+    debugPrint(
+      '[SubscriptionController] ▶ Creating plan: ${plan.displayNameAr}',
+    );
     isLoading.value = true;
     try {
       await SupabaseService.client

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/reward_model.dart';
 import '../../../core/services/audit_logger.dart';
@@ -23,6 +24,7 @@ class RewardsController extends GetxController {
 
   /// Load settings from Supabase
   Future<void> loadSettings() async {
+    debugPrint('[RewardsController] ▶ Loading gamification settings...');
     isLoading.value = true;
     try {
       await Future.wait([_loadRewards(), _loadPrizes(), _loadPointRules()]);

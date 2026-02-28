@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../models/audit_log_model.dart';
@@ -76,6 +77,7 @@ class AuditController extends GetxController {
   }
 
   Future<void> fetchLogs() async {
+    debugPrint('[AuditController] ▶ Fetching audit logs...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -87,6 +89,7 @@ class AuditController extends GetxController {
       _allLogs.assignAll(
         (response as List).map((json) => AuditLog.fromJson(json)).toList(),
       );
+      debugPrint('[AuditController] ✓ Loaded ${_allLogs.length} audit logs');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'AuditController',

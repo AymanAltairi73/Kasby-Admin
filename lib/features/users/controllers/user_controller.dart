@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -24,6 +25,7 @@ class UserController extends GetxController {
 
   /// Load users from Supabase
   Future<void> loadUsers() async {
+    debugPrint('[UserController] ▶ Loading users from Supabase...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -35,6 +37,7 @@ class UserController extends GetxController {
           .map((json) => User.fromSupabase(json))
           .toList();
       _applyFilters();
+      debugPrint('[UserController] ✓ Loaded ${users.length} users');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'UserController',

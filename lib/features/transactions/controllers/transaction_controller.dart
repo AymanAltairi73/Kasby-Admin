@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -37,6 +38,7 @@ class TransactionController extends GetxController {
 
   /// Load transactions from Supabase with user names
   Future<void> loadTransactions() async {
+    debugPrint('[TransactionController] ▶ Loading transactions...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -160,6 +162,7 @@ class TransactionController extends GetxController {
   Future<void> approveDeposit(String txnId) async {
     try {
       isLoading.value = true;
+      debugPrint('[TransactionController] ▶ Approving deposit: $txnId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await SupabaseService.client.rpc(
@@ -240,6 +243,7 @@ class TransactionController extends GetxController {
   Future<void> rejectTransaction(String txnId, [String reason = '']) async {
     try {
       isLoading.value = true;
+      debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await SupabaseService.client.rpc(

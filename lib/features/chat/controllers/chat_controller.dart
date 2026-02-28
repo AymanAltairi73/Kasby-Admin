@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
 import '../../../core/services/audio_service.dart';
@@ -15,6 +16,9 @@ class ChatController extends GetxController {
   void onInit() {
     super.onInit();
     _audioService = Get.find<AudioService>();
+    debugPrint(
+      '[ChatController] ▶ Initializing with mock data (no chat tables in DB)',
+    );
     _loadMockData();
   }
 
@@ -94,6 +98,9 @@ class ChatController extends GetxController {
 
   void sendMessage(String userId, String content) async {
     if (content.trim().isEmpty) return;
+    debugPrint(
+      '[ChatController] ▶ Sending message to $userId: ${content.substring(0, content.length > 30 ? 30 : content.length)}...',
+    );
 
     final newMessage = ChatMessage(
       id: DateTime.now().toString(),

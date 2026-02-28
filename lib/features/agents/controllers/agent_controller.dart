@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/agent_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -25,6 +26,7 @@ class AgentController extends GetxController {
 
   /// Load agents from Supabase
   Future<void> loadAgents() async {
+    debugPrint('[AgentController] ▶ Loading agents from Supabase...');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -36,6 +38,7 @@ class AgentController extends GetxController {
           .map((json) => Agent.fromSupabase(json))
           .toList();
       _applyFilters();
+      debugPrint('[AgentController] ✓ Loaded ${agents.length} agents');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'AgentController',
@@ -132,6 +135,7 @@ class AgentController extends GetxController {
     String notes = '',
   }) async {
     try {
+      debugPrint('[AgentController] ▶ Creating agent: $name');
       isLoading.value = true;
       final agent = Agent(
         id: '',
@@ -185,6 +189,7 @@ class AgentController extends GetxController {
   /// Update agent by ID and a map of fields (matches UI call site)
   Future<void> updateAgent(String agentId, Map<String, dynamic> data) async {
     try {
+      debugPrint('[AgentController] ▶ Updating agent: $agentId');
       await SupabaseService.client
           .from('agents')
           .update(data)
@@ -215,6 +220,7 @@ class AgentController extends GetxController {
   /// Delete agent
   Future<void> deleteAgent(String agentId) async {
     try {
+      debugPrint('[AgentController] ▶ Deleting agent: $agentId');
       await SupabaseService.client.from('agents').delete().eq('id', agentId);
 
       agents.removeWhere((a) => a.id == agentId);
