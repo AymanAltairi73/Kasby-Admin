@@ -26,10 +26,14 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   Future<void> _handleVerifyOtp() async {
+    debugPrint(
+      '[AUTH:OtpScreen] ▶ Verify OTP pressed — code length: ${_currentOtp.length}',
+    );
     if (_currentOtp.length == 6) {
-      // OTP flow is no longer used — auth goes directly to main
+      debugPrint('[AUTH:OtpScreen] ✓ OTP complete — navigating to /main');
       Get.offAllNamed('/main');
     } else {
+      debugPrint('[AUTH:OtpScreen] ✗ OTP incomplete — showing error');
       Get.snackbar(
         'خطأ',
         'الرجاء إدخال رمز التحقق المكون من 6 أرقام',

@@ -27,9 +27,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _handleResetPassword() async {
+    debugPrint('[AUTH:ForgotPasswordScreen] ▶ Reset password button pressed');
+    debugPrint(
+      '[AUTH:ForgotPasswordScreen] ℹ Email: ${_emailController.text.trim()}',
+    );
     if (_formKey.currentState!.validate()) {
-      await _authController.forgotPassword(_emailController.text);
-      Get.back();
+      debugPrint('[AUTH:ForgotPasswordScreen] ✓ Form validation passed');
+      try {
+        await _authController.forgotPassword(_emailController.text);
+        debugPrint(
+          '[AUTH:ForgotPasswordScreen] ✓ Reset email sent successfully',
+        );
+        Get.back();
+      } catch (e, stackTrace) {
+        debugPrint('[AUTH:ForgotPasswordScreen] ✗ RESET ERROR: $e');
+        debugPrint('[AUTH:ForgotPasswordScreen] StackTrace: $stackTrace');
+      }
+    } else {
+      debugPrint('[AUTH:ForgotPasswordScreen] ✗ Form validation failed');
     }
   }
 

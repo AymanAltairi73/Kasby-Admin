@@ -26,9 +26,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('[AUTH:LoginScreen] ▶ Screen initialized');
     // Pre-fill username if remembered
     if (_authController.rememberMe.value) {
       _emailController.text = _authController.savedEmail.value;
+      debugPrint(
+        '[AUTH:LoginScreen] ℹ Pre-filled email from saved credentials',
+      );
     }
   }
 
@@ -40,15 +44,32 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    debugPrint('[AUTH:LoginScreen] ▶ Login button pressed');
+    debugPrint('[AUTH:LoginScreen] ℹ Email: ${_emailController.text.trim()}');
     if (_formKey.currentState!.validate()) {
-      final success = await _authController.login(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      if (success) {
-        Get.offAllNamed('/main');
+      debugPrint('[AUTH:LoginScreen] ✓ Form validation passed');
+      try {
+        final success = await _authController.login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        debugPrint('[AUTH:LoginScreen] ℹ Login result: $success');
+        if (success) {
+          debugPrint(
+            '[AUTH:LoginScreen] ✓ Login successful — navigating to /main',
+          );
+          Get.offAllNamed('/main');
+        } else {
+          debugPrint(
+            '[AUTH:LoginScreen] ✗ Login failed — controller returned false',
+          );
+        }
+      } catch (e, stackTrace) {
+        debugPrint('[AUTH:LoginScreen] ✗ LOGIN ERROR: $e');
+        debugPrint('[AUTH:LoginScreen] StackTrace: $stackTrace');
       }
+    } else {
+      debugPrint('[AUTH:LoginScreen] ✗ Form validation failed');
     }
   }
 

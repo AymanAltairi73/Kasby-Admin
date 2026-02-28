@@ -37,8 +37,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    debugPrint('[AUTH:RegisterScreen] ▶ Register button pressed');
+    debugPrint(
+      '[AUTH:RegisterScreen] ℹ Email: ${_emailController.text.trim()}',
+    );
+    debugPrint('[AUTH:RegisterScreen] ℹ Name: ${_nameController.text.trim()}');
     if (_formKey.currentState!.validate()) {
+      debugPrint('[AUTH:RegisterScreen] ✓ Form validation passed');
       if (_passwordController.text != _confirmPasswordController.text) {
+        debugPrint('[AUTH:RegisterScreen] ✗ Password mismatch!');
         Get.snackbar(
           'خطأ',
           'كلمات المرور غير متطابقة',
@@ -49,16 +56,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final success = await _authController.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
-      );
-
-      if (success) {
-        Get.back(); // Go back to login
+      try {
+        final success = await _authController.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          fullName: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+        debugPrint('[AUTH:RegisterScreen] ℹ SignUp result: $success');
+        if (success) {
+          debugPrint(
+            '[AUTH:RegisterScreen] ✓ Registration successful — going back to login',
+          );
+          Get.back();
+        } else {
+          debugPrint(
+            '[AUTH:RegisterScreen] ✗ Registration failed — controller returned false',
+          );
+        }
+      } catch (e, stackTrace) {
+        debugPrint('[AUTH:RegisterScreen] ✗ REGISTER ERROR: $e');
+        debugPrint('[AUTH:RegisterScreen] StackTrace: $stackTrace');
       }
+    } else {
+      debugPrint('[AUTH:RegisterScreen] ✗ Form validation failed');
     }
   }
 

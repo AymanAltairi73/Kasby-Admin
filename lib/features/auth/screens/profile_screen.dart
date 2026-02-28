@@ -10,6 +10,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[AUTH:ProfileScreen] ▶ Screen loaded');
     final nameController = TextEditingController(text: 'أيمن محمد');
     final emailController = TextEditingController(text: 'ayman@kasby.com');
     final phoneController = TextEditingController(text: '+964 77660444646');
@@ -183,6 +184,13 @@ class ProfileScreen extends StatelessWidget {
                 KasbyButton(
                   text: 'تحديث الهوية الرقمية',
                   onPressed: () {
+                    debugPrint('[AUTH:ProfileScreen] ▶ Save profile pressed');
+                    debugPrint(
+                      '[AUTH:ProfileScreen] ℹ Name: ${nameController.text}',
+                    );
+                    debugPrint(
+                      '[AUTH:ProfileScreen] ℹ Email: ${emailController.text}',
+                    );
                     Get.snackbar(
                       'تم التحديث',
                       'تم حفظ المعلومات بنجاح',
@@ -192,6 +200,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       colorText: Colors.white,
                     );
+                    debugPrint('[AUTH:ProfileScreen] ✓ Profile updated (mock)');
                   },
                 ),
                 const SizedBox(height: 50),
