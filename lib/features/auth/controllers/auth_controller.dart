@@ -64,25 +64,43 @@ class AuthController extends GetxController {
   }
 
   /// Check if current user is an admin
+  /// Priority: 1) RPC is_admin() 2) appMetadata 3) userMetadata
   Future<bool> _checkIsAdmin() async {
+    final user = SupabaseService.auth.currentUser;
+    debugPrint('[AuthController] _checkIsAdmin — user: ${user?.id}');
+    debugPrint(
+      '[AuthController] _checkIsAdmin — appMetadata: ${user?.appMetadata}',
+    );
+    debugPrint(
+      '[AuthController] _checkIsAdmin — userMetadata: ${user?.userMetadata}',
+    );
+
+    // 1. Try RPC is_admin() — checks raw_app_meta_data (most secure)
     try {
       final response = await SupabaseService.client.rpc('is_admin');
-      return response == true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: '_checkIsAdmin',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      // Fallback: check user metadata
-      final user = SupabaseService.auth.currentUser;
-      if (user != null) {
-        final isAdmin = user.appMetadata['is_admin'];
-        return isAdmin == true || isAdmin == 'true';
-      }
-      return false;
+      debugPrint('[AuthController] _checkIsAdmin — RPC result: $response');
+      if (response == true) return true;
+    } catch (e) {
+      debugPrint('[AuthController] _checkIsAdmin — RPC failed: $e');
     }
+
+    // 2. Fallback: check appMetadata (raw_app_meta_data — server-set only)
+    if (user != null) {
+      final appAdmin = user.appMetadata['is_admin'];
+      debugPrint(
+        '[AuthController] _checkIsAdmin — appMetadata is_admin: $appAdmin',
+      );
+      if (appAdmin == true || appAdmin == 'true') return true;
+
+      // 3. Fallback: check userMetadata (raw_user_meta_data — client-set)
+      final userAdmin = user.userMetadata?['is_admin'];
+      debugPrint(
+        '[AuthController] _checkIsAdmin — userMetadata is_admin: $userAdmin',
+      );
+      if (userAdmin == true || userAdmin == 'true') return true;
+    }
+
+    return false;
   }
 
   /// Load remembered credentials from SharedPreferences
@@ -132,12 +150,25 @@ class AuthController extends GetxController {
 
   /// Login with email and password via Supabase Auth
   Future<bool> login(String email, String password) async {
+    debugPrint('[AuthController] ▶ login() called — email: $email');
     isLoading.value = true;
 
     try {
+      debugPrint('[AuthController] ℹ Step 1: signInWithPassword...');
       final response = await SupabaseService.auth.signInWithPassword(
         email: email,
         password: password,
+      );
+      debugPrint('[AuthController] ✓ signInWithPassword completed');
+      debugPrint(
+        '[AuthController] ℹ Session: ${response.session != null ? "EXISTS" : "NULL"}',
+      );
+      debugPrint('[AuthController] ℹ User ID: ${response.user?.id}');
+      debugPrint(
+        '[AuthController] ℹ User metadata: ${response.user?.userMetadata}',
+      );
+      debugPrint(
+        '[AuthController] ℹ App metadata: ${response.user?.appMetadata}',
       );
 
       if (response.session == null) {
@@ -145,8 +176,11 @@ class AuthController extends GetxController {
       }
 
       // 1. Verify admin status via RPC and Metadata
+      debugPrint('[AuthController] ℹ Step 2: _checkIsAdmin()...');
       final isAdmin = await _checkIsAdmin();
+      debugPrint('[AuthController] ℹ isAdmin result: $isAdmin');
       if (!isAdmin) {
+        debugPrint('[AuthController] ✗ NOT an admin — signing out');
         await SupabaseService.auth.signOut();
         throw AuthException(
           'هذا الحساب ليس حساب مدير. لا يمكنك الوصول إلى لوحة التحكم.',
@@ -164,9 +198,16 @@ class AuthController extends GetxController {
       userRole.value = 'Admin';
       userName.value = response.user?.userMetadata?['full_name'] ?? 'المدير';
 
+      debugPrint(
+        '[AuthController] ✓ Login SUCCESS — userName: ${userName.value}',
+      );
       isLoading.value = false;
       return true;
     } on AuthException catch (e) {
+      debugPrint('[AuthController] ✗ AuthException: ${e.message}');
+      debugPrint(
+        '[AuthController] ✗ AuthException statusCode: ${e.statusCode}',
+      );
       isLoading.value = false;
       String message = e.message;
       if (message.contains('Invalid login credentials')) {
@@ -181,6 +222,8 @@ class AuthController extends GetxController {
       );
       return false;
     } catch (e, stackTrace) {
+      debugPrint('[AuthController] ✗ UNEXPECTED ERROR: $e');
+      debugPrint('[AuthController] StackTrace: $stackTrace');
       AppLoggerService.logError(
         controller: 'AuthController',
         method: 'login',
