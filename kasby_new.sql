@@ -565,7 +565,7 @@ DROP FUNCTION IF EXISTS fn_update_timestamp() CASCADE;
 CREATE OR REPLACE FUNCTION fn_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = CURRENT_TIMESTAMP; RETURN NEW; END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_profiles_ts ON profiles;
 CREATE TRIGGER trg_profiles_ts       BEFORE UPDATE ON profiles         FOR EACH ROW EXECUTE FUNCTION fn_update_timestamp();
@@ -604,7 +604,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_txn_immutable ON transactions;
 CREATE TRIGGER trg_txn_immutable
@@ -616,7 +616,7 @@ DROP FUNCTION IF EXISTS fn_prevent_audit_mutation() CASCADE;
 CREATE OR REPLACE FUNCTION fn_prevent_audit_mutation()
 RETURNS TRIGGER AS $$
 BEGIN RAISE EXCEPTION 'FORBIDDEN: Audit logs are immutable.'; END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_audit_immutable ON audit_logs;
 CREATE TRIGGER trg_audit_immutable
@@ -1076,7 +1076,8 @@ USING (
 -- ============================================================
 
 DROP VIEW IF EXISTS v_user_dashboard;
-CREATE OR REPLACE VIEW v_user_dashboard AS
+DROP VIEW IF EXISTS v_user_dashboard CASCADE;
+CREATE VIEW v_user_dashboard AS
 SELECT p.id AS user_id, p.full_name, p.account_tier, p.kyc_status,
     w.available_balance, w.profit_balance, w.invested_balance, w.pending_balance,
     w.is_frozen, w.currency, up.current_balance AS point_balance,
@@ -1164,7 +1165,11 @@ ON CONFLICT (code) DO NOTHING;
 -- 10.6 DAILY CHECK-IN
 DROP FUNCTION IF EXISTS public.daily_check_in() CASCADE;
 CREATE OR REPLACE FUNCTION public.daily_check_in()
-RETURNS json AS $$
+RETURNS json 
+LANGUAGE plpgsql 
+SECURITY DEFINER 
+SET search_path = public
+AS $$
 DECLARE
     v_user_id UUID;
     v_last_checkin TIMESTAMPTZ;
@@ -1175,6 +1180,9 @@ BEGIN
     IF v_user_id IS NULL THEN
         RETURN json_build_object('success', FALSE, 'error', 'Unauthorized');
     END IF;
+    
+    -- Safety: Set search path
+    -- SET search_path = public; (Done in function signature)
 
     -- 1. Check if already checked in today
     SELECT created_at INTO v_last_checkin
@@ -1235,7 +1243,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================================
 
 DROP VIEW IF EXISTS v_user_dashboard;
-CREATE OR REPLACE VIEW v_user_dashboard AS
+DROP VIEW IF EXISTS v_user_dashboard CASCADE;
+CREATE VIEW v_user_dashboard AS
 SELECT p.id AS user_id, p.full_name, p.account_tier, p.kyc_status,
     w.available_balance, w.profit_balance, w.invested_balance, w.pending_balance,
     w.is_frozen, w.currency, COALESCE(up.current_balance, 0) AS point_balance,
@@ -1284,14 +1293,12 @@ INSERT INTO auth.users (
     raw_app_meta_data = EXCLUDED.raw_app_meta_data,
     updated_at = NOW();
 
--- Create admin profile
-INSERT INTO admin_profiles (id, full_name, role, is_active)
+-- Create admin profile (SSOT: full_name is in profiles)
+INSERT INTO admin_profiles (id, role, is_active)
 VALUES (
     '00000000-0000-0000-0000-000000000000',
-    'المشرف العام',
     'superadmin',
     TRUE
 ) ON CONFLICT (id) DO UPDATE SET
-    full_name = EXCLUDED.full_name,
     role = EXCLUDED.role,
     is_active = TRUE;
