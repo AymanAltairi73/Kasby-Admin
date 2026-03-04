@@ -561,6 +561,32 @@ CREATE TABLE IF NOT EXISTS public.terms_sections (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 15.7 Advertisements (الإعلانات)
+CREATE TABLE IF NOT EXISTS public.ads (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title_ar        TEXT NOT NULL,
+    title_en        TEXT,
+    description_ar  TEXT,
+    description_en  TEXT,
+    image_url       TEXT NOT NULL,
+    action_url      TEXT,
+    priority        INTEGER DEFAULT 0,
+    is_active       BOOLEAN DEFAULT TRUE,
+    expires_at      TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW(),
+    created_by      UUID REFERENCES auth.users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ads_active_priority ON ads(is_active, priority DESC);
+
+-- Seed Data for ads
+INSERT INTO public.ads (title_ar, title_en, description_ar, description_en, image_url, action_url, priority, is_active)
+VALUES 
+('نمو استثماراتك', 'Investment Growth', 'ابدأ رحلة الاستثمار الآمن مع كاسبي اليوم', 'Start your secure investment journey with Kasby today', 'https://raw.githubusercontent.com/Ayman-Altairi/Kasby-Assets/main/slider_growth.png', null, 10, true),
+('أمان وحماية', 'Security & Protection', 'نظام حماية متطور لجميع بياناتك ومعاملاتك المالية', 'Advanced protection system for all your data and financial transactions', 'https://raw.githubusercontent.com/Ayman-Altairi/Kasby-Assets/main/slider_secure.png', null, 20, true),
+('تنوع المحفظة', 'Portfolio Diversification', 'خيارات استثمارية متعددة تناسب جميع الأهداف', 'Multiple investment options to suit all goals', 'https://raw.githubusercontent.com/Ayman-Altairi/Kasby-Assets/main/slider_diversified.png', null, 30, true);
+
 -- ============================================================
 -- 16. TRIGGERS & AUTOMATION
 -- ============================================================
@@ -745,6 +771,7 @@ ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.point_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spin_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ads ENABLE ROW LEVEL SECURITY;
 
 -- 18.1 PROFILES
 DROP POLICY IF EXISTS "Admin full access" ON profiles;
@@ -797,6 +824,12 @@ DROP POLICY IF EXISTS "Admin scan investments" ON user_investments;
 CREATE POLICY "Admin scan investments" ON user_investments FOR ALL USING (public.is_admin());
 DROP POLICY IF EXISTS "User view investments" ON user_investments;
 CREATE POLICY "User view investments" ON user_investments FOR SELECT USING (user_id = auth.uid());
+
+-- 18.8 ADS
+DROP POLICY IF EXISTS "Admin full access ads" ON ads;
+CREATE POLICY "Admin full access ads" ON ads FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Anyone view active ads" ON ads;
+CREATE POLICY "Anyone view active ads" ON ads FOR SELECT USING (is_active = true AND (expires_at IS NULL OR expires_at > NOW()));
 
 -- 18.8 LOANS
 DROP POLICY IF EXISTS "Admin scan loans" ON loans;
@@ -856,11 +889,28 @@ CREATE POLICY "User view spins" ON spin_results FOR SELECT USING (user_id = auth
 DROP VIEW IF EXISTS public.v_user_dashboard CASCADE;
 CREATE VIEW public.v_user_dashboard
 WITH (security_invoker = true) AS
-SELECT
-    p.id, p.full_name, p.role, p.status,
-    w.available_balance, w.invested_balance, w.profit_balance
+SELECT 
+    p.id AS user_id, 
+    p.full_name, 
+    p.account_tier, 
+    p.kyc_status,
+    COALESCE(w.available_balance, 0) AS available_balance, 
+    COALESCE(w.profit_balance, 0) AS profit_balance, 
+    COALESCE(w.invested_balance, 0) AS invested_balance, 
+    COALESCE(w.pending_balance, 0) AS pending_balance,
+    COALESCE(w.is_frozen, FALSE) AS is_frozen, 
+    COALESCE(w.currency, 'USD') AS currency, 
+    COALESCE(up.current_balance, 0) AS point_balance,
+    (SELECT COUNT(*) FROM user_investments ui WHERE ui.user_id = p.id AND ui.status = 'active')::INT AS active_investments,
+    (SELECT COUNT(*) FROM loans l WHERE l.user_id = p.id AND l.status = 'current')::INT AS active_loans,
+    (SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = p.id AND type = 'profit' AND created_at >= NOW() - INTERVAL '24 hours') AS daily_profit,
+    CASE WHEN COALESCE(w.invested_balance, 0) > 0 
+         THEN ROUND(((SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE user_id = p.id AND type = 'profit' AND created_at >= NOW() - INTERVAL '24 hours') / w.invested_balance * 100), 2)
+         ELSE 0 
+    END AS profit_percentage
 FROM profiles p
-JOIN wallets w ON p.id = w.user_id;
+LEFT JOIN wallets w ON w.user_id = p.id AND w.currency = 'USD'
+LEFT JOIN user_points up ON up.user_id = p.id;
 
 COMMIT;
 

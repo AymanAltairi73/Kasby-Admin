@@ -6,6 +6,7 @@ import '../../../core/widgets/kasby_card.dart';
 import 'fee_settings_screen.dart';
 import 'currency_settings_screen.dart';
 import 'transaction_limits_screen.dart';
+import 'ads_screen.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/controllers/theme_controller.dart';
 
@@ -102,6 +103,13 @@ class SettingsScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.rectangleAd,
+              title: 'إدارة الإعلانات',
+              subtitle: 'إدارة الإعلانات المعروضة في تطبيق المستخدم',
+              onTap: () => Get.to(() => const AdsScreen()),
+            ),
+            const SizedBox(height: 8),
             _buildSettingCard(
               icon: FontAwesomeIcons.fileContract,
               title: 'الشروط والأحكام',

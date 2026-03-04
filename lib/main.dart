@@ -50,7 +50,7 @@ Future<void> main() async {
   // Initialize Services
   await SupabaseService.init();
   await AppLoggerService.init();
-
+  
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
   await initializeDateFormatting('en', null);
