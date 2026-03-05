@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show AdminUserAttributes;
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
@@ -20,7 +23,24 @@ class UserController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadUsers();
+    // Listen to auth state — reload users when admin logs in
+    try {
+      final auth = Get.find<AuthController>();
+      ever(auth.isLoggedIn, (loggedIn) {
+        if (loggedIn) {
+          loadUsers();
+        } else {
+          users.clear();
+          filteredUsers.clear();
+        }
+      });
+      // If already logged in at init time, load immediately
+      if (auth.isLoggedIn.value) {
+        loadUsers();
+      }
+    } catch (_) {
+      // AuthController not ready yet — will reload via ever()
+    }
   }
 
   /// Load users from Supabase
@@ -104,8 +124,8 @@ class UserController extends GetxController {
           .toList();
     }
 
-    // Apply status filter
-    if (selectedStatus.value != 'all') {
+    // Apply status filter (skip if 'all' or 'All')
+    if (selectedStatus.value.toLowerCase() != 'all') {
       result = result
           .where(
             (u) => u.status.toLowerCase() == selectedStatus.value.toLowerCase(),
@@ -113,8 +133,8 @@ class UserController extends GetxController {
           .toList();
     }
 
-    // Apply KYC filter
-    if (selectedKyc.value != 'all') {
+    // Apply KYC filter (skip if 'all' or 'All')
+    if (selectedKyc.value.toLowerCase() != 'all') {
       result = result
           .where(
             (u) => u.kycStatus.toLowerCase() == selectedKyc.value.toLowerCase(),
@@ -122,8 +142,9 @@ class UserController extends GetxController {
           .toList();
     }
 
-    // Apply country filter
-    if (selectedCountry.value.isNotEmpty) {
+    // Apply country filter (skip if empty or 'all'/'All')
+    if (selectedCountry.value.isNotEmpty &&
+        selectedCountry.value.toLowerCase() != 'all') {
       result = result
           .where(
             (u) =>
@@ -132,8 +153,9 @@ class UserController extends GetxController {
           .toList();
     }
 
-    // Apply account type filter
-    if (selectedAccountType.value.isNotEmpty) {
+    // Apply account type filter (skip if empty or 'all'/'All')
+    if (selectedAccountType.value.isNotEmpty &&
+        selectedAccountType.value.toLowerCase() != 'all') {
       result = result
           .where(
             (u) =>
@@ -141,6 +163,31 @@ class UserController extends GetxController {
                 selectedAccountType.value.toLowerCase(),
           )
           .toList();
+    }
+
+    // Apply time filter
+    final now = DateTime.now();
+    switch (selectedTimeFilter.value) {
+      case TimeFilter.daily:
+        result = result
+            .where(
+              (u) =>
+                  u.createdAt.year == now.year &&
+                  u.createdAt.month == now.month &&
+                  u.createdAt.day == now.day,
+            )
+            .toList();
+        break;
+      case TimeFilter.weekly:
+        final weekAgo = now.subtract(const Duration(days: 7));
+        result = result.where((u) => u.createdAt.isAfter(weekAgo)).toList();
+        break;
+      case TimeFilter.monthly:
+        final monthAgo = now.subtract(const Duration(days: 30));
+        result = result.where((u) => u.createdAt.isAfter(monthAgo)).toList();
+        break;
+      case TimeFilter.all:
+        break;
     }
 
     filteredUsers.value = result;
@@ -370,6 +417,8 @@ class UserController extends GetxController {
   }
 
   /// Add user from named parameters (matches UI call site)
+  /// Uses adminClient (service role key) to create users without affecting
+  /// the current admin session. Falls back to signUp if no service role key.
   Future<void> addUser({
     required String name,
     required String country,
@@ -380,19 +429,69 @@ class UserController extends GetxController {
     String email = '',
   }) async {
     try {
-      await SupabaseService.client.from('profiles').insert({
-        'full_name': name,
-        'country_code': country.isNotEmpty ? country : null,
-        'city': city,
-        'phone': phone,
-        'whatsapp': whatsapp,
-        'telegram': telegram,
-        'email': email,
-        'role': 'user', // Explicitly set role for new manual users
-        'status': 'active',
-        'kyc_status': 'unverified',
-        'account_tier': 'free',
-      });
+      // Generate email if not provided
+      final userEmail = email.isNotEmpty
+          ? email
+          : '${phone.replaceAll(RegExp(r'[^0-9]'), '')}@kasby.app';
+
+      final tempPassword = 'Kasby@${DateTime.now().millisecondsSinceEpoch}';
+
+      String? userId;
+
+      if (SupabaseService.hasAdminClient) {
+        // ═══ Preferred: Use admin client (service role key) ═══
+        // This does NOT affect the current admin session
+        final response = await SupabaseService.adminClient.auth.admin
+            .createUser(
+              AdminUserAttributes(
+                email: userEmail,
+                password: tempPassword,
+                emailConfirm: true,
+                userMetadata: {
+                  'full_name': name,
+                  'phone': phone,
+                  'country_code': country,
+                },
+              ),
+            );
+        userId = response.user?.id;
+      } else {
+        // ═══ Fallback: Use signUp (requires session restore) ═══
+        debugPrint(
+          '[UserController] ⚠ No service role key — using signUp fallback',
+        );
+        final adminRefreshToken =
+            SupabaseService.auth.currentSession?.refreshToken;
+
+        final response = await SupabaseService.auth.signUp(
+          email: userEmail,
+          password: tempPassword,
+          data: {'full_name': name, 'phone': phone, 'country_code': country},
+        );
+        userId = response.user?.id;
+
+        // Restore admin session
+        if (adminRefreshToken != null) {
+          await SupabaseService.auth.setSession(adminRefreshToken);
+        }
+      }
+
+      if (userId == null) {
+        throw Exception('فشل إنشاء حساب المستخدم');
+      }
+
+      // Update profile with extra fields not handled by trigger
+      await SupabaseService.client
+          .from('profiles')
+          .update({
+            'city': city,
+            'whatsapp': whatsapp.isNotEmpty ? whatsapp : null,
+            'telegram': telegram.isNotEmpty ? telegram : null,
+            'status': 'active',
+            'kyc_status': 'unverified',
+            'account_tier': 'free',
+          })
+          .eq('id', userId);
 
       await loadUsers();
       Get.snackbar(
@@ -407,11 +506,20 @@ class UserController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar(
-        'خطأ',
-        'فشل في إضافة المستخدم',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+
+      String errorMsg = 'فشل في إضافة المستخدم';
+      final errStr = e.toString();
+      if (errStr.contains('already been registered') ||
+          errStr.contains('already exists')) {
+        errorMsg = 'هذا البريد الإلكتروني أو رقم الهاتف مسجل بالفعل';
+      } else if (errStr.contains('Database error')) {
+        errorMsg =
+            'خطأ في قاعدة البيانات — تأكد من عدم تكرار رقم الهاتف أو البريد';
+      } else if (!SupabaseService.hasAdminClient) {
+        errorMsg =
+            'يرجى تشغيل التطبيق مع --dart-define=SUPABASE_SERVICE_ROLE_KEY=...';
+      }
+      Get.snackbar('خطأ', errorMsg, snackPosition: SnackPosition.BOTTOM);
     }
   }
 

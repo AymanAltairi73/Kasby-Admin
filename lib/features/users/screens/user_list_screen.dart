@@ -21,7 +21,7 @@ class UserListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userController = Get.put(UserController());
+    final userController = Get.find<UserController>();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -108,13 +108,13 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: {'type': 'status', 'value': 'All'},
+                value: {'type': 'status', 'value': 'all'},
                 child: Row(
                   children: [
                     Icon(
                       Icons.all_inclusive,
                       size: 18,
-                      color: userController.selectedStatus.value == 'All'
+                      color: userController.selectedStatus.value == 'all'
                           ? KasbyColors.info
                           : Colors.white60,
                     ),
@@ -168,11 +168,11 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: {'type': 'country', 'value': 'All'},
+                value: {'type': 'country', 'value': 'all'},
                 child: Text(
                   'كل الدول',
                   style: TextStyle(
-                    color: userController.selectedCountry.value == 'All'
+                    color: userController.selectedCountry.value == 'all'
                         ? KasbyColors.primaryGold
                         : Colors.white,
                   ),
@@ -204,11 +204,11 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: {'type': 'accountType', 'value': 'All'},
+                value: {'type': 'accountType', 'value': 'all'},
                 child: Text(
                   'كل الحسابات',
                   style: TextStyle(
-                    color: userController.selectedAccountType.value == 'All'
+                    color: userController.selectedAccountType.value == 'all'
                         ? KasbyColors.primaryGold
                         : Colors.white,
                   ),
@@ -314,15 +314,19 @@ class UserListScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
-                    itemCount: userController.filteredUsers.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final user = userController.filteredUsers[index];
-                      return _buildDazzlingUserCard(user);
-                    },
+                  return RefreshIndicator(
+                    onRefresh: () => userController.loadUsers(),
+                    color: KasbyColors.primaryGold,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+                      itemCount: userController.filteredUsers.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final user = userController.filteredUsers[index];
+                        return _buildDazzlingUserCard(user);
+                      },
+                    ),
                   );
                 }),
               ),

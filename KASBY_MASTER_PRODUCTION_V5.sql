@@ -18,61 +18,315 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- 1. CUSTOM TYPES (IDEMPOTENT)
 -- ============================================================
 DO $$ BEGIN
+    -- role_type (نوع الدور)
+    -- 'user'  = مستخدم | User
+    -- 'admin' = مدير  | Admin
+    -- 'agent' = وكيل  | Agent
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
         CREATE TYPE role_type AS ENUM ('user', 'admin', 'agent');
     END IF;
+
+    -- user_status (حالة المستخدم)
+    -- 'active'    = نشط      | Active
+    -- 'blocked'   = محظور    | Blocked
+    -- 'suspended' = معلّق    | Suspended
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
         CREATE TYPE user_status AS ENUM ('active', 'blocked', 'suspended');
     END IF;
+
+    -- account_tier (مستوى الحساب)
+    -- 'free'     = مجاني   | Free
+    -- 'verified' = موثّق   | Verified
+    -- 'vip'      = مميز    | VIP
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'account_tier') THEN
         CREATE TYPE account_tier AS ENUM ('free', 'verified', 'vip');
     END IF;
+
+    -- kyc_status (حالة التحقق من الهوية)
+    -- 'unverified' = غير موثّق    | Unverified
+    -- 'pending'    = قيد المراجعة | Pending
+    -- 'verified'   = موثّق        | Verified
+    -- 'rejected'   = مرفوض        | Rejected
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kyc_status') THEN
         CREATE TYPE kyc_status AS ENUM ('unverified', 'pending', 'verified', 'rejected');
     END IF;
+
+    -- txn_type (نوع المعاملة)
+    -- 'deposit'            = إيداع              | Deposit
+    -- 'withdrawal'         = سحب                | Withdrawal
+    -- 'transfer_in'        = تحويل وارد         | Transfer In
+    -- 'transfer_out'       = تحويل صادر         | Transfer Out
+    -- 'investment'         = استثمار             | Investment
+    -- 'investment_return'  = عائد استثمار        | Investment Return
+    -- 'loan_disbursement'  = صرف قرض            | Loan Disbursement
+    -- 'loan_repayment'     = سداد قرض           | Loan Repayment
+    -- 'reward'             = مكافأة              | Reward
+    -- 'adjustment'         = تسوية               | Adjustment
+    -- 'profit'             = ربح                 | Profit
+    -- 'fee'                = رسوم                | Fee
+    -- 'admin_credit'       = إضافة إدارية       | Admin Credit
+    -- 'admin_debit'        = خصم إداري          | Admin Debit
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'txn_type') THEN
         CREATE TYPE txn_type AS ENUM ('deposit', 'withdrawal', 'transfer_in', 'transfer_out', 'investment', 'investment_return', 'loan_disbursement', 'loan_repayment', 'reward', 'adjustment', 'profit', 'fee', 'admin_credit', 'admin_debit');
     END IF;
+
+    -- txn_status (حالة المعاملة)
+    -- 'pending'    = قيد الانتظار | Pending
+    -- 'processing' = قيد المعالجة | Processing
+    -- 'completed'  = مكتملة       | Completed
+    -- 'approved'   = موافق عليها  | Approved
+    -- 'rejected'   = مرفوضة       | Rejected
+    -- 'cancelled'  = ملغاة        | Cancelled
+    -- 'failed'     = فشلت         | Failed
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'txn_status') THEN
         CREATE TYPE txn_status AS ENUM ('pending', 'processing', 'completed', 'approved', 'rejected', 'cancelled', 'failed');
     END IF;
+
+    -- investment_status (حالة الاستثمار)
+    -- 'active'    = نشط     | Active
+    -- 'completed' = مكتمل   | Completed
+    -- 'cancelled' = ملغي    | Cancelled
+    -- 'matured'   = مستحق   | Matured
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'investment_status') THEN
         CREATE TYPE investment_status AS ENUM ('active', 'completed', 'cancelled', 'matured');
     END IF;
+
+    -- loan_status (حالة القرض)
+    -- 'pending'   = قيد الانتظار | Pending
+    -- 'current'   = جاري         | Current
+    -- 'paid'      = مدفوع        | Paid
+    -- 'delayed'   = متأخر        | Delayed
+    -- 'defaulted' = متعثر        | Defaulted
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'loan_status') THEN
         CREATE TYPE loan_status AS ENUM ('pending', 'current', 'paid', 'delayed', 'defaulted');
     END IF;
+
+    -- agent_status (حالة الوكيل)
+    -- 'active'    = نشط    | Active
+    -- 'inactive'  = غير نشط | Inactive
+    -- 'suspended' = معلّق   | Suspended
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agent_status') THEN
         CREATE TYPE agent_status AS ENUM ('active', 'inactive', 'suspended');
     END IF;
+
+    -- severity_type (مستوى الخطورة)
+    -- 'info'     = معلومات | Info
+    -- 'warning'  = تحذير   | Warning
+    -- 'critical' = حرج     | Critical
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'severity_type') THEN
         CREATE TYPE severity_type AS ENUM ('info', 'warning', 'critical');
     END IF;
+
+    -- kyc_doc_type (نوع وثيقة التحقق)
+    -- 'id_card_front'    = بطاقة هوية (أمامية) | ID Card (Front)
+    -- 'id_card_back'     = بطاقة هوية (خلفية)  | ID Card (Back)
+    -- 'passport'         = جواز سفر             | Passport
+    -- 'selfie'           = صورة شخصية           | Selfie
+    -- 'proof_of_address' = إثبات عنوان          | Proof of Address
+    -- 'other'            = أخرى                 | Other
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'kyc_doc_type') THEN
         CREATE TYPE kyc_doc_type AS ENUM ('id_card_front', 'id_card_back', 'passport', 'selfie', 'proof_of_address', 'other');
     END IF;
+
+    -- audit_log_type (نوع سجل المراجعة)
+    -- 'auth'            = مصادقة         | Authentication
+    -- 'user_management' = إدارة المستخدمين | User Management
+    -- 'financial'       = مالي            | Financial
+    -- 'system'          = نظام            | System
+    -- 'security'        = أمني            | Security
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_log_type') THEN
         CREATE TYPE audit_log_type AS ENUM ('auth', 'user_management', 'financial', 'system', 'security');
     END IF;
+
+    -- audit_log_status (حالة سجل المراجعة)
+    -- 'success' = ناجح   | Success
+    -- 'failed'  = فاشل   | Failed
+    -- 'warning' = تحذير  | Warning
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_log_status') THEN
         CREATE TYPE audit_log_status AS ENUM ('success', 'failed', 'warning');
     END IF;
+
+    -- message_type (نوع الرسالة)
+    -- 'text'   = نص    | Text
+    -- 'image'  = صورة  | Image
+    -- 'file'   = ملف   | File
+    -- 'system' = نظام  | System
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'message_type') THEN
         CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'system');
     END IF;
+
+    -- point_rule_type (نوع قاعدة النقاط)
+    -- 'earn'  = كسب    | Earn
+    -- 'spend' = إنفاق  | Spend
+    -- 'bonus' = مكافأة | Bonus
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'point_rule_type') THEN
         CREATE TYPE point_rule_type AS ENUM ('earn', 'spend', 'bonus');
     END IF;
+
+    -- prize_type (نوع الجائزة)
+    -- 'points'  = نقاط   | Points
+    -- 'cash'    = نقدي   | Cash
+    -- 'voucher' = قسيمة  | Voucher
+    -- 'nothing' = لا شيء | Nothing
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'prize_type') THEN
         CREATE TYPE prize_type AS ENUM ('points', 'cash', 'voucher', 'nothing');
     END IF;
+
+    -- limit_tier (مستوى الحد)
+    -- 'free'     = مجاني | Free
+    -- 'verified' = موثّق | Verified
+    -- 'vip'      = مميز  | VIP
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'limit_tier') THEN
         CREATE TYPE limit_tier AS ENUM ('free', 'verified', 'vip');
     END IF;
+
+    -- fee_category (فئة الرسوم)
+    -- 'deposit'    = إيداع    | Deposit
+    -- 'withdrawal' = سحب      | Withdrawal
+    -- 'transfer'   = تحويل    | Transfer
+    -- 'investment' = استثمار   | Investment
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'fee_category') THEN
         CREATE TYPE fee_category AS ENUM ('deposit', 'withdrawal', 'transfer', 'investment');
     END IF;
 END $$;
+
+-- ============================================================
+-- 1.1 ENUM TRANSLATIONS TABLE (جدول ترجمات الأنواع)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.enum_translations (
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    enum_type   TEXT NOT NULL,
+    enum_value  TEXT NOT NULL,
+    label_ar    TEXT NOT NULL,
+    label_en    TEXT NOT NULL,
+    UNIQUE(enum_type, enum_value)
+);
+
+-- Seed translations (IDEMPOTENT via ON CONFLICT)
+INSERT INTO public.enum_translations (enum_type, enum_value, label_ar, label_en) VALUES
+    -- role_type
+    ('role_type', 'user',  'مستخدم', 'User'),
+    ('role_type', 'admin', 'مدير',   'Admin'),
+    ('role_type', 'agent', 'وكيل',   'Agent'),
+    -- user_status
+    ('user_status', 'active',    'نشط',    'Active'),
+    ('user_status', 'blocked',   'محظور',   'Blocked'),
+    ('user_status', 'suspended', 'معلّق',   'Suspended'),
+    -- account_tier
+    ('account_tier', 'free',     'مجاني', 'Free'),
+    ('account_tier', 'verified', 'موثّق', 'Verified'),
+    ('account_tier', 'vip',      'مميز',  'VIP'),
+    -- kyc_status
+    ('kyc_status', 'unverified', 'غير موثّق',    'Unverified'),
+    ('kyc_status', 'pending',    'قيد المراجعة', 'Pending'),
+    ('kyc_status', 'verified',   'موثّق',        'Verified'),
+    ('kyc_status', 'rejected',   'مرفوض',        'Rejected'),
+    -- txn_type
+    ('txn_type', 'deposit',           'إيداع',          'Deposit'),
+    ('txn_type', 'withdrawal',        'سحب',            'Withdrawal'),
+    ('txn_type', 'transfer_in',       'تحويل وارد',     'Transfer In'),
+    ('txn_type', 'transfer_out',      'تحويل صادر',     'Transfer Out'),
+    ('txn_type', 'investment',        'استثمار',         'Investment'),
+    ('txn_type', 'investment_return', 'عائد استثمار',    'Investment Return'),
+    ('txn_type', 'loan_disbursement', 'صرف قرض',        'Loan Disbursement'),
+    ('txn_type', 'loan_repayment',    'سداد قرض',       'Loan Repayment'),
+    ('txn_type', 'reward',            'مكافأة',          'Reward'),
+    ('txn_type', 'adjustment',        'تسوية',           'Adjustment'),
+    ('txn_type', 'profit',            'ربح',             'Profit'),
+    ('txn_type', 'fee',               'رسوم',            'Fee'),
+    ('txn_type', 'admin_credit',      'إضافة إدارية',   'Admin Credit'),
+    ('txn_type', 'admin_debit',       'خصم إداري',      'Admin Debit'),
+    -- txn_status
+    ('txn_status', 'pending',    'قيد الانتظار', 'Pending'),
+    ('txn_status', 'processing', 'قيد المعالجة', 'Processing'),
+    ('txn_status', 'completed',  'مكتملة',       'Completed'),
+    ('txn_status', 'approved',   'موافق عليها',  'Approved'),
+    ('txn_status', 'rejected',   'مرفوضة',       'Rejected'),
+    ('txn_status', 'cancelled',  'ملغاة',        'Cancelled'),
+    ('txn_status', 'failed',     'فشلت',         'Failed'),
+    -- investment_status
+    ('investment_status', 'active',    'نشط',   'Active'),
+    ('investment_status', 'completed', 'مكتمل', 'Completed'),
+    ('investment_status', 'cancelled', 'ملغي',  'Cancelled'),
+    ('investment_status', 'matured',   'مستحق', 'Matured'),
+    -- loan_status
+    ('loan_status', 'pending',   'قيد الانتظار', 'Pending'),
+    ('loan_status', 'current',   'جاري',         'Current'),
+    ('loan_status', 'paid',      'مدفوع',        'Paid'),
+    ('loan_status', 'delayed',   'متأخر',        'Delayed'),
+    ('loan_status', 'defaulted', 'متعثر',        'Defaulted'),
+    -- agent_status
+    ('agent_status', 'active',    'نشط',     'Active'),
+    ('agent_status', 'inactive',  'غير نشط', 'Inactive'),
+    ('agent_status', 'suspended', 'معلّق',   'Suspended'),
+    -- severity_type
+    ('severity_type', 'info',     'معلومات', 'Info'),
+    ('severity_type', 'warning',  'تحذير',   'Warning'),
+    ('severity_type', 'critical', 'حرج',     'Critical'),
+    -- kyc_doc_type
+    ('kyc_doc_type', 'id_card_front',    'بطاقة هوية (أمامية)', 'ID Card (Front)'),
+    ('kyc_doc_type', 'id_card_back',     'بطاقة هوية (خلفية)',  'ID Card (Back)'),
+    ('kyc_doc_type', 'passport',         'جواز سفر',             'Passport'),
+    ('kyc_doc_type', 'selfie',           'صورة شخصية',           'Selfie'),
+    ('kyc_doc_type', 'proof_of_address', 'إثبات عنوان',          'Proof of Address'),
+    ('kyc_doc_type', 'other',            'أخرى',                 'Other'),
+    -- audit_log_type
+    ('audit_log_type', 'auth',            'مصادقة',           'Authentication'),
+    ('audit_log_type', 'user_management', 'إدارة المستخدمين', 'User Management'),
+    ('audit_log_type', 'financial',       'مالي',              'Financial'),
+    ('audit_log_type', 'system',          'نظام',              'System'),
+    ('audit_log_type', 'security',        'أمني',              'Security'),
+    -- audit_log_status
+    ('audit_log_status', 'success', 'ناجح',  'Success'),
+    ('audit_log_status', 'failed',  'فاشل',  'Failed'),
+    ('audit_log_status', 'warning', 'تحذير', 'Warning'),
+    -- message_type
+    ('message_type', 'text',   'نص',   'Text'),
+    ('message_type', 'image',  'صورة', 'Image'),
+    ('message_type', 'file',   'ملف',  'File'),
+    ('message_type', 'system', 'نظام', 'System'),
+    -- point_rule_type
+    ('point_rule_type', 'earn',  'كسب',    'Earn'),
+    ('point_rule_type', 'spend', 'إنفاق',  'Spend'),
+    ('point_rule_type', 'bonus', 'مكافأة', 'Bonus'),
+    -- prize_type
+    ('prize_type', 'points',  'نقاط',   'Points'),
+    ('prize_type', 'cash',    'نقدي',   'Cash'),
+    ('prize_type', 'voucher', 'قسيمة',  'Voucher'),
+    ('prize_type', 'nothing', 'لا شيء', 'Nothing'),
+    -- limit_tier
+    ('limit_tier', 'free',     'مجاني', 'Free'),
+    ('limit_tier', 'verified', 'موثّق', 'Verified'),
+    ('limit_tier', 'vip',      'مميز',  'VIP'),
+    -- fee_category
+    ('fee_category', 'deposit',    'إيداع',   'Deposit'),
+    ('fee_category', 'withdrawal', 'سحب',     'Withdrawal'),
+    ('fee_category', 'transfer',   'تحويل',   'Transfer'),
+    ('fee_category', 'investment', 'استثمار', 'Investment')
+ON CONFLICT (enum_type, enum_value) DO UPDATE SET
+    label_ar = EXCLUDED.label_ar,
+    label_en = EXCLUDED.label_en;
+
+-- Helper function: get translated label for any enum value
+CREATE OR REPLACE FUNCTION public.fn_translate_enum(
+    p_enum_type TEXT,
+    p_enum_value TEXT,
+    p_lang TEXT DEFAULT 'ar'  -- 'ar' or 'en'
+)
+RETURNS TEXT AS $$
+DECLARE
+    v_label TEXT;
+BEGIN
+    IF p_lang = 'en' THEN
+        SELECT label_en INTO v_label FROM public.enum_translations
+        WHERE enum_type = p_enum_type AND enum_value = p_enum_value;
+    ELSE
+        SELECT label_ar INTO v_label FROM public.enum_translations
+        WHERE enum_type = p_enum_type AND enum_value = p_enum_value;
+    END IF;
+    RETURN COALESCE(v_label, p_enum_value);
+END;
+$$ LANGUAGE plpgsql STABLE SET search_path = public;
 
 -- ============================================================
 -- 2. SECURITY HELPERS

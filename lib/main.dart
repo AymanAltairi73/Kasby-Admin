@@ -43,6 +43,7 @@ import 'core/services/supabase_service.dart';
 import 'core/services/app_logger_service.dart';
 import 'features/subscriptions/controllers/subscription_controller.dart';
 import 'features/subscriptions/screens/subscriptions_screen.dart';
+import 'core/localization/admin_translations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +51,7 @@ Future<void> main() async {
   // Initialize Services
   await SupabaseService.init();
   await AppLoggerService.init();
-  
+
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
   await initializeDateFormatting('en', null);
@@ -91,6 +92,7 @@ class KasbyAdminApp extends StatelessWidget {
           : ThemeMode.light,
 
       // RTL Support
+      translations: AdminTranslations(),
       locale: const Locale('ar', 'SA'),
       fallbackLocale: const Locale('en', 'US'),
 
