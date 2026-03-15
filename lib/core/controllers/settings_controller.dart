@@ -2,12 +2,15 @@ import 'package:get/get.dart';
 import '../../core/services/audit_logger.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/services/app_logger_service.dart';
+import '../../core/services/system_repository.dart';
 import '../models/system_settings_model.dart';
 
 /// Settings Controller
 /// Manages system-wide emergency controls from Supabase `system_settings` table
 /// (Single Source of Truth — no local storage)
 class SettingsController extends GetxController {
+  final SystemRepository _systemRepo = SystemRepository(SupabaseService.client);
+  
   final settings = SystemSettings(
     pauseDeposits: false,
     pauseWithdrawals: false,
@@ -33,11 +36,7 @@ class SettingsController extends GetxController {
   Future<void> loadSettings() async {
     isLoading.value = true;
     try {
-      final response = await SupabaseService.client
-          .from('system_settings')
-          .select()
-          .limit(1)
-          .maybeSingle();
+      final response = await _systemRepo.getSettings();
 
       if (response != null) {
         settings.value = SystemSettings.fromJson(response);
@@ -65,7 +64,7 @@ class SettingsController extends GetxController {
   Future<void> _createInitialSettings() async {
     try {
       final adminId = SupabaseService.auth.currentUser?.id;
-      await SupabaseService.client.from('system_settings').insert({
+      await _systemRepo.createSettings({
         'pause_deposits': false,
         'pause_withdrawals': false,
         'pause_profits': false,
@@ -87,28 +86,21 @@ class SettingsController extends GetxController {
     try {
       final adminId = SupabaseService.auth.currentUser?.id;
       // Get the settings row ID first
-      final existing = await SupabaseService.client
-          .from('system_settings')
-          .select('id')
-          .limit(1)
-          .maybeSingle();
+      final existing = await _systemRepo.getSettings();
       if (existing == null) return;
 
-      await SupabaseService.client
-          .from('system_settings')
-          .update({
-            'pause_deposits': settings.value.pauseDeposits,
-            'pause_withdrawals': settings.value.pauseWithdrawals,
-            'pause_profits': settings.value.pauseProfits,
-            'pause_investments': settings.value.pauseInvestments,
-            'pause_loans': settings.value.pauseLoans,
-            'system_freeze': settings.value.systemFreeze,
-            'is_maintenance_mode': settings.value.isMaintenanceMode,
-            'maintenance_message': settings.value.maintenanceMessage,
-            'updated_by': adminId,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', existing['id']);
+      await _systemRepo.updateSettings(existing['id'], {
+        'pause_deposits': settings.value.pauseDeposits,
+        'pause_withdrawals': settings.value.pauseWithdrawals,
+        'pause_profits': settings.value.pauseProfits,
+        'pause_investments': settings.value.pauseInvestments,
+        'pause_loans': settings.value.pauseLoans,
+        'system_freeze': settings.value.systemFreeze,
+        'is_maintenance_mode': settings.value.isMaintenanceMode,
+        'maintenance_message': settings.value.maintenanceMessage,
+        'updated_by': adminId,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsController',

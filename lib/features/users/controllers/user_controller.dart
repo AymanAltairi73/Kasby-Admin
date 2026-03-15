@@ -7,9 +7,12 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../repositories/profile_repository.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
+  final ProfileRepository _profileRepo = ProfileRepository(SupabaseService.client);
+  
   final users = <User>[].obs;
   final filteredUsers = <User>[].obs;
   final isLoading = false.obs;
@@ -48,14 +51,8 @@ class UserController extends GetxController {
     debugPrint('[UserController] ▶ Loading users from Supabase...');
     isLoading.value = true;
     try {
-      final response = await SupabaseService.client
-          .from('profiles')
-          .select('*, wallets(*)')
-          .order('created_at', ascending: false);
-
-      users.value = (response as List)
-          .map((json) => User.fromSupabase(json))
-          .toList();
+      final response = await _profileRepo.getAllProfiles();
+      users.value = response;
       _applyFilters();
       debugPrint('[UserController] ✓ Loaded ${users.length} users');
     } catch (e, stackTrace) {
@@ -196,10 +193,7 @@ class UserController extends GetxController {
   /// Block user
   Future<void> blockUser(String userId) async {
     try {
-      await SupabaseService.client
-          .from('profiles')
-          .update({'status': 'blocked'})
-          .eq('id', userId);
+      await _profileRepo.updateProfile(userId, {'status': 'blocked'});
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
@@ -230,10 +224,7 @@ class UserController extends GetxController {
   /// Activate user
   Future<void> activateUser(String userId) async {
     try {
-      await SupabaseService.client
-          .from('profiles')
-          .update({'status': 'active'})
-          .eq('id', userId);
+      await _profileRepo.updateProfile(userId, {'status': 'active'});
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
@@ -288,10 +279,7 @@ class UserController extends GetxController {
   /// Verify KYC / documents
   Future<void> verifyKyc(String userId) async {
     try {
-      await SupabaseService.client
-          .from('profiles')
-          .update({'kyc_status': 'Verified'})
-          .eq('id', userId);
+      await _profileRepo.updateProfile(userId, {'kyc_status': 'Verified'});
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
@@ -321,10 +309,7 @@ class UserController extends GetxController {
   /// Reject KYC
   Future<void> rejectKyc(String userId) async {
     try {
-      await SupabaseService.client
-          .from('profiles')
-          .update({'kyc_status': 'Rejected'})
-          .eq('id', userId);
+      await _profileRepo.updateProfile(userId, {'kyc_status': 'Rejected'});
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
@@ -357,9 +342,9 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await SupabaseService.client.rpc(
+      await _profileRepo.callRpc(
         'fn_admin_add_balance',
-        params: {'p_user_id': userId, 'p_amount': amount},
+        {'p_user_id': userId, 'p_amount': amount},
       );
 
       await loadUsers();
@@ -390,9 +375,9 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await SupabaseService.client.rpc(
+      await _profileRepo.callRpc(
         'fn_admin_deduct_balance',
-        params: {'p_user_id': userId, 'p_amount': amount},
+        {'p_user_id': userId, 'p_amount': amount},
       );
 
       await loadUsers();
@@ -481,17 +466,14 @@ class UserController extends GetxController {
       }
 
       // Update profile with extra fields not handled by trigger
-      await SupabaseService.client
-          .from('profiles')
-          .update({
-            'city': city,
-            'whatsapp': whatsapp.isNotEmpty ? whatsapp : null,
-            'telegram': telegram.isNotEmpty ? telegram : null,
-            'status': 'active',
-            'kyc_status': 'unverified',
-            'account_tier': 'free',
-          })
-          .eq('id', userId);
+      await _profileRepo.updateProfile(userId, {
+        'city': city,
+        'whatsapp': whatsapp.isNotEmpty ? whatsapp : null,
+        'telegram': telegram.isNotEmpty ? telegram : null,
+        'status': 'active',
+        'kyc_status': 'unverified',
+        'account_tier': 'free',
+      });
 
       await loadUsers();
       Get.snackbar(
@@ -526,10 +508,7 @@ class UserController extends GetxController {
   /// Update user profile
   Future<void> updateUser(User user) async {
     try {
-      await SupabaseService.client
-          .from('profiles')
-          .update(user.toSupabase())
-          .eq('id', user.id);
+      await _profileRepo.updateProfile(user.id, user.toSupabase());
 
       final idx = users.indexWhere((u) => u.id == user.id);
       if (idx != -1) {
@@ -560,7 +539,7 @@ class UserController extends GetxController {
   /// Delete user
   Future<void> deleteUser(String userId) async {
     try {
-      await SupabaseService.client.from('profiles').delete().eq('id', userId);
+      await _profileRepo.deleteProfile(userId);
 
       users.removeWhere((u) => u.id == userId);
       _applyFilters();
