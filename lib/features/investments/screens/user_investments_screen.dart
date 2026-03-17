@@ -51,23 +51,40 @@ class UserInvestmentsScreen extends StatelessWidget {
   }
 
   Widget _buildInvestmentsList(List<UserInvestment> investments) {
+    final controller = Get.find<InvestmentController>();
+    
     if (investments.isEmpty) {
-      return const Center(
-        child: Text(
-          'لا توجد استثمارات',
-          style: TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
+      return RefreshIndicator(
+        onRefresh: () => controller.loadUserInvestments(),
+        color: KasbyColors.primaryGold,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 100),
+            Center(
+              child: Text(
+                'لا توجد استثمارات',
+                style: TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: investments.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final investment = investments[index];
-        return _buildInvestmentCard(investment);
-      },
+    return RefreshIndicator(
+      onRefresh: () => controller.loadUserInvestments(),
+      color: KasbyColors.primaryGold,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: investments.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final investment = investments[index];
+          return _buildInvestmentCard(investment);
+        },
+      ),
     );
   }
 

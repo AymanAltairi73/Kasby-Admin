@@ -37,21 +37,29 @@ class AuditLogsScreen extends StatelessWidget {
                       );
                     }
 
-                    if (controller.logs.isEmpty) {
-                      return _buildEmptyState();
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: controller.logs.length,
-                      itemBuilder: (context, index) {
-                        final log = controller.logs[index];
-                        return _buildEnhancedLogItem(context, log, index);
-                      },
+                    return RefreshIndicator(
+                      onRefresh: () => controller.fetchLogs(),
+                      color: KasbyColors.primaryGold,
+                      child: controller.logs.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(height: Get.height * 0.2),
+                                _buildEmptyState(),
+                              ],
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              itemCount: controller.logs.length,
+                              itemBuilder: (context, index) {
+                                final log = controller.logs[index];
+                                return _buildEnhancedLogItem(context, log, index);
+                              },
+                            ),
                     );
                   }),
                 ),

@@ -10,11 +10,10 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/audit_controller.dart';
 import '../controllers/main_controller.dart';
-import '../../users/controllers/user_controller.dart';
-import '../../investments/controllers/investment_controller.dart';
 import '../../transactions/controllers/transaction_controller.dart';
 import '../models/audit_log_model.dart';
 import '../../chat/controllers/chat_controller.dart';
+import '../controllers/dashboard_controller.dart';
 
 /// Dashboard Home Screen - Masterpiece Edition
 /// Main overview with celestial aesthetics and magical interactions
@@ -25,8 +24,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final auditController = Get.find<AuditController>();
-    final userController = Get.find<UserController>();
-    final investmentController = Get.find<InvestmentController>();
+    final dashboardController = Get.put(DashboardController());
     final transactionController = Get.find<TransactionController>();
 
     return Scaffold(
@@ -38,125 +36,127 @@ class DashboardScreen extends StatelessWidget {
           _buildPremiumGoldenBackground(),
 
           // Main Content
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 100),
+          RefreshIndicator(
+            onRefresh: () async {
+              await Future.wait([
+                dashboardController.loadDashboardData(),
+                auditController.fetchLogs(),
+                transactionController.loadTransactions(),
+              ]);
+            },
+            color: KasbyColors.primaryGold,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 100),
 
-                // Magical Welcome Header
-                _buildMagicalHeader(authController),
+                  // Magical Welcome Header
+                  _buildMagicalHeader(authController),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Magical Statistics Grid
-                      _buildMagicalStatsGrid(
-                        userController,
-                        investmentController,
-                        transactionController,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Magical Statistics Grid
+                        _buildMagicalStatsGrid(dashboardController),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Urgent Alerts (New Section)
-                      _buildUrgentAlerts(transactionController),
+                        // Urgent Alerts (New Section)
+                        _buildUrgentAlerts(transactionController),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Nebula Chart Section
-                      const _SectionHeader(
-                        title: 'مركز التحليلات المالية والتدفقات',
-                        subtitle: 'مؤشرات الأداء الأسبوعية للمحافظ الاستثمارية',
-                      ),
-                      const SizedBox(height: 16),
-                      RepaintBoundary(
-                        child: KasbyGlassCard(
-                          padding: const EdgeInsets.all(16),
-                          opacity: 0.08,
-                          child: SizedBox(
-                            height: 180,
-                            child: _buildNebulaChart(),
+                        // Nebula Chart Section
+                        const _SectionHeader(
+                          title: 'مركز التحليلات المالية والتدفقات',
+                          subtitle: 'مؤشرات الأداء الأسبوعية للمحافظ الاستثمارية',
+                        ),
+                        const SizedBox(height: 16),
+                        RepaintBoundary(
+                          child: KasbyGlassCard(
+                            padding: const EdgeInsets.all(16),
+                            opacity: 0.08,
+                            child: SizedBox(
+                              height: 180,
+                              child: _buildNebulaChart(),
+                            ),
                           ),
                         ),
-                      ),
 
-                      SizedBox(height: 25),
+                        const SizedBox(height: 25),
 
-                      // Magical Command Hub
-                      const _SectionHeader(
-                        title: 'مركز القيادة والتحكم',
-                        subtitle: 'وصول فوري لكافة أركان المنظومة',
-                      ),
-                      SizedBox(height: 25),
-                      _buildMagicalActionHub(),
+                        // Magical Command Hub
+                        const _SectionHeader(
+                          title: 'مركز القيادة والتحكم',
+                          subtitle: 'وصول فوري لكافة أركان المنظومة',
+                        ),
+                        const SizedBox(height: 25),
+                        _buildMagicalActionHub(),
 
-                      // Celestial Activity Feed
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const _SectionHeader(title: 'آخر التحركات'),
-                          TextButton(
-                            onPressed: () => Get.toNamed('/audit-logs'),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'مشاهدة السجل',
-                                  style: TextStyle(
-                                    color: KasbyColors.primaryGold.withValues(
-                                      alpha: 0.8,
+                        // Celestial Activity Feed
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const _SectionHeader(title: 'آخر التحركات'),
+                            TextButton(
+                              onPressed: () => Get.toNamed('/audit-logs'),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    'مشاهدة السجل',
+                                    style: TextStyle(
+                                      color: KasbyColors.primaryGold,
+                                      fontSize: 12,
                                     ),
-                                    fontSize: 12,
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 10,
-                                  color: KasbyColors.primaryGold.withValues(
-                                    alpha: 0.8,
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 10,
+                                    color: KasbyColors.primaryGold,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Obx(() {
-                        if (auditController.isLoading.value &&
-                            auditController.logs.isEmpty) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: KasbyColors.primaryGold,
-                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Obx(() {
+                          if (auditController.isLoading.value &&
+                              auditController.logs.isEmpty) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                color: KasbyColors.primaryGold,
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: auditController.logs
+                                .take(3)
+                                .toList()
+                                .asMap()
+                                .entries
+                                .map((entry) {
+                                  final int index = entry.key;
+                                  final log = entry.value;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildCelestialLogItem(log, index),
+                                  );
+                                })
+                                .toList(),
                           );
-                        }
-                        return Column(
-                          children: auditController.logs
-                              .take(3)
-                              .toList()
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                                final int index = entry.key;
-                                final log = entry.value;
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildCelestialLogItem(log, index),
-                                );
-                              })
-                              .toList(),
-                        );
-                      }),
-                      const SizedBox(height: 100), // Spacing for bottom nav bar
-                    ],
+                        }),
+                        const SizedBox(height: 100), // Spacing for bottom nav bar
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -438,31 +438,8 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMagicalStatsGrid(
-    UserController userController,
-    InvestmentController investmentController,
-    TransactionController transactionController,
-  ) {
+  Widget _buildMagicalStatsGrid(DashboardController dashboardController) {
     return Obx(() {
-      final totalInvested = investmentController.userInvestments.fold(
-        0.0,
-        (sum, inv) => sum + inv.amount,
-      );
-
-      final totalProfits = investmentController.userInvestments
-          .where((inv) => inv.status.toLowerCase() == 'completed')
-          .fold(0.0, (sum, inv) => sum + (inv.expectedProfit));
-
-      final totalUsersCount = userController.users
-          .where((u) => u.role == 'user')
-          .length;
-      final activeUsers = userController.users
-          .where((u) => u.role == 'user' && u.status.toLowerCase() == 'active')
-          .length;
-      final pendingTransactions = transactionController.transactions
-          .where((t) => t.status.toLowerCase() == 'pending')
-          .length;
-
       return GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
@@ -473,43 +450,42 @@ class DashboardScreen extends StatelessWidget {
         children: [
           _buildMagicalStatCard(
             title: 'إجمالي المستخدمين',
-            value: NumberFormat('#,###').format(totalUsersCount),
+            value: NumberFormat('#,###').format(dashboardController.totalUsers),
             icon: FontAwesomeIcons.users,
             glowColor: KasbyColors.glowGold,
             index: 0,
           ),
           _buildMagicalStatCard(
             title: 'المستخدمون النشطون',
-            value: NumberFormat('#,###').format(activeUsers),
+            value: NumberFormat('#,###').format(dashboardController.activeUsers),
             icon: FontAwesomeIcons.userCheck,
             glowColor: KasbyColors.glowGreen,
             index: 1,
           ),
           _buildMagicalStatCard(
             title: 'إجمالي المحافظ الاستثمارية',
-            value: '\$${NumberFormat.compact().format(totalInvested)}',
+            value: '\$${NumberFormat.compact().format(dashboardController.totalInvested)}',
             icon: FontAwesomeIcons.chartLine,
             glowColor: KasbyColors.glowBlue,
             index: 2,
           ),
           _buildMagicalStatCard(
             title: 'الأرباح المحققة',
-            value: '\$${NumberFormat.compact().format(totalProfits)}',
+            value: '\$${NumberFormat.compact().format(dashboardController.totalProfits)}',
             icon: FontAwesomeIcons.moneyBillTrendUp,
             glowColor: KasbyColors.glowGreen,
             index: 3,
           ),
           _buildMagicalStatCard(
             title: 'المعاملات المعلقة',
-            value: NumberFormat('#,###').format(pendingTransactions),
+            value: NumberFormat('#,###').format(dashboardController.pendingTransactions),
             icon: FontAwesomeIcons.bolt,
             glowColor: KasbyColors.glowOrange,
             index: 4,
           ),
           _buildMagicalStatCard(
             title: 'حجم التداول اليومي',
-            value:
-                '\$${NumberFormat.compact().format(transactionController.transactions.where((t) => t.createdAt.day == DateTime.now().day && t.createdAt.month == DateTime.now().month && t.createdAt.year == DateTime.now().year).fold(0.0, (sum, t) => sum + t.amount))}',
+            value: '\$${NumberFormat.compact().format(dashboardController.dailyVolume)}',
             icon: FontAwesomeIcons.arrowTrendUp,
             glowColor: KasbyColors.glowGold,
             index: 5,

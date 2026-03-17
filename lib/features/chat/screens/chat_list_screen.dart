@@ -100,32 +100,47 @@ class ChatListScreen extends StatelessWidget {
           : chatController.userConversations;
 
       if (filteredList.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        return RefreshIndicator(
+          onRefresh: () => chatController.loadConversations(),
+          color: KasbyColors.primaryGold,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              Icon(
-                isAgent ? FontAwesomeIcons.userTie : FontAwesomeIcons.users,
-                size: 60,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'لا توجد محادثات نشطة',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+              SizedBox(height: Get.height * 0.2),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isAgent ? FontAwesomeIcons.userTie : FontAwesomeIcons.users,
+                      size: 60,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'لا توجد محادثات نشطة',
+                      style: TextStyle(color: Colors.white54, fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         );
       }
 
-      return ListView.builder(
-        itemCount: filteredList.length,
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-        itemBuilder: (context, index) {
-          final conv = filteredList[index];
-          return _buildConversationItem(conv, index);
-        },
+      return RefreshIndicator(
+        onRefresh: () => chatController.loadConversations(),
+        color: KasbyColors.primaryGold,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: filteredList.length,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+          itemBuilder: (context, index) {
+            final conv = filteredList[index];
+            return _buildConversationItem(conv, index);
+          },
+        ),
       );
     });
   }

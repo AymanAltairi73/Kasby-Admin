@@ -16,10 +16,14 @@ class TransactionLimitsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('حدود المعاملات')),
-      body: Obx(
-        () => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () => controller.loadSettings(),
+        color: KasbyColors.primaryGold,
+        child: Obx(
+          () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
             _buildLimitSection(
               context,
               controller,
@@ -47,8 +51,9 @@ class TransactionLimitsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLimitSection(
     BuildContext context,

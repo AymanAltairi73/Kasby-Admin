@@ -17,10 +17,14 @@ class CurrencySettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('إعدادات العملات')),
-      body: Obx(
-        () => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () => controller.loadSettings(),
+        color: KasbyColors.primaryGold,
+        child: Obx(
+          () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
             ...controller.currencies.map(
               (currency) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -37,8 +41,9 @@ class CurrencySettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildCurrencyCard(
     BuildContext context,

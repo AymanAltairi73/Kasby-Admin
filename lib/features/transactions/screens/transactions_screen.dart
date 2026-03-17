@@ -72,22 +72,37 @@ class TransactionsScreen extends StatelessWidget {
     TransactionController controller,
   ) {
     if (transactions.isEmpty) {
-      return const Center(
-        child: Text(
-          'لا توجد معاملات',
-          style: TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
+      return RefreshIndicator(
+        onRefresh: () => controller.loadTransactions(),
+        color: KasbyColors.primaryGold,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: const [
+            SizedBox(height: 200),
+            Center(
+              child: Text(
+                'لا توجد معاملات',
+                style: TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: transactions.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        return _buildTransactionCard(transaction, controller);
-      },
+    return RefreshIndicator(
+      onRefresh: () => controller.loadTransactions(),
+      color: KasbyColors.primaryGold,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: transactions.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final transaction = transactions[index];
+          return _buildTransactionCard(transaction, controller);
+        },
+      ),
     );
   }
 

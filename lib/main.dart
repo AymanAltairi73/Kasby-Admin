@@ -8,13 +8,13 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/otp_screen.dart';
 import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/dashboard/screens/main_wrapper.dart';
+import 'features/gamification/screens/rewards_screen.dart';
 import 'features/users/screens/user_list_screen.dart';
 import 'features/investments/screens/investment_plans_screen.dart';
 import 'features/investments/screens/user_investments_screen.dart';
 import 'features/transactions/screens/transactions_screen.dart';
 import 'features/agents/screens/agents_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
-import 'features/gamification/screens/rewards_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/settings/screens/terms_screen.dart';
 import 'features/settings/screens/faq_screen.dart';
@@ -90,6 +90,10 @@ class KasbyAdminApp extends StatelessWidget {
       themeMode: Get.find<ThemeController>().isDarkMode.value
           ? ThemeMode.dark
           : ThemeMode.light,
+
+      // Smooth Navigation
+      defaultTransition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 250),
 
       // RTL Support
       translations: AdminTranslations(),

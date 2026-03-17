@@ -44,38 +44,43 @@ class TermsScreen extends StatelessWidget {
                 return _buildEmptyState(context, controller);
               }
 
-              return ReorderableListView.builder(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 80),
-                itemCount: controller.terms.length + 1,
-                proxyDecorator: (widget, index, animation) {
-                  return Material(color: Colors.transparent, child: widget);
-                },
-                onReorder: (oldIndex, newIndex) {
-                  if (oldIndex < 1 || newIndex < 1) {
-                    return; // Header cannot be reordered
-                  }
-                  controller.reorderTerms(oldIndex - 1, newIndex - 1);
-                },
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Container(
-                      key: const ValueKey('header'),
-                      child: _buildHeader(),
-                    );
-                  }
+              return RefreshIndicator(
+                onRefresh: () => controller.loadSettings(),
+                color: KasbyColors.primaryGold,
+                child: ReorderableListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 80),
+                  itemCount: controller.terms.length + 1,
+                  proxyDecorator: (widget, index, animation) {
+                    return Material(color: Colors.transparent, child: widget);
+                  },
+                  onReorder: (oldIndex, newIndex) {
+                    if (oldIndex < 1 || newIndex < 1) {
+                      return; // Header cannot be reordered
+                    }
+                    controller.reorderTerms(oldIndex - 1, newIndex - 1);
+                  },
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Container(
+                        key: const ValueKey('header'),
+                        child: _buildHeader(),
+                      );
+                    }
 
-                  final term = controller.terms[index - 1];
-                  return Padding(
-                    key: ValueKey(term.id),
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: _buildTermCard(
-                      context,
-                      controller,
-                      term,
-                      index: index,
-                    ),
-                  );
-                },
+                    final term = controller.terms[index - 1];
+                    return Padding(
+                      key: ValueKey(term.id),
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildTermCard(
+                        context,
+                        controller,
+                        term,
+                        index: index,
+                      ),
+                    );
+                  },
+                ),
               );
             }),
           ),

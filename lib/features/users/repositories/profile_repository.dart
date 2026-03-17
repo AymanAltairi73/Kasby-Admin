@@ -6,7 +6,7 @@ import '../models/user_model.dart';
 class ProfileRepository extends BaseRepository {
   ProfileRepository(SupabaseClient client) : super('profiles', client);
 
-  /// Fetch all profiles with nested wallets.
+  /// Fetch all profiles with nested wallets (legacy).
   Future<List<User>> getAllProfiles() async {
     return safeQuery<List<User>>(
       () async {
@@ -20,6 +20,27 @@ class ProfileRepository extends BaseRepository {
             .toList();
       },
       methodName: 'getAllProfiles',
+    );
+  }
+
+  /// Fetch paginated profiles with wallets.
+  Future<List<User>> getProfilesPaginated({
+    int from = 0,
+    int to = 19,
+  }) async {
+    return safeQuery<List<User>>(
+      () async {
+        final response = await client
+            .from(tableName)
+            .select('*, wallets(*)')
+            .range(from, to)
+            .order('created_at', ascending: false);
+
+        return (response as List)
+            .map((json) => User.fromSupabase(json))
+            .toList();
+      },
+      methodName: 'getProfilesPaginated',
     );
   }
 

@@ -27,6 +27,11 @@ class ChatController extends GetxController {
   List<ChatConversation> get userConversations =>
       conversations.where((c) => !c.isAgent).toList();
 
+  Future<void> loadConversations() async {
+    debugPrint('[ChatController] ▶ Refreshing conversations...');
+    _loadMockData();
+  }
+
   void _loadMockData() {
     // Adding some mock conversations
     conversations.assignAll([

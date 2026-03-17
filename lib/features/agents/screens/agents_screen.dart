@@ -256,23 +256,32 @@ class AgentsScreen extends StatelessWidget {
                   final filteredAgents = controller.filteredAgents;
 
                   if (filteredAgents.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    return RefreshIndicator(
+                      onRefresh: () => controller.loadAgents(),
+                      color: KasbyColors.primaryGold,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          Icon(
-                            Icons.group_off_rounded,
-                            size: 64,
-                            color: KasbyColors.primaryGold.withValues(
-                              alpha: 0.3,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'لا يوجد وكلاء متطابقين مع البحث',
-                            style: TextStyle(
-                              color: KasbyColors.textSecondary,
-                              fontSize: 16,
+                          const SizedBox(height: 100),
+                          Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.group_off_rounded,
+                                  size: 64,
+                                  color: KasbyColors.primaryGold.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'لا يوجد وكلاء متطابقين مع البحث',
+                                  style: TextStyle(
+                                    color: KasbyColors.textSecondary,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -280,15 +289,20 @@ class AgentsScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                    itemCount: filteredAgents.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final agent = filteredAgents[index];
-                      return _buildAgentCard(agent, controller, index);
-                    },
+                  return RefreshIndicator(
+                    onRefresh: () => controller.loadAgents(),
+                    color: KasbyColors.primaryGold,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                      itemCount: filteredAgents.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final agent = filteredAgents[index];
+                        return _buildAgentCard(agent, controller, index);
+                      },
+                    ),
                   );
                 }),
               ),

@@ -1,0 +1,48 @@
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import '../../../core/services/base_repository.dart';
+import '../models/transaction_model.dart';
+
+/// Transaction Repository — handles financial transactions and their relationships.
+class TransactionRepository extends BaseRepository {
+  TransactionRepository(SupabaseClient client) : super('transactions', client);
+
+  /// Fetch paginated transactions with user names.
+  Future<List<Transaction>> getTransactionsPaginated({
+    int from = 0,
+    int to = 19,
+    String? type,
+    String? status,
+  }) async {
+    return safeQuery<List<Transaction>>(
+      () async {
+        var query = client
+            .from(tableName)
+            .select('*, profiles!transactions_user_id_fkey!left(full_name)');
+
+        if (type != null && type != 'Both' && type != 'all') {
+          query = query.eq('type', type);
+        }
+        if (status != null && status != 'all') {
+          query = query.eq('status', status);
+        }
+
+        final response = await query
+            .range(from, to)
+            .order('created_at', ascending: false);
+
+        return (response as List)
+            .map((json) => Transaction.fromSupabase(json))
+            .toList();
+      },
+      methodName: 'getTransactionsPaginated',
+    );
+  }
+
+  /// Call a transaction processing RPC.
+  Future<void> processTransaction(String fnName, Map<String, dynamic> params) async {
+    await safeQuery(
+      () => client.rpc(fnName, params: params),
+      methodName: 'rpc:$fnName',
+    );
+  }
+}

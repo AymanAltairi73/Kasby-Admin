@@ -25,6 +25,31 @@ abstract class BaseRepository {
     }
   }
 
+  /// Generic paginated fetcher.
+  /// [from] and [to] are 0-indexed range indices.
+  Future<List<T>> getPaginated<T>({
+    required String methodName,
+    required T Function(Map<String, dynamic>) fromJson,
+    String select = '*',
+    int from = 0,
+    int to = 19,
+    String orderBy = 'created_at',
+    bool ascending = false,
+  }) async {
+    return safeQuery(
+      () async {
+        final response = await client
+            .from(tableName)
+            .select(select)
+            .range(from, to)
+            .order(orderBy, ascending: ascending);
+
+        return (response as List).map((json) => fromJson(json)).toList();
+      },
+      methodName: methodName,
+    );
+  }
+
   void _logException(
     PostgrestException e,
     StackTrace stackTrace,

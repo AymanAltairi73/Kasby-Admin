@@ -5,8 +5,11 @@ import '../models/audit_log_model.dart';
 import '../../../core/models/time_filter.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/activity_repository.dart';
 
 class AuditController extends GetxController {
+  final ActivityRepository _activityRepo = ActivityRepository(SupabaseService.client);
+  
   final _allLogs = <AuditLog>[].obs;
   final logs = <AuditLog>[].obs;
   final isLoading = false.obs;
@@ -94,14 +97,10 @@ class AuditController extends GetxController {
     );
     isLoading.value = true;
     try {
-      final response = await SupabaseService.client
-          .from('activity_logs')
-          .select('*, profiles:actor_id(full_name)')
-          .order('created_at', ascending: false)
-          .limit(200);
+      final response = await _activityRepo.getActivitiesPaginated(to: 199);
 
       _allLogs.assignAll(
-        (response as List).map((json) => AuditLog.fromJson(json)).toList(),
+        response.map((json) => AuditLog.fromJson(json)).toList(),
       );
       debugPrint('[AuditController] ✓ Loaded ${_allLogs.length} activity logs');
     } catch (e, stackTrace) {

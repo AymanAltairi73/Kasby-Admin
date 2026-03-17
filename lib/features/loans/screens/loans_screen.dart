@@ -88,30 +88,42 @@ class LoansScreen extends StatelessWidget {
   }
 
   Widget _buildLoansList(List<Loan> loans) {
+    final controller = Get.find<LoanController>();
+    
     if (loans.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      return RefreshIndicator(
+        onRefresh: () => controller.loadLoans(),
+        color: KasbyColors.primaryGold,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                FontAwesomeIcons.clipboardCheck,
-                size: 48,
-                color: KasbyColors.primaryGold.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'لا توجد سلفات متاحة',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+            SizedBox(height: Get.height * 0.2),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      FontAwesomeIcons.clipboardCheck,
+                      size: 48,
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'لا توجد سلفات متاحة',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -119,13 +131,18 @@ class LoansScreen extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-      itemCount: loans.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        return _buildLoanCard(loans[index], index);
-      },
+    return RefreshIndicator(
+      onRefresh: () => controller.loadLoans(),
+      color: KasbyColors.primaryGold,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+        itemCount: loans.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 16),
+        itemBuilder: (context, index) {
+          return _buildLoanCard(loans[index], index);
+        },
+      ),
     );
   }
 

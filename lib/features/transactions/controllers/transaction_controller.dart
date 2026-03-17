@@ -4,9 +4,12 @@ import '../models/transaction_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
+import '../repositories/transaction_repository.dart';
 
 /// Transaction Controller — manages financial transactions from Supabase
 class TransactionController extends GetxController {
+  final TransactionRepository _transactionRepo = TransactionRepository(SupabaseService.client);
+  
   final transactions = <Transaction>[].obs;
   final filteredTransactions = <Transaction>[].obs;
   final isLoading = false.obs;
@@ -41,14 +44,8 @@ class TransactionController extends GetxController {
     debugPrint('[TransactionController] ▶ Loading transactions...');
     isLoading.value = true;
     try {
-      final response = await SupabaseService.client
-          .from('transactions')
-          .select('*, profiles!transactions_user_id_fkey(full_name)')
-          .order('created_at', ascending: false);
-
-      transactions.value = (response as List)
-          .map((json) => Transaction.fromSupabase(json))
-          .toList();
+      final response = await _transactionRepo.getTransactionsPaginated();
+      transactions.value = response;
       _applyFilters();
       _calculateStats();
     } catch (e, stackTrace) {
@@ -165,9 +162,9 @@ class TransactionController extends GetxController {
       debugPrint('[TransactionController] ▶ Approving deposit: $txnId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
-      await SupabaseService.client.rpc(
+      await _transactionRepo.processTransaction(
         'fn_process_deposit',
-        params: {'p_txn_id': txnId, 'p_admin_id': adminId},
+        {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
       await loadTransactions();
@@ -199,9 +196,9 @@ class TransactionController extends GetxController {
       isLoading.value = true;
       final adminId = SupabaseService.auth.currentUser?.id;
 
-      await SupabaseService.client.rpc(
+      await _transactionRepo.processTransaction(
         'fn_process_withdrawal',
-        params: {'p_txn_id': txnId, 'p_admin_id': adminId},
+        {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
       await loadTransactions();
@@ -246,9 +243,9 @@ class TransactionController extends GetxController {
       debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
-      await SupabaseService.client.rpc(
+      await _transactionRepo.processTransaction(
         'fn_reject_transaction',
-        params: {
+        {
           'p_txn_id': txnId,
           'p_admin_id': adminId,
           'p_reason': reason.isNotEmpty ? reason : 'رفض بواسطة المدير',

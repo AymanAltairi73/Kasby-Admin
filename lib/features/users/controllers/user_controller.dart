@@ -46,12 +46,12 @@ class UserController extends GetxController {
     }
   }
 
-  /// Load users from Supabase
+  /// Load users from Supabase with pagination
   Future<void> loadUsers() async {
     debugPrint('[UserController] ▶ Loading users from Supabase...');
     isLoading.value = true;
     try {
-      final response = await _profileRepo.getAllProfiles();
+      final response = await _profileRepo.getProfilesPaginated(from: 0, to: 49);
       users.value = response;
       _applyFilters();
       debugPrint('[UserController] ✓ Loaded ${users.length} users');
@@ -69,6 +69,32 @@ class UserController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Load more users for pagination
+  Future<void> loadMoreUsers() async {
+    if (isLoading.value) return;
+    
+    debugPrint('[UserController] ▶ Loading more users...');
+    try {
+      final nextFrom = users.length;
+      final nextTo = nextFrom + 49;
+      
+      final response = await _profileRepo.getProfilesPaginated(from: nextFrom, to: nextTo);
+      
+      if (response.isNotEmpty) {
+        users.addAll(response);
+        _applyFilters();
+        debugPrint('[UserController] ✓ Loaded ${response.length} more users');
+      }
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'loadMoreUsers',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 

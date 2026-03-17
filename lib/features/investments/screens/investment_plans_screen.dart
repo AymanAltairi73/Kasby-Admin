@@ -81,76 +81,81 @@ class InvestmentPlansScreen extends StatelessWidget {
               );
             }
 
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Radiant Header
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          KasbyColors.primaryGold.withValues(alpha: 0.15),
-                          Colors.transparent,
+            return RefreshIndicator(
+              onRefresh: () => controller.loadPlans(),
+              color: KasbyColors.primaryGold,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Radiant Header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            KasbyColors.primaryGold.withValues(alpha: 0.15),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'مستويات الاستثمار النخبوية',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'اختر الباقة المناسبة لاستراتيجيتك المالية',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: KasbyColors.textSecondary,
+                            ),
+                          ),
                         ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
                       ),
                     ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'مستويات الاستثمار النخبوية',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'اختر الباقة المناسبة لاستراتيجيتك المالية',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: KasbyColors.textSecondary,
-                          ),
-                        ),
-                      ],
+
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                      itemCount: controller.plans.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final plan = controller.plans[index];
+                        // Determine tier color based on profit
+                        Color tierColor = KasbyColors.glowGold;
+                        if (plan.profitPercentage >= 15) {
+                          tierColor = const Color(
+                            0xFFE5E4E2,
+                          ); // Platinum (Silverish)
+                        } else if (plan.profitPercentage >= 10) {
+                          tierColor = KasbyColors.primaryGold; // Gold
+                        } else {
+                          tierColor = const Color(0xFFC0C0C0); // Silver
+                        }
+
+                        return _buildDazzlingPlanCard(
+                          plan,
+                          controller,
+                          tierColor,
+                        );
+                      },
                     ),
-                  ),
-
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                    itemCount: controller.plans.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final plan = controller.plans[index];
-                      // Determine tier color based on profit
-                      Color tierColor = KasbyColors.glowGold;
-                      if (plan.profitPercentage >= 15) {
-                        tierColor = const Color(
-                          0xFFE5E4E2,
-                        ); // Platinum (Silverish)
-                      } else if (plan.profitPercentage >= 10) {
-                        tierColor = KasbyColors.primaryGold; // Gold
-                      } else {
-                        tierColor = const Color(0xFFC0C0C0); // Silver
-                      }
-
-                      return _buildDazzlingPlanCard(
-                        plan,
-                        controller,
-                        tierColor,
-                      );
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }),

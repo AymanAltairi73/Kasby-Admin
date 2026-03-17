@@ -451,14 +451,19 @@ class PremiumDetailsScreen extends StatelessWidget {
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 120, 20, 100),
-              itemCount: premiumPlans.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final plan = premiumPlans[index];
-                return _buildPlanItem(context, plan, controller);
-              },
+            return RefreshIndicator(
+              onRefresh: () => controller.loadPlans(),
+              color: KasbyColors.primaryGold,
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 120, 20, 100),
+                itemCount: premiumPlans.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final plan = premiumPlans[index];
+                  return _buildPlanItem(context, plan, controller);
+                },
+              ),
             );
           }),
         ],
