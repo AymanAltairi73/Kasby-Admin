@@ -31,7 +31,7 @@ class AgentController extends GetxController {
     try {
       final response = await SupabaseService.client
           .from('agents')
-          .select('*, profiles(*)')
+          .select('*, profiles!left(*)')
           .order('created_at', ascending: false);
 
       agents.value = (response as List)

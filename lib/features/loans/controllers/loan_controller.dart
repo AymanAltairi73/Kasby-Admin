@@ -24,7 +24,7 @@ class LoanController extends GetxController {
     try {
       final response = await SupabaseService.client
           .from('loans')
-          .select('*, profiles!loans_user_id_fkey(full_name)')
+          .select('*, profiles!loans_user_id_fkey!left(full_name)')
           .order('created_at', ascending: false);
 
       loans.assignAll(

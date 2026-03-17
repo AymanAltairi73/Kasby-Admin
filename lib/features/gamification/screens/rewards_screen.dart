@@ -1,549 +1,407 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
-import '../../../core/widgets/kasby_card.dart';
+import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
-import '../../../core/widgets/kasby_dialog.dart';
 import '../controllers/rewards_controller.dart';
 import '../models/reward_model.dart';
 
-/// Rewards Screen
-/// Manage daily rewards, spin wheel, and points system
 class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<RewardsController>();
+    // Ensure controller is available
+    final controller = Get.isRegistered<RewardsController>() 
+        ? Get.find<RewardsController>() 
+        : Get.put(RewardsController());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('المكافآت والنقاط')),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());        return RefreshIndicator(
-          onRefresh: () => controller.loadSettings(),
-          color: KasbyColors.primaryGold,
-          child: SingleChildScrollView(
+      appBar: AppBar(
+        title: const Text('المكافآت والولاء'),
+        centerTitle: true,
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => controller.loadSettings(),
+        color: KasbyColors.primaryGold,
+        child: Obx(() {
+          if (controller.isLoading.value && controller.rewards.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Daily Check-in
-                const Text(
-                  'تسجيل الحضور اليومي',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
-                  ),
-                ),
+                _buildSectionHeader('المكافآت اليومية', FontAwesomeIcons.gift),
                 const SizedBox(height: 12),
-                ...controller.rewards.map(
-                  (reward) => KasbyCard(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                gradient: KasbyColors.primaryGradient,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                reward.icon == 'calendar-check'
-                                    ? FontAwesomeIcons.calendarCheck
-                                    : FontAwesomeIcons.gift,
-                                color: Colors.black,
-                                size: 32,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    reward.title,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: KasbyColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${reward.points} نقطة لكل يوم متتالي',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: KasbyColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatCard(
-                                'المستخدمون النشطون اليوم',
-                                '1,234',
-                                FontAwesomeIcons.users,
-                                KasbyColors.success,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStatCard(
-                                'إجمالي النقاط الموزعة',
-                                '61,700',
-                                FontAwesomeIcons.coins,
-                                KasbyColors.primaryGold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                _buildRewardsList(controller),
                 const SizedBox(height: 24),
-
-                // Spin Wheel
-                const Text(
-                  'عجلة الحظ',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
-                  ),
-                ),
+                _buildSectionHeader('جوائز عجلة الحظ', FontAwesomeIcons.dharmachakra),
                 const SizedBox(height: 12),
-                KasbyCard(
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  KasbyColors.primaryGold,
-                                  KasbyColors.success,
-                                  KasbyColors.info,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.dharmachakra,
-                              color: Colors.black,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'عجلة الحظ اليومية',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: KasbyColors.textPrimary,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'فرصة واحدة يومياً للفوز',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: KasbyColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'الجوائز المتاحة',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: KasbyColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: controller.prizes.map((prize) {
-                          return _buildPrizeChip(
-                            prize.label,
-                            prize.type == 'Cash'
-                                ? KasbyColors.error
-                                : KasbyColors.primaryGold,
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              'المشاركون اليوم',
-                              '856',
-                              FontAwesomeIcons.userGroup,
-                              KasbyColors.info,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildStatCard(
-                              'إجمالي الجوائز',
-                              '\$425',
-                              FontAwesomeIcons.gift,
-                              KasbyColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                _buildPrizesList(controller),
                 const SizedBox(height: 24),
-
-                // Points System
-                const Text(
-                  'نظام النقاط',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.textPrimary,
-                  ),
-                ),
+                _buildSectionHeader('قواعد كسب النقاط', FontAwesomeIcons.coins),
                 const SizedBox(height: 12),
-                KasbyCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'طرق كسب النقاط',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: KasbyColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...controller.pointsEarnRules.map(
-                        (rule) => Column(
-                          children: [
-                            _buildPointsRule(rule.action, rule.points.toString()),
-                            if (controller.pointsEarnRules.last != rule)
-                              const Divider(color: KasbyColors.background),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'استبدال النقاط',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: KasbyColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...controller.pointsRedeemRules.map(
-                        (rule) => Column(
-                          children: [
-                            _buildPointsRule(rule.action, rule.points.toString()),
-                            if (controller.pointsRedeemRules.last != rule)
-                              const Divider(color: KasbyColors.background),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildRulesList(controller, controller.pointsEarnRules, 'كسب'),
                 const SizedBox(height: 24),
-
-                // Configuration Button
-                KasbyButton(
-                  text: 'إعدادات المكافآت',
-                  onPressed: () => _showEditRewardsDialog(context, controller),
-                  icon: FontAwesomeIcons.gear,
-                  isOutlined: true,
-                ),
+                _buildSectionHeader('قواعد استبدال النقاط', FontAwesomeIcons.handHoldingHeart),
+                const SizedBox(height: 12),
+                _buildRulesList(controller, controller.pointsRedeemRules, 'استبدال'),
+                const SizedBox(height: 40),
               ],
             ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: KasbyColors.primaryGold),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-        );�',
-                onPressed: () => _showEditRewardsDialog(context, controller),
-                icon: FontAwesomeIcons.gear,
-                isOutlined: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRewardsList(RewardsController controller) {
+    if (controller.rewards.isEmpty) {
+      return const KasbyGlassCard(
+        child: Center(child: Padding(padding: EdgeInsets.all(20), child: Text('لا توجد مكافآت مسجلة', style: TextStyle(color: KasbyColors.textSecondary)))),
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: controller.rewards.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final reward = controller.rewards[index];
+        return KasbyGlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _getIconData(reward.icon),
+                  color: KasbyColors.primaryGold,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      reward.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      reward.description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: KasbyColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${reward.points} نقطة',
+                style: const TextStyle(
+                  color: KasbyColors.primaryGold,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: KasbyColors.info),
+                onPressed: () => _showEditRewardDialog(context, controller, reward),
               ),
             ],
           ),
         );
-      }),
+      },
     );
   }
 
-  /// Dialog to edit reward values, prizes, and rules
-  void _showEditRewardsDialog(
-    BuildContext context,
-    RewardsController controller,
-  ) {
-    // Local state for the dialog
-    final localRewards = List<Reward>.from(controller.rewards);
-    final localPrizes = List<Prize>.from(controller.prizes);
-    final localEarnRules = List<PointRule>.from(controller.pointsEarnRules);
-    final localRedeemRules = List<PointRule>.from(controller.pointsRedeemRules);
-
-    Get.dialog(
-      KasbyDialog(
-        title: 'تعديل قيم المكافآت',
-        actions: [
-          KasbyButton(
-            text: 'إلغاء',
-            onPressed: () => Get.back(),
-            isOutlined: true,
-            width: 100,
-          ),
-          const SizedBox(width: 12),
-          KasbyButton(
-            text: 'حفظ التعديلات',
-            onPressed: () async {
-              await controller.updateAllSettings(
-                updatedRewards: localRewards,
-                updatedPrizes: localPrizes,
-                updatedEarnRules: localEarnRules,
-                updatedRedeemRules: localRedeemRules,
-              );
-              Get.back();
-              Get.snackbar('نجح', 'تم حفظ التعديلات بنجاح');
-            },
-            width: 150,
-          ),
-        ],
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPrizesList(RewardsController controller) {
+    if (controller.prizes.isEmpty) {
+      return const KasbyGlassCard(
+        child: Center(child: Padding(padding: EdgeInsets.all(20), child: Text('لا توجد جوائز مسجلة', style: TextStyle(color: KasbyColors.textSecondary)))),
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: controller.prizes.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final prize = controller.prizes[index];
+        return KasbyGlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              // --- Daily Rewards Section ---
-              _buildSectionTitle('المكافآت اليومية'),
-              ...localRewards.map((Reward reward) {
-                final pointsController = TextEditingController(
-                  text: reward.points.toString(),
-                );
-                return _buildEditField(
-                  label: reward.title,
-                  controller: pointsController,
-                  onSave: (val) {
-                    final points = int.tryParse(val) ?? reward.points;
-                    final index = localRewards.indexOf(reward);
-                    localRewards[index] = reward.copyWith(points: points);
-                  },
-                );
-              }),
-
-              const SizedBox(height: 20),
-              // --- Point Rules Section ---
-              _buildSectionTitle('قواعد كسب النقاط'),
-              ...localEarnRules.map((PointRule rule) {
-                final valController = TextEditingController(
-                  text: rule.points.toString(),
-                );
-                return _buildEditField(
-                  label: rule.action,
-                  controller: valController,
-                  onSave: (val) {
-                    final points = int.tryParse(val) ?? rule.points;
-                    final index = localEarnRules.indexOf(rule);
-                    localEarnRules[index] = rule.copyWith(points: points);
-                  },
-                );
-              }),
-
-              const SizedBox(height: 20),
-              // --- Point Redemption Section ---
-              _buildSectionTitle('قواعد استبدال النقاط'),
-              ...localRedeemRules.map((PointRule rule) {
-                final valController = TextEditingController(
-                  text: rule.points.toString(),
-                );
-                return _buildEditField(
-                  label: rule.action,
-                  controller: valController,
-                  onSave: (val) {
-                    final points = int.tryParse(val) ?? rule.points;
-                    final index = localRedeemRules.indexOf(rule);
-                    localRedeemRules[index] = rule.copyWith(points: points);
-                  },
-                );
-              }),
-
-              const SizedBox(height: 20),
-              // --- Spin Wheel Section ---
-              _buildSectionTitle('جوائز عجلة الحظ'),
-              ...localPrizes.map((Prize prize) {
-                final valController = TextEditingController(text: prize.label);
-                return _buildEditField(
-                  label: 'الجائزة ${prize.id}',
-                  controller: valController,
-                  onSave: (val) {
-                    final index = localPrizes.indexOf(prize);
-                    localPrizes[index] = prize.copyWith(label: val);
-                  },
-                );
-              }),
+              Text(
+                prize.label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              _buildTypeBadge(prize.type),
+              const SizedBox(width: 16),
+              Text(
+                '${(prize.probability * 100).toStringAsFixed(1)}%',
+                style: const TextStyle(color: KasbyColors.textSecondary),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: KasbyColors.info),
+                onPressed: () => _showEditPrizeDialog(context, controller, prize),
+              ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: KasbyColors.primaryGold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditField({
-    required String label,
-    required TextEditingController controller,
-    required Function(String) onSave,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
-            ),
+  Widget _buildRulesList(RewardsController controller, List<PointRule> rules, String typeLabel) {
+    if (rules.isEmpty) {
+      return const KasbyGlassCard(
+        child: Center(child: Padding(padding: EdgeInsets.all(20), child: Text('لا توجد قواعد مسجلة', style: TextStyle(color: KasbyColors.textSecondary)))),
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: rules.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final rule = rules[index];
+        return KasbyGlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  rule.action,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+              Text(
+                '${rule.points} نقطة',
+                style: const TextStyle(
+                  color: KasbyColors.success,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18, color: KasbyColors.info),
+                onPressed: () => _showEditRuleDialog(context, controller, rule),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 3,
-            child: KasbyTextField(
-              controller: controller,
-              hintText: 'القيمة',
-              onChanged: onSave,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildTypeBadge(String type) {
+    Color color = KasbyColors.info;
+    if (type == 'Cash') color = KasbyColors.success;
+    if (type == 'Points') color = KasbyColors.primaryGold;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Directionality(
-            textDirection: ui.TextDirection.ltr,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: KasbyColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrizeChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
+        type,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildPointsRule(String action, String points) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            action,
-            style: const TextStyle(fontSize: 14, color: KasbyColors.textBody),
-          ),
-          Text(
-            points,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: KasbyColors.primaryGold,
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'calendar-check':
+        return FontAwesomeIcons.calendarCheck;
+      case 'star':
+        return FontAwesomeIcons.star;
+      case 'gift':
+        return FontAwesomeIcons.gift;
+      default:
+        return FontAwesomeIcons.award;
+    }
+  }
+
+  void _showEditRewardDialog(BuildContext context, RewardsController controller, Reward reward) {
+    final titleController = TextEditingController(text: reward.title);
+    final descController = TextEditingController(text: reward.description);
+    final pointsController = TextEditingController(text: reward.points.toString());
+
+    Get.dialog(
+      _buildDialog(
+        title: 'تعديل المكافأة',
+        content: Column(
+          children: [
+            KasbyTextField(controller: titleController, labelText: 'العنوان'),
+            const SizedBox(height: 12),
+            KasbyTextField(controller: descController, labelText: 'الوصف'),
+            const SizedBox(height: 12),
+            KasbyTextField(
+              controller: pointsController,
+              labelText: 'النقاط',
+              keyboardType: TextInputType.number,
             ),
-          ),
-        ],
+          ],
+        ),
+        onConfirm: () {
+          controller.updateReward(
+            reward.copyWith(
+              title: titleController.text,
+              description: descController.text,
+              points: int.tryParse(pointsController.text) ?? reward.points,
+            ),
+          );
+          Get.back();
+        },
+      ),
+    );
+  }
+
+  void _showEditPrizeDialog(BuildContext context, RewardsController controller, Prize prize) {
+    final labelController = TextEditingController(text: prize.label);
+    final valueController = TextEditingController(text: prize.value);
+    final probController = TextEditingController(text: prize.probability.toString());
+
+    Get.dialog(
+      _buildDialog(
+        title: 'تعديل الجائزة',
+        content: Column(
+          children: [
+            KasbyTextField(controller: labelController, labelText: 'المسمى'),
+            const SizedBox(height: 12),
+            KasbyTextField(controller: valueController, labelText: 'القيمة'),
+            const SizedBox(height: 12),
+            KasbyTextField(
+              controller: probController,
+              labelText: 'الاحتمالية (0.01 - 1.0)',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        onConfirm: () {
+          controller.updatePrize(
+            prize.copyWith(
+              label: labelController.text,
+              value: valueController.text,
+              probability: double.tryParse(probController.text) ?? prize.probability,
+            ),
+          );
+          Get.back();
+        },
+      ),
+    );
+  }
+
+  void _showEditRuleDialog(BuildContext context, RewardsController controller, PointRule rule) {
+    final pointsController = TextEditingController(text: rule.points.toString());
+
+    Get.dialog(
+      _buildDialog(
+        title: 'تعديل قاعدة النقاط',
+        content: Column(
+          children: [
+            Text(rule.action, style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 16),
+            KasbyTextField(
+              controller: pointsController,
+              labelText: 'النقاط',
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        onConfirm: () {
+          controller.updatePointRule(
+            rule.copyWith(points: int.tryParse(pointsController.text) ?? rule.points),
+          );
+          Get.back();
+        },
+      ),
+    );
+  }
+
+  Widget _buildDialog({
+    required String title,
+    required Widget content,
+    required VoidCallback onConfirm,
+  }) {
+    return Dialog(
+      backgroundColor: KasbyColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            content,
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: KasbyButton(text: 'حفظ', onPressed: onConfirm),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
