@@ -386,13 +386,15 @@ class AgentDetailsScreen extends StatelessWidget {
   Future<void> _launchService(String url, [String? errorMsg]) async {
     final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        Get.snackbar('تنبيه', errorMsg ?? 'لا يمكن فتح الرابط');
+      // Try launching first as externalApplication
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        // Fallback or error snackbar
+        Get.snackbar('تنبيه', errorMsg ?? 'لا يمكن فتح الرابط وتأكد من تثبيت التطبيق المطلوب');
       }
     } catch (e) {
-      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة الاتصال');
+      debugPrint('Launch error: $e');
+      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة الاتصال، تأكد من تثبيت التطبيق');
     }
   }
 

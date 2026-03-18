@@ -609,9 +609,8 @@ class UserListScreen extends StatelessWidget {
   static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
     final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
         Get.snackbar(
           'تنبيه',
           fallbackMessage ??
@@ -622,7 +621,8 @@ class UserListScreen extends StatelessWidget {
         );
       }
     } catch (e) {
-      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط');
+      debugPrint('Launch error: $e');
+      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط، تأكد من تثبيت التطبيق');
     }
   }
 
