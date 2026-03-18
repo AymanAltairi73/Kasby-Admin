@@ -131,7 +131,6 @@ class AgentController extends GetxController {
     String whatsapp = '',
     String telegram = '',
     String email = '',
-    String notes = '',
   }) async {
     try {
       debugPrint('[AgentController] ▶ Creating agent in Unified system: $name');
@@ -163,7 +162,6 @@ class AgentController extends GetxController {
         'id': profileId,
         'status': 'Active',
         'is_available_now': true,
-        'notes': notes,
         'supported_methods': [
           if (whatsapp.isNotEmpty) 'WhatsApp',
           if (telegram.isNotEmpty) 'Telegram',

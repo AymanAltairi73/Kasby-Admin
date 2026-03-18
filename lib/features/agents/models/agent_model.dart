@@ -15,7 +15,6 @@ class Agent {
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
   final double successRate;
   final int totalTransactions;
-  final String notes;
   final DateTime createdAt;
 
   Agent({
@@ -34,7 +33,6 @@ class Agent {
     required this.supportedMethods,
     required this.successRate,
     required this.totalTransactions,
-    this.notes = '',
     required this.createdAt,
   });
 
@@ -53,7 +51,6 @@ class Agent {
     List<String>? supportedMethods,
     double? successRate,
     int? totalTransactions,
-    String? notes,
     DateTime? createdAt,
   }) {
     return Agent(
@@ -72,7 +69,6 @@ class Agent {
       supportedMethods: supportedMethods ?? this.supportedMethods,
       successRate: successRate ?? this.successRate,
       totalTransactions: totalTransactions ?? this.totalTransactions,
-      notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -116,7 +112,6 @@ class Agent {
       supportedMethods: parseSupportedMethods(json['supported_methods']),
       successRate: (json['success_rate'] ?? 0.0).toDouble(),
       totalTransactions: json['total_transactions'] ?? 0,
-      notes: json['notes'] ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -146,7 +141,6 @@ class Agent {
           .toDouble(),
       totalTransactions:
           json['totalTransactions'] ?? json['total_transactions'] ?? 0,
-      notes: json['notes'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : (json['created_at'] != null
@@ -172,7 +166,6 @@ class Agent {
       'supportedMethods': supportedMethods,
       'successRate': successRate,
       'totalTransactions': totalTransactions,
-      'notes': notes,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -188,7 +181,6 @@ class Agent {
       'supported_methods': supportedMethods, // JSONB in kasby_new.sql
       'success_rate': successRate,
       'total_transactions': totalTransactions,
-      'notes': notes,
     };
   }
 }

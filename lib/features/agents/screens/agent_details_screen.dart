@@ -200,29 +200,6 @@ class AgentDetailsScreen extends StatelessWidget {
                     ),
                   ),
 
-                  if (agent.notes.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Text(
-                      'ملاحظات إدارية',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: KasbyColors.primaryGold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    KasbyGlassCard(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        agent.notes,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          height: 1.6,
-                        ),
-                      ),
-                    ),
-                  ],
 
                   const SizedBox(height: 24),
 

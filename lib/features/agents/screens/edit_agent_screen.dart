@@ -30,7 +30,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
   late final TextEditingController emailController;
   late final TextEditingController telegramController;
   late final TextEditingController whatsappController;
-  late final TextEditingController notesController;
 
   final isFormValid = false.obs;
   final isLoading = false.obs;
@@ -49,7 +48,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
     emailController = TextEditingController(text: agent?.email ?? '');
     telegramController = TextEditingController(text: agent?.telegram ?? '');
     whatsappController = TextEditingController(text: agent?.whatsapp ?? '');
-    notesController = TextEditingController(text: agent?.notes ?? '');
 
     // Initial validation check
     WidgetsBinding.instance.addPostFrameCallback((_) => _validate());
@@ -70,7 +68,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
     emailController.dispose();
     telegramController.dispose();
     whatsappController.dispose();
-    notesController.dispose();
     super.dispose();
   }
 
@@ -98,7 +95,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               'whatsapp': whatsappController.text,
               'telegram': telegramController.text,
               'email': emailController.text,
-              'notes': notesController.text,
             });
           } else {
             await controller.createAgent(
@@ -111,10 +107,19 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               whatsapp: whatsappController.text,
               telegram: telegramController.text,
               email: emailController.text,
-              notes: notesController.text,
             );
           }
-          Get.back(); // Return to list/details
+          
+          Get.snackbar(
+            'نجاح',
+            isEdit ? 'تم تحديث بيانات الوكيل بنجاح' : 'تم إضافة الوكيل بنجاح',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: KasbyColors.success.withValues(alpha: 0.8),
+            colorText: Colors.white,
+          );
+
+          // Return specifically to the agents list screen
+          Get.until((route) => Get.currentRoute == '/agents');
         } finally {
           isLoading.value = false;
         }
@@ -258,30 +263,6 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                             keyboardType: TextInputType.emailAddress,
                             prefixIcon: Icons.alternate_email_rounded,
                             validator: ValidationUtils.validateEmail,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    KasbyGlassCard(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'إضافات',
-                            style: TextStyle(
-                              color: KasbyColors.primaryGold,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          KasbyTextField(
-                            controller: notesController,
-                            labelText: 'الملاحظات',
-                            prefixIcon: Icons.note_add_rounded,
-                            maxLines: 4,
                           ),
                         ],
                       ),
