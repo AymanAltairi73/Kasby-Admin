@@ -225,7 +225,9 @@ class InvestmentPlansScreen extends StatelessWidget {
                         ],
                       ),
                       padding: const EdgeInsets.all(12),
-                      child: Image.asset(plan.imagePath!, fit: BoxFit.contain),
+                      child: plan.imagePath!.trim().toLowerCase().startsWith('http')
+                          ? Image.network(plan.imagePath!.trim(), fit: BoxFit.contain)
+                          : Image.asset(plan.imagePath!, fit: BoxFit.contain),
                     ),
                   ],
                 ),

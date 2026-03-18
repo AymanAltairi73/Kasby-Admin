@@ -269,15 +269,15 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
                           ? Image.file(_selectedImageFile!, fit: BoxFit.contain)
                           : (_currentImageUrl != null &&
                                     _currentImageUrl!.isNotEmpty
-                                ? (_currentImageUrl!.startsWith('http')
-                                      ? Image.network(
-                                          _currentImageUrl!,
-                                          fit: BoxFit.contain,
-                                        )
-                                      : Image.asset(
-                                          _currentImageUrl!,
-                                          fit: BoxFit.contain,
-                                        ))
+                                  ? (_currentImageUrl!.trim().toLowerCase().startsWith('http')
+                                        ? Image.network(
+                                            _currentImageUrl!.trim(),
+                                            fit: BoxFit.contain,
+                                          )
+                                        : Image.asset(
+                                            _currentImageUrl!,
+                                            fit: BoxFit.contain,
+                                          ))
                                 : const Icon(
                                     Icons.image_outlined,
                                     size: 40,
