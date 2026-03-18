@@ -50,6 +50,14 @@ abstract class BaseRepository {
     );
   }
 
+  /// Generic update method
+  Future<void> update(String id, Map<String, dynamic> data) async {
+    await safeQuery(
+      () => client.from(tableName).update(data).eq('id', id),
+      methodName: 'update',
+    );
+  }
+
   void _logException(
     PostgrestException e,
     StackTrace stackTrace,

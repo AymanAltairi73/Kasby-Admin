@@ -508,6 +508,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           Get.to(
                             () => const ChatDetailsScreen(),
                             arguments: ChatConversation(
+                              id: '', // Empty ID signifies a potentially new conversation
                               userId: widget.user.id,
                               userName: widget.user.name,
                               lastMessage: 'بدء محادثة جديدة',

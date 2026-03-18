@@ -95,6 +95,12 @@ class ChatListScreen extends StatelessWidget {
     required bool isAgent,
   }) {
     return Obx(() {
+      if (chatController.isLoading.value && chatController.conversations.isEmpty) {
+        return const Center(
+          child: CircularProgressIndicator(color: KasbyColors.primaryGold),
+        );
+      }
+
       final filteredList = isAgent
           ? chatController.agentConversations
           : chatController.userConversations;
@@ -151,7 +157,7 @@ class ChatListScreen extends StatelessWidget {
       child: KasbyGlassCard(
         onTap: () {
           Get.toNamed('/chat-details', arguments: conv);
-          Get.find<ChatController>().markAsRead(conv.userId);
+          Get.find<ChatController>().markAsRead(conv.id);
         },
         padding: const EdgeInsets.all(12),
         opacity: 0.08,

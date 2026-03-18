@@ -26,10 +26,27 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
     conversation = Get.arguments as ChatConversation;
     chatController = Get.find<ChatController>();
 
+    if (conversation.id.isNotEmpty) {
+      chatController.listenToMessages(conversation.id);
+    } else {
+      // Fallback for new conversations: try to find/create it
+      _initializeNewConversation();
+    }
+
     // Jump to bottom on open
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
+  }
+
+  Future<void> _initializeNewConversation() async {
+    final newId = await chatController.ensureConversation(conversation.userId);
+    if (newId != null) {
+      setState(() {
+        conversation = chatController.conversations.firstWhere((c) => c.id == newId);
+      });
+      chatController.listenToMessages(newId);
+    }
   }
 
   void _scrollToBottom() {
@@ -59,7 +76,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 Expanded(
                   child: Obx(() {
                     final messages =
-                        chatController.messages[conversation.userId] ?? [];
+                        chatController.messages[conversation.id] ?? [];
                     final isTyping =
                         chatController.isTyping[conversation.userId] ?? false;
 
@@ -216,7 +233,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                       ),
                       Obx(() {
                         final isTyping =
-                            chatController.isTyping[conversation.userId] ?? false;
+                            chatController.isTyping[conversation.id] ?? false;
                         return Row(
                           children: [
                             Container(
@@ -414,7 +431,11 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
 
   void _handleSend() {
     if (_messageController.text.isNotEmpty) {
-      chatController.sendMessage(conversation.userId, _messageController.text);
+      chatController.sendMessage(
+        conversation.id,
+        _messageController.text,
+        userId: conversation.userId,
+      );
       _messageController.clear();
       _scrollToBottom();
     }

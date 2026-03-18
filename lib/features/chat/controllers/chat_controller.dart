@@ -1,25 +1,42 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
+import '../repositories/chat_repository.dart';
 import '../../../core/services/audio_service.dart';
+import '../../../core/services/supabase_service.dart';
 
 class ChatController extends GetxController {
   final conversations = <ChatConversation>[].obs;
-  final messages =
-      <String, List<ChatMessage>>{}.obs; // userId -> list of messages
+  final messages = <String, List<ChatMessage>>{}.obs; // conversationId -> list of messages
   final unreadTotal = 0.obs;
   final isTyping = <String, bool>{}.obs; // userId -> isTyping
+  final isLoading = false.obs;
 
   late AudioService _audioService;
+  late ChatRepository _chatRepository;
+  
+  StreamSubscription? _conversationsSubscription;
+  final Map<String, StreamSubscription> _messageSubscriptions = {};
 
   @override
   void onInit() {
     super.onInit();
     _audioService = Get.find<AudioService>();
-    debugPrint(
-      '[ChatController] ▶ Initializing with mock data (no chat tables in DB)',
-    );
-    _loadMockData();
+    _chatRepository = ChatRepository(SupabaseService.client);
+    
+    debugPrint('[ChatController] ▶ Initializing real-time chat...');
+    loadConversations();
+    _startConversationsStream();
+  }
+
+  @override
+  void onClose() {
+    _conversationsSubscription?.cancel();
+    for (var sub in _messageSubscriptions.values) {
+      sub.cancel();
+    }
+    super.onClose();
   }
 
   List<ChatConversation> get agentConversations =>
@@ -28,70 +45,57 @@ class ChatController extends GetxController {
       conversations.where((c) => !c.isAgent).toList();
 
   Future<void> loadConversations() async {
-    debugPrint('[ChatController] ▶ Refreshing conversations...');
-    _loadMockData();
+    try {
+      isLoading.value = true;
+      final currentUser = SupabaseService.client.auth.currentUser;
+      debugPrint('[ChatController] ▶ Fetching conversations for user: ${currentUser?.id}');
+      
+      final data = await _chatRepository.getConversations();
+      debugPrint('[ChatController] √ Fetched ${data.length} conversations.');
+      for (var c in data) {
+        debugPrint('  - Conv ID: ${c.id}, User: ${c.userName}, isAgent: ${c.isAgent}');
+      }
+      conversations.assignAll(data);
+      _calculateUnread();
+    } catch (e) {
+      debugPrint('[ChatController] ✗ Error loading conversations: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  void _loadMockData() {
-    // Adding some mock conversations
-    conversations.assignAll([
-      ChatConversation(
-        userId: 'u1',
-        userName: 'الوكيل: أحمد علي',
-        lastMessage: 'تم تحديث أسعار الصرف اليوم',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 5)),
-        unreadCount: 2,
-        isOnline: true,
-        isAgent: true,
-      ),
-      ChatConversation(
-        userId: 'u2',
-        userName: 'المستخدم: سارة محمد',
-        lastMessage: 'تم استلام الحوالة، شكراً لكم',
-        lastMessageTime: DateTime.now().subtract(const Duration(hours: 2)),
-        unreadCount: 0,
-        isOnline: false,
-        isAgent: false,
-      ),
-      ChatConversation(
-        userId: 'u3',
-        userName: 'الوكيل: محمد حسن',
-        lastMessage: 'هل توجد عمولات خاصة لوكلاء VIP؟',
-        lastMessageTime: DateTime.now().subtract(const Duration(days: 1)),
-        unreadCount: 0,
-        isOnline: true,
-        isAgent: true,
-      ),
-      ChatConversation(
-        userId: 'u4',
-        userName: 'المستخدم: عبد الله عمر',
-        lastMessage: 'متى سيتم تفعيل حسابي؟',
-        lastMessageTime: DateTime.now().subtract(const Duration(minutes: 45)),
-        unreadCount: 1,
-        isOnline: true,
-        isAgent: false,
-      ),
-    ]);
+  void _startConversationsStream() {
+    _conversationsSubscription?.cancel();
+    _conversationsSubscription = _chatRepository.streamConversations().listen((event) {
+      // Re-fetch to get profile data (stream doesn't support joins easily)
+      loadConversations();
+    });
+  }
 
-    // Mock messages for Ahmed
-    messages['u1'] = [
-      ChatMessage(
-        id: '1',
-        senderId: 'u1',
-        content: 'مرحباً، تم تحديث كشف الحساب الخاص بي',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        isMe: false,
-      ),
-      ChatMessage(
-        id: '1.1',
-        senderId: 'admin',
-        content: 'أهلاً بك يا أحمد، سأتحقق منه الآن',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        isMe: true,
-      ),
-    ];
+  void listenToMessages(String conversationId) {
+    if (conversationId.isEmpty || _messageSubscriptions.containsKey(conversationId)) return;
 
-    _calculateUnread();
+    final currentUserId = SupabaseService.auth.currentUser?.id ?? '';
+    
+    _messageSubscriptions[conversationId] = _chatRepository
+        .streamMessages(conversationId)
+        .listen((data) {
+          final newMessages = data.map((json) => ChatMessage.fromSupabase(json, currentUserId)).toList();
+          
+          // Check if a new message was received (to play sound)
+          if (messages.containsKey(conversationId)) {
+            final oldLen = messages[conversationId]!.length;
+            if (newMessages.length > oldLen) {
+              final lastMsg = newMessages.last;
+              if (!lastMsg.isMe) {
+                _audioService.playNotification();
+              }
+            }
+          }
+
+          messages[conversationId] = newMessages;
+          messages.refresh();
+        });
   }
 
   void _calculateUnread() {
@@ -101,109 +105,62 @@ class ChatController extends GetxController {
     );
   }
 
-  void sendMessage(String userId, String content) async {
+  Future<String?> ensureConversation(String userId) async {
+    try {
+      final conv = await _chatRepository.getOrCreateConversation(userId);
+      // Update local list if not present
+      if (!conversations.any((c) => c.id == conv.id)) {
+        conversations.insert(0, conv);
+      }
+      return conv.id;
+    } catch (e) {
+      debugPrint('[ChatController] ✗ Error ensuring conversation: $e');
+      return null;
+    }
+  }
+
+  Future<void> sendMessage(String conversationId, String content, {String? userId}) async {
     if (content.trim().isEmpty) return;
-    debugPrint(
-      '[ChatController] ▶ Sending message to $userId: ${content.substring(0, content.length > 30 ? 30 : content.length)}...',
-    );
+    
+    final senderId = SupabaseService.auth.currentUser?.id;
+    if (senderId == null) return;
 
-    final newMessage = ChatMessage(
-      id: DateTime.now().toString(),
-      senderId: 'admin',
-      content: content,
-      timestamp: DateTime.now(),
-      isMe: true,
-    );
+    String targetConvId = conversationId;
 
-    if (messages.containsKey(userId)) {
-      messages[userId]!.add(newMessage);
-      messages.refresh();
-    } else {
-      messages[userId] = [newMessage];
-    }
+    try {
+      // If conversationId is empty, we must have a userId to find/create it
+      if (targetConvId.isEmpty && userId != null) {
+        final newId = await ensureConversation(userId);
+        if (newId == null) throw Exception('Could not create conversation');
+        targetConvId = newId;
+        // Start listening to the new conversation
+        listenToMessages(targetConvId);
+      }
 
-    // Play sound
-    _audioService.playMessageSent();
+      if (targetConvId.isEmpty) return;
 
-    // Update conversation last message
-    final index = conversations.indexWhere((c) => c.userId == userId);
-    if (index != -1) {
-      final conv = conversations[index];
-      conversations[index] = ChatConversation(
-        userId: conv.userId,
-        userName: conv.userName,
-        userAvatar: conv.userAvatar,
-        lastMessage: content,
-        lastMessageTime: DateTime.now(),
-        unreadCount: conv.unreadCount,
-        isOnline: conv.isOnline,
-        isAgent: conv.isAgent,
+      // Play sound immediately for UX
+      _audioService.playMessageSent();
+
+      await _chatRepository.sendMessage(
+        conversationId: targetConvId,
+        senderId: senderId,
+        content: content,
       );
-      conversations.refresh();
-    }
-
-    // Simulate reply
-    _simulateReply(userId);
-  }
-
-  void _simulateReply(String userId) async {
-    await Future.delayed(const Duration(seconds: 2));
-    isTyping[userId] = true;
-    isTyping.refresh();
-
-    await Future.delayed(const Duration(seconds: 3));
-    isTyping[userId] = false;
-    isTyping.refresh();
-
-    final reply = ChatMessage(
-      id: DateTime.now().toString(),
-      senderId: userId,
-      content: 'شكراً لردك السريع! سأقوم بمراجعة التعليمات.',
-      timestamp: DateTime.now(),
-      isMe: false,
-    );
-
-    if (messages.containsKey(userId)) {
-      messages[userId]!.add(reply);
-      messages.refresh();
-    }
-
-    _audioService.playNotification();
-
-    final index = conversations.indexWhere((c) => c.userId == userId);
-    if (index != -1) {
-      final conv = conversations[index];
-      conversations[index] = ChatConversation(
-        userId: conv.userId,
-        userName: conv.userName,
-        userAvatar: conv.userAvatar,
-        lastMessage: reply.content,
-        lastMessageTime: DateTime.now(),
-        unreadCount: conv.unreadCount + 1,
-        isOnline: conv.isOnline,
-        isAgent: conv.isAgent,
-      );
-      conversations.refresh();
-      _calculateUnread();
+    } catch (e) {
+      debugPrint('[ChatController] ✗ Error sending message: $e');
+      Get.snackbar('خطأ', 'فشل إرسال الرسالة');
     }
   }
 
-  void markAsRead(String userId) {
-    final index = conversations.indexWhere((c) => c.userId == userId);
-    if (index != -1 && conversations[index].unreadCount > 0) {
-      final conv = conversations[index];
-      conversations[index] = ChatConversation(
-        userId: conv.userId,
-        userName: conv.userName,
-        userAvatar: conv.userAvatar,
-        lastMessage: conv.lastMessage,
-        lastMessageTime: conv.lastMessageTime,
-        unreadCount: 0,
-        isOnline: conv.isOnline,
-        isAgent: conv.isAgent,
-      );
-      conversations.refresh();
+  void markAsRead(String conversationId) async {
+    try {
+      await _chatRepository.update(conversationId, {
+        'unread_admin_count': 0,
+      });
       _calculateUnread();
+    } catch (e) {
+      debugPrint('[ChatController] ✗ Error marking as read: $e');
     }
   }
 }
