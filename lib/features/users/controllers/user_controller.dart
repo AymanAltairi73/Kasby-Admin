@@ -8,6 +8,9 @@ import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../repositories/profile_repository.dart';
+import '../../investments/models/investment_model.dart';
+import '../../transactions/models/transaction_model.dart';
+import '../models/user_activity_model.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
@@ -22,6 +25,12 @@ class UserController extends GetxController {
   final selectedTimeFilter = TimeFilter.all.obs;
   final selectedCountry = ''.obs;
   final selectedAccountType = ''.obs;
+  
+  // Extra User Details (for details screen)
+  final selectedUserInvestments = <UserInvestment>[].obs;
+  final selectedUserTransactions = <Transaction>[].obs;
+  final selectedUserActivities = <UserActivity>[].obs;
+  final isDetailsLoading = false.obs;
 
   @override
   void onInit() {
@@ -596,6 +605,44 @@ class UserController extends GetxController {
       return users.firstWhere((u) => u.id == userId);
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Load extra details for a specific user (Investments, Transactions, Activities)
+  Future<void> loadUserExtraDetails(String userId) async {
+    debugPrint('[UserController] ▶ Loading extra details for user: $userId');
+    isDetailsLoading.value = true;
+    
+    // Clear previous data
+    selectedUserInvestments.clear();
+    selectedUserTransactions.clear();
+    selectedUserActivities.clear();
+
+    try {
+      // Run in parallel for speed
+      final results = await Future.wait([
+        _profileRepo.getUserInvestments(userId),
+        _profileRepo.getUserTransactions(userId),
+        _profileRepo.getUserActivities(userId),
+      ]);
+
+      selectedUserInvestments.value = results[0] as List<UserInvestment>;
+      selectedUserTransactions.value = results[1] as List<Transaction>;
+      selectedUserActivities.value = results[2] as List<UserActivity>;
+      
+      debugPrint('[UserController] ✓ Loaded details: '
+          '${selectedUserInvestments.length} inv, '
+          '${selectedUserTransactions.length} txns, '
+          '${selectedUserActivities.length} acts');
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'UserController',
+        method: 'loadUserExtraDetails',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      isDetailsLoading.value = false;
     }
   }
 }

@@ -1,6 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../../../core/services/base_repository.dart';
 import '../models/user_model.dart';
+import '../../investments/models/investment_model.dart';
+import '../../transactions/models/transaction_model.dart';
+import '../models/user_activity_model.dart';
 
 /// Profile Repository — handles all CRUD operations for the `profiles` table.
 class ProfileRepository extends BaseRepository {
@@ -57,6 +60,60 @@ class ProfileRepository extends BaseRepository {
     await safeQuery(
       () => client.from(tableName).delete().eq('id', id),
       methodName: 'deleteProfile',
+    );
+  }
+
+  /// Fetch a user's investments.
+  Future<List<UserInvestment>> getUserInvestments(String userId) async {
+    return safeQuery<List<UserInvestment>>(
+      () async {
+        final response = await client
+            .from('user_investments')
+            .select('*, investment_plans(*)')
+            .eq('user_id', userId)
+            .order('start_date', ascending: false);
+
+        return (response as List)
+            .map((json) => UserInvestment.fromSupabase(json))
+            .toList();
+      },
+      methodName: 'getUserInvestments',
+    );
+  }
+
+  /// Fetch a user's transactions.
+  Future<List<Transaction>> getUserTransactions(String userId) async {
+    return safeQuery<List<Transaction>>(
+      () async {
+        final response = await client
+            .from('transactions')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', ascending: false);
+
+        return (response as List)
+            .map((json) => Transaction.fromSupabase(json))
+            .toList();
+      },
+      methodName: 'getUserTransactions',
+    );
+  }
+
+  /// Fetch a user's activity logs.
+  Future<List<UserActivity>> getUserActivities(String userId) async {
+    return safeQuery<List<UserActivity>>(
+      () async {
+        final response = await client
+            .from('user_activities')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', ascending: false);
+
+        return (response as List)
+            .map((json) => UserActivity.fromJson(json))
+            .toList();
+      },
+      methodName: 'getUserActivities',
     );
   }
 

@@ -428,16 +428,16 @@ class UserListScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  user.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Text(
-                      user.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -496,6 +496,7 @@ class UserListScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
                 Text(
                   user.email,
                   style: const TextStyle(

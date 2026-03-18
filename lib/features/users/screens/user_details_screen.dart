@@ -16,16 +16,33 @@ import '../controllers/user_controller.dart';
 import '../../chat/models/chat_model.dart';
 import '../../chat/screens/chat_details_screen.dart';
 
+
 /// User Details Screen
 /// Show detailed user information and admin actions
-class UserDetailsScreen extends StatelessWidget {
+class UserDetailsScreen extends StatefulWidget {
   final User user;
 
   const UserDetailsScreen({super.key, required this.user});
 
   @override
+  State<UserDetailsScreen> createState() => _UserDetailsScreenState();
+}
+
+class _UserDetailsScreenState extends State<UserDetailsScreen> {
+  late final UserController userController;
+
+  @override
+  void initState() {
+    super.initState();
+    userController = Get.find<UserController>();
+    // Load extra details (Investments, Transactions, Activities)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      userController.loadUserExtraDetails(widget.user.id);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userController = Get.find<UserController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -65,27 +82,27 @@ class UserDetailsScreen extends StatelessWidget {
               ),
               PopupMenuItem(
                 child: Text(
-                  user.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
+                  widget.user.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
                   style: TextStyle(
-                    color: user.status == 'Active'
+                    color: widget.user.status == 'Active'
                         ? KasbyColors.error
                         : KasbyColors.success,
                   ),
                 ),
                 onTap: () {
                   KasbyConfirmationDialog.show(
-                    title: user.status == 'Active'
+                    title: widget.user.status == 'Active'
                         ? 'حظر المستخدم'
                         : 'تفعيل المستخدم',
-                    message: user.status == 'Active'
-                        ? 'هل أنت متأكد من حظر المستخدم "${user.name}"؟'
-                        : 'هل أنت متأكد من تفعيل المستخدم "${user.name}"؟',
-                    isDangerous: user.status == 'Active',
+                    message: widget.user.status == 'Active'
+                        ? 'هل أنت متأكد من حظر المستخدم "${widget.user.name}"؟'
+                        : 'هل أنت متأكد من تفعيل المستخدم "${widget.user.name}"؟',
+                    isDangerous: widget.user.status == 'Active',
                     onConfirm: () {
-                      if (user.status == 'Active') {
-                        userController.blockUser(user.id);
+                      if (widget.user.status == 'Active') {
+                        userController.blockUser(widget.user.id);
                       } else {
-                        userController.activateUser(user.id);
+                        userController.activateUser(widget.user.id);
                       }
                     },
                   );
@@ -142,7 +159,10 @@ class UserDetailsScreen extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => userController.loadUsers(),
+        onRefresh: () async {
+          await userController.loadUsers();
+          await userController.loadUserExtraDetails(widget.user.id);
+        },
         color: KasbyColors.primaryGold,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -164,7 +184,7 @@ class UserDetailsScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        user.name.isNotEmpty ? user.name[0] : '?',
+                        widget.user.name.isNotEmpty ? widget.user.name[0] : '?',
                         style: const TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -180,14 +200,14 @@ class UserDetailsScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        user.name,
+                        widget.user.name,
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: KasbyColors.textPrimary,
                         ),
                       ),
-                      if (user.accountType == 'VIP')
+                      if (widget.user.accountType == 'VIP')
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Icon(
@@ -196,7 +216,7 @@ class UserDetailsScreen extends StatelessWidget {
                             size: 24,
                           ),
                         )
-                      else if (user.accountType == 'Verified')
+                      else if (widget.user.accountType == 'Verified')
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: Icon(
@@ -220,7 +240,7 @@ class UserDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        user.email,
+                        widget.user.email,
                         style: const TextStyle(
                           fontSize: 14,
                           color: KasbyColors.textSecondary,
@@ -239,7 +259,7 @@ class UserDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        user.phone,
+                        widget.user.phone,
                         textDirection: ui.TextDirection.ltr,
                         style: const TextStyle(
                           fontSize: 14,
@@ -253,37 +273,37 @@ class UserDetailsScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (user.whatsapp.isNotEmpty)
+                      if (widget.user.whatsapp.isNotEmpty)
                         _buildCommunicationButton(
                           icon: FontAwesomeIcons.whatsapp,
                           color: const Color(0xFF25D366),
                           label: 'واتساب',
                           onTap: () => _launchUrl(
-                            'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
+                            'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
                             fallbackMessage:
                                 'يرجى التأكد من تثبيت واتساب على جهازك',
                           ),
                         ),
-                      if (user.whatsapp.isNotEmpty) const SizedBox(width: 20),
-                      if (user.telegram.isNotEmpty)
+                      if (widget.user.whatsapp.isNotEmpty) const SizedBox(width: 20),
+                      if (widget.user.telegram.isNotEmpty)
                         _buildCommunicationButton(
                           icon: FontAwesomeIcons.telegram,
                           color: const Color(0xFF24A1DE),
                           label: 'تيليجرام',
                           onTap: () => _launchUrl(
-                            user.telegram.startsWith('http')
-                                ? user.telegram
-                                : 'https://t.me/${user.telegram.replaceAll('@', '')}',
+                            widget.user.telegram.startsWith('http')
+                                ? widget.user.telegram
+                                : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
                             fallbackMessage:
                                 'يرجى التأكد من تثبيت تليجرام على جهازك',
                           ),
                         ),
-                      if (user.telegram.isNotEmpty) const SizedBox(width: 20),
+                      if (widget.user.telegram.isNotEmpty) const SizedBox(width: 20),
                       _buildCommunicationButton(
                         icon: Icons.phone_forwarded_rounded,
                         color: KasbyColors.info,
                         label: 'اتصال',
-                        onTap: () => _launchUrl('tel:${user.phone}'),
+                        onTap: () => _launchUrl('tel:${widget.user.phone}'),
                       ),
                     ],
                   ),
@@ -294,26 +314,32 @@ class UserDetailsScreen extends StatelessWidget {
                     spacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
+                      Obx(() {
+                        final currUser = userController.getUserById(widget.user.id) ?? widget.user;
+                        return _buildStatusBadge(
+                          label: currUser.status == 'Active' ? 'نشط' : 'محظور',
+                          color: currUser.status == 'Active'
+                              ? KasbyColors.success
+                              : KasbyColors.error,
+                        );
+                      }),
                       _buildStatusBadge(
-                        label: user.status == 'Active' ? 'نشط' : 'محظور',
-                        color: user.status == 'Active'
-                            ? KasbyColors.success
-                            : KasbyColors.error,
-                      ),
-                      _buildStatusBadge(
-                        label: user.country,
+                        label: widget.user.country,
                         color: KasbyColors.info,
                         icon: Icons.public,
                       ),
-                      _buildStatusBadge(
-                        label: 'KYC: ${user.kycStatus}',
-                        color: user.kycStatus == 'Verified'
-                            ? KasbyColors.success
-                            : (user.kycStatus == 'Pending'
-                                  ? KasbyColors.warning
-                                  : KasbyColors.error),
-                        icon: Icons.how_to_reg,
-                      ),
+                      Obx(() {
+                        final currUser = userController.getUserById(widget.user.id) ?? widget.user;
+                        return _buildStatusBadge(
+                          label: 'KYC: ${currUser.kycStatus}',
+                          color: currUser.kycStatus == 'Verified'
+                              ? KasbyColors.success
+                              : (currUser.kycStatus == 'Pending'
+                                    ? KasbyColors.warning
+                                    : KasbyColors.error),
+                          icon: Icons.how_to_reg,
+                        );
+                      }),
                     ],
                   ),
 
@@ -323,7 +349,7 @@ class UserDetailsScreen extends StatelessWidget {
                   Directionality(
                     textDirection: ui.TextDirection.ltr,
                     child: Text(
-                      'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(user.createdAt)}',
+                      'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(widget.user.createdAt)}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: KasbyColors.textSecondary,
@@ -332,7 +358,7 @@ class UserDetailsScreen extends StatelessWidget {
                   ),
 
                   // KYC Actions (If Pending)
-                  if (user.kycStatus == 'Pending')
+                  if (widget.user.kycStatus == 'Pending')
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
                       child: Row(
@@ -360,7 +386,7 @@ class UserDetailsScreen extends StatelessWidget {
                             ),
                             onPressed: () {
                               // Mock Action
-                              final updated = user.copyWith(
+                              final updated = widget.user.copyWith(
                                 kycStatus: 'Verified',
                                 accountType: 'Verified',
                               );
@@ -398,7 +424,7 @@ class UserDetailsScreen extends StatelessWidget {
                         color: const Color(0xFF25D366),
                         label: 'واتساب',
                         onTap: () => _launchUrl(
-                          'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
+                          'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
                           fallbackMessage:
                               'يرجى التأكد من تثبيت واتساب على جهازك',
                         ),
@@ -408,9 +434,9 @@ class UserDetailsScreen extends StatelessWidget {
                         color: const Color(0xFF24A1DE),
                         label: 'تليجرام',
                         onTap: () => _launchUrl(
-                          user.telegram.startsWith('http')
-                              ? user.telegram
-                              : 'https://t.me/${user.telegram.replaceAll('@', '')}',
+                          widget.user.telegram.startsWith('http')
+                              ? widget.user.telegram
+                              : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
                           fallbackMessage:
                               'يرجى التأكد من تثبيت تليجرام على جهازك',
                         ),
@@ -458,8 +484,8 @@ class UserDetailsScreen extends StatelessWidget {
                           Get.to(
                             () => const ChatDetailsScreen(),
                             arguments: ChatConversation(
-                              userId: user.id,
-                              userName: user.name,
+                              userId: widget.user.id,
+                              userName: widget.user.name,
                               lastMessage: 'بدء محادثة جديدة',
                               lastMessageTime: DateTime.now(),
                               isOnline: true,
@@ -487,6 +513,11 @@ class UserDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
+            const SizedBox(height: 24),
+            // Quick Actions Section
+            // _buildQuickActions(context, userController),
+            // const SizedBox(height: 24),
+
             // Wallet Section
             const Text(
               'المحفظة',
@@ -497,34 +528,40 @@ class UserDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildWalletCard(
-                    title: 'الرصيد المتاح',
-                    amount: user.walletBalance,
-                    icon: FontAwesomeIcons.wallet,
-                    color: KasbyColors.primaryGold,
+            Obx(() {
+              final currUser = userController.getUserById(widget.user.id) ?? widget.user;
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildWalletCard(
+                      title: 'الرصيد المتاح',
+                      amount: currUser.walletBalance,
+                      icon: FontAwesomeIcons.wallet,
+                      color: KasbyColors.primaryGold,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildWalletCard(
-                    title: 'المستثمر',
-                    amount: user.investedAmount,
-                    icon: FontAwesomeIcons.chartLine,
-                    color: KasbyColors.success,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildWalletCard(
+                      title: 'المستثمر',
+                      amount: currUser.investedAmount,
+                      icon: FontAwesomeIcons.chartLine,
+                      color: KasbyColors.success,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              );
+            }),
             const SizedBox(height: 12),
-            _buildWalletCard(
-              title: 'المعلق',
-              amount: user.pendingAmount,
-              icon: FontAwesomeIcons.clockRotateLeft,
-              color: KasbyColors.warning,
-            ),
+            Obx(() {
+              final currUser = userController.getUserById(widget.user.id) ?? widget.user;
+              return _buildWalletCard(
+                title: 'المعلق',
+                amount: currUser.pendingAmount,
+                icon: FontAwesomeIcons.clockRotateLeft,
+                color: KasbyColors.warning,
+              );
+            }),
             const SizedBox(height: 24),
 
             // Investments Section
@@ -537,21 +574,90 @@ class UserDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            KasbyCard(
-              child: const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    'لا توجد استثمارات نشطة',
-                    style: TextStyle(color: KasbyColors.textSecondary),
+            Obx(() {
+              if (userController.isDetailsLoading.value) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(color: KasbyColors.primaryGold),
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+              
+              if (userController.selectedUserInvestments.isEmpty) {
+                return KasbyCard(
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text(
+                        'لا توجد استثمارات نشطة',
+                        style: TextStyle(color: KasbyColors.textSecondary),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: userController.selectedUserInvestments.length,
+                itemBuilder: (context, index) {
+                  final inv = userController.selectedUserInvestments[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: KasbyGlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: KasbyColors.success.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(FontAwesomeIcons.chartPie, color: KasbyColors.success, size: 20),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  inv.planName,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                                Text(
+                                  'تاريخ الاستحقاق: ${DateFormat('yyyy/MM/dd').format(inv.endDate)}',
+                                  style: const TextStyle(fontSize: 12, color: KasbyColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '\$${inv.amount.toStringAsFixed(2)}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: KasbyColors.primaryGold),
+                              ),
+                              Text(
+                                '${inv.status}',
+                                style: const TextStyle(fontSize: 10, color: KasbyColors.success),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
             const SizedBox(height: 24),
 
             // Documents Section
-            if (user.documents.isNotEmpty) ...[
+            if (widget.user.documents.isNotEmpty) ...[
               const Text(
                 'الوثائق المقدمة',
                 style: TextStyle(
@@ -565,7 +671,7 @@ class UserDetailsScreen extends StatelessWidget {
                 height: 200,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: user.documents.length,
+                  itemCount: widget.user.documents.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(width: 12),
                   itemBuilder: (context, index) {
@@ -577,7 +683,7 @@ class UserDetailsScreen extends StatelessWidget {
                           fit: StackFit.expand,
                           children: [
                             Image.asset(
-                              user.documents[index], // Assuming local assets for mock
+                              widget.user.documents[index], // Assuming local assets for mock
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Center(
@@ -621,7 +727,7 @@ class UserDetailsScreen extends StatelessWidget {
               ),
 
               // Verify/Reject Actions for Pending KYC
-              if (user.kycStatus == 'Pending')
+              if (widget.user.kycStatus == 'Pending')
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: Row(
@@ -669,25 +775,31 @@ class UserDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            if (user.activityLog.isEmpty)
-              KasbyCard(
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: Text(
-                      'لا يوجد نشاط مسجل',
-                      style: TextStyle(color: KasbyColors.textSecondary),
+            Obx(() {
+              if (userController.isDetailsLoading.value) {
+                return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
+              }
+
+              if (userController.selectedUserActivities.isEmpty) {
+                return KasbyCard(
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text(
+                        'لا يوجد نشاط مسجل',
+                        style: TextStyle(color: KasbyColors.textSecondary),
+                      ),
                     ),
                   ),
-                ),
-              )
-            else
-              ListView.builder(
+                );
+              }
+
+              return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: user.activityLog.length,
+                itemCount: userController.selectedUserActivities.length,
                 itemBuilder: (context, index) {
-                  final activity = user.activityLog[index];
+                  final activity = userController.selectedUserActivities[index];
                   IconData icon;
                   Color iconColor;
 
@@ -764,7 +876,8 @@ class UserDetailsScreen extends StatelessWidget {
                     ),
                   );
                 },
-              ),
+              );
+            }),
 
             const SizedBox(height: 24),
 
@@ -778,17 +891,81 @@ class UserDetailsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            KasbyCard(
-              child: const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    'لا توجد معاملات',
-                    style: TextStyle(color: KasbyColors.textSecondary),
+            Obx(() {
+              if (userController.isDetailsLoading.value) {
+                return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
+              }
+
+              if (userController.selectedUserTransactions.isEmpty) {
+                return KasbyCard(
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text(
+                        'لا توجد معاملات',
+                        style: TextStyle(color: KasbyColors.textSecondary),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: userController.selectedUserTransactions.length,
+                itemBuilder: (context, index) {
+                  final txn = userController.selectedUserTransactions[index];
+                  final isPositive = txn.type == 'deposit' || txn.type == 'investment_profit';
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: KasbyGlassCard(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: (isPositive ? KasbyColors.success : KasbyColors.error).withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isPositive ? Icons.arrow_downward : Icons.arrow_upward,
+                              color: isPositive ? KasbyColors.success : KasbyColors.error,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  txn.type,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                                Text(
+                                  DateFormat('yyyy/MM/dd HH:mm').format(txn.createdAt),
+                                  style: const TextStyle(fontSize: 12, color: KasbyColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            '${isPositive ? "+" : "-"}\$${txn.amount.abs().toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isPositive ? KasbyColors.success : KasbyColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
           ],
         ),
       ),
@@ -872,11 +1049,11 @@ class UserDetailsScreen extends StatelessWidget {
     KasbyConfirmationDialog.show(
       title: 'حذف المستخدم',
       message:
-          'هل أنت متأكد من حذف المستخدم "${user.name}" نهائياً؟ لا يمكن التراجع عن هذه العملية.',
+          'هل أنت متأكد من حذف المستخدم "${widget.user.name}" نهائياً؟ لا يمكن التراجع عن هذه العملية.',
       isDangerous: true,
       confirmText: 'حذف',
       onConfirm: () {
-        controller.deleteUser(user.id);
+        controller.deleteUser(widget.user.id);
         Get.back(); // Back to list
       },
     );
@@ -889,10 +1066,10 @@ class UserDetailsScreen extends StatelessWidget {
     KasbyConfirmationDialog.show(
       title: 'توثيق الحساب',
       message:
-          'هل أنت متأكد من قبول وثائق "${user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
+          'هل أنت متأكد من قبول وثائق "${widget.user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
       confirmText: 'توثيق',
       onConfirm: () {
-        controller.verifyDocuments(user.id);
+        controller.verifyDocuments(widget.user.id);
       },
     );
   }
@@ -926,7 +1103,7 @@ class UserDetailsScreen extends StatelessWidget {
                 isDangerous: true,
                 confirmText: 'رفض',
                 onConfirm: () {
-                  controller.rejectDocuments(user.id, reasonController.text);
+                  controller.rejectDocuments(widget.user.id, reasonController.text);
                 },
               );
             } else {
@@ -967,7 +1144,7 @@ class UserDetailsScreen extends StatelessWidget {
               KasbyConfirmationDialog.show(
                 message: 'إضافة \$${amountController.text} للمحفظة؟',
                 onConfirm: () => controller.addBalance(
-                  user.id,
+                  widget.user.id,
                   double.parse(amountController.text),
                   'إضافة رصيد من قبل الإدارة',
                 ),
@@ -1009,7 +1186,7 @@ class UserDetailsScreen extends StatelessWidget {
                 message: 'خصم \$${amountController.text} من المحفظة؟',
                 isDangerous: true,
                 onConfirm: () => controller.deductBalance(
-                  user.id,
+                  widget.user.id,
                   double.parse(amountController.text),
                   'خصم رصيد من قبل الإدارة',
                 ),
@@ -1031,13 +1208,13 @@ class UserDetailsScreen extends StatelessWidget {
 
   void _showEditUserDialog(BuildContext context, UserController controller) {
     final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: user.name);
-    final countryController = TextEditingController(text: user.country);
-    final cityController = TextEditingController(text: user.city);
-    final phoneController = TextEditingController(text: user.phone);
-    final whatsappController = TextEditingController(text: user.whatsapp);
-    final telegramController = TextEditingController(text: user.telegram);
-    final emailController = TextEditingController(text: user.email);
+    final nameController = TextEditingController(text: widget.user.name);
+    final countryController = TextEditingController(text: widget.user.country);
+    final cityController = TextEditingController(text: widget.user.city);
+    final phoneController = TextEditingController(text: widget.user.phone);
+    final whatsappController = TextEditingController(text: widget.user.whatsapp);
+    final telegramController = TextEditingController(text: widget.user.telegram);
+    final emailController = TextEditingController(text: widget.user.email);
 
     final isFormValid = true.obs;
 
@@ -1153,7 +1330,7 @@ class UserDetailsScreen extends StatelessWidget {
                                           'هل أنت متأكد من تعديل بيانات المستخدم؟',
                                       confirmText: 'تأكيد',
                                       onConfirm: () async {
-                                        final updatedUser = user.copyWith(
+                                        final updatedUser = widget.user.copyWith(
                                           name: nameController.text,
                                           country: countryController.text,
                                           city: cityController.text,
@@ -1229,6 +1406,123 @@ class UserDetailsScreen extends StatelessWidget {
       ],
     );
   }
+
+  // Widget _buildQuickActions(BuildContext context, UserController controller) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'إجراءات سريعة',
+  //         style: TextStyle(
+  //           fontSize: 18,
+  //           fontWeight: FontWeight.bold,
+  //           color: KasbyColors.textPrimary,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       SingleChildScrollView(
+  //         scrollDirection: Axis.horizontal,
+  //         child: Row(
+  //           children: [
+  //             _buildActionItem(
+  //               label: 'إضافة رصيد',
+  //               icon: Icons.add_circle_outline,
+  //               color: KasbyColors.success,
+  //               onTap: () => _showAddBalanceDialog(context, controller),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             _buildActionItem(
+  //               label: 'خصم رصيد',
+  //               icon: Icons.remove_circle_outline,
+  //               color: KasbyColors.error,
+  //               onTap: () => _showDeductBalanceDialog(context, controller),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Obx(() {
+  //               final currUser = controller.getUserById(widget.user.id) ?? widget.user;
+  //               return _buildActionItem(
+  //                 label: currUser.status == 'Active' ? 'حظر' : 'تفعيل',
+  //                 icon: currUser.status == 'Active' ? Icons.block : Icons.check_circle_outline,
+  //                 color: currUser.status == 'Active' ? KasbyColors.error : KasbyColors.success,
+  //                 onTap: () {
+  //                   KasbyConfirmationDialog.show(
+  //                     title: currUser.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
+  //                     message: currUser.status == 'Active'
+  //                         ? 'هل أنت متأكد من حظر المستخدم "${currUser.name}"؟'
+  //                         : 'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
+  //                     isDangerous: currUser.status == 'Active',
+  //                     onConfirm: () {
+  //                       if (currUser.status == 'Active') {
+  //                         controller.blockUser(widget.user.id);
+  //                       } else {
+  //                         controller.activateUser(widget.user.id);
+  //                       }
+  //                     },
+  //                   );
+  //                 },
+  //               );
+  //             }),
+  //             const SizedBox(width: 12),
+  //             _buildActionItem(
+  //               label: 'تعديل',
+  //               icon: Icons.edit_outlined,
+  //               color: KasbyColors.info,
+  //               onTap: () => _showEditUserDialog(context, controller),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             _buildActionItem(
+  //               label: 'حظر / تفعيل',
+  //               icon: Icons.security_rounded,
+  //               color: KasbyColors.warning,
+  //               onTap: () => controller.toggleBlockUser(widget.user.id),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             _buildActionItem(
+  //               label: 'حذف',
+  //               icon: Icons.delete_outline_rounded,
+  //               color: KasbyColors.error,
+  //               onTap: () => _showDeleteConfirmation(controller),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Widget _buildActionItem({
+  //   required String label,
+  //   required IconData icon,
+  //   required Color color,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return KasbyGlassCard(
+  //     padding: EdgeInsets.zero,
+  //     child: InkWell(
+  //       onTap: onTap,
+  //       borderRadius: BorderRadius.circular(16),
+  //       child: Container(
+  //         width: 90,
+  //         padding: const EdgeInsets.symmetric(vertical: 16),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Icon(icon, color: color, size: 24),
+  //             const SizedBox(height: 8),
+  //             Text(
+  //               label,
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 12,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
     final uri = Uri.parse(url);

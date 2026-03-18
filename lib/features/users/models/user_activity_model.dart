@@ -41,7 +41,7 @@ class UserActivity {
       'id': id,
       'action': action,
       'details': details,
-      'timestamp': timestamp.toIso8601String(),
+      'created_at': timestamp.toIso8601String(),
       'type': type,
       'ip_address': ipAddress,
       'device': device,
