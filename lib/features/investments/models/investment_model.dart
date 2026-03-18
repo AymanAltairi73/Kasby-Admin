@@ -11,7 +11,6 @@ class InvestmentPlan {
   final bool isActive;
   final DateTime createdAt;
   final String? imagePath;
-  final int? durationDays;
   final String? riskLevel;
 
   InvestmentPlan({
@@ -26,7 +25,6 @@ class InvestmentPlan {
     required this.isActive,
     required this.createdAt,
     this.imagePath,
-    this.durationDays,
     this.riskLevel,
   });
 
@@ -42,7 +40,6 @@ class InvestmentPlan {
     bool? isActive,
     DateTime? createdAt,
     String? imagePath,
-    int? durationDays,
     String? riskLevel,
   }) {
     return InvestmentPlan(
@@ -57,7 +54,6 @@ class InvestmentPlan {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       imagePath: imagePath ?? this.imagePath,
-      durationDays: durationDays ?? this.durationDays,
       riskLevel: riskLevel ?? this.riskLevel,
     );
   }
@@ -84,7 +80,6 @@ class InvestmentPlan {
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
       imagePath: json['image_url'] ?? json['image_path'],
-      durationDays: json['duration_days'],
       riskLevel: json['risk_level'] != null ? _capitalize(json['risk_level']) : null,
     );
   }
@@ -116,7 +111,6 @@ class InvestmentPlan {
                 ? DateTime.parse(json['created_at'])
                 : DateTime.now()),
       imagePath: json['imagePath'] ?? json['image_path'] ?? json['image_url'],
-      durationDays: json['durationDays'] ?? json['duration_days'],
       riskLevel: (json['riskLevel'] ?? json['risk_level']) != null
           ? _capitalize(json['riskLevel'] ?? json['risk_level'])
           : null,
@@ -136,7 +130,6 @@ class InvestmentPlan {
       'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
       'imagePath': imagePath,
-      'durationDays': durationDays,
       'riskLevel': riskLevel,
     };
   }
@@ -151,7 +144,6 @@ class InvestmentPlan {
       'max_amount': maxAmount,
       'is_active': isActive,
       'description_ar': descriptionAr,
-      'duration_days': durationDays,
       'image_url': imagePath,
       'risk_level': riskLevel,
       'available_amounts': availableAmounts,

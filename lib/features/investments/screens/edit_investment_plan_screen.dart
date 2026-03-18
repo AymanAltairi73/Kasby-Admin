@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 
@@ -27,7 +28,6 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
   late TextEditingController profitPercentageController;
   late TextEditingController minAmountController;
   late TextEditingController maxAmountController;
-  late TextEditingController durationDaysController;
   late TextEditingController availableAmountsController;
   
   String? selectedRiskLevel;
@@ -35,7 +35,17 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
   String? _currentImageUrl;
   bool isActive = true;
 
-  final List<String> riskLevels = ['Low', 'Medium', 'High'];
+  final List<String> riskLevels = ['منخفض', 'متوسط', 'عالي'];
+  final Map<String, String> riskLevelMap = {
+    'منخفض': 'Low',
+    'متوسط': 'Medium',
+    'عالي': 'High',
+  };
+  final Map<String, String> riskLevelReverseMap = {
+    'Low': 'منخفض',
+    'Medium': 'متوسط',
+    'High': 'عالي',
+  };
 
   @override
   void initState() {
@@ -46,16 +56,10 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
     profitPercentageController = TextEditingController(text: widget.plan.profitPercentage.toString());
     minAmountController = TextEditingController(text: widget.plan.minAmount.toString());
     maxAmountController = TextEditingController(text: widget.plan.maxAmount.toString());
-    durationDaysController = TextEditingController(text: widget.plan.durationDays?.toString() ?? '');
     availableAmountsController = TextEditingController(text: widget.plan.availableAmounts?.join(', ') ?? '');
-    selectedRiskLevel = _capitalize(widget.plan.riskLevel ?? 'Medium');
+    selectedRiskLevel = riskLevelReverseMap[widget.plan.riskLevel] ?? 'متوسط';
     _currentImageUrl = widget.plan.imagePath;
     isActive = widget.plan.isActive;
-  }
-
-  String _capitalize(String text) {
-    if (text.isEmpty) return 'Medium';
-    return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
   @override
@@ -66,7 +70,6 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
     profitPercentageController.dispose();
     minAmountController.dispose();
     maxAmountController.dispose();
-    durationDaysController.dispose();
     availableAmountsController.dispose();
     super.dispose();
   }
@@ -101,6 +104,66 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
             _buildImageSection(),
             const SizedBox(height: 32),
             _buildFormSection(),
+            const SizedBox(height: 24),
+            _buildRiskExplanation(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, right: 4),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: KasbyColors.primaryGold,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRiskExplanation() {
+    return KasbyGlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.info_outline, color: KasbyColors.primaryGold, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'ما هو مستوى المخاطرة؟',
+                style: TextStyle(
+                  color: KasbyColors.primaryGold,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildRiskInfo('منخفض', 'يركز على الأمان وحماية رأس المال، أرباح بسيطة ومستقرة.'),
+          _buildRiskInfo('متوسط', 'توازن بين الربح والأمان، مع تذبذب بسيط في النتائج.'),
+          _buildRiskInfo('عالي', 'يستهدف أرباحاً كبيرة جداً، لكنه يحمل مخاطرة عالية بخسارة جزء من المال.'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiskInfo(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: KasbyColors.textSecondary, fontSize: 13, height: 1.4),
+          children: [
+            TextSpan(text: '$title: ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            TextSpan(text: desc),
           ],
         ),
       ),
@@ -176,33 +239,62 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
 
   Widget _buildFormSection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        KasbyTextField(controller: nameArController, hintText: 'اسم الخطة (عربي)', prefixIcon: Icons.title),
+        _buildLabel('اسم الباقة (بالعربي)'),
+        KasbyTextField(controller: nameArController, hintText: 'مثال: الباقة الفضية', prefixIcon: Icons.title),
         const SizedBox(height: 16),
-        KasbyTextField(controller: nameEnController, hintText: 'اسم الخطة (English)', prefixIcon: Icons.language),
+        _buildLabel('اسم الباقة (English)'),
+        KasbyTextField(controller: nameEnController, hintText: 'Example: Silver Package', prefixIcon: Icons.language),
         const SizedBox(height: 16),
-        KasbyTextField(controller: descriptionArController, hintText: 'وصف الخطة (عربي)', prefixIcon: Icons.description, maxLines: 4),
+        _buildLabel('وصف الباقة (بالعربي)'),
+        KasbyTextField(controller: descriptionArController, hintText: 'اشرح تفاصيل الباقة...', prefixIcon: Icons.description, maxLines: 4),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: KasbyTextField(controller: profitPercentageController, hintText: 'نسبة الربح (%)', keyboardType: TextInputType.number, prefixIcon: Icons.percent)),
-            const SizedBox(width: 16),
-            Expanded(child: KasbyTextField(controller: durationDaysController, hintText: 'المدة (أيام)', keyboardType: TextInputType.number, prefixIcon: Icons.calendar_today)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('نسبة الربح (%)'),
+                  KasbyTextField(controller: profitPercentageController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.percent),
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: KasbyTextField(controller: minAmountController, hintText: 'الحد الأدنى', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('الحد الأدنى'),
+                  KasbyTextField(controller: minAmountController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money),
+                ],
+              ),
+            ),
             const SizedBox(width: 16),
-            Expanded(child: KasbyTextField(controller: maxAmountController, hintText: 'الحد الأقصى', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('الحد الأقصى'),
+                  KasbyTextField(controller: maxAmountController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money),
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        KasbyTextField(controller: availableAmountsController, hintText: 'المبالغ المتاحة (مثال: 100, 200, 500)', prefixIcon: Icons.list),
+        _buildLabel('المبالغ المتاحة (مفصولة بفاصلة)'),
+        KasbyTextField(controller: availableAmountsController, hintText: '100, 500, 1000', prefixIcon: Icons.list),
         const SizedBox(height: 16),
+        _buildLabel('مستوى المخاطرة'),
         _buildRiskLevelSelector(),
         const SizedBox(height: 16),
+        _buildLabel('حالة النشاط'),
         _buildStatusSwitch(),
         const SizedBox(height: 40),
         Obx(
@@ -282,9 +374,8 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       'profitPercentage': double.tryParse(profitPercentageController.text) ?? 0,
       'minAmount': double.tryParse(minAmountController.text) ?? 0,
       'maxAmount': double.tryParse(maxAmountController.text) ?? 0,
-      'durationDays': int.tryParse(durationDaysController.text),
       'availableAmounts': availableAmounts,
-      'riskLevel': selectedRiskLevel,
+      'riskLevel': riskLevelMap[selectedRiskLevel] ?? 'Medium',
       'imagePath': imageUrl,
       'isActive': isActive,
     };

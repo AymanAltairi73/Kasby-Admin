@@ -116,7 +116,6 @@ class InvestmentController extends GetxController {
     required double maxAmount,
     List<double>? availableAmounts,
     String? imagePath,
-    int? durationDays,
     String? riskLevel,
   }) async {
     isLoading.value = true;
@@ -130,7 +129,6 @@ class InvestmentController extends GetxController {
         'max_amount': maxAmount,
         'available_amounts': availableAmounts,
         'image_url': imagePath,
-        'duration_days': durationDays,
         'risk_level': riskLevel,
         'is_active': true,
       });

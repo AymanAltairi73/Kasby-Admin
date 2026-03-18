@@ -414,6 +414,23 @@ class InvestmentPlansScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildDialogLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6, right: 2),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: KasbyColors.primaryGold,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDazzlingMetric({
     required IconData icon,
     required String label,
@@ -468,9 +485,13 @@ class InvestmentPlansScreen extends StatelessWidget {
     final profitController = TextEditingController();
     final minAmountController = TextEditingController();
     final maxAmountController = TextEditingController();
-    final durationDaysController = TextEditingController();
     final amountsController = TextEditingController();
-    String selectedRiskLevel = 'Medium';
+    String selectedRiskLevel = 'متوسط';
+    final Map<String, String> riskLevelMap = {
+      'منخفض': 'Low',
+      'متوسط': 'Medium',
+      'عالي': 'High',
+    };
     File? selectedImage;
     final ImagePicker picker = ImagePicker();
 
@@ -523,41 +544,41 @@ class InvestmentPlansScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  _buildDialogLabel('اسم الباقة (بالعربي)'),
                   KasbyTextField(
                     controller: nameArController,
-                    hintText: 'اسم الخطة (عربي)',
+                    hintText: '',
                     prefixIcon: Icons.title,
                   ),
                   const SizedBox(height: 12),
+                  _buildDialogLabel('اسم الباقة (انجليزي)'),
                   KasbyTextField(
                     controller: nameEnController,
-                    hintText: 'اسم الخطة (English)',
+                    hintText: '',
                     prefixIcon: Icons.language,
                   ),
                   const SizedBox(height: 12),
+                  _buildDialogLabel('وصف الباقة (بالعربي)'),
                   KasbyTextField(
                     controller: descriptionController,
-                    hintText: 'وصف الخطة (عربي)',
+                    hintText: 'اشرح تفاصيل الباقة...',
                     prefixIcon: Icons.description,
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: KasbyTextField(
-                          controller: profitController,
-                          hintText: 'الربح (%)',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.percent,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: KasbyTextField(
-                          controller: durationDaysController,
-                          hintText: 'المدة (أيام)',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.calendar_today,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel('الربح (%)'),
+                            KasbyTextField(
+                              controller: profitController,
+                              hintText: '0.0',
+                              keyboardType: TextInputType.number,
+                              prefixIcon: Icons.percent,
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -566,36 +587,49 @@ class InvestmentPlansScreen extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: KasbyTextField(
-                          controller: minAmountController,
-                          hintText: 'الحد الأدنى',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.attach_money,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel('الحد الأدنى'),
+                            KasbyTextField(
+                              controller: minAmountController,
+                              hintText: '0.0',
+                              keyboardType: TextInputType.number,
+                              prefixIcon: Icons.attach_money,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: KasbyTextField(
-                          controller: maxAmountController,
-                          hintText: 'الحد الأقصى',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.attach_money,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel('الحد الأقصى'),
+                            KasbyTextField(
+                              controller: maxAmountController,
+                              hintText: '0.0',
+                              keyboardType: TextInputType.number,
+                              prefixIcon: Icons.attach_money,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
+                  _buildDialogLabel('المبالغ المتاحة (مفصولة بفاصلة)'),
                   KasbyTextField(
                     controller: amountsController,
-                    hintText: 'المبالغ المتاحة (100,200...)',
+                    hintText: '100, 500, 1000,..etc',
                     prefixIcon: Icons.list,
                   ),
                   const SizedBox(height: 12),
+                  _buildDialogLabel('مستوى المخاطرة'),
                   DropdownButtonFormField<String>(
                     value: selectedRiskLevel,
                     dropdownColor: KasbyColors.surface,
                     decoration: InputDecoration(
-                      hintText: 'مستوى المخاطرة',
                       prefixIcon: const Icon(
                         Icons.warning,
                         color: KasbyColors.primaryGold,
@@ -607,7 +641,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: ['Low', 'Medium', 'High']
+                    items: ['منخفض', 'متوسط', 'عالي']
                         .map(
                           (e) => DropdownMenuItem(
                             value: e,
@@ -676,9 +710,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                             availableAmounts: availableAmounts.isNotEmpty
                                 ? availableAmounts
                                 : null,
-                            durationDays:
-                                int.tryParse(durationDaysController.text),
-                            riskLevel: selectedRiskLevel,
+                            riskLevel: riskLevelMap[selectedRiskLevel] ?? 'Medium',
                             imagePath: imageUrl,
                           );
                           Get.back();
