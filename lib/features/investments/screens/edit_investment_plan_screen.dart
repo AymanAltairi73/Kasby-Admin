@@ -526,7 +526,7 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
             ],
           ),
           content: const Text(
-            'تم تحديث إعدادات الباقة بنجاح',
+            'تم تحديث الباقة بنجاح',
             style: TextStyle(color: Colors.white70),
           ),
           actions: [

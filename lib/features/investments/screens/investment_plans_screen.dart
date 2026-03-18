@@ -732,7 +732,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                                   ],
                                 ),
                                 content: const Text(
-                                  'تم إنشاء الباقة بنجاح',
+                                  'تم إضافة الخطة بنجاح',
                                   style: TextStyle(color: Colors.white70),
                                 ),
                                 actions: [
