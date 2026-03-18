@@ -697,25 +697,55 @@ class InvestmentPlansScreen extends StatelessWidget {
                                 .toList();
                           }
 
-                          await controller.createPlan(
-                            nameAr: nameArController.text,
-                            nameEn: nameEnController.text,
-                            descriptionAr: descriptionController.text.isNotEmpty
-                                ? descriptionController.text
-                                : 'وصف الخطة المقترحة للاستثمار...',
-                            profitPercentage:
-                                double.tryParse(profitController.text) ?? 0,
-                            minAmount:
-                                double.tryParse(minAmountController.text) ?? 0,
-                            maxAmount:
-                                double.tryParse(maxAmountController.text) ?? 0,
-                            availableAmounts: availableAmounts.isNotEmpty
-                                ? availableAmounts
-                                : null,
-                            riskLevel: riskLevelMap[selectedRiskLevel] ?? 'Medium',
-                            imagePath: imageUrl,
-                          );
-                          Get.back();
+                          try {
+                            await controller.createPlan(
+                              nameAr: nameArController.text,
+                              nameEn: nameEnController.text,
+                              descriptionAr: descriptionController.text.isNotEmpty
+                                  ? descriptionController.text
+                                  : 'وصف الخطة المقترحة للاستثمار...',
+                              profitPercentage:
+                                  double.tryParse(profitController.text) ?? 0,
+                              minAmount:
+                                  double.tryParse(minAmountController.text) ?? 0,
+                              maxAmount:
+                                  double.tryParse(maxAmountController.text) ?? 0,
+                              availableAmounts: availableAmounts.isNotEmpty
+                                  ? availableAmounts
+                                  : null,
+                              riskLevel: riskLevelMap[selectedRiskLevel] ?? 'medium',
+                              imagePath: imageUrl,
+                            );
+                            
+                            Get.back(); // Close creation dialog
+                            
+                            // Show success dialog
+                            Get.dialog(
+                              AlertDialog(
+                                backgroundColor: KasbyColors.surface,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                title: const Row(
+                                  children: [
+                                    Icon(Icons.check_circle, color: KasbyColors.success),
+                                    SizedBox(width: 10),
+                                    Text('نجاح', style: TextStyle(color: Colors.white)),
+                                  ],
+                                ),
+                                content: const Text(
+                                  'تم إنشاء الباقة بنجاح',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Get.back(),
+                                    child: const Text('حسناً', style: TextStyle(color: KasbyColors.primaryGold)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } catch (e) {
+                            // Error handled by controller
+                          }
                         },
                   child: Text(
                     controller.isLoading.value ? 'جاري...' : 'إنشاء',

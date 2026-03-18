@@ -510,8 +510,41 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       'isActive': isActive,
     };
 
-    await controller.updatePlan(widget.plan.id, updates);
-    Get.back();
+    try {
+      await controller.updatePlan(widget.plan.id, updates);
+      
+      // Show success dialog
+      Get.dialog(
+        AlertDialog(
+          backgroundColor: KasbyColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: KasbyColors.success),
+              SizedBox(width: 10),
+              Text('نجاح', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          content: const Text(
+            'تم تحديث إعدادات الباقة بنجاح',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Get.back(); // Close dialog
+                Get.back(); // Go back to plans screen
+              },
+              child: const Text('حسناً', style: TextStyle(color: KasbyColors.primaryGold)),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
+    } catch (e) {
+      // Error is already logged and snackbar shown by controller,
+      // but we can add secondary handling here if needed.
+    }
   }
 
   void _confirmDelete(
