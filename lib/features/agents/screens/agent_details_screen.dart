@@ -30,10 +30,7 @@ class AgentDetailsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_rounded, color: KasbyColors.primaryGold),
-            onPressed: () {
-              // Note: We can add navigation to an EditAgentScreen here later if needed
-              // For now, let's keep the user's specific request about details
-            },
+            onPressed: () => Get.toNamed('/edit-agent', arguments: agent),
           ),
         ],
       ),

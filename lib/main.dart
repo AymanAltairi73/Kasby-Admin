@@ -35,6 +35,7 @@ import 'features/chat/controllers/chat_controller.dart';
 import 'features/chat/screens/chat_list_screen.dart';
 import 'features/chat/screens/chat_details_screen.dart';
 import 'features/agents/screens/agent_details_screen.dart';
+import 'features/agents/screens/edit_agent_screen.dart';
 import 'core/services/audio_service.dart';
 import 'features/loans/controllers/loan_controller.dart';
 import 'features/loans/screens/loans_screen.dart';
@@ -138,6 +139,7 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(name: '/chat-list', page: () => const ChatListScreen()),
         GetPage(name: '/chat-details', page: () => const ChatDetailsScreen()),
         GetPage(name: '/agent-details', page: () => const AgentDetailsScreen()),
+        GetPage(name: '/edit-agent', page: () => const EditAgentScreen()),
         GetPage(
           name: '/subscriptions',
           page: () => const SubscriptionsScreen(),
