@@ -1025,6 +1025,7 @@ ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.point_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spin_results ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.spin_wheel_rewards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ads ENABLE ROW LEVEL SECURITY;
 
 -- 18.1 PROFILES
@@ -1136,6 +1137,12 @@ DROP POLICY IF EXISTS "Admin scan spins" ON spin_results;
 CREATE POLICY "Admin scan spins" ON spin_results FOR ALL USING (public.is_admin());
 DROP POLICY IF EXISTS "User view spins" ON spin_results;
 CREATE POLICY "User view spins" ON spin_results FOR SELECT USING (user_id = auth.uid());
+
+-- 18.14 SPIN WHEEL REWARDS
+DROP POLICY IF EXISTS "Admin scan spin_rewards" ON spin_wheel_rewards;
+CREATE POLICY "Admin scan spin_rewards" ON spin_wheel_rewards FOR ALL USING (public.is_admin());
+DROP POLICY IF EXISTS "Anyone view active spin rewards" ON spin_wheel_rewards;
+CREATE POLICY "Anyone view active spin rewards" ON spin_wheel_rewards FOR SELECT USING (is_active = true);
 
 -- ============================================================
 -- 19. VIEW (PERFORMANCE & SECURITY)

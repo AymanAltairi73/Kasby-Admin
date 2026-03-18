@@ -202,50 +202,54 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      conversation.userName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        conversation.userName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    Obx(() {
-                      final isTyping =
-                          chatController.isTyping[conversation.userId] ?? false;
-                      return Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: isTyping || conversation.isOnline
-                                  ? KasbyColors.success
-                                  : Colors.grey,
-                              shape: BoxShape.circle,
+                      Obx(() {
+                        final isTyping =
+                            chatController.isTyping[conversation.userId] ?? false;
+                        return Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: isTyping || conversation.isOnline
+                                    ? KasbyColors.success
+                                    : Colors.grey,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isTyping
-                                ? 'يكتب الآن...'
-                                : (conversation.isOnline
-                                      ? 'نشط الآن'
-                                      : 'غير متصل'),
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isTyping
-                                  ? KasbyColors.success
-                                  : Colors.white.withValues(alpha: 0.5),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                isTyping
+                                    ? 'يكتب الآن...'
+                                    : (conversation.isOnline
+                                          ? 'نشط الآن'
+                                          : 'غير متصل'),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isTyping
+                                      ? KasbyColors.success
+                                      : Colors.white.withValues(alpha: 0.5),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ],
             ),

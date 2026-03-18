@@ -15,6 +15,7 @@ import '../models/user_model.dart';
 import '../controllers/user_controller.dart';
 import '../../chat/models/chat_model.dart';
 import '../../chat/screens/chat_details_screen.dart';
+import 'edit_user_screen.dart';
 
 
 /// User Details Screen
@@ -128,7 +129,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   final ctx = context;
                   Future.delayed(Duration.zero, () {
                     if (ctx.mounted) {
-                      _showEditUserDialog(ctx, userController);
+                      Get.to(() => EditUserScreen(user: widget.user));
                     }
                   });
                 },
@@ -268,6 +269,29 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  if (widget.user.address.isNotEmpty)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: KasbyColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            widget.user.address,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: KasbyColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 12),
                   // Communication Buttons
                   Row(
@@ -515,8 +539,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
             const SizedBox(height: 24),
             // Quick Actions Section
-            // _buildQuickActions(context, userController),
-            // const SizedBox(height: 24),
+            _buildQuickActions(context, userController),
+            const SizedBox(height: 24),
 
             // Wallet Section
             const Text(
@@ -1206,173 +1230,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     );
   }
 
-  void _showEditUserDialog(BuildContext context, UserController controller) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController(text: widget.user.name);
-    final countryController = TextEditingController(text: widget.user.country);
-    final cityController = TextEditingController(text: widget.user.city);
-    final phoneController = TextEditingController(text: widget.user.phone);
-    final whatsappController = TextEditingController(text: widget.user.whatsapp);
-    final telegramController = TextEditingController(text: widget.user.telegram);
-    final emailController = TextEditingController(text: widget.user.email);
-
-    final isFormValid = true.obs;
-
-    void validate() {
-      isFormValid.value = formKey.currentState?.validate() ?? false;
-    }
-
-    Get.dialog(
-      BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: KasbyGlassCard(
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Form(
-                key: formKey,
-                onChanged: validate,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'تعديل بيانات المستخدم',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    KasbyTextField(
-                      controller: nameController,
-                      hintText: 'الاسم الكامل للمستخدم',
-                      prefixIcon: Icons.person_outline,
-                      validator: (v) =>
-                          ValidationUtils.validateRequired(v, 'الاسم'),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: KasbyTextField(
-                            controller: countryController,
-                            hintText: 'الدولة',
-                            prefixIcon: Icons.public_rounded,
-                            validator: (v) =>
-                                ValidationUtils.validateRequired(v, 'الدولة'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: KasbyTextField(
-                            controller: cityController,
-                            hintText: 'المدينة',
-                            prefixIcon: Icons.location_city_rounded,
-                            validator: (v) =>
-                                ValidationUtils.validateRequired(v, 'المدينة'),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    KasbyTextField(
-                      controller: phoneController,
-                      hintText: 'رقم الهاتف (إلزامي)',
-                      prefixIcon: Icons.phone_android_outlined,
-                      keyboardType: TextInputType.phone,
-                      validator: ValidationUtils.validatePhone,
-                    ),
-                    const SizedBox(height: 12),
-                    KasbyTextField(
-                      controller: whatsappController,
-                      hintText: 'رقم واتساب (اختياري)',
-                      prefixIcon: FontAwesomeIcons.whatsapp,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 12),
-                    KasbyTextField(
-                      controller: telegramController,
-                      hintText: 'معرف تيليجرام (اختياري)',
-                      prefixIcon: FontAwesomeIcons.telegram,
-                    ),
-                    const SizedBox(height: 12),
-                    KasbyTextField(
-                      controller: emailController,
-                      hintText: 'البريد الإلكتروني (اختياري)',
-                      prefixIcon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (v) => v != null && v.isNotEmpty
-                          ? ValidationUtils.validateEmail(v)
-                          : null,
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text(
-                            'إلغاء',
-                            style: TextStyle(color: KasbyColors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Obx(
-                          () => ElevatedButton(
-                            onPressed: isFormValid.value
-                                ? () {
-                                    KasbyConfirmationDialog.show(
-                                      title: 'تأكيد العملية',
-                                      message:
-                                          'هل أنت متأكد من تعديل بيانات المستخدم؟',
-                                      confirmText: 'تأكيد',
-                                      onConfirm: () async {
-                                        final updatedUser = widget.user.copyWith(
-                                          name: nameController.text,
-                                          country: countryController.text,
-                                          city: cityController.text,
-                                          phone: phoneController.text,
-                                          whatsapp: whatsappController.text,
-                                          telegram: telegramController.text,
-                                          email: emailController.text,
-                                        );
-                                        await controller.updateUser(
-                                          updatedUser,
-                                        );
-                                        Get.back(); // Close dialog
-                                      },
-                                    );
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: KasbyColors.primaryGold,
-                              foregroundColor: Colors.black,
-                              disabledBackgroundColor: Colors.white12,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'حفظ التعديلات',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCommunicationButton({
     required IconData icon,
     required Color color,
@@ -1388,9 +1245,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: color.withValues(alpha: 0.5)),
+              border: Border.all(color: color.withOpacity(0.5)),
             ),
             child: Icon(icon, color: color, size: 24),
           ),
@@ -1407,124 +1264,124 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     );
   }
 
-  // Widget _buildQuickActions(BuildContext context, UserController controller) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       const Text(
-  //         'إجراءات سريعة',
-  //         style: TextStyle(
-  //           fontSize: 18,
-  //           fontWeight: FontWeight.bold,
-  //           color: KasbyColors.textPrimary,
-  //         ),
-  //       ),
-  //       const SizedBox(height: 12),
-  //       SingleChildScrollView(
-  //         scrollDirection: Axis.horizontal,
-  //         child: Row(
-  //           children: [
-  //             _buildActionItem(
-  //               label: 'إضافة رصيد',
-  //               icon: Icons.add_circle_outline,
-  //               color: KasbyColors.success,
-  //               onTap: () => _showAddBalanceDialog(context, controller),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             _buildActionItem(
-  //               label: 'خصم رصيد',
-  //               icon: Icons.remove_circle_outline,
-  //               color: KasbyColors.error,
-  //               onTap: () => _showDeductBalanceDialog(context, controller),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             Obx(() {
-  //               final currUser = controller.getUserById(widget.user.id) ?? widget.user;
-  //               return _buildActionItem(
-  //                 label: currUser.status == 'Active' ? 'حظر' : 'تفعيل',
-  //                 icon: currUser.status == 'Active' ? Icons.block : Icons.check_circle_outline,
-  //                 color: currUser.status == 'Active' ? KasbyColors.error : KasbyColors.success,
-  //                 onTap: () {
-  //                   KasbyConfirmationDialog.show(
-  //                     title: currUser.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
-  //                     message: currUser.status == 'Active'
-  //                         ? 'هل أنت متأكد من حظر المستخدم "${currUser.name}"؟'
-  //                         : 'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
-  //                     isDangerous: currUser.status == 'Active',
-  //                     onConfirm: () {
-  //                       if (currUser.status == 'Active') {
-  //                         controller.blockUser(widget.user.id);
-  //                       } else {
-  //                         controller.activateUser(widget.user.id);
-  //                       }
-  //                     },
-  //                   );
-  //                 },
-  //               );
-  //             }),
-  //             const SizedBox(width: 12),
-  //             _buildActionItem(
-  //               label: 'تعديل',
-  //               icon: Icons.edit_outlined,
-  //               color: KasbyColors.info,
-  //               onTap: () => _showEditUserDialog(context, controller),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             _buildActionItem(
-  //               label: 'حظر / تفعيل',
-  //               icon: Icons.security_rounded,
-  //               color: KasbyColors.warning,
-  //               onTap: () => controller.toggleBlockUser(widget.user.id),
-  //             ),
-  //             const SizedBox(width: 12),
-  //             _buildActionItem(
-  //               label: 'حذف',
-  //               icon: Icons.delete_outline_rounded,
-  //               color: KasbyColors.error,
-  //               onTap: () => _showDeleteConfirmation(controller),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
+  Widget _buildQuickActions(BuildContext context, UserController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'إجراءات سريعة',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: KasbyColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildActionItem(
+                label: 'إضافة رصيد',
+                icon: Icons.add_circle_outline,
+                color: KasbyColors.success,
+                onTap: () => _showAddBalanceDialog(context, controller),
+              ),
+              const SizedBox(width: 12),
+              _buildActionItem(
+                label: 'خصم رصيد',
+                icon: Icons.remove_circle_outline,
+                color: KasbyColors.error,
+                onTap: () => _showDeductBalanceDialog(context, controller),
+              ),
+              const SizedBox(width: 12),
+              Obx(() {
+                final currUser = controller.getUserById(widget.user.id) ?? widget.user;
+                return _buildActionItem(
+                  label: currUser.status == 'Active' ? 'حظر' : 'تفعيل',
+                  icon: currUser.status == 'Active' ? Icons.block : Icons.check_circle_outline,
+                  color: currUser.status == 'Active' ? KasbyColors.error : KasbyColors.success,
+                  onTap: () {
+                    KasbyConfirmationDialog.show(
+                      title: currUser.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
+                      message: currUser.status == 'Active'
+                          ? 'هل أنت متأكد من حظر المستخدم "${currUser.name}"؟'
+                          : 'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
+                      isDangerous: currUser.status == 'Active',
+                      onConfirm: () {
+                        if (currUser.status == 'Active') {
+                          controller.blockUser(widget.user.id);
+                        } else {
+                          controller.activateUser(widget.user.id);
+                        }
+                      },
+                    );
+                  },
+                );
+              }),
+              const SizedBox(width: 12),
+              _buildActionItem(
+                label: 'تعديل',
+                icon: Icons.edit_outlined,
+                color: KasbyColors.info,
+                onTap: () => Get.to(() => EditUserScreen(user: widget.user)),
+              ),
+              const SizedBox(width: 12),
+              _buildActionItem(
+                label: 'حظر / تفعيل',
+                icon: Icons.security_rounded,
+                color: KasbyColors.warning,
+                onTap: () => controller.toggleBlockUser(widget.user.id),
+              ),
+              const SizedBox(width: 12),
+              _buildActionItem(
+                label: 'حذف',
+                icon: Icons.delete_outline_rounded,
+                color: KasbyColors.error,
+                onTap: () => _showDeleteConfirmation(controller),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-  // Widget _buildActionItem({
-  //   required String label,
-  //   required IconData icon,
-  //   required Color color,
-  //   required VoidCallback onTap,
-  // }) {
-  //   return KasbyGlassCard(
-  //     padding: EdgeInsets.zero,
-  //     child: InkWell(
-  //       onTap: onTap,
-  //       borderRadius: BorderRadius.circular(16),
-  //       child: Container(
-  //         width: 90,
-  //         padding: const EdgeInsets.symmetric(vertical: 16),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Icon(icon, color: color, size: 24),
-  //             const SizedBox(height: 8),
-  //             Text(
-  //               label,
-  //               style: TextStyle(
-  //                 color: color,
-  //                 fontSize: 12,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildActionItem({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return KasbyGlassCard(
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 90,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-  static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
+  Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
     final uri = Uri.parse(url);
     try {
       if (await canLaunchUrl(uri)) {

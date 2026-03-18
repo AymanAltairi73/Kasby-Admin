@@ -28,4 +28,12 @@ class SystemRepository extends BaseRepository {
       methodName: 'updateSettings',
     );
   }
+
+  /// Update the first row of settings (singleton pattern).
+  Future<void> updateFirstSettings(Map<String, dynamic> data) async {
+    final settings = await getSettings();
+    if (settings != null && settings['id'] != null) {
+      await updateSettings(settings['id'], data);
+    }
+  }
 }

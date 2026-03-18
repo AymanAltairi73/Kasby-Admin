@@ -18,6 +18,7 @@ class SettingsManagementController extends GetxController {
   final limits = <LimitItem>[].obs;
 
   // Maintenance State
+  final settingsId = ''.obs;
   final isMaintenanceMode = false.obs;
   final maintenanceMessage =
       'النظام حالياً في مرحلة التحديث الدوري لضمان أعلى معايير الأمان والامتثال. سنعود قريباً.'
@@ -210,10 +211,11 @@ class SettingsManagementController extends GetxController {
     try {
       final response = await SupabaseService.client
           .from('system_settings')
-          .select('is_maintenance_mode, maintenance_message')
+          .select('id, is_maintenance_mode, maintenance_message')
           .limit(1)
           .maybeSingle();
       if (response != null) {
+        settingsId.value = response['id'].toString();
         isMaintenanceMode.value = response['is_maintenance_mode'] ?? false;
         if (response['maintenance_message'] != null &&
             (response['maintenance_message'] as String).isNotEmpty) {
@@ -370,7 +372,7 @@ class SettingsManagementController extends GetxController {
             'is_maintenance_mode': value,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', 'global');
+          .eq('id', settingsId.value);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -391,7 +393,7 @@ class SettingsManagementController extends GetxController {
             'maintenance_message': message,
             'updated_at': DateTime.now().toIso8601String(),
           })
-          .eq('id', 'global');
+          .eq('id', settingsId.value);
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
