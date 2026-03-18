@@ -145,7 +145,7 @@ class InvestmentPlan {
       'is_active': isActive,
       'description_ar': descriptionAr,
       'image_url': imagePath,
-      'risk_level': riskLevel,
+      'risk_level': riskLevel?.toLowerCase(),
       'available_amounts': availableAmounts,
     };
   }

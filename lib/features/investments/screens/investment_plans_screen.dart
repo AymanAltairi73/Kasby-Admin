@@ -488,9 +488,9 @@ class InvestmentPlansScreen extends StatelessWidget {
     final amountsController = TextEditingController();
     String selectedRiskLevel = 'متوسط';
     final Map<String, String> riskLevelMap = {
-      'منخفض': 'Low',
-      'متوسط': 'Medium',
-      'عالي': 'High',
+      'منخفض': 'low',
+      'متوسط': 'medium',
+      'عالي': 'high',
     };
     File? selectedImage;
     final ImagePicker picker = ImagePicker();

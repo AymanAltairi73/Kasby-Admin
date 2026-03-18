@@ -15,7 +15,8 @@ class EditInvestmentPlanScreen extends StatefulWidget {
   const EditInvestmentPlanScreen({super.key, required this.plan});
 
   @override
-  State<EditInvestmentPlanScreen> createState() => _EditInvestmentPlanScreenState();
+  State<EditInvestmentPlanScreen> createState() =>
+      _EditInvestmentPlanScreenState();
 }
 
 class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
@@ -29,7 +30,7 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
   late TextEditingController minAmountController;
   late TextEditingController maxAmountController;
   late TextEditingController availableAmountsController;
-  
+
   String? selectedRiskLevel;
   File? _selectedImageFile;
   String? _currentImageUrl;
@@ -52,11 +53,21 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
     super.initState();
     nameArController = TextEditingController(text: widget.plan.nameAr);
     nameEnController = TextEditingController(text: widget.plan.nameEn ?? '');
-    descriptionArController = TextEditingController(text: widget.plan.descriptionAr);
-    profitPercentageController = TextEditingController(text: widget.plan.profitPercentage.toString());
-    minAmountController = TextEditingController(text: widget.plan.minAmount.toString());
-    maxAmountController = TextEditingController(text: widget.plan.maxAmount.toString());
-    availableAmountsController = TextEditingController(text: widget.plan.availableAmounts?.join(', ') ?? '');
+    descriptionArController = TextEditingController(
+      text: widget.plan.descriptionAr,
+    );
+    profitPercentageController = TextEditingController(
+      text: widget.plan.profitPercentage.toString(),
+    );
+    minAmountController = TextEditingController(
+      text: widget.plan.minAmount.toString(),
+    );
+    maxAmountController = TextEditingController(
+      text: widget.plan.maxAmount.toString(),
+    );
+    availableAmountsController = TextEditingController(
+      text: widget.plan.availableAmounts?.join(', ') ?? '',
+    );
     selectedRiskLevel = riskLevelReverseMap[widget.plan.riskLevel] ?? 'متوسط';
     _currentImageUrl = widget.plan.imagePath;
     isActive = widget.plan.isActive;
@@ -90,7 +101,11 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
         title: const Text('تحديث إعدادات الباقة'),
         actions: [
           IconButton(
-            icon: const Icon(FontAwesomeIcons.trashCan, color: KasbyColors.error, size: 20),
+            icon: const Icon(
+              FontAwesomeIcons.trashCan,
+              color: KasbyColors.error,
+              size: 20,
+            ),
             onPressed: () => _confirmDelete(context, controller, widget.plan),
           ),
           const SizedBox(width: 8),
@@ -134,7 +149,11 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
         children: [
           const Row(
             children: [
-              Icon(Icons.info_outline, color: KasbyColors.primaryGold, size: 20),
+              Icon(
+                Icons.info_outline,
+                color: KasbyColors.primaryGold,
+                size: 20,
+              ),
               SizedBox(width: 8),
               Text(
                 'ما هو مستوى المخاطرة؟',
@@ -147,9 +166,18 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildRiskInfo('منخفض', 'يركز على الأمان وحماية رأس المال، أرباح بسيطة ومستقرة.'),
-          _buildRiskInfo('متوسط', 'توازن بين الربح والأمان، مع تذبذب بسيط في النتائج.'),
-          _buildRiskInfo('عالي', 'يستهدف أرباحاً كبيرة جداً، لكنه يحمل مخاطرة عالية بخسارة جزء من المال.'),
+          _buildRiskInfo(
+            'منخفض',
+            'يركز على الأمان وحماية رأس المال، أرباح بسيطة ومستقرة.',
+          ),
+          _buildRiskInfo(
+            'متوسط',
+            'توازن بين الربح والأمان، مع تذبذب بسيط في النتائج.',
+          ),
+          _buildRiskInfo(
+            'عالي',
+            'يستهدف أرباحاً كبيرة جداً، لكنه يحمل مخاطرة عالية بخسارة جزء من المال.',
+          ),
         ],
       ),
     );
@@ -160,9 +188,19 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(color: KasbyColors.textSecondary, fontSize: 13, height: 1.4),
+          style: const TextStyle(
+            color: KasbyColors.textSecondary,
+            fontSize: 13,
+            height: 1.4,
+          ),
           children: [
-            TextSpan(text: '$title: ', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            TextSpan(
+              text: '$title: ',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             TextSpan(text: desc),
           ],
         ),
@@ -176,7 +214,11 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
         children: [
           const Text(
             'أيقونة الباقة',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: KasbyColors.textPrimary),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: KasbyColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(
@@ -184,49 +226,80 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Glow Aura
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                        blurRadius: 25,
-                        spreadRadius: 8,
-                      ),
-                    ],
-                  ),
-                ),
                 // Image Container
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: double.infinity,
+                  height: 220,
                   decoration: BoxDecoration(
                     color: KasbyColors.primaryGold.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: KasbyColors.primaryGold.withValues(alpha: 0.3), width: 2),
+                    border: Border.all(
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
                     ],
                   ),
                   padding: const EdgeInsets.all(20),
-                  child: _selectedImageFile != null
-                      ? Image.file(_selectedImageFile!, fit: BoxFit.contain)
-                      : (_currentImageUrl != null && _currentImageUrl!.isNotEmpty
-                          ? (_currentImageUrl!.startsWith('http')
-                              ? Image.network(_currentImageUrl!, fit: BoxFit.contain)
-                              : Image.asset(_currentImageUrl!, fit: BoxFit.contain))
-                          : const Icon(Icons.image_outlined, size: 40, color: KasbyColors.textSecondary)),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Glow Aura (inside)
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: KasbyColors.primaryGold.withValues(alpha: 0.15),
+                              blurRadius: 35,
+                              spreadRadius: 12,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Image logic
+                      _selectedImageFile != null
+                          ? Image.file(_selectedImageFile!, fit: BoxFit.contain)
+                          : (_currentImageUrl != null &&
+                                    _currentImageUrl!.isNotEmpty
+                                ? (_currentImageUrl!.startsWith('http')
+                                      ? Image.network(
+                                          _currentImageUrl!,
+                                          fit: BoxFit.contain,
+                                        )
+                                      : Image.asset(
+                                          _currentImageUrl!,
+                                          fit: BoxFit.contain,
+                                        ))
+                                : const Icon(
+                                    Icons.image_outlined,
+                                    size: 40,
+                                    color: KasbyColors.textSecondary,
+                                  )),
+                    ],
+                  ),
                 ),
                 Positioned(
                   bottom: 4,
                   right: 4,
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(gradient: KasbyColors.primaryGradient, shape: BoxShape.circle),
-                    child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.black),
+                    decoration: BoxDecoration(
+                      gradient: KasbyColors.primaryGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      size: 18,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ],
@@ -242,13 +315,26 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel('اسم الباقة (بالعربي)'),
-        KasbyTextField(controller: nameArController, hintText: 'مثال: الباقة الفضية', prefixIcon: Icons.title),
+        KasbyTextField(
+          controller: nameArController,
+          hintText: 'مثال: الباقة الفضية',
+          prefixIcon: Icons.title,
+        ),
         const SizedBox(height: 16),
         _buildLabel('اسم الباقة (English)'),
-        KasbyTextField(controller: nameEnController, hintText: 'Example: Silver Package', prefixIcon: Icons.language),
+        KasbyTextField(
+          controller: nameEnController,
+          hintText: 'Example: Silver Package',
+          prefixIcon: Icons.language,
+        ),
         const SizedBox(height: 16),
         _buildLabel('وصف الباقة (بالعربي)'),
-        KasbyTextField(controller: descriptionArController, hintText: 'اشرح تفاصيل الباقة...', prefixIcon: Icons.description, maxLines: 4),
+        KasbyTextField(
+          controller: descriptionArController,
+          hintText: 'اشرح تفاصيل الباقة...',
+          prefixIcon: Icons.description,
+          maxLines: 4,
+        ),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -257,7 +343,12 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLabel('نسبة الربح (%)'),
-                  KasbyTextField(controller: profitPercentageController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.percent),
+                  KasbyTextField(
+                    controller: profitPercentageController,
+                    hintText: '0.0',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.percent,
+                  ),
                 ],
               ),
             ),
@@ -271,7 +362,12 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLabel('الحد الأدنى'),
-                  KasbyTextField(controller: minAmountController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money),
+                  KasbyTextField(
+                    controller: minAmountController,
+                    hintText: '0.0',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.attach_money,
+                  ),
                 ],
               ),
             ),
@@ -281,7 +377,12 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLabel('الحد الأقصى'),
-                  KasbyTextField(controller: maxAmountController, hintText: '0.0', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money),
+                  KasbyTextField(
+                    controller: maxAmountController,
+                    hintText: '0.0',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.attach_money,
+                  ),
                 ],
               ),
             ),
@@ -289,7 +390,11 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
         ),
         const SizedBox(height: 16),
         _buildLabel('المبالغ المتاحة (مفصولة بفاصلة)'),
-        KasbyTextField(controller: availableAmountsController, hintText: '100, 500, 1000', prefixIcon: Icons.list),
+        KasbyTextField(
+          controller: availableAmountsController,
+          hintText: '100, 500, 1000',
+          prefixIcon: Icons.list,
+        ),
         const SizedBox(height: 16),
         _buildLabel('مستوى المخاطرة'),
         _buildRiskLevelSelector(),
@@ -318,9 +423,16 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: KasbyColors.textSecondary, size: 20),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: KasbyColors.textSecondary,
+            size: 20,
+          ),
           const SizedBox(width: 12),
-          const Text('مستوى المخاطرة:', style: TextStyle(color: KasbyColors.textSecondary)),
+          const Text(
+            'مستوى المخاطرة:',
+            style: TextStyle(color: KasbyColors.textSecondary),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: DropdownButtonHideUnderline(
@@ -328,7 +440,17 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
                 value: selectedRiskLevel,
                 dropdownColor: KasbyColors.surface,
                 isExpanded: true,
-                items: riskLevels.map((lvl) => DropdownMenuItem(value: lvl, child: Text(lvl, style: const TextStyle(color: Colors.white)))).toList(),
+                items: riskLevels
+                    .map(
+                      (lvl) => DropdownMenuItem(
+                        value: lvl,
+                        child: Text(
+                          lvl,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (val) => setState(() => selectedRiskLevel = val),
               ),
             ),
@@ -342,7 +464,10 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('حالة الخطة (نشط/متوقف)', style: TextStyle(color: Colors.white, fontSize: 16)),
+        const Text(
+          'حالة الخطة (نشط/متوقف)',
+          style: TextStyle(color: Colors.white, fontSize: 16),
+        ),
         Switch(
           value: isActive,
           onChanged: (val) => setState(() => isActive = val),
@@ -363,8 +488,13 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
       }
     }
 
-    final List<double> availableAmounts = availableAmountsController.text.isNotEmpty
-        ? availableAmountsController.text.split(',').map((e) => double.tryParse(e.trim()) ?? 0).where((e) => e > 0).toList()
+    final List<double> availableAmounts =
+        availableAmountsController.text.isNotEmpty
+        ? availableAmountsController.text
+              .split(',')
+              .map((e) => double.tryParse(e.trim()) ?? 0)
+              .where((e) => e > 0)
+              .toList()
         : [];
 
     final updates = {
@@ -384,12 +514,21 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
     Get.back();
   }
 
-  void _confirmDelete(BuildContext context, InvestmentController controller, InvestmentPlan plan) {
+  void _confirmDelete(
+    BuildContext context,
+    InvestmentController controller,
+    InvestmentPlan plan,
+  ) {
     Get.dialog(
       AlertDialog(
         backgroundColor: KasbyColors.surface,
-        title: const Text('حذف الخطة', style: TextStyle(color: KasbyColors.error)),
-        content: Text('هل أنت متأكد من حذف "${plan.nameAr}" نهائياً؟ سيتم إلغاء تفعيلها.'),
+        title: const Text(
+          'حذف الخطة',
+          style: TextStyle(color: KasbyColors.error),
+        ),
+        content: Text(
+          'هل أنت متأكد من حذف "${plan.nameAr}" نهائياً؟ سيتم إلغاء تفعيلها.',
+        ),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
@@ -398,7 +537,10 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
               Get.back();
               Get.back();
             },
-            child: const Text('تأكيد', style: TextStyle(color: KasbyColors.error)),
+            child: const Text(
+              'تأكيد',
+              style: TextStyle(color: KasbyColors.error),
+            ),
           ),
         ],
       ),

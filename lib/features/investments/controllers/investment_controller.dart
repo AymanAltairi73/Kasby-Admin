@@ -181,7 +181,11 @@ class InvestmentController extends GetxController {
 
       updates.forEach((key, value) {
         if (mapping.containsKey(key)) {
-          supabaseUpdates[mapping[key]!] = value;
+          var mappedValue = value;
+          if (key == 'riskLevel' && value is String) {
+            mappedValue = value.toLowerCase();
+          }
+          supabaseUpdates[mapping[key]!] = mappedValue;
         }
       });
 

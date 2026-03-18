@@ -145,7 +145,7 @@ class SettingsManagementController extends GetxController {
       final response = await SupabaseService.client
           .from('currencies')
           .select()
-          .order('created_at', ascending: true);
+          .order('updated_at', ascending: true);
       if ((response as List).isNotEmpty) {
         currencies.assignAll(
           response.map(
@@ -211,7 +211,7 @@ class SettingsManagementController extends GetxController {
       final response = await SupabaseService.client
           .from('system_settings')
           .select('is_maintenance_mode, maintenance_message')
-          .eq('id', 'global')
+          .limit(1)
           .maybeSingle();
       if (response != null) {
         isMaintenanceMode.value = response['is_maintenance_mode'] ?? false;
