@@ -2,6 +2,7 @@
 class InvestmentPlan {
   final String id;
   final String nameAr;
+  final String? nameEn;
   final double profitPercentage;
   final double minAmount;
   final double maxAmount;
@@ -11,10 +12,12 @@ class InvestmentPlan {
   final DateTime createdAt;
   final String? imagePath;
   final int? durationDays;
+  final String? riskLevel;
 
   InvestmentPlan({
     required this.id,
     required this.nameAr,
+    this.nameEn,
     required this.profitPercentage,
     required this.minAmount,
     required this.maxAmount,
@@ -24,11 +27,13 @@ class InvestmentPlan {
     required this.createdAt,
     this.imagePath,
     this.durationDays,
+    this.riskLevel,
   });
 
   InvestmentPlan copyWith({
     String? id,
     String? nameAr,
+    String? nameEn,
     double? profitPercentage,
     double? minAmount,
     double? maxAmount,
@@ -38,10 +43,12 @@ class InvestmentPlan {
     DateTime? createdAt,
     String? imagePath,
     int? durationDays,
+    String? riskLevel,
   }) {
     return InvestmentPlan(
       id: id ?? this.id,
       nameAr: nameAr ?? this.nameAr,
+      nameEn: nameEn ?? this.nameEn,
       profitPercentage: profitPercentage ?? this.profitPercentage,
       minAmount: minAmount ?? this.minAmount,
       maxAmount: maxAmount ?? this.maxAmount,
@@ -51,6 +58,7 @@ class InvestmentPlan {
       createdAt: createdAt ?? this.createdAt,
       imagePath: imagePath ?? this.imagePath,
       durationDays: durationDays ?? this.durationDays,
+      riskLevel: riskLevel ?? this.riskLevel,
     );
   }
 
@@ -59,6 +67,7 @@ class InvestmentPlan {
     return InvestmentPlan(
       id: json['id'] ?? '',
       nameAr: json['name_ar'] ?? json['name'] ?? '',
+      nameEn: json['name_en'],
       profitPercentage: (json['profit_percentage'] ?? 0.0).toDouble(),
       minAmount: (json['min_amount'] ?? 0.0).toDouble(),
       maxAmount: (json['max_amount'] ?? 0.0).toDouble(),
@@ -76,7 +85,13 @@ class InvestmentPlan {
           : DateTime.now(),
       imagePath: json['image_url'] ?? json['image_path'],
       durationDays: json['duration_days'],
+      riskLevel: json['risk_level'] != null ? _capitalize(json['risk_level']) : null,
     );
+  }
+
+  static String _capitalize(String text) {
+    if (text.isEmpty) return 'Medium';
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
   }
 
   /// Legacy fromJson
@@ -84,6 +99,7 @@ class InvestmentPlan {
     return InvestmentPlan(
       id: json['id'] ?? '',
       nameAr: json['nameAr'] ?? json['name_ar'] ?? '',
+      nameEn: json['nameEn'] ?? json['name_en'],
       profitPercentage:
           (json['profitPercentage'] ?? json['profit_percentage'] ?? 0.0)
               .toDouble(),
@@ -99,8 +115,11 @@ class InvestmentPlan {
           : (json['created_at'] != null
                 ? DateTime.parse(json['created_at'])
                 : DateTime.now()),
-      imagePath: json['imagePath'] ?? json['image_path'],
+      imagePath: json['imagePath'] ?? json['image_path'] ?? json['image_url'],
       durationDays: json['durationDays'] ?? json['duration_days'],
+      riskLevel: (json['riskLevel'] ?? json['risk_level']) != null
+          ? _capitalize(json['riskLevel'] ?? json['risk_level'])
+          : null,
     );
   }
 
@@ -108,6 +127,7 @@ class InvestmentPlan {
     return {
       'id': id,
       'nameAr': nameAr,
+      'nameEn': nameEn,
       'profitPercentage': profitPercentage,
       'minAmount': minAmount,
       'maxAmount': maxAmount,
@@ -117,6 +137,7 @@ class InvestmentPlan {
       'createdAt': createdAt.toIso8601String(),
       'imagePath': imagePath,
       'durationDays': durationDays,
+      'riskLevel': riskLevel,
     };
   }
 
@@ -124,6 +145,7 @@ class InvestmentPlan {
   Map<String, dynamic> toSupabase() {
     return {
       'name_ar': nameAr,
+      'name_en': nameEn,
       'profit_percentage': profitPercentage,
       'min_amount': minAmount,
       'max_amount': maxAmount,
@@ -131,6 +153,8 @@ class InvestmentPlan {
       'description_ar': descriptionAr,
       'duration_days': durationDays,
       'image_url': imagePath,
+      'risk_level': riskLevel,
+      'available_amounts': availableAmounts,
     };
   }
 }

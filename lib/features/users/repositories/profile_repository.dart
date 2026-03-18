@@ -12,7 +12,7 @@ class ProfileRepository extends BaseRepository {
       () async {
         final response = await client
             .from(tableName)
-            .select('*, wallets(*)')
+            .select('*, wallets!left(*)')
             .order('created_at', ascending: false);
 
         return (response as List)
@@ -32,7 +32,7 @@ class ProfileRepository extends BaseRepository {
       () async {
         final response = await client
             .from(tableName)
-            .select('*, wallets(*)')
+            .select('*, wallets!left(*)')
             .range(from, to)
             .order('created_at', ascending: false);
 

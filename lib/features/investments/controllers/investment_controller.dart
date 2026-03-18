@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
@@ -78,24 +80,58 @@ class InvestmentController extends GetxController {
     isLoading.value = false;
   }
 
+  /// Upload plan image to Supabase Storage
+  Future<String?> uploadPlanImage(File file) async {
+    try {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.basename(file.path)}';
+      final storagePath = 'plan_icons/$fileName';
+
+      await SupabaseService.client.storage
+          .from('investment-plans')
+          .upload(storagePath, file);
+
+      final imageUrl = SupabaseService.client.storage
+          .from('investment-plans')
+          .getPublicUrl(storagePath);
+
+      return imageUrl;
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'InvestmentController',
+        method: 'uploadPlanImage',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
   /// Create new plan
   Future<void> createPlan({
     required String nameAr,
+    String? nameEn,
     required String descriptionAr,
     required double profitPercentage,
     required double minAmount,
     required double maxAmount,
     List<double>? availableAmounts,
     String? imagePath,
+    int? durationDays,
+    String? riskLevel,
   }) async {
     isLoading.value = true;
     try {
       await SupabaseService.client.from('investment_plans').insert({
         'name_ar': nameAr,
+        'name_en': nameEn,
         'description_ar': descriptionAr,
         'profit_percentage': profitPercentage,
         'min_amount': minAmount,
         'max_amount': maxAmount,
+        'available_amounts': availableAmounts,
+        'image_url': imagePath,
+        'duration_days': durationDays,
+        'risk_level': riskLevel,
         'is_active': true,
       });
 
@@ -129,24 +165,27 @@ class InvestmentController extends GetxController {
     isLoading.value = true;
     try {
       final supabaseUpdates = <String, dynamic>{};
-      if (updates['nameAr'] != null) {
-        supabaseUpdates['name_ar'] = updates['nameAr'];
-      }
-      if (updates['descriptionAr'] != null) {
-        supabaseUpdates['description_ar'] = updates['descriptionAr'];
-      }
-      if (updates['profitPercentage'] != null) {
-        supabaseUpdates['profit_percentage'] = updates['profitPercentage'];
-      }
-      if (updates['minAmount'] != null) {
-        supabaseUpdates['min_amount'] = updates['minAmount'];
-      }
-      if (updates['maxAmount'] != null) {
-        supabaseUpdates['max_amount'] = updates['maxAmount'];
-      }
-      if (updates['imagePath'] != null) {
-        supabaseUpdates['image_path'] = updates['imagePath'];
-      }
+      
+      // Map Dart keys to Supabase column names
+      final mapping = {
+        'nameAr': 'name_ar',
+        'nameEn': 'name_en',
+        'descriptionAr': 'description_ar',
+        'profitPercentage': 'profit_percentage',
+        'minAmount': 'min_amount',
+        'maxAmount': 'max_amount',
+        'availableAmounts': 'available_amounts',
+        'imagePath': 'image_url',
+        'durationDays': 'duration_days',
+        'riskLevel': 'risk_level',
+        'isActive': 'is_active',
+      };
+
+      updates.forEach((key, value) {
+        if (mapping.containsKey(key)) {
+          supabaseUpdates[mapping[key]!] = value;
+        }
+      });
 
       await SupabaseService.client
           .from('investment_plans')
@@ -182,12 +221,16 @@ class InvestmentController extends GetxController {
   Future<void> deletePlan(String planId) async {
     isLoading.value = true;
     try {
+      // Actually delete if the user really wants to, but usually we just deactivate.
+      // The user requested to confirm operations, so I'll keep it as deactivation for safety 
+      // unless it's a new plan without investments.
+      
       await SupabaseService.client
           .from('investment_plans')
           .update({'is_active': false})
           .eq('id', planId);
 
-      plans.removeWhere((p) => p.id == planId);
+      await loadPlans();
 
       Get.snackbar(
         'نجح',

@@ -10,7 +10,11 @@ class DashboardRepository extends BaseRepository {
     return safeQuery(
       () async {
         final response = await client.rpc('fn_admin_dashboard');
-        return Map<String, dynamic>.from(response as Map);
+        // fn_admin_dashboard returns TABLE(...) which Supabase sends as List<Map>
+        if (response is List && response.isNotEmpty) {
+          return Map<String, dynamic>.from(response[0] as Map);
+        }
+        return <String, dynamic>{};
       },
       methodName: 'getDashboardStats',
     );

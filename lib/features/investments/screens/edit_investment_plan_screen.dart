@@ -1,49 +1,94 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
-import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 
-class EditInvestmentPlanScreen extends StatelessWidget {
+class EditInvestmentPlanScreen extends StatefulWidget {
   final InvestmentPlan plan;
   const EditInvestmentPlanScreen({super.key, required this.plan});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<InvestmentController>();
-    final nameArController = TextEditingController(text: plan.nameAr);
-    final descriptionArController = TextEditingController(
-      text: plan.descriptionAr,
-    );
-    final profitPercentageController = TextEditingController(
-      text: plan.profitPercentage.toString(),
-    );
-    final minAmountController = TextEditingController(
-      text: plan.minAmount.toString(),
-    );
-    final maxAmountController = TextEditingController(
-      text: plan.maxAmount.toString(),
-    );
-    final availableAmountsController = TextEditingController(
-      text: plan.availableAmounts?.join(', ') ?? '',
-    );
-    final selectedImagePath = plan.imagePath.obs;
+  State<EditInvestmentPlanScreen> createState() => _EditInvestmentPlanScreenState();
+}
 
+class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
+  final controller = Get.find<InvestmentController>();
+  final ImagePicker _picker = ImagePicker();
+
+  late TextEditingController nameArController;
+  late TextEditingController nameEnController;
+  late TextEditingController descriptionArController;
+  late TextEditingController profitPercentageController;
+  late TextEditingController minAmountController;
+  late TextEditingController maxAmountController;
+  late TextEditingController durationDaysController;
+  late TextEditingController availableAmountsController;
+  
+  String? selectedRiskLevel;
+  File? _selectedImageFile;
+  String? _currentImageUrl;
+  bool isActive = true;
+
+  final List<String> riskLevels = ['Low', 'Medium', 'High'];
+
+  @override
+  void initState() {
+    super.initState();
+    nameArController = TextEditingController(text: widget.plan.nameAr);
+    nameEnController = TextEditingController(text: widget.plan.nameEn ?? '');
+    descriptionArController = TextEditingController(text: widget.plan.descriptionAr);
+    profitPercentageController = TextEditingController(text: widget.plan.profitPercentage.toString());
+    minAmountController = TextEditingController(text: widget.plan.minAmount.toString());
+    maxAmountController = TextEditingController(text: widget.plan.maxAmount.toString());
+    durationDaysController = TextEditingController(text: widget.plan.durationDays?.toString() ?? '');
+    availableAmountsController = TextEditingController(text: widget.plan.availableAmounts?.join(', ') ?? '');
+    selectedRiskLevel = _capitalize(widget.plan.riskLevel ?? 'Medium');
+    _currentImageUrl = widget.plan.imagePath;
+    isActive = widget.plan.isActive;
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return 'Medium';
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
+  @override
+  void dispose() {
+    nameArController.dispose();
+    nameEnController.dispose();
+    descriptionArController.dispose();
+    profitPercentageController.dispose();
+    minAmountController.dispose();
+    maxAmountController.dispose();
+    durationDaysController.dispose();
+    availableAmountsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImageFile = File(image.path);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('تحديث إعدادات الباقة'),
         actions: [
           IconButton(
-            icon: const Icon(
-              FontAwesomeIcons.trashCan,
-              color: KasbyColors.error,
-              size: 20,
-            ),
-            onPressed: () => _confirmDelete(context, controller, plan),
+            icon: const Icon(FontAwesomeIcons.trashCan, color: KasbyColors.error, size: 20),
+            onPressed: () => _confirmDelete(context, controller, widget.plan),
           ),
           const SizedBox(width: 8),
         ],
@@ -53,270 +98,216 @@ class EditInvestmentPlanScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Preview & Selection
-            const Text(
-              'أيقونة الباقة',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(
-              () => Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Glow Aura
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: KasbyColors.primaryGold.withValues(
-                              alpha: 0.1,
-                            ),
-                            blurRadius: 25,
-                            spreadRadius: 8,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Image Container
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: selectedImagePath.value != null
-                          ? Image.asset(
-                              selectedImagePath.value!,
-                              fit: BoxFit.contain,
-                            )
-                          : const Icon(
-                              Icons.image_outlined,
-                              size: 40,
-                              color: KasbyColors.textSecondary,
-                            ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: () =>
-                            _showImagePicker(context, selectedImagePath),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: KasbyColors.primaryGradient,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 18,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildImageSection(),
             const SizedBox(height: 32),
-
-            // Form Fields
-            KasbyTextField(
-              controller: nameArController,
-              hintText: 'اسم الخطة (عربي)',
-              prefixIcon: Icons.title,
-            ),
-            const SizedBox(height: 16),
-            KasbyTextField(
-              controller: descriptionArController,
-              hintText: 'وصف الخطة (عربي)',
-              prefixIcon: Icons.description,
-              maxLines: 4,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: KasbyTextField(
-                    controller: profitPercentageController,
-                    hintText: 'نسبة الربح (%)',
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.percent,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: KasbyTextField(
-                    controller: minAmountController,
-                    hintText: 'الحد الأدنى',
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.attach_money,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: KasbyTextField(
-                    controller: maxAmountController,
-                    hintText: 'الحد الأقصى',
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.attach_money,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            KasbyTextField(
-              controller: availableAmountsController,
-              hintText: 'المبالغ المتاحة (مثال: 100, 200, 500)',
-              prefixIcon: Icons.list,
-            ),
-            const SizedBox(height: 40),
-
-            KasbyButton(
-              text: 'حفظ التغييرات',
-              onPressed: () {
-                final updates = {
-                  'nameAr': nameArController.text,
-                  'descriptionAr': descriptionArController.text,
-                  'profitPercentage':
-                      double.tryParse(profitPercentageController.text) ?? 0,
-                  'minAmount': double.tryParse(minAmountController.text) ?? 0,
-                  'maxAmount': double.tryParse(maxAmountController.text) ?? 0,
-                  'availableAmounts': availableAmountsController.text.isNotEmpty
-                      ? availableAmountsController.text
-                            .split(',')
-                            .map((e) => double.tryParse(e.trim()) ?? 0)
-                            .where((e) => e > 0)
-                            .toList()
-                      : null,
-                  'imagePath': selectedImagePath.value,
-                };
-                controller.updatePlan(plan.id, updates);
-                Get.back();
-              },
-            ),
+            _buildFormSection(),
           ],
         ),
       ),
     );
   }
 
-  void _showImagePicker(BuildContext context, Rx<String?> selectedImage) {
-    Get.bottomSheet(
-      KasbyGlassCard(
-        margin: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildImageSection() {
+    return Center(
+      child: Column(
+        children: [
+          const Text(
+            'أيقونة الباقة',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: KasbyColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _pickImage,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Glow Aura
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                        blurRadius: 25,
+                        spreadRadius: 8,
+                      ),
+                    ],
+                  ),
+                ),
+                // Image Container
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: KasbyColors.primaryGold.withValues(alpha: 0.3), width: 2),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8)),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: _selectedImageFile != null
+                      ? Image.file(_selectedImageFile!, fit: BoxFit.contain)
+                      : (_currentImageUrl != null && _currentImageUrl!.isNotEmpty
+                          ? (_currentImageUrl!.startsWith('http')
+                              ? Image.network(_currentImageUrl!, fit: BoxFit.contain)
+                              : Image.asset(_currentImageUrl!, fit: BoxFit.contain))
+                          : const Icon(Icons.image_outlined, size: 40, color: KasbyColors.textSecondary)),
+                ),
+                Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(gradient: KasbyColors.primaryGradient, shape: BoxShape.circle),
+                    child: const Icon(Icons.camera_alt_rounded, size: 18, color: Colors.black),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormSection() {
+    return Column(
+      children: [
+        KasbyTextField(controller: nameArController, hintText: 'اسم الخطة (عربي)', prefixIcon: Icons.title),
+        const SizedBox(height: 16),
+        KasbyTextField(controller: nameEnController, hintText: 'اسم الخطة (English)', prefixIcon: Icons.language),
+        const SizedBox(height: 16),
+        KasbyTextField(controller: descriptionArController, hintText: 'وصف الخطة (عربي)', prefixIcon: Icons.description, maxLines: 4),
+        const SizedBox(height: 16),
+        Row(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                'اختر أيقونة الخطة',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Expanded(child: KasbyTextField(controller: profitPercentageController, hintText: 'نسبة الربح (%)', keyboardType: TextInputType.number, prefixIcon: Icons.percent)),
+            const SizedBox(width: 16),
+            Expanded(child: KasbyTextField(controller: durationDaysController, hintText: 'المدة (أيام)', keyboardType: TextInputType.number, prefixIcon: Icons.calendar_today)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: KasbyTextField(controller: minAmountController, hintText: 'الحد الأدنى', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money)),
+            const SizedBox(width: 16),
+            Expanded(child: KasbyTextField(controller: maxAmountController, hintText: 'الحد الأقصى', keyboardType: TextInputType.number, prefixIcon: Icons.attach_money)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        KasbyTextField(controller: availableAmountsController, hintText: 'المبالغ المتاحة (مثال: 100, 200, 500)', prefixIcon: Icons.list),
+        const SizedBox(height: 16),
+        _buildRiskLevelSelector(),
+        const SizedBox(height: 16),
+        _buildStatusSwitch(),
+        const SizedBox(height: 40),
+        Obx(
+          () => KasbyButton(
+            text: 'حفظ التغييرات',
+            isLoading: controller.isLoading.value,
+            onPressed: _saveChanges,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRiskLevelSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: KasbyColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: KasbyColors.textSecondary, size: 20),
+          const SizedBox(width: 12),
+          const Text('مستوى المخاطرة:', style: TextStyle(color: KasbyColors.textSecondary)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedRiskLevel,
+                dropdownColor: KasbyColors.surface,
+                isExpanded: true,
+                items: riskLevels.map((lvl) => DropdownMenuItem(value: lvl, child: Text(lvl, style: const TextStyle(color: Colors.white)))).toList(),
+                onChanged: (val) => setState(() => selectedRiskLevel = val),
               ),
             ),
-            const Divider(color: Colors.white12),
-            _buildImageOption(
-              'خطة الذهب',
-              'assets/images/gold.png',
-              selectedImage,
-            ),
-            _buildImageOption(
-              'خطة الفضة',
-              'assets/images/sliver.png',
-              selectedImage,
-            ),
-            _buildImageOption(
-              'خطة العقارات',
-              'assets/images/real_estate.png',
-              selectedImage,
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
-      backgroundColor: Colors.transparent,
     );
   }
 
-  Widget _buildImageOption(
-    String label,
-    String path,
-    Rx<String?> selectedImage,
-  ) {
-    return ListTile(
-      leading: Image.asset(path, width: 30),
-      title: Text(label),
-      onTap: () {
-        selectedImage.value = path;
-        Get.back();
-      },
-      trailing: selectedImage.value == path
-          ? const Icon(Icons.check_circle, color: KasbyColors.primaryGold)
-          : null,
+  Widget _buildStatusSwitch() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text('حالة الخطة (نشط/متوقف)', style: TextStyle(color: Colors.white, fontSize: 16)),
+        Switch(
+          value: isActive,
+          onChanged: (val) => setState(() => isActive = val),
+          activeColor: KasbyColors.primaryGold,
+        ),
+      ],
     );
   }
 
-  void _confirmDelete(
-    BuildContext context,
-    InvestmentController controller,
-    InvestmentPlan plan,
-  ) {
+  Future<void> _saveChanges() async {
+    String? imageUrl = _currentImageUrl;
+
+    if (_selectedImageFile != null) {
+      imageUrl = await controller.uploadPlanImage(_selectedImageFile!);
+      if (imageUrl == null) {
+        Get.snackbar('خطأ', 'فشل في رفع الصورة');
+        return;
+      }
+    }
+
+    final List<double> availableAmounts = availableAmountsController.text.isNotEmpty
+        ? availableAmountsController.text.split(',').map((e) => double.tryParse(e.trim()) ?? 0).where((e) => e > 0).toList()
+        : [];
+
+    final updates = {
+      'nameAr': nameArController.text,
+      'nameEn': nameEnController.text,
+      'descriptionAr': descriptionArController.text,
+      'profitPercentage': double.tryParse(profitPercentageController.text) ?? 0,
+      'minAmount': double.tryParse(minAmountController.text) ?? 0,
+      'maxAmount': double.tryParse(maxAmountController.text) ?? 0,
+      'durationDays': int.tryParse(durationDaysController.text),
+      'availableAmounts': availableAmounts,
+      'riskLevel': selectedRiskLevel,
+      'imagePath': imageUrl,
+      'isActive': isActive,
+    };
+
+    await controller.updatePlan(widget.plan.id, updates);
+    Get.back();
+  }
+
+  void _confirmDelete(BuildContext context, InvestmentController controller, InvestmentPlan plan) {
     Get.dialog(
       AlertDialog(
         backgroundColor: KasbyColors.surface,
-        title: const Text(
-          'حذف الخطة',
-          style: TextStyle(color: KasbyColors.error),
-        ),
-        content: Text(
-          'هل أنت متأكد من حذف "${plan.nameAr}" نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.',
-        ),
+        title: const Text('حذف الخطة', style: TextStyle(color: KasbyColors.error)),
+        content: Text('هل أنت متأكد من حذف "${plan.nameAr}" نهائياً؟ سيتم إلغاء تفعيلها.'),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
             onPressed: () {
               controller.deletePlan(plan.id);
-              Get.back(); // Close dialog
-              Get.back(); // Close screen
+              Get.back();
+              Get.back();
             },
-            child: const Text(
-              'حذف الآن',
-              style: TextStyle(color: KasbyColors.error),
-            ),
+            child: const Text('تأكيد', style: TextStyle(color: KasbyColors.error)),
           ),
         ],
       ),
