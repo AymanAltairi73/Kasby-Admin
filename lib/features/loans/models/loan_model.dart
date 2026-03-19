@@ -8,6 +8,9 @@ class Loan {
   final String userId;
   final String userName;
   final double amount;
+  final double interestRate;
+  final double totalDue;
+  final double paidAmount;
   final DateTime loanDate;
   final DateTime repaymentDate;
   final LoanStatus status;
@@ -17,6 +20,9 @@ class Loan {
     this.userId = '',
     required this.userName,
     required this.amount,
+    this.interestRate = 0.0,
+    this.totalDue = 0.0,
+    this.paidAmount = 0.0,
     required this.loanDate,
     required this.repaymentDate,
     required this.status,
@@ -25,6 +31,9 @@ class Loan {
   Loan copyWith({
     String? userName,
     double? amount,
+    double? interestRate,
+    double? totalDue,
+    double? paidAmount,
     DateTime? loanDate,
     DateTime? repaymentDate,
     LoanStatus? status,
@@ -34,6 +43,9 @@ class Loan {
       userId: userId,
       userName: userName ?? this.userName,
       amount: amount ?? this.amount,
+      interestRate: interestRate ?? this.interestRate,
+      totalDue: totalDue ?? this.totalDue,
+      paidAmount: paidAmount ?? this.paidAmount,
       loanDate: loanDate ?? this.loanDate,
       repaymentDate: repaymentDate ?? this.repaymentDate,
       status: status ?? this.status,
@@ -45,13 +57,13 @@ class Loan {
       case LoanStatus.pending:
         return 'قيد الانتظار';
       case LoanStatus.current:
-        return 'جاري';
+        return 'جاري السداد';
       case LoanStatus.paid:
-        return 'تم السداد';
+        return 'تم السداد بنجاح';
       case LoanStatus.delayed:
-        return 'متأخر';
+        return 'متأخر عن السداد';
       case LoanStatus.defaulted:
-        return 'متعثر';
+        return 'متعثر كلياً';
     }
   }
 
@@ -68,6 +80,28 @@ class Loan {
       case LoanStatus.defaulted:
         return Colors.grey;
     }
+  }
+
+  int get daysRemaining {
+    final now = DateTime.now();
+    if (now.isAfter(repaymentDate)) return 0;
+    return repaymentDate.difference(now).inDays;
+  }
+
+  double get percentProgress {
+    final totalDuration = repaymentDate.difference(loanDate).inMilliseconds;
+    if (totalDuration <= 0) return 1.0;
+    
+    final elapsed = DateTime.now().difference(loanDate).inMilliseconds;
+    if (elapsed <= 0) return 0.0;
+    
+    final progress = elapsed / totalDuration;
+    return progress.clamp(0.0, 1.0);
+  }
+
+  bool get isOverdue {
+    if (status == LoanStatus.paid) return false;
+    return DateTime.now().isAfter(repaymentDate);
   }
 
   static LoanStatus _parseStatus(String? status) {
@@ -101,6 +135,9 @@ class Loan {
       userId: json['user_id'] ?? '',
       userName: uName,
       amount: (json['amount'] ?? 0.0).toDouble(),
+      interestRate: (json['interest_rate'] ?? 0.0).toDouble(),
+      totalDue: (json['total_due'] ?? 0.0).toDouble(),
+      paidAmount: (json['paid_amount'] ?? 0.0).toDouble(),
       loanDate: json['loan_date'] != null
           ? DateTime.parse(json['loan_date'])
           : (json['created_at'] != null
@@ -120,6 +157,9 @@ class Loan {
       userId: json['userId'] ?? json['user_id'] ?? '',
       userName: json['userName'] ?? '',
       amount: (json['amount'] ?? 0.0).toDouble(),
+      interestRate: (json['interestRate'] ?? json['interest_rate'] ?? 0.0).toDouble(),
+      totalDue: (json['totalDue'] ?? json['total_due'] ?? 0.0).toDouble(),
+      paidAmount: (json['paidAmount'] ?? json['paid_amount'] ?? 0.0).toDouble(),
       loanDate: json['loanDate'] != null
           ? DateTime.parse(json['loanDate'])
           : (json['loan_date'] != null
@@ -144,6 +184,9 @@ class Loan {
       'id': id,
       'userName': userName,
       'amount': amount,
+      'interestRate': interestRate,
+      'totalDue': totalDue,
+      'paidAmount': paidAmount,
       'loanDate': loanDate.toIso8601String(),
       'repaymentDate': repaymentDate.toIso8601String(),
       'status': status.toString(),
