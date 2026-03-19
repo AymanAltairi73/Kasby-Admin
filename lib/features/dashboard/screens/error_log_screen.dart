@@ -270,13 +270,18 @@ class ErrorLogScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        log.controllerName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: KasbyColors.primaryGold,
+                      Expanded(
+                        child: Text(
+                          log.controllerName,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: KasbyColors.primaryGold,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         DateFormat('HH:mm').format(log.createdAt),
                         style: const TextStyle(
