@@ -12,6 +12,7 @@ import '../../../core/widgets/kasby_button.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 import 'edit_investment_plan_screen.dart';
+import 'investment_plan_detail_screen.dart';
 
 /// Investment Plans Screen
 /// Manage investment plans (CRUD)
@@ -51,116 +52,118 @@ class InvestmentPlansScreen extends StatelessWidget {
             ),
           ),
 
-          Obx(() {
-            if (controller.isLoading.value && controller.plans.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: KasbyColors.primaryGold,
-                ),
-              );
-            }
+          Positioned.fill(
+            child: Obx(() {
+              if (controller.isLoading.value && controller.plans.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: KasbyColors.primaryGold,
+                  ),
+                );
+              }
 
-            if (controller.plans.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.folderOpen,
-                      size: 64,
-                      color: KasbyColors.textSecondary.withValues(alpha: 0.3),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'لا توجد خطط استثمار حالياً',
-                      style: TextStyle(
-                        color: KasbyColors.textSecondary,
-                        fontSize: 16,
+              if (controller.plans.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        FontAwesomeIcons.folderOpen,
+                        size: 64,
+                        color: KasbyColors.textSecondary.withValues(alpha: 0.3),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () => controller.loadPlans(),
-              color: KasbyColors.primaryGold,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Radiant Header
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            KasbyColors.primaryGold.withValues(alpha: 0.15),
-                            Colors.transparent,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                      const SizedBox(height: 16),
+                      const Text(
+                        'لا توجد خطط استثمار حالياً',
+                        style: TextStyle(
+                          color: KasbyColors.textSecondary,
+                          fontSize: 16,
                         ),
                       ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'مستويات الاستثمار النخبوية',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => controller.loadPlans(),
+                color: KasbyColors.primaryGold,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Radiant Header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              KasbyColors.primaryGold.withValues(alpha: 0.15),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
-                          SizedBox(height: 8),
-                          Text(
-                            'اختر الباقة المناسبة لاستراتيجيتك المالية',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: KasbyColors.textSecondary,
+                        ),
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'مستويات الاستثمار النخبوية',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 8),
+                            Text(
+                              'اختر الباقة المناسبة لاستراتيجيتك المالية',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: KasbyColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                      itemCount: controller.plans.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final plan = controller.plans[index];
-                        // Determine tier color based on profit
-                        Color tierColor = KasbyColors.glowGold;
-                        if (plan.profitPercentage >= 15) {
-                          tierColor = const Color(
-                            0xFFE5E4E2,
-                          ); // Platinum (Silverish)
-                        } else if (plan.profitPercentage >= 10) {
-                          tierColor = KasbyColors.primaryGold; // Gold
-                        } else {
-                          tierColor = const Color(0xFFC0C0C0); // Silver
-                        }
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                        itemCount: controller.plans.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final plan = controller.plans[index];
+                          // Determine tier color based on profit
+                          Color tierColor = KasbyColors.glowGold;
+                          if (plan.profitPercentage >= 15) {
+                            tierColor = const Color(
+                              0xFFE5E4E2,
+                            ); // Platinum (Silverish)
+                          } else if (plan.profitPercentage >= 10) {
+                            tierColor = KasbyColors.primaryGold; // Gold
+                          } else {
+                            tierColor = const Color(0xFFC0C0C0); // Silver
+                          }
 
-                        return _buildDazzlingPlanCard(
-                          plan,
-                          controller,
-                          tierColor,
-                        );
-                      },
-                    ),
-                  ],
+                          return _buildDazzlingPlanCard(
+                            plan,
+                            controller,
+                            tierColor,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ],
       ),
     );
@@ -171,247 +174,228 @@ class InvestmentPlansScreen extends StatelessWidget {
     InvestmentController controller,
     Color tierColor,
   ) {
-    return KasbyGlassCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (plan.imagePath != null)
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Glow Aura
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: tierColor.withValues(alpha: 0.15),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
+    return GestureDetector(
+      onTap: () => Get.to(() => InvestmentPlanDetailScreen(plan: plan)),
+      child: KasbyGlassCard(
+        padding: const EdgeInsets.all(0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Image Header
+            Stack(
+              children: [
+                Hero(
+                  tag: 'plan_image_${plan.id}',
+                  child: Container(
+                    height: 180,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(24)),
+                      image: plan.imagePath != null
+                          ? DecorationImage(
+                              image: plan.imagePath!
+                                      .trim()
+                                      .toLowerCase()
+                                      .startsWith('http')
+                                  ? NetworkImage(plan.imagePath!.trim())
+                                  : AssetImage(plan.imagePath!) as ImageProvider,
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      gradient: plan.imagePath == null
+                          ? LinearGradient(
+                              colors: [
+                                tierColor.withValues(alpha: 0.3),
+                                Colors.black
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
                     ),
-                    // Image Container
-                    Container(
-                      width: 80,
-                      height: 80,
-                      margin: const EdgeInsets.only(left: 16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            tierColor.withValues(alpha: 0.15),
-                            tierColor.withValues(alpha: 0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: tierColor.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      child: plan.imagePath!.trim().toLowerCase().startsWith('http')
-                          ? Image.network(plan.imagePath!.trim(), fit: BoxFit.contain)
-                          : Image.asset(plan.imagePath!, fit: BoxFit.contain),
-                    ),
-                  ],
+                  ),
                 ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plan.nameAr,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: tierColor,
-                        letterSpacing: -0.5,
-                        shadows: [
-                          Shadow(
-                            color: tierColor.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
+                // Overlay Gradient
+                Container(
+                  height: 180,
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withValues(alpha: 0.6),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
+                  ),
+                ),
+                // Status Badge
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: plan.isActive
+                          ? KasbyColors.success.withValues(alpha: 0.2)
+                          : KasbyColors.error.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
                         color: plan.isActive
-                            ? KasbyColors.success.withValues(alpha: 0.1)
-                            : KasbyColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: plan.isActive
-                              ? KasbyColors.success.withValues(alpha: 0.2)
-                              : KasbyColors.error.withValues(alpha: 0.2),
+                            ? KasbyColors.success
+                            : KasbyColors.error,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: plan.isActive
+                                ? KasbyColors.success
+                                : KasbyColors.error,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          plan.isActive ? 'نشط' : 'متوقف',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: plan.isActive
+                                ? KasbyColors.success
+                                : KasbyColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Profit Badge
+                Positioned(
+                  bottom: 12,
+                  left: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'عائد يصل إلى',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: plan.isActive
-                                  ? KasbyColors.success
-                                  : KasbyColors.error,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            plan.isActive ? 'نشط' : 'متوقف',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: plan.isActive
-                                  ? KasbyColors.success
-                                  : KasbyColors.error,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        '${plan.profitPercentage}%',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: tierColor,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: KasbyColors.error.withValues(alpha: 0.05),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.trashCan,
-                    color: KasbyColors.error,
-                    size: 16,
+                    ],
                   ),
                 ),
-                onPressed: () =>
-                    _confirmDeletePlan(Get.context!, controller, plan),
-                tooltip: 'حذف الخطة',
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            plan.descriptionAr,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white.withValues(alpha: 0.6),
-              height: 1.5,
+              ],
             ),
-          ),
-          if (plan.availableAmounts != null &&
-              plan.availableAmounts!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'المبالغ المتاحة للاستثمار:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.primaryGold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: plan.availableAmounts!.map((amount) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          plan.nameAr,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: tierColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(FontAwesomeIcons.trashCan,
+                            color: KasbyColors.error, size: 16),
+                        onPressed: () =>
+                            _confirmDeletePlan(Get.context!, controller, plan),
+                      ),
+                    ],
                   ),
-                  decoration: BoxDecoration(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                  const SizedBox(height: 8),
+                  Text(
+                    plan.descriptionAr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      height: 1.4,
                     ),
                   ),
-                  child: Text(
-                    '\$${amount.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDazzlingMetric(
+                          icon: FontAwesomeIcons.circleArrowDown,
+                          label: 'الحد الأدنى',
+                          value: '\$${plan.minAmount.toStringAsFixed(0)}',
+                          color: KasbyColors.success,
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildDazzlingMetric(
+                          icon: FontAwesomeIcons.circleArrowUp,
+                          label: 'الحد الأقصى',
+                          value: '\$${plan.maxAmount.toStringAsFixed(0)}',
+                          color: KasbyColors.warning,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: KasbyButton(
+                          text: 'عرض التفاصيل',
+                          onPressed: () =>
+                              Get.to(() => InvestmentPlanDetailScreen(plan: plan)),
+                          icon: Icons.visibility_rounded,
+                          backgroundColor: tierColor.withValues(alpha: 0.1),
+                          textColor: tierColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      KasbyButton(
+                        text: '',
+                        onPressed: () =>
+                            Get.to(() => EditInvestmentPlanScreen(plan: plan)),
+                        icon: Icons.edit_rounded,
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
+                        textColor: Colors.white,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
-          const SizedBox(height: 24),
-
-          // Metrics Grid
-          Center(
-            child: _buildDazzlingMetric(
-              icon: FontAwesomeIcons.bolt,
-              label: 'العائد المتوقع',
-              value: '${plan.profitPercentage}%',
-              color: tierColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDazzlingMetric(
-                  icon: FontAwesomeIcons.circleArrowDown,
-                  label: 'الحد الأدنى للمشاركة',
-                  value: '\$${plan.minAmount.toStringAsFixed(0)}',
-                  color: KasbyColors.success,
-                ),
-              ),
-              Expanded(
-                child: _buildDazzlingMetric(
-                  icon: FontAwesomeIcons.circleArrowUp,
-                  label: 'الحد الأقصى',
-                  value: '\$${plan.maxAmount.toStringAsFixed(0)}',
-                  color: KasbyColors.warning,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: KasbyButton(
-              text: 'تحديث إعدادات الباقة',
-              onPressed: () =>
-                  Get.to(() => EditInvestmentPlanScreen(plan: plan)),
-              icon: Icons.edit,
-              backgroundColor: tierColor.withValues(alpha: 0.15),
-              textColor: tierColor,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

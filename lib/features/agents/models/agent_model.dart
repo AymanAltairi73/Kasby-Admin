@@ -13,7 +13,6 @@ class Agent {
   final String status; // Active, Inactive
   final bool isAvailableNow;
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
-  final double successRate;
   final int totalTransactions;
   final DateTime createdAt;
 
@@ -31,7 +30,6 @@ class Agent {
     required this.status,
     required this.isAvailableNow,
     required this.supportedMethods,
-    required this.successRate,
     required this.totalTransactions,
     required this.createdAt,
   });
@@ -49,7 +47,6 @@ class Agent {
     String? status,
     bool? isAvailableNow,
     List<String>? supportedMethods,
-    double? successRate,
     int? totalTransactions,
     DateTime? createdAt,
   }) {
@@ -67,7 +64,6 @@ class Agent {
       status: status ?? this.status,
       isAvailableNow: isAvailableNow ?? this.isAvailableNow,
       supportedMethods: supportedMethods ?? this.supportedMethods,
-      successRate: successRate ?? this.successRate,
       totalTransactions: totalTransactions ?? this.totalTransactions,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -110,7 +106,6 @@ class Agent {
       status: json['status'] ?? 'active',
       isAvailableNow: json['is_available_now'] ?? false,
       supportedMethods: parseSupportedMethods(json['supported_methods']),
-      successRate: (json['success_rate'] ?? 0.0).toDouble(),
       totalTransactions: json['total_transactions'] ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
@@ -137,8 +132,6 @@ class Agent {
       supportedMethods: List<String>.from(
         json['supportedMethods'] ?? json['supported_methods'] ?? [],
       ),
-      successRate: (json['successRate'] ?? json['success_rate'] ?? 0.0)
-          .toDouble(),
       totalTransactions:
           json['totalTransactions'] ?? json['total_transactions'] ?? 0,
       createdAt: json['createdAt'] != null
@@ -164,7 +157,6 @@ class Agent {
       'status': status,
       'isAvailableNow': isAvailableNow,
       'supportedMethods': supportedMethods,
-      'successRate': successRate,
       'totalTransactions': totalTransactions,
       'createdAt': createdAt.toIso8601String(),
     };
@@ -179,7 +171,6 @@ class Agent {
       'status': status,
       'is_available_now': isAvailableNow,
       'supported_methods': supportedMethods, // JSONB in kasby_new.sql
-      'success_rate': successRate,
       'total_transactions': totalTransactions,
     };
   }

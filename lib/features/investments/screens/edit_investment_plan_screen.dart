@@ -209,104 +209,126 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
   }
 
   Widget _buildImageSection() {
-    return Center(
-      child: Column(
-        children: [
-          const Text(
-            'أيقونة الباقة',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: KasbyColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: _pickImage,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Image Container
-                Container(
-                  width: double.infinity,
-                  height: 220,
-                  decoration: BoxDecoration(
-                    color: KasbyColors.primaryGold.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('صورة الباقة المميزة'),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Hero(
+            tag: 'plan_image_${widget.plan.id}',
+            child: Container(
+              width: double.infinity,
+              height: 280,
+              decoration: BoxDecoration(
+                color: KasbyColors.surface,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: KasbyColors.primaryGold.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    spreadRadius: 2,
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Glow Aura (inside)
-                      Container(
-                        width: 100,
-                        height: 100,
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // The Image itself
+                    _selectedImageFile != null
+                        ? Image.file(_selectedImageFile!, fit: BoxFit.cover)
+                        : (_currentImageUrl != null &&
+                                _currentImageUrl!.isNotEmpty
+                            ? (_currentImageUrl!
+                                    .trim()
+                                    .toLowerCase()
+                                    .startsWith('http')
+                                ? Image.network(
+                                    _currentImageUrl!.trim(),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    _currentImageUrl!,
+                                    fit: BoxFit.cover,
+                                  ))
+                            : Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      KasbyColors.primaryGold
+                                          .withValues(alpha: 0.1),
+                                      Colors.black.withValues(alpha: 0.5),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.add_photo_alternate_outlined,
+                                  size: 48,
+                                  color: KasbyColors.primaryGold,
+                                ),
+                              )),
+
+                    // Dark Overlay Gradient
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.7),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+
+                    // Change Photo Badge
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: KasbyColors.primaryGold.withValues(alpha: 0.15),
-                              blurRadius: 35,
-                              spreadRadius: 12,
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.camera_alt_rounded,
+                                size: 16, color: KasbyColors.primaryGold),
+                            SizedBox(width: 8),
+                            Text(
+                              'تغيير الصورة',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      // Image logic
-                      _selectedImageFile != null
-                          ? Image.file(_selectedImageFile!, fit: BoxFit.contain)
-                          : (_currentImageUrl != null &&
-                                    _currentImageUrl!.isNotEmpty
-                                  ? (_currentImageUrl!.trim().toLowerCase().startsWith('http')
-                                        ? Image.network(
-                                            _currentImageUrl!.trim(),
-                                            fit: BoxFit.contain,
-                                          )
-                                        : Image.asset(
-                                            _currentImageUrl!,
-                                            fit: BoxFit.contain,
-                                          ))
-                                : const Icon(
-                                    Icons.image_outlined,
-                                    size: 40,
-                                    color: KasbyColors.textSecondary,
-                                  )),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  bottom: 4,
-                  right: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: KasbyColors.primaryGradient,
-                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.camera_alt_rounded,
-                      size: 18,
-                      color: Colors.black,
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

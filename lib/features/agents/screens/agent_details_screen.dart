@@ -145,26 +145,11 @@ class AgentDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          label: 'المعاملات',
-                          value: agent.totalTransactions.toString(),
-                          icon: FontAwesomeIcons.arrowRightArrowLeft,
-                          color: KasbyColors.info,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatCard(
-                          label: 'نسبة النجاح',
-                          value: '${agent.successRate}%',
-                          icon: Icons.auto_graph_rounded,
-                          color: KasbyColors.success,
-                        ),
-                      ),
-                    ],
+                  _buildStatCard(
+                    label: 'إجمالي المعاملات المكتملة',
+                    value: agent.totalTransactions.toString(),
+                    icon: FontAwesomeIcons.arrowRightArrowLeft,
+                    color: KasbyColors.info,
                   ),
 
                   const SizedBox(height: 24),

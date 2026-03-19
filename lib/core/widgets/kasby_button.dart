@@ -31,7 +31,7 @@ class KasbyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: width ?? double.infinity,
+      width: width,
       height: height ?? 56,
       child: isOutlined ? _buildOutlinedButton() : _buildGradientButton(),
     );
