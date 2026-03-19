@@ -68,42 +68,50 @@ class SubscriptionPlan {
 
   /// Construct from Supabase `subscription_plans` row
   factory SubscriptionPlan.fromSupabase(Map<String, dynamic> json) {
-    // Parse features from JSONB
+    // Parse features from JSONB or Map
     List<String> feats = [];
-    if (json['features'] is List) {
-      feats = List<String>.from(json['features']);
-    } else if (json['features'] is Map) {
-      final items = (json['features'] as Map)['items'];
-      if (items is List) feats = List<String>.from(items);
+    final rawFeatures = json['features'];
+    if (rawFeatures is List) {
+      feats = List<String>.from(rawFeatures.map((e) => e.toString()));
+    } else if (rawFeatures is Map) {
+      final items = rawFeatures['items'];
+      if (items is List) feats = List<String>.from(items.map((e) => e.toString()));
     }
 
     final double priceMonthly = (json['price_monthly'] ?? 0.0).toDouble();
     final double priceYearly = (json['price_yearly'] ?? 0.0).toDouble();
 
-    // Logic to determine price and duration from the two DB columns
-    double usedPrice = priceMonthly;
-    String usedDuration = '1 Month';
+    // Mapping logic for price and duration
+    double usedPrice = 0.0;
+    String usedDuration = 'Basic';
+    String tier = 'free';
 
-    if (priceMonthly > 0) {
-      usedPrice = priceMonthly;
-      usedDuration = '1 Month';
-    } else if (priceYearly > 0) {
+    if (priceYearly > 0) {
       usedPrice = priceYearly;
       usedDuration = '1 Year';
+      tier = 'premium';
+    } else if (priceMonthly > 0) {
+      usedPrice = priceMonthly;
+      usedDuration = '1 Month';
+      tier = 'premium';
+    } else {
+      usedPrice = 0.0;
+      usedDuration = 'Lifetime';
+      tier = 'free';
     }
 
     return SubscriptionPlan(
       id: json['id']?.toString() ?? '',
-      tier: (priceMonthly > 0 || priceYearly > 0) ? 'premium' : 'free',
-      technicalName: json['name'] ?? '',
-      displayNameAr: json['name'] ?? '',
-      displayNameEn: json['name'] ?? '',
+      tier: tier,
+      technicalName: json['name'] ?? 'basic_plan',
+      displayNameAr: json['display_name_ar'] ?? json['name'] ?? 'خطة أساسية',
+      displayNameEn: json['display_name_en'] ?? json['name'] ?? 'Basic Plan',
       price: usedPrice,
       duration: usedDuration,
-      maxActiveInvestments: (priceMonthly > 0 || priceYearly > 0) ? 999 : 2,
-      withdrawalProcessTime: (priceMonthly > 0 || priceYearly > 0) ? 2 : 72,
+      maxActiveInvestments: tier == 'premium' ? 999 : 2,
+      withdrawalProcessTime: tier == 'premium' ? 2 : 72,
       status: (json['is_active'] == true) ? 'Active' : 'Inactive',
-      icon: 'stars_rounded',
+      icon: json['icon'] ?? 'stars_rounded',
       features: feats,
       keywords: [],
     );

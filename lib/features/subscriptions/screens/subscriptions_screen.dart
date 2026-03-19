@@ -38,52 +38,98 @@ class SubscriptionsScreen extends StatelessWidget {
             size: 400,
             color: KasbyColors.info.withValues(alpha: 0.05),
           ),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 120, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'اختر الفئة للإدارة',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Radiant Header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          KasbyColors.primaryGold.withValues(alpha: 0.15),
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'مستويات الحسابات',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'إدارة فئات العضوية والمميزات الحصرية لعملاء كسب',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
 
-                // Free Plan Category
-                _buildCategoryCard(
-                  title: 'الخطة المجانية',
-                  subtitle: 'إدارة مميزات الحساب العادي',
-                  icon: Icons.person_outline_rounded,
-                  color: Colors.white70,
-                  onTap: () {
-                    final freePlan = controller.plans.firstWhereOrNull(
-                      (p) => p.tier == 'free',
-                    );
-                    if (freePlan != null) {
-                      _showEditPlanDialog(context, freePlan, controller);
-                    } else {
-                      Get.snackbar('تنبيه', 'لا توجد خطة مجانية حالياً');
-                    }
-                  },
-                ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'فئات العضوية',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
 
-                const SizedBox(height: 20),
+                        // Free Plan Category
+                        _buildCategoryCard(
+                          title: 'العضوية الأساسية',
+                          subtitle: 'مميزات الحساب المجاني والقيود',
+                          icon: Icons.person_outline_rounded,
+                          color: Colors.white70,
+                          onTap: () {
+                            final freePlan = controller.plans.firstWhereOrNull(
+                              (p) => p.tier == 'free',
+                            );
+                            if (freePlan != null) {
+                              _showEditPlanDialog(context, freePlan, controller);
+                            } else {
+                              Get.snackbar('تنبيه', 'لا توجد خطة مجانية حالياً');
+                            }
+                          },
+                        ),
 
-                // Premium Category
-                _buildCategoryCard(
-                  title: 'خطة الحساب المميز',
-                  subtitle: 'إدارة باقات البريميوم والمميزات',
-                  icon: Icons.stars_rounded,
-                  color: KasbyColors.primaryGold,
-                  isPremium: true,
-                  onTap: () => Get.to(() => const PremiumDetailsScreen()),
-                ),
-              ],
+                        const SizedBox(height: 20),
+
+                        // Premium Category
+                        _buildCategoryCard(
+                          title: 'العضوية الممتازة (Premium)',
+                          subtitle: 'إدارة باقات البريميوم والخدمات الاستثنائية',
+                          icon: Icons.stars_rounded,
+                          color: KasbyColors.primaryGold,
+                          isPremium: true,
+                          onTap: () => Get.to(() => const PremiumDetailsScreen()),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -476,92 +522,208 @@ class PremiumDetailsScreen extends StatelessWidget {
     SubscriptionPlan plan,
     SubscriptionController controller,
   ) {
+    // Tier-based decoration
+    Color tierColor = KasbyColors.primaryGold;
+    if (plan.price >= 80) {
+      tierColor = const Color(0xFFE5E4E2); // Platinum
+    } else if (plan.price <= 10) {
+      tierColor = const Color(0xFFC0C0C0); // Silver
+    }
+
     return KasbyGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    plan.displayNameAr,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    plan.duration,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
+          // Header with Tier and Price
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  tierColor.withValues(alpha: 0.1),
+                  Colors.transparent,
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _updatePlan(context, plan, controller),
-                    icon: const Icon(
-                      Icons.edit_rounded,
-                      color: KasbyColors.primaryGold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => _deletePlan(context, plan, controller),
-                    icon: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '\$${plan.price}',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: KasbyColors.primaryGold,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: Colors.white10),
-          const SizedBox(height: 12),
-          ...plan.features
-              .take(3)
-              .map(
-                (f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.check_circle_outline_rounded,
-                        size: 14,
-                        color: KasbyColors.success,
+                      Text(
+                        plan.displayNameAr,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: tierColor,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          f,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                          ),
+                      const SizedBox(height: 4),
+                      Text(
+                        plan.displayNameEn,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.3),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '\$${plan.price.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: tierColor,
+                      ),
+                    ),
+                    Text(
+                      plan.duration == '1 Month' ? '/ شهرياً' : '/ سنوياً',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white38,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'المميزات الحصرية',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...plan.features.map(
+                  (f) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: tierColor.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 14,
+                            color: tierColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            f,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.6),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildMiniBadge(
+                      '${plan.maxActiveInvestments > 100 ? "∞" : plan.maxActiveInvestments} استثمارات',
+                      Icons.account_balance_wallet_rounded,
+                      tierColor,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildMiniBadge(
+                      'سحب خلال ${plan.withdrawalProcessTime} ساعة',
+                      Icons.history_rounded,
+                      Colors.blueAccent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _updatePlan(context, plan, controller),
+                        icon: const Icon(Icons.edit_rounded, size: 18),
+                        label: const Text('تعديل الخطة'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white10),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton.filled(
+                      onPressed: () => _deletePlan(context, plan, controller),
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                      style: IconButton.styleFrom(
+                        backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniBadge(String text, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: color.withValues(alpha: 0.8),
+            ),
+          ),
         ],
       ),
     );
