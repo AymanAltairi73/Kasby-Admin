@@ -637,11 +637,11 @@ class TransactionsScreen extends StatelessWidget {
           children: [
             _buildSummaryRow(
               'إجمالي التداول:',
-              '\$${(summary['total_volume'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
+              '\$${((summary['total_volume'] ?? 0) as num).toDouble().toStringAsFixed(2).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
             _buildSummaryRow(
               'صافي التدفق:',
-              '\$${(summary['net_flow'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
+              '\$${((summary['net_flow'] ?? 0) as num).toDouble().toStringAsFixed(2).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
             _buildSummaryRow(
               'عدد الإيداعات:',
@@ -653,7 +653,7 @@ class TransactionsScreen extends StatelessWidget {
             ),
             _buildSummaryRow(
               'متوسط الإيداع:',
-              '\$${(summary['average_deposit'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
+              '\$${((summary['average_deposit'] ?? 0) as num).toDouble().toStringAsFixed(2).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
           ],
         ),

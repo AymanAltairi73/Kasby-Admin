@@ -28,7 +28,7 @@ class ReportService {
       'net_flow': totalDeposits - totalWithdrawals,
       'deposit_count': deposits.length,
       'withdrawal_count': withdrawals.length,
-      'average_deposit': deposits.isEmpty ? 0 : totalDeposits / deposits.length,
+      'average_deposit': deposits.isEmpty ? 0.0 : totalDeposits / deposits.length,
       'period_start': transactions.isEmpty ? null : transactions.last.createdAt,
       'period_end': transactions.isEmpty ? null : transactions.first.createdAt,
     };
