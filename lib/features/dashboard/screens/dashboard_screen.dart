@@ -15,8 +15,8 @@ import '../models/audit_log_model.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../controllers/dashboard_controller.dart';
 
-/// Dashboard Home Screen - Masterpiece Edition
-/// Main overview with celestial aesthetics and magical interactions
+/// Dashboard Home Screen — Restructured Edition
+/// Clean sections: Stats → Financial → Actions → Activity
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -29,13 +29,13 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: _buildRoyalAppBar(authController),
+      appBar: _buildAppBar(authController),
       body: Stack(
         children: [
-          // Professional Golden Transparent Background
-          _buildPremiumGoldenBackground(),
+          // Background
+          _buildBackground(),
 
-          // Main Content
+          // Content
           RefreshIndicator(
             onRefresh: () async {
               await Future.wait([
@@ -52,106 +52,59 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 100),
 
-                  // Magical Welcome Header
-                  _buildMagicalHeader(authController),
+                  // ═══════════════════════════════════════
+                  // Section 1: Welcome + Date
+                  // ═══════════════════════════════════════
+                  _buildWelcomeSection(authController),
+                  const SizedBox(height: 20),
+
+                  // ═══════════════════════════════════════
+                  // Section 2: Horizontal Stats Bar
+                  // ═══════════════════════════════════════
+                  _buildHorizontalStats(dashboardController),
+                  const SizedBox(height: 20),
 
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Magical Statistics Grid
-                        _buildMagicalStatsGrid(dashboardController),
-
-                        const SizedBox(height: 16),
-
-                        // Urgent Alerts (New Section)
+                        // ═══════════════════════════════════════
+                        // Section 3: Urgent Alerts
+                        // ═══════════════════════════════════════
                         _buildUrgentAlerts(transactionController),
 
+                        // ═══════════════════════════════════════
+                        // Section 4: Financial Overview
+                        // ═══════════════════════════════════════
+                        _buildSectionTitle(
+                          icon: FontAwesomeIcons.chartLine,
+                          title: 'النظرة المالية',
+                          subtitle: 'ملخص الاستثمارات والأرباح',
+                        ),
+                        const SizedBox(height: 12),
+                        _buildFinancialCards(dashboardController),
                         const SizedBox(height: 16),
+                        _buildChart(),
+                        const SizedBox(height: 28),
 
-                        // Nebula Chart Section
-                        const _SectionHeader(
-                          title: 'مركز التحليلات المالية والتدفقات',
-                          subtitle: 'مؤشرات الأداء الأسبوعية للمحافظ الاستثمارية',
+                        // ═══════════════════════════════════════
+                        // Section 5: Quick Actions
+                        // ═══════════════════════════════════════
+                        _buildSectionTitle(
+                          icon: FontAwesomeIcons.grip,
+                          title: 'مركز التحكم',
+                          subtitle: 'وصول سريع لكافة الأقسام',
                         ),
-                        const SizedBox(height: 16),
-                        RepaintBoundary(
-                          child: KasbyGlassCard(
-                            padding: const EdgeInsets.all(16),
-                            opacity: 0.08,
-                            child: SizedBox(
-                              height: 180,
-                              child: _buildNebulaChart(),
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 12),
+                        _buildActionHub(),
+                        const SizedBox(height: 28),
 
-                        const SizedBox(height: 25),
-
-                        // Magical Command Hub
-                        const _SectionHeader(
-                          title: 'مركز القيادة والتحكم',
-                          subtitle: 'وصول فوري لكافة أركان المنظومة',
-                        ),
-                        const SizedBox(height: 25),
-                        _buildMagicalActionHub(),
-
-                        // Celestial Activity Feed
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const _SectionHeader(title: 'آخر التحركات'),
-                            TextButton(
-                              onPressed: () => Get.toNamed('/audit-logs'),
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    'مشاهدة السجل',
-                                    style: TextStyle(
-                                      color: KasbyColors.primaryGold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.arrow_forward_ios_rounded,
-                                    size: 10,
-                                    color: KasbyColors.primaryGold,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Obx(() {
-                          if (auditController.isLoading.value &&
-                              auditController.logs.isEmpty) {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: KasbyColors.primaryGold,
-                              ),
-                            );
-                          }
-                          return Column(
-                            children: auditController.logs
-                                .take(3)
-                                .toList()
-                                .asMap()
-                                .entries
-                                .map((entry) {
-                                  final int index = entry.key;
-                                  final log = entry.value;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildCelestialLogItem(log, index),
-                                  );
-                                })
-                                .toList(),
-                          );
-                        }),
-                        const SizedBox(height: 100), // Spacing for bottom nav bar
+                        // ═══════════════════════════════════════
+                        // Section 6: Activity Feed
+                        // ═══════════════════════════════════════
+                        _buildActivitySection(auditController),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -164,50 +117,14 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUrgentAlerts(TransactionController transactionController) {
-    return Obx(() {
-      final pendingWithdrawals = transactionController.pendingWithdrawals;
-      if (pendingWithdrawals.isEmpty) return const SizedBox.shrink();
+  // ═══════════════════════════════════════════════════════════
+  //  BACKGROUND
+  // ═══════════════════════════════════════════════════════════
 
-      return KasbyGlassCard(
-        padding: const EdgeInsets.all(12),
-        color: KasbyColors.error.withValues(alpha: 0.05),
-        child: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: KasbyColors.error),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'تنبيه: هناك ${pendingWithdrawals.length} معاملات سحب بانتظار الموافقة.',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Get.toNamed('/transactions', arguments: 1),
-              child: const Text(
-                'مراجعة',
-                style: TextStyle(color: KasbyColors.primaryGold),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildPremiumGoldenBackground() {
+  Widget _buildBackground() {
     return Stack(
       children: [
-        // Base Deep Background
-        Container(
-          color: const Color(0xFF0F172A), // Slate 900
-        ),
-
-        // Subtle Ambient Glows - Top Right
+        Container(color: const Color(0xFF0F172A)),
         Positioned(
           top: -100,
           right: -100,
@@ -218,15 +135,13 @@ class DashboardScreen extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  KasbyColors.primaryGold.withValues(alpha: 0.15),
+                  KasbyColors.primaryGold.withValues(alpha: 0.12),
                   Colors.transparent,
                 ],
               ),
             ),
           ),
         ),
-
-        // Subtle Ambient Glows - Bottom Left
         Positioned(
           bottom: -100,
           left: -100,
@@ -237,28 +152,13 @@ class DashboardScreen extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  KasbyColors.primaryGoldLight.withValues(alpha: 0.1),
+                  KasbyColors.primaryGoldLight.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
               ),
             ),
           ),
         ),
-
-        // Noise Texture Overlay (Optional for subtle grain)
-        Opacity(
-          opacity: 0.03,
-          child: Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/noise.png'),
-                repeat: ImageRepeat.repeat,
-              ),
-            ),
-          ),
-        ),
-
-        // Glass Overlay
         BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
           child: Container(color: Colors.transparent),
@@ -267,7 +167,11 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildRoyalAppBar(AuthController authController) {
+  // ═══════════════════════════════════════════════════════════
+  //  APP BAR
+  // ═══════════════════════════════════════════════════════════
+
+  PreferredSizeWidget _buildAppBar(AuthController authController) {
     final chatController = Get.find<ChatController>();
     return PreferredSize(
       preferredSize: const Size.fromHeight(80),
@@ -279,7 +183,7 @@ class DashboardScreen extends StatelessWidget {
             elevation: 0,
             centerTitle: true,
             title: const Text(
-              'لوحة تحكم',
+              'لوحة التحكم',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
@@ -325,7 +229,6 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 onPressed: () => Get.toNamed('/notifications'),
               ),
-              // Magical Chat Trigger
               Obx(
                 () => Stack(
                   children: [
@@ -380,10 +283,18 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMagicalHeader(AuthController authController) {
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 1: WELCOME
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildWelcomeSection(AuthController authController) {
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE، d MMMM yyyy', 'ar').format(now);
+    final greeting = _getGreeting(now.hour);
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -391,7 +302,7 @@ class DashboardScreen extends StatelessWidget {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: 'مرحباً، ',
+                  text: '$greeting، ',
                   style: TextStyle(
                     fontSize: 22,
                     color: Colors.white.withValues(alpha: 0.6),
@@ -411,11 +322,12 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 4),
           Row(
             children: [
               Container(
-                width: 8,
-                height: 8,
+                width: 6,
+                height: 6,
                 decoration: const BoxDecoration(
                   color: KasbyColors.success,
                   shape: BoxShape.circle,
@@ -423,12 +335,11 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'حساب نشط',
+                dateStr,
                 style: TextStyle(
-                  fontSize: 10,
-                  color: KasbyColors.success.withValues(alpha: 0.7),
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.4),
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -438,246 +349,432 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMagicalStatsGrid(DashboardController dashboardController) {
-    return Obx(() {
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.35,
+  String _getGreeting(int hour) {
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 17) return 'مساء الخير';
+    return 'مساء الخير';
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 2: HORIZONTAL STATS BAR
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildHorizontalStats(DashboardController dc) {
+    return SizedBox(
+      height: 100,
+      child: Obx(() => ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _buildMagicalStatCard(
-            title: 'إجمالي المستخدمين',
-            value: NumberFormat('#,###').format(dashboardController.totalUsers),
+          _buildStatChip(
+            title: 'المستخدمين',
+            value: NumberFormat('#,###').format(dc.totalUsers),
             icon: FontAwesomeIcons.users,
-            glowColor: KasbyColors.glowGold,
-            index: 0,
+            color: KasbyColors.glowGold,
           ),
-          _buildMagicalStatCard(
-            title: 'المستخدمون النشطون',
-            value: NumberFormat('#,###').format(dashboardController.activeUsers),
+          _buildStatChip(
+            title: 'النشطون',
+            value: NumberFormat('#,###').format(dc.activeUsers),
             icon: FontAwesomeIcons.userCheck,
-            glowColor: KasbyColors.glowGreen,
-            index: 1,
+            color: KasbyColors.glowGreen,
           ),
-          _buildMagicalStatCard(
-            title: 'إجمالي المحافظ الاستثمارية',
-            value: '\$${NumberFormat.compact().format(dashboardController.totalInvested)}',
-            icon: FontAwesomeIcons.chartLine,
-            glowColor: KasbyColors.glowBlue,
-            index: 2,
+          _buildStatChip(
+            title: 'معاملات معلقة',
+            value: NumberFormat('#,###').format(dc.pendingTransactions),
+            icon: FontAwesomeIcons.clockRotateLeft,
+            color: KasbyColors.glowOrange,
           ),
-          _buildMagicalStatCard(
-            title: 'الأرباح المحققة',
-            value: '\$${NumberFormat.compact().format(dashboardController.totalProfits)}',
-            icon: FontAwesomeIcons.moneyBillTrendUp,
-            glowColor: KasbyColors.glowGreen,
-            index: 3,
-          ),
-          _buildMagicalStatCard(
-            title: 'المعاملات المعلقة',
-            value: NumberFormat('#,###').format(dashboardController.pendingTransactions),
-            icon: FontAwesomeIcons.bolt,
-            glowColor: KasbyColors.glowOrange,
-            index: 4,
-          ),
-          _buildMagicalStatCard(
-            title: 'حجم التداول اليومي',
-            value: '\$${NumberFormat.compact().format(dashboardController.dailyVolume)}',
+          _buildStatChip(
+            title: 'حجم التداول',
+            value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
             icon: FontAwesomeIcons.arrowTrendUp,
-            glowColor: KasbyColors.glowGold,
-            index: 5,
+            color: KasbyColors.glowBlue,
           ),
         ],
+      )),
+    );
+  }
+
+  Widget _buildStatChip({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      width: 145,
+      margin: const EdgeInsets.only(left: 10),
+      child: KasbyGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        opacity: 0.08,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, size: 16, color: color),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 3: URGENT ALERTS
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildUrgentAlerts(TransactionController transactionController) {
+    return Obx(() {
+      final pendingWithdrawals = transactionController.pendingWithdrawals;
+      if (pendingWithdrawals.isEmpty) return const SizedBox.shrink();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: KasbyGlassCard(
+          padding: const EdgeInsets.all(14),
+          color: KasbyColors.error.withValues(alpha: 0.06),
+          borderColor: KasbyColors.error.withValues(alpha: 0.2),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: KasbyColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: KasbyColors.error,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'طلبات سحب معلقة',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${pendingWithdrawals.length} طلب بانتظار الموافقة',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () => Get.toNamed('/transactions', arguments: 1),
+                style: TextButton.styleFrom(
+                  backgroundColor: KasbyColors.error.withValues(alpha: 0.15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'مراجعة',
+                  style: TextStyle(
+                    color: KasbyColors.error,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     });
   }
 
-  Widget _buildMagicalStatCard({
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 4: FINANCIAL OVERVIEW
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildFinancialCards(DashboardController dc) {
+    return Obx(() => Row(
+      children: [
+        Expanded(
+          child: _buildFinancialTile(
+            title: 'إجمالي الاستثمار',
+            value: '\$${NumberFormat('#,##0').format(dc.totalInvested)}',
+            icon: FontAwesomeIcons.chartPie,
+            color: KasbyColors.glowBlue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildFinancialTile(
+            title: 'الأرباح المحققة',
+            value: '\$${NumberFormat('#,##0').format(dc.totalProfits)}',
+            icon: FontAwesomeIcons.moneyBillTrendUp,
+            color: KasbyColors.glowGreen,
+          ),
+        ),
+      ],
+    ));
+  }
+
+  Widget _buildFinancialTile({
     required String title,
     required String value,
     required IconData icon,
-    required Color glowColor,
-    required int index,
+    required Color color,
   }) {
     return KasbyGlassCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       opacity: 0.08,
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Inner Glow
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: RadialGradient(
-                  colors: [
-                    glowColor.withValues(alpha: 0.1),
-                    Colors.transparent,
-                  ],
-                  center: Alignment.topLeft,
-                  radius: 1.2,
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            right: -10,
-            bottom: -10,
-            child: Icon(
-              icon,
-              size: 70,
-              color: glowColor.withValues(alpha: 0.03),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildGlowingIcon(icon: icon, color: glowColor, size: 18),
-                  Icon(
-                    Icons.trending_up_rounded,
-                    size: 14,
-                    color: glowColor.withValues(alpha: 0.5),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 16, color: color),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
+              const Spacer(),
+              Icon(
+                Icons.trending_up_rounded,
+                size: 16,
+                color: color.withValues(alpha: 0.5),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMagicalActionHub() {
+  Widget _buildChart() {
+    return KasbyGlassCard(
+      padding: const EdgeInsets.all(16),
+      opacity: 0.06,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'تدفقات الأسبوع',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '7 أيام',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: KasbyColors.primaryGold,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          RepaintBoundary(
+            child: SizedBox(
+              height: 160,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: Colors.white.withValues(alpha: 0.03),
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: FlTitlesData(show: false),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: const [
+                        FlSpot(0, 3),
+                        FlSpot(1, 4),
+                        FlSpot(2, 3.5),
+                        FlSpot(3, 5),
+                        FlSpot(4, 4.5),
+                        FlSpot(5, 6),
+                        FlSpot(6, 5.8),
+                      ],
+                      isCurved: true,
+                      color: KasbyColors.primaryGold,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, barData, index) =>
+                            FlDotCirclePainter(
+                              radius: 3,
+                              color: Colors.black,
+                              strokeWidth: 2,
+                              strokeColor: KasbyColors.primaryGold,
+                            ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            KasbyColors.primaryGold.withValues(alpha: 0.15),
+                            KasbyColors.primaryGold.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      shadow: Shadow(
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 5: ACTION HUB (4 columns)
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildActionHub() {
     final actions = [
-      {
-        'title': 'إدارة المستخدمين',
-        'icon': FontAwesomeIcons.usersGear,
-        'color': KasbyColors.primaryGold,
-        'route': '/users',
-        'sub': 'تحكم كامل',
-      },
-      {
-        'title': 'طلبات السحب',
-        'icon': FontAwesomeIcons.moneyBillTransfer,
-        'color': KasbyColors.error,
-        'page': 2,
-        'sub': '15 طلب معلق',
-      },
-      {
-        'title': 'خطط الاستثمار',
-        'icon': FontAwesomeIcons.chartPie,
-        'color': KasbyColors.info,
-        'route': '/investment-plans',
-        'sub': 'إدارة المحافظ',
-      },
-      {
-        'title': 'شبكة الوكلاء',
-        'icon': FontAwesomeIcons.networkWired,
-        'color': KasbyColors.glowOrange,
-        'page': 1,
-        'sub': 'نظام التوزيع',
-      },
-      {
-        'title': 'إعدادات النظام',
-        'icon': FontAwesomeIcons.gears,
-        'color': Colors.purpleAccent,
-        'route': '/settings',
-        'sub': 'خيارات الطوارئ',
-      },
-      {
-        'title': 'سلفات كاسبي',
-        'icon': FontAwesomeIcons.handHoldingDollar,
-        'color': KasbyColors.success,
-        'route': '/loans',
-        'sub': 'نظام القروض',
-      },
-      {
-        'title': 'مركز الإشعارات',
-        'icon': FontAwesomeIcons.bullhorn,
-        'color': KasbyColors.warning,
-        'route': '/notifications',
-        'sub': 'تواصل ذكي',
-      },
+      _ActionItem('المستخدمين', FontAwesomeIcons.usersGear, KasbyColors.primaryGold, route: '/users'),
+      _ActionItem('المعاملات', FontAwesomeIcons.moneyBillTransfer, KasbyColors.error, page: 2),
+      _ActionItem('الاستثمار', FontAwesomeIcons.chartPie, KasbyColors.info, route: '/investment-plans'),
+      _ActionItem('الوكلاء', FontAwesomeIcons.networkWired, KasbyColors.glowOrange, page: 1),
+      _ActionItem('الإعدادات', FontAwesomeIcons.gears, Colors.purpleAccent, route: '/settings'),
+      _ActionItem('السلفات', FontAwesomeIcons.handHoldingDollar, KasbyColors.success, route: '/loans'),
+      _ActionItem('الإشعارات', FontAwesomeIcons.bullhorn, KasbyColors.warning, route: '/notifications'),
+      _ActionItem('الاشتراكات', FontAwesomeIcons.crown, KasbyColors.primaryGold, route: '/subscriptions'),
     ];
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 1.05,
+        crossAxisCount: 4,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.85,
       ),
       itemCount: actions.length,
       itemBuilder: (context, index) {
         final action = actions[index];
-        final color = action['color'] as Color;
         return KasbyGlassCard(
           onTap: () {
-            if (action.containsKey('page')) {
-              Get.find<MainController>().changePage(action['page'] as int);
-            } else if (action.containsKey('route')) {
-              Get.toNamed(action['route'] as String);
+            if (action.page != null) {
+              Get.find<MainController>().changePage(action.page!);
+            } else if (action.route != null) {
+              Get.toNamed(action.route!);
             }
           },
           padding: const EdgeInsets.all(8),
-          opacity: 0.08,
+          opacity: 0.06,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildGlowingIcon(
-                icon: action['icon'] as IconData,
-                color: color,
-                size: 20,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: action.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  action.icon,
+                  color: action.color,
+                  size: 18,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                action['title'] as String,
+                action.title,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                action['sub'] as String,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.white.withValues(alpha: 0.3),
                 ),
               ),
             ],
@@ -687,89 +784,113 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNebulaChart() {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.white.withValues(alpha: 0.03),
-            strokeWidth: 1,
-          ),
-        ),
-        titlesData: FlTitlesData(show: false),
-        borderData: FlBorderData(show: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              const FlSpot(0, 3),
-              const FlSpot(1, 4),
-              const FlSpot(2, 3.5),
-              const FlSpot(3, 5),
-              const FlSpot(4, 4.5),
-              const FlSpot(5, 6),
-              const FlSpot(6, 5.8),
-            ],
-            isCurved: true,
-            color: KasbyColors.primaryGold,
-            barWidth: 4,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                    radius: 4,
-                    color: Colors.black,
-                    strokeWidth: 2,
-                    strokeColor: KasbyColors.primaryGold,
-                  ),
+  // ═══════════════════════════════════════════════════════════
+  //  SECTION 6: ACTIVITY FEED
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildActivitySection(AuditController auditController) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle(
+              icon: FontAwesomeIcons.clockRotateLeft,
+              title: 'آخر التحركات',
             ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  KasbyColors.primaryGold.withValues(alpha: 0.2),
-                  KasbyColors.primaryGold.withValues(alpha: 0.0),
+            TextButton(
+              onPressed: () => Get.toNamed('/audit-logs'),
+              child: const Row(
+                children: [
+                  Text(
+                    'عرض الكل',
+                    style: TextStyle(
+                      color: KasbyColors.primaryGold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 10,
+                    color: KasbyColors.primaryGold,
+                  ),
                 ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
               ),
             ),
-            shadow: Shadow(
-              color: KasbyColors.primaryGold.withValues(alpha: 0.5),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Obx(() {
+          if (auditController.isLoading.value &&
+              auditController.logs.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(
+                  color: KasbyColors.primaryGold,
+                ),
+              ),
+            );
+          }
+          if (auditController.logs.isEmpty) {
+            return KasbyGlassCard(
+              padding: const EdgeInsets.all(20),
+              opacity: 0.05,
+              child: Center(
+                child: Text(
+                  'لا توجد أنشطة حديثة',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            );
+          }
+          return Column(
+            children: auditController.logs
+                .take(4)
+                .toList()
+                .asMap()
+                .entries
+                .map((entry) {
+                  final log = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildLogItem(log),
+                  );
+                })
+                .toList(),
+          );
+        }),
+      ],
     );
   }
 
-  Widget _buildCelestialLogItem(AuditLog log, int index) {
+  Widget _buildLogItem(AuditLog log) {
     return KasbyGlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       opacity: 0.05,
       child: Row(
         children: [
           Container(
-            width: 45,
-            height: 45,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: _getSeverityColor(log.severity).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _getSeverityColor(log.severity).withValues(alpha: 0.2),
               ),
             ),
             child: Icon(
               _getActionIcon(log.action),
-              size: 20,
+              size: 18,
               color: _getSeverityColor(log.severity),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -777,47 +898,79 @@ class DashboardScreen extends StatelessWidget {
                 Text(
                   log.action,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'بواسطة: ${log.adminName}',
+                  log.adminName,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white.withValues(alpha: 0.4),
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.35),
                   ),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Directionality(
-                textDirection: ui.TextDirection.ltr,
-                child: Text(
-                  DateFormat('HH:mm', 'en').format(log.timestamp),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: KasbyColors.primaryGold,
-                  ),
-                ),
+          Directionality(
+            textDirection: ui.TextDirection.ltr,
+            child: Text(
+              DateFormat('HH:mm', 'en').format(log.timestamp),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.primaryGold,
               ),
-              Text(
-                'اليوم',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white.withValues(alpha: 0.3),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  SHARED HELPERS
+  // ═══════════════════════════════════════════════════════════
+
+  Widget _buildSectionTitle({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: KasbyColors.primaryGold),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ],
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 22),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white.withValues(alpha: 0.35),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -836,10 +989,12 @@ class DashboardScreen extends StatelessWidget {
   IconData _getActionIcon(String action) {
     final act = action.toLowerCase();
     if (act.contains('error')) return Icons.error_outline_rounded;
-    if (act.contains('login') || act.contains('auth'))
+    if (act.contains('login') || act.contains('auth')) {
       return Icons.lock_outline_rounded;
-    if (act.contains('financial') || act.contains('wallet'))
+    }
+    if (act.contains('financial') || act.contains('wallet')) {
       return Icons.account_balance_wallet_outlined;
+    }
     if (act.contains('agent')) return Icons.person_search_rounded;
     if (act.contains('user')) return Icons.people_outline_rounded;
     return Icons.history_rounded;
@@ -878,7 +1033,7 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'هل أنت متأكد من رغبتك في إغلاق هذه الجلسة',
+                'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
               ),
@@ -889,7 +1044,7 @@ class DashboardScreen extends StatelessWidget {
                     child: TextButton(
                       onPressed: () => Get.back(),
                       child: Text(
-                        'تحليق بالبقاء',
+                        'إلغاء',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.5),
                         ),
@@ -929,66 +1084,15 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
-
-  // --- NEW MASTERPIECE WIDGETS ---
-
-  Widget _buildGlowingIcon({
-    required IconData icon,
-    required Color color,
-    double size = 20,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-          ),
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: Icon(icon, color: color, size: size),
-    );
-  }
 }
 
-class _SectionHeader extends StatelessWidget {
+/// Simple data class for action items
+class _ActionItem {
   final String title;
-  final String? subtitle;
-  const _SectionHeader({required this.title, this.subtitle});
+  final IconData icon;
+  final Color color;
+  final String? route;
+  final int? page;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle!,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.4),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
+  const _ActionItem(this.title, this.icon, this.color, {this.route, this.page});
 }

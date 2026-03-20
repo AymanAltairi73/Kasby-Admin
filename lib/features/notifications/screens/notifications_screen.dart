@@ -191,18 +191,16 @@ class NotificationsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Obx(
-              () => Row(
-                children: [
-                  _buildScheduleChip('الآن', true, () {}),
-                  const SizedBox(width: 8),
-                  _buildScheduleChip(
-                    'جدولة...',
-                    false,
-                    () => _showDateTimePicker(context),
-                  ),
-                ],
-              ),
+            Row(
+              children: [
+                _buildScheduleChip('الآن', true, () {}),
+                const SizedBox(width: 8),
+                _buildScheduleChip(
+                  'جدولة...',
+                  false,
+                  () => _showDateTimePicker(context),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
 
