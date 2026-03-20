@@ -116,7 +116,7 @@ class KasbyAdminApp extends StatelessWidget {
           name: '/forgot-password',
           page: () => const ForgotPasswordScreen(),
         ),
-        GetPage(name: '/dashboard', page: () => const MainWrapper()),
+        GetPage(name: '/main', page: () => const MainWrapper()),
         GetPage(name: '/users', page: () => const UserListScreen()),
         GetPage(
           name: '/investment-plans',

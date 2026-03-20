@@ -253,12 +253,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return;
         }
 
-        await SupabaseService.auth.updateUser(
-          UserAttributes(password: passwordController.text),
-        );
-        debugPrint('[ProfileScreen] ✓ Password updated');
-        passwordController.clear();
-        confirmPasswordController.clear();
+        try {
+          await SupabaseService.auth.updateUser(
+            UserAttributes(password: passwordController.text),
+          );
+          debugPrint('[ProfileScreen] ✓ Password updated');
+          passwordController.clear();
+          confirmPasswordController.clear();
+        } on AuthApiException catch (authKey) {
+          if (authKey.code == 'same_password') {
+            Get.snackbar(
+              'تنبيه',
+              'كلمة المرور الجديدة يجب أن تكون مختلفة عن الحالية',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: KasbyColors.warning.withValues(alpha: 0.8),
+              colorText: Colors.black,
+            );
+          } else {
+            rethrow;
+          }
+        }
       }
 
       // Update AuthController state
