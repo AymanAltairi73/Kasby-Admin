@@ -183,15 +183,31 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       gradient: KasbyColors.primaryGradient,
                       shape: BoxShape.circle,
                     ),
-                    child: Center(
-                      child: Text(
-                        widget.user.name.isNotEmpty ? widget.user.name[0] : '?',
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
+                    child: ClipOval(
+                      child: widget.user.avatarUrl.isNotEmpty
+                          ? Image.network(
+                              widget.user.avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.black,
+                              ),
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: Colors.black,
+                                  ),
+                                );
+                              },
+                            )
+                          : const Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.black,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),

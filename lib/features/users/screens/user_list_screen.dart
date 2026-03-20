@@ -397,15 +397,31 @@ class UserListScreen extends StatelessWidget {
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: Center(
-                  child: Text(
-                    user.name.isNotEmpty ? user.name[0] : '?',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: ClipOval(
+                  child: user.avatarUrl.isNotEmpty
+                      ? Image.network(
+                          user.avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.person,
+                            size: 24,
+                            color: Colors.white,
+                          ),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 24,
+                          color: Colors.white,
+                        ),
                 ),
               ),
               if (user.accountType != 'Free')
