@@ -64,7 +64,7 @@ class SettingsScreen extends StatelessWidget {
             _buildSettingCard(
               icon: Icons.subscriptions_rounded,
               title: 'اشتراكات المستخدمين',
-              subtitle: 'إدارة خطط الاشتراك (أساسي / احترافي)',
+              subtitle: 'إدارة خطط الاشتراك (شهري / سنوي)',
               onTap: () => Get.toNamed('/subscriptions'),
             ),
             const SizedBox(height: 8),

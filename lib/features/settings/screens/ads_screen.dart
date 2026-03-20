@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
-import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/ad_controller.dart';
 import '../models/ad_model.dart';
+import 'ad_detail_screen.dart';
+import 'add_edit_ad_screen.dart';
 
 class AdsScreen extends StatelessWidget {
   const AdsScreen({super.key});
@@ -16,309 +19,284 @@ class AdsScreen extends StatelessWidget {
     final controller = Get.put(AdController());
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إدارة الإعلانات')),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: KasbyColors.primaryGold),
-          );
-        }
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text(
+          'إدارة الإعلانات',
+          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: Stack(
+        children: [
+          _buildBackground(),
+          Obx(() {
+            if (controller.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(color: KasbyColors.primaryGold),
+              );
+            }
 
-        if (controller.ads.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  FontAwesomeIcons.rectangleAd,
-                  size: 64,
-                  color: KasbyColors.textSecondary,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'لا توجد إعلانات حالياً',
-                  style: TextStyle(color: KasbyColors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                KasbyButton(
-                  text: 'إضافة إعلان جديد',
-                  width: 200,
-                  onPressed: () => _showAdForm(context, controller),
-                ),
-              ],
-            ),
-          );
-        }
+            if (controller.ads.isEmpty) {
+              return _buildEmptyState(context, controller);
+            }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.loadAds(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.ads.length,
-            itemBuilder: (context, index) {
-              final ad = controller.ads[index];
-              return _buildAdCard(context, controller, ad);
-            },
-          ),
-        );
-      }),
+            return RefreshIndicator(
+              onRefresh: () => controller.loadAds(),
+              color: KasbyColors.primaryGold,
+              backgroundColor: const Color(0xFF1E293B),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 100, 16, 100),
+                physics: const BouncingScrollPhysics(),
+                itemCount: controller.ads.length,
+                itemBuilder: (context, index) {
+                  final ad = controller.ads[index];
+                  return _buildAdCard(context, controller, ad);
+                },
+              ),
+            );
+          }),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: KasbyColors.primaryGold,
-        onPressed: () => _showAdForm(context, controller),
-        child: const Icon(Icons.add, color: Colors.black),
+        onPressed: () => Get.to(() => const AddEditAdScreen()),
+        child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
       ),
     );
   }
 
-  Widget _buildAdCard(BuildContext context, AdController controller, Ad ad) {
-    return KasbyGlassCard(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+  Widget _buildBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A)],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, AdController controller) {
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  ad.imageUrl,
-                  width: 80,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 80,
-                    height: 50,
-                    color: Colors.white10,
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      size: 20,
-                      color: Colors.white24,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      ad.titleAr,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (ad.descriptionAr != null &&
-                        ad.descriptionAr!.isNotEmpty)
-                      Text(
-                        ad.descriptionAr!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: KasbyColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: ad.isActive,
-                activeColor: KasbyColors.primaryGold,
-                onChanged: (val) => controller.toggleAdStatus(ad),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              FontAwesomeIcons.rectangleAd,
+              size: 80,
+              color: Colors.white.withOpacity(0.1),
+            ),
           ),
-          const Divider(height: 24, color: Colors.white10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'الأولوية: ${ad.priority}',
-                style: const TextStyle(
-                  color: KasbyColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.edit, color: KasbyColors.info, size: 20),
-                onPressed: () => _showAdForm(context, controller, ad: ad),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.delete,
-                  color: KasbyColors.error,
-                  size: 20,
-                ),
-                onPressed: () =>
-                    _showDeleteConfirmation(context, controller, ad),
-              ),
-            ],
+          const SizedBox(height: 24),
+          const Text(
+            'لا توجد إعلانات نشطة حالياً',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'ابدأ بإضافة أول إعلان لنظام كسببي',
+            style: TextStyle(color: Colors.white38, fontSize: 14),
+          ),
+          const SizedBox(height: 32),
+          KasbyButton(
+            text: 'إضافة إعلان جديد',
+            width: 220,
+            onPressed: () => Get.to(() => const AddEditAdScreen()),
           ),
         ],
       ),
     );
   }
 
-  void _showAdForm(BuildContext context, AdController controller, {Ad? ad}) {
-    final titleArController = TextEditingController(text: ad?.titleAr);
-    final titleEnController = TextEditingController(text: ad?.titleEn);
-    final descArController = TextEditingController(text: ad?.descriptionAr);
-    final descEnController = TextEditingController(text: ad?.descriptionEn);
-    final imageUrlController = TextEditingController(text: ad?.imageUrl);
-    final actionUrlController = TextEditingController(text: ad?.actionUrl);
-    final priorityController = TextEditingController(
-      text: ad?.priority.toString() ?? '0',
-    );
-    final isActive = (ad?.isActive ?? true).obs;
-
-    Get.dialog(
-      Dialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          width: Get.width * 0.9,
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
+  Widget _buildAdCard(BuildContext context, AdController controller, Ad ad) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: KasbyGlassCard(
+        padding: EdgeInsets.zero,
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Get.to(() => AdDetailScreen(ad: ad)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image Section
+            Stack(
               children: [
-                Text(
-                  ad == null ? 'إضافة إعلان جديد' : 'تعديل الإعلان',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                KasbyTextField(
-                  controller: titleArController,
-                  labelText: 'العنوان (بالعربية)',
-                  hintText: 'مثال: عرض الاستثمار الذهبي',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: titleEnController,
-                  labelText: 'العنوان (بالإنجليزي) - اختياري',
-                  hintText: 'Example: Golden Investment Offer',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: descArController,
-                  labelText: 'الوصف (بالعربية)',
-                  hintText: 'وصف قصير للإعلان',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: descEnController,
-                  labelText: 'الوصف (بالإنجليزي) - اختياري',
-                  hintText: 'Short description',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: imageUrlController,
-                  labelText: 'رابط الصورة',
-                  hintText: 'https://example.com/image.jpg',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: actionUrlController,
-                  labelText: 'رابط التوجيه (اختياري)',
-                  hintText: 'https://kasby.com/details',
-                ),
-                const SizedBox(height: 16),
-                KasbyTextField(
-                  controller: priorityController,
-                  labelText: 'الأولوية',
-                  hintText: 'رقم يعبر عن ترتيب الظهور (الأعلى أولاً)',
-                ),
-                const SizedBox(height: 16),
-                Obx(
-                  () => CheckboxListTile(
-                    title: const Text(
-                      'نشط',
-                      style: TextStyle(color: Colors.white),
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: CachedNetworkImage(
+                    imageUrl: ad.imageUrl,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Shimmer.fromColors(
+                      baseColor: Colors.white.withOpacity(0.05),
+                      highlightColor: Colors.white.withOpacity(0.1),
+                      child: Container(
+                        height: 160,
+                        width: double.infinity,
+                        color: Colors.white,
+                      ),
                     ),
-                    value: isActive.value,
-                    onChanged: (val) => isActive.value = val ?? true,
-                    activeColor: KasbyColors.primaryGold,
-                    contentPadding: EdgeInsets.zero,
+                    errorWidget: (context, url, error) => Container(
+                      height: 160,
+                      color: Colors.white.withOpacity(0.05),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.broken_image_outlined,
+                            color: KasbyColors.error,
+                            size: 30,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'خطأ في تحميل الصورة',
+                            style: TextStyle(
+                              color: KasbyColors.error.withOpacity(0.7),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 32),
-                KasbyButton(
-                  text: ad == null ? 'إضافة' : 'حفظ التغييرات',
-                  onPressed: () async {
-                    if (titleArController.text.isEmpty ||
-                        imageUrlController.text.isEmpty) {
-                      Get.snackbar(
-                        'خطأ',
-                        'يرجى ملء الحقول الأساسية (العنوان بالعربية ورابط الصورة)',
-                      );
-                      return;
-                    }
-
-                    final newAd = Ad(
-                      id: ad?.id ?? '',
-                      titleAr: titleArController.text,
-                      titleEn: titleEnController.text,
-                      descriptionAr: descArController.text,
-                      descriptionEn: descEnController.text,
-                      imageUrl: imageUrlController.text,
-                      actionUrl: actionUrlController.text,
-                      priority: int.tryParse(priorityController.text) ?? 0,
-                      isActive: isActive.value,
-                      createdAt: ad?.createdAt ?? DateTime.now(),
-                      updatedAt: DateTime.now(),
-                    );
-
-                    bool success;
-                    if (ad == null) {
-                      success = await controller.addAd(newAd);
-                    } else {
-                      success = await controller.updateAd(newAd);
-                    }
-
-                    if (success) {
-                      Get.back();
-                      Get.snackbar(
-                        'تم',
-                        ad == null
-                            ? 'تم إضافة الإعلان بنجاح'
-                            : 'تم تحديث الإعلان بنجاح',
-                      );
-                    } else {
-                      Get.snackbar('خطأ', 'حدث خطأ أثناء حفظ البيانات');
-                    }
-                  },
-                ),
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: const Text(
-                    'إلغاء',
-                    style: TextStyle(color: KasbyColors.textSecondary),
-                  ),
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: _buildStatusIndicator(ad.isActive),
                 ),
               ],
             ),
-          ),
+            
+            // Info Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ad.titleAr,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (ad.descriptionAr != null && ad.descriptionAr!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      ad.descriptionAr!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => Get.to(() => AdDetailScreen(ad: ad)),
+                          icon: const Icon(Icons.info_outline_rounded, size: 18),
+                          label: const Text('التفاصيل'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.edit_rounded, color: KasbyColors.info, size: 20),
+                          onPressed: () => Get.to(() => AddEditAdScreen(ad: ad)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: KasbyColors.error, size: 20),
+                          onPressed: () => _showDeleteConfirmation(context, controller, ad),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showDeleteConfirmation(
-    BuildContext context,
-    AdController controller,
-    Ad ad,
-  ) {
+  Widget _buildStatusIndicator(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: (isActive ? KasbyColors.success : KasbyColors.error).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: (isActive ? KasbyColors.success : KasbyColors.error).withOpacity(0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: isActive ? KasbyColors.success : KasbyColors.error,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isActive ? 'نشط' : 'معطل',
+            style: TextStyle(
+              color: isActive ? KasbyColors.success : KasbyColors.error,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, AdController controller, Ad ad) {
     Get.defaultDialog(
       title: 'حذف الإعلان',
       middleText: 'هل أنت متأكد من حذف الإعلان "${ad.titleAr}"؟',
@@ -331,7 +309,7 @@ class AdsScreen extends StatelessWidget {
       cancelTextColor: KasbyColors.primaryGold,
       buttonColor: KasbyColors.error,
       onConfirm: () async {
-        final success = await controller.deleteAd(ad.id, ad.titleAr);
+        final success = await controller.deleteAd(ad.id, ad.titleAr, ad.imageUrl);
         Get.back();
         if (success) {
           Get.snackbar('تم', 'تم حذف الإعلان بنجاح');

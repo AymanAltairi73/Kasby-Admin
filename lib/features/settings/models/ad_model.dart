@@ -5,8 +5,6 @@ class Ad {
   final String? descriptionAr;
   final String? descriptionEn;
   final String imageUrl;
-  final String? actionUrl;
-  final int priority;
   final bool isActive;
   final DateTime? expiresAt;
   final DateTime createdAt;
@@ -20,8 +18,6 @@ class Ad {
     this.descriptionAr,
     this.descriptionEn,
     required this.imageUrl,
-    this.actionUrl,
-    this.priority = 0,
     this.isActive = true,
     this.expiresAt,
     required this.createdAt,
@@ -37,8 +33,6 @@ class Ad {
       descriptionAr: json['description_ar'],
       descriptionEn: json['description_en'],
       imageUrl: json['image_url'] ?? '',
-      actionUrl: json['action_url'],
-      priority: json['priority'] ?? 0,
       isActive: json['is_active'] ?? true,
       expiresAt: json['expires_at'] != null
           ? DateTime.parse(json['expires_at'])
@@ -60,10 +54,9 @@ class Ad {
       'description_ar': descriptionAr,
       'description_en': descriptionEn,
       'image_url': imageUrl,
-      'action_url': actionUrl,
-      'priority': priority,
       'is_active': isActive,
       'expires_at': expiresAt?.toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
     };
   }
 
@@ -74,8 +67,6 @@ class Ad {
     String? descriptionAr,
     String? descriptionEn,
     String? imageUrl,
-    String? actionUrl,
-    int? priority,
     bool? isActive,
     DateTime? expiresAt,
     DateTime? createdAt,
@@ -89,8 +80,6 @@ class Ad {
       descriptionAr: descriptionAr ?? this.descriptionAr,
       descriptionEn: descriptionEn ?? this.descriptionEn,
       imageUrl: imageUrl ?? this.imageUrl,
-      actionUrl: actionUrl ?? this.actionUrl,
-      priority: priority ?? this.priority,
       isActive: isActive ?? this.isActive,
       expiresAt: expiresAt ?? this.expiresAt,
       createdAt: createdAt ?? this.createdAt,
