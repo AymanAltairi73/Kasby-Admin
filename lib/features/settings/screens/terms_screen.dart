@@ -415,47 +415,35 @@ class TermsScreen extends StatelessWidget {
                   validator: (v) => v!.isEmpty ? 'يرجى إدخال المحتوى' : null,
                 ),
                 const SizedBox(height: 32),
-                KasbyButton(
+                Obx(() => KasbyButton(
                   text: term == null
                       ? 'إضافة البند الآن'
                       : 'حفظ التعديلات النهائية',
                   icon: term == null
                       ? Icons.check_circle_rounded
                       : Icons.save_rounded,
-                  onPressed: () {
+                  isLoading: controller.isSaving.value,
+                  onPressed: () async {
                     if (formKey.currentState!.validate()) {
                       if (term == null) {
-                        controller.addTerm(
+                        await controller.addTerm(
                           titleController.text,
                           contentController.text,
                         );
-                        Get.snackbar(
-                          'تم الإضافة',
-                          'تمت إضافة البند بنجاح',
-                          backgroundColor: KasbyColors.success.withValues(
-                            alpha: 0.9,
-                          ),
-                          colorText: Colors.white,
-                        );
                       } else {
-                        controller.updateTerm(
+                        await controller.updateTerm(
                           term.id,
                           titleController.text,
                           contentController.text,
                         );
-                        Get.snackbar(
-                          'تم التحديث',
-                          'تم حفظ التعديلات بنجاح',
-                          backgroundColor: KasbyColors.info.withValues(
-                            alpha: 0.9,
-                          ),
-                          colorText: Colors.white,
-                        );
                       }
-                      Get.back();
+                      
+                      if (!controller.isSaving.value) {
+                        Get.back();
+                      }
                     }
                   },
-                ),
+                )),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Get.back(),
@@ -529,8 +517,8 @@ class TermsScreen extends StatelessWidget {
                     child: KasbyButton(
                       text: 'حذف نهائي',
                       backgroundColor: KasbyColors.error,
-                      onPressed: () {
-                        controller.deleteTerm(id);
+                      onPressed: () async {
+                        await controller.deleteTerm(id);
                         Get.back();
                         Get.snackbar(
                           'تم الحذف',

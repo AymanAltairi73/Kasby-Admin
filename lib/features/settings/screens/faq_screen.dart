@@ -201,24 +201,27 @@ class FaqScreen extends StatelessWidget {
                   maxLines: 5,
                 ),
                 const SizedBox(height: 32),
-                KasbyButton(
+                Obx(() => KasbyButton(
                   text: faq == null ? 'إضافة' : 'حفظ التعديلات',
-                  onPressed: () {
+                  isLoading: controller.isSaving.value,
+                  onPressed: () async {
                     if (faq == null) {
-                      controller.addFAQ(
+                      await controller.addFAQ(
                         questionController.text,
                         answerController.text,
                       );
                     } else {
-                      controller.updateFAQ(
+                      await controller.updateFAQ(
                         faq.id,
                         questionController.text,
                         answerController.text,
                       );
                     }
-                    Get.back();
+                    if (!controller.isSaving.value) {
+                      Get.back();
+                    }
                   },
-                ),
+                )),
                 TextButton(
                   onPressed: () => Get.back(),
                   child: const Text(
@@ -256,8 +259,8 @@ class FaqScreen extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
-              controller.deleteFAQ(id);
+            onPressed: () async {
+              await controller.deleteFAQ(id);
               Get.back();
             },
             child: const Text(

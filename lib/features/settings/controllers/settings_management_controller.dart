@@ -25,6 +25,7 @@ class SettingsManagementController extends GetxController {
           .obs;
 
   final isLoading = true.obs;
+  final isSaving = false.obs;
 
   @override
   void onInit() {
@@ -406,14 +407,25 @@ class SettingsManagementController extends GetxController {
   }
 
   // FAQ — CRUD to Supabase
-  void addFAQ(String question, String answer) async {
-    final newId = DateTime.now().millisecondsSinceEpoch.toString();
-    faqs.add(FAQItem(id: newId, question: question, answer: answer));
+  Future<void> addFAQ(String question, String answer) async {
+    isSaving.value = true;
     try {
-      await SupabaseService.client.from('faqs').insert({
-        'question': question,
-        'answer': answer,
-      });
+      final response = await SupabaseService.client
+          .from('faqs')
+          .insert({
+            'question': question,
+            'answer': answer,
+          })
+          .select()
+          .single();
+
+      final newFaq = FAQItem(
+        id: response['id'].toString(),
+        question: response['question'] ?? '',
+        answer: response['answer'] ?? '',
+      );
+      faqs.add(newFaq);
+      _logAction('إضافة سؤال شائع: $question');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -421,35 +433,43 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في إضافة السؤال الشائع');
+    } finally {
+      isSaving.value = false;
     }
-    _logAction('إضافة سؤال شائع: $question');
   }
 
-  void updateFAQ(String id, String question, String answer) async {
+  Future<void> updateFAQ(String id, String question, String answer) async {
     int index = faqs.indexWhere((e) => e.id == id);
-    if (index != -1) {
+    if (index == -1) return;
+
+    isSaving.value = true;
+    try {
+      await SupabaseService.client
+          .from('faqs')
+          .update({'question': question, 'answer': answer})
+          .eq('id', id);
+
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
-      try {
-        await SupabaseService.client
-            .from('faqs')
-            .update({'question': question, 'answer': answer})
-            .eq('id', id);
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'SettingsManagementController',
-          method: 'updateFAQ',
-          error: e,
-          stackTrace: stackTrace,
-        );
-      }
       _logAction('تحديث سؤال شائع: $question');
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SettingsManagementController',
+        method: 'updateFAQ',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      Get.snackbar('خطأ', 'فشل في تحديث السؤال الشائع');
+    } finally {
+      isSaving.value = false;
     }
   }
 
-  void deleteFAQ(String id) async {
-    faqs.removeWhere((e) => e.id == id);
+  Future<void> deleteFAQ(String id) async {
     try {
       await SupabaseService.client.from('faqs').delete().eq('id', id);
+      faqs.removeWhere((e) => e.id == id);
+      _logAction('حذف سؤال شائع');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -457,27 +477,33 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في حذف السؤال الشائع');
     }
-    _logAction('حذف سؤال شائع');
   }
 
   // Terms — CRUD to Supabase
-  void addTerm(String title, String content) async {
-    final newId = DateTime.now().millisecondsSinceEpoch.toString();
-    terms.add(
-      TermSection(
-        id: newId,
-        title: title,
-        content: content,
-        order: terms.length + 1,
-      ),
-    );
+  Future<void> addTerm(String title, String content) async {
+    isSaving.value = true;
     try {
-      await SupabaseService.client.from('terms_sections').insert({
-        'title': title,
-        'content': content,
-        'sort_order': terms.length,
-      });
+      final nextOrder = terms.length + 1;
+      final response = await SupabaseService.client
+          .from('terms_sections')
+          .insert({
+            'title': title,
+            'content': content,
+            'sort_order': nextOrder,
+          })
+          .select()
+          .single();
+
+      final newTerm = TermSection(
+        id: response['id'].toString(),
+        title: response['title'] ?? '',
+        content: response['content'] ?? '',
+        order: response['sort_order'] ?? nextOrder,
+      );
+      terms.add(newTerm);
+      _logAction('إضافة بند شروط: $title');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -485,35 +511,43 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في إضافة بند الشروط');
+    } finally {
+      isSaving.value = false;
     }
-    _logAction('إضافة بند شروط: $title');
   }
 
-  void updateTerm(String id, String title, String content) async {
+  Future<void> updateTerm(String id, String title, String content) async {
     int index = terms.indexWhere((e) => e.id == id);
-    if (index != -1) {
+    if (index == -1) return;
+
+    isSaving.value = true;
+    try {
+      await SupabaseService.client
+          .from('terms_sections')
+          .update({'title': title, 'content': content})
+          .eq('id', id);
+
       terms[index] = terms[index].copyWith(title: title, content: content);
-      try {
-        await SupabaseService.client
-            .from('terms_sections')
-            .update({'title': title, 'content': content})
-            .eq('id', id);
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'SettingsManagementController',
-          method: 'updateTerm',
-          error: e,
-          stackTrace: stackTrace,
-        );
-      }
       _logAction('تحديث بند شروط: $title');
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SettingsManagementController',
+        method: 'updateTerm',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      Get.snackbar('خطأ', 'فشل في تحديث بند الشروط');
+    } finally {
+      isSaving.value = false;
     }
   }
 
-  void deleteTerm(String id) async {
-    terms.removeWhere((e) => e.id == id);
+  Future<void> deleteTerm(String id) async {
     try {
       await SupabaseService.client.from('terms_sections').delete().eq('id', id);
+      terms.removeWhere((e) => e.id == id);
+      _logAction('حذف بند شروط');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -521,8 +555,8 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في حذف بند الشروط');
     }
-    _logAction('حذف بند شروط');
   }
 
   void reorderTerms(int oldIndex, int newIndex) async {
