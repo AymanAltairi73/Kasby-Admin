@@ -205,20 +205,37 @@ class FaqScreen extends StatelessWidget {
                   text: faq == null ? 'إضافة' : 'حفظ التعديلات',
                   isLoading: controller.isSaving.value,
                   onPressed: () async {
+                    bool success;
                     if (faq == null) {
-                      await controller.addFAQ(
+                      success = await controller.addFAQ(
                         questionController.text,
                         answerController.text,
                       );
                     } else {
-                      await controller.updateFAQ(
+                      success = await controller.updateFAQ(
                         faq.id,
                         questionController.text,
                         answerController.text,
                       );
                     }
-                    if (!controller.isSaving.value) {
+                    
+                    if (success) {
                       Get.back();
+                      Get.snackbar(
+                        'نجاح',
+                        faq == null ? 'تم إضافة السؤال الشائع بنجاح' : 'تم تحديث السؤال الشائع بنجاح',
+                        backgroundColor: KasbyColors.success.withOpacity(0.9),
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    } else {
+                      Get.snackbar(
+                        'خطأ',
+                        'فشل في العملية، يرجى المحاولة مرة أخرى',
+                        backgroundColor: KasbyColors.error.withOpacity(0.9),
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
                     }
                   },
                 )),
@@ -260,8 +277,17 @@ class FaqScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              await controller.deleteFAQ(id);
-              Get.back();
+              final success = await controller.deleteFAQ(id);
+              if (success) {
+                Get.back();
+                Get.snackbar(
+                  'نجاح',
+                  'تم حذف السؤال الشائع بنجاح',
+                  backgroundColor: KasbyColors.error.withOpacity(0.9),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              }
             },
             child: const Text(
               'حذف',

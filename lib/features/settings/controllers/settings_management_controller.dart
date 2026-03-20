@@ -5,6 +5,7 @@ import '../models/settings_models.dart';
 import '../../../core/services/audit_logger.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/theme/kasby_colors.dart';
 
 /// Settings Management Controller
 /// Manages FAQs, Terms, Fees, Currencies, Limits, and Maintenance
@@ -383,6 +384,13 @@ class SettingsManagementController extends GetxController {
       );
     }
     _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
+    Get.snackbar(
+      'وضع الصيانة',
+      'تم ${value ? 'تفعيل' : 'تعطيل'} وضع الصيانة بنجاح',
+      backgroundColor: KasbyColors.warning.withOpacity(0.9),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   void updateMaintenanceMessage(String message) async {
@@ -404,10 +412,17 @@ class SettingsManagementController extends GetxController {
       );
     }
     _logAction('تحديث رسالة الصيانة');
+    Get.snackbar(
+      'رسالة الصيانة',
+      'تم تحديث الرسالة بنجاح',
+      backgroundColor: KasbyColors.info.withOpacity(0.9),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 
   // FAQ — CRUD to Supabase
-  Future<void> addFAQ(String question, String answer) async {
+  Future<bool> addFAQ(String question, String answer) async {
     isSaving.value = true;
     try {
       final response = await SupabaseService.client
@@ -426,6 +441,7 @@ class SettingsManagementController extends GetxController {
       );
       faqs.add(newFaq);
       _logAction('إضافة سؤال شائع: $question');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -433,15 +449,15 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في إضافة السؤال الشائع');
+      return false;
     } finally {
       isSaving.value = false;
     }
   }
 
-  Future<void> updateFAQ(String id, String question, String answer) async {
+  Future<bool> updateFAQ(String id, String question, String answer) async {
     int index = faqs.indexWhere((e) => e.id == id);
-    if (index == -1) return;
+    if (index == -1) return false;
 
     isSaving.value = true;
     try {
@@ -452,6 +468,7 @@ class SettingsManagementController extends GetxController {
 
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
       _logAction('تحديث سؤال شائع: $question');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -459,17 +476,18 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في تحديث السؤال الشائع');
+      return false;
     } finally {
       isSaving.value = false;
     }
   }
 
-  Future<void> deleteFAQ(String id) async {
+  Future<bool> deleteFAQ(String id) async {
     try {
       await SupabaseService.client.from('faqs').delete().eq('id', id);
       faqs.removeWhere((e) => e.id == id);
       _logAction('حذف سؤال شائع');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -477,12 +495,12 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في حذف السؤال الشائع');
+      return false;
     }
   }
 
   // Terms — CRUD to Supabase
-  Future<void> addTerm(String title, String content) async {
+  Future<bool> addTerm(String title, String content) async {
     isSaving.value = true;
     try {
       final nextOrder = terms.length + 1;
@@ -504,6 +522,7 @@ class SettingsManagementController extends GetxController {
       );
       terms.add(newTerm);
       _logAction('إضافة بند شروط: $title');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -511,15 +530,15 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في إضافة بند الشروط');
+      return false;
     } finally {
       isSaving.value = false;
     }
   }
 
-  Future<void> updateTerm(String id, String title, String content) async {
+  Future<bool> updateTerm(String id, String title, String content) async {
     int index = terms.indexWhere((e) => e.id == id);
-    if (index == -1) return;
+    if (index == -1) return false;
 
     isSaving.value = true;
     try {
@@ -530,6 +549,7 @@ class SettingsManagementController extends GetxController {
 
       terms[index] = terms[index].copyWith(title: title, content: content);
       _logAction('تحديث بند شروط: $title');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -537,17 +557,18 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في تحديث بند الشروط');
+      return false;
     } finally {
       isSaving.value = false;
     }
   }
 
-  Future<void> deleteTerm(String id) async {
+  Future<bool> deleteTerm(String id) async {
     try {
       await SupabaseService.client.from('terms_sections').delete().eq('id', id);
       terms.removeWhere((e) => e.id == id);
       _logAction('حذف بند شروط');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -555,7 +576,7 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar('خطأ', 'فشل في حذف بند الشروط');
+      return false;
     }
   }
 
@@ -584,6 +605,14 @@ class SettingsManagementController extends GetxController {
       }
     }
     _logAction('إعادة ترتيب بنود الشروط');
+    Get.snackbar(
+      'تم إعادة الترتيب',
+      'تم حفظ ترتيب البنود الجديد بنجاح',
+      backgroundColor: KasbyColors.success.withOpacity(0.9),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      icon: const Icon(Icons.reorder_rounded, color: Colors.white),
+    );
   }
 
   // Fees — update to Supabase
@@ -596,6 +625,14 @@ class SettingsManagementController extends GetxController {
             .from('fees')
             .update({'value': newValue})
             .eq('id', id);
+        
+        Get.snackbar(
+          'تحديث الرسوم',
+          'تم تحديث ${fees[index].label} بنجاح',
+          backgroundColor: KasbyColors.info.withOpacity(0.9),
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } catch (e, stackTrace) {
         AppLoggerService.logError(
           controller: 'SettingsManagementController',

@@ -425,21 +425,37 @@ class TermsScreen extends StatelessWidget {
                   isLoading: controller.isSaving.value,
                   onPressed: () async {
                     if (formKey.currentState!.validate()) {
+                      bool success;
                       if (term == null) {
-                        await controller.addTerm(
+                        success = await controller.addTerm(
                           titleController.text,
                           contentController.text,
                         );
                       } else {
-                        await controller.updateTerm(
+                        success = await controller.updateTerm(
                           term.id,
                           titleController.text,
                           contentController.text,
                         );
                       }
                       
-                      if (!controller.isSaving.value) {
+                      if (success) {
                         Get.back();
+                        Get.snackbar(
+                          'نجاح',
+                          term == null ? 'تم إضافة البند بنجاح' : 'تم تحديث البند بنجاح',
+                          backgroundColor: KasbyColors.success.withOpacity(0.9),
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      } else {
+                        Get.snackbar(
+                          'خطأ',
+                          'فشل في العملية، يرجى المحاولة مرة أخرى',
+                          backgroundColor: KasbyColors.error.withOpacity(0.9),
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
                       }
                     }
                   },
@@ -518,14 +534,17 @@ class TermsScreen extends StatelessWidget {
                       text: 'حذف نهائي',
                       backgroundColor: KasbyColors.error,
                       onPressed: () async {
-                        await controller.deleteTerm(id);
-                        Get.back();
-                        Get.snackbar(
-                          'تم الحذف',
-                          'تم حذف البند بنجاح',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: KasbyColors.error,
-                        );
+                        final success = await controller.deleteTerm(id);
+                        if (success) {
+                          Get.back();
+                          Get.snackbar(
+                            'تم الحذف',
+                            'تم حذف البند بنجاح',
+                            backgroundColor: KasbyColors.error.withOpacity(0.9),
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
                       },
                     ),
                   ),
