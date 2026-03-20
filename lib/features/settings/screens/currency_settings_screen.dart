@@ -193,8 +193,8 @@ class CurrencySettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 32),
                 KasbyButton(
-                  text: currency == null ? 'إضافة' : 'حفظ التعديلات',
-                  onPressed: () {
+                  text: 'حفظ التغييرات',
+                  onPressed: () async {
                     final newCurrency = CurrencyItem(
                       id:
                           currency?.id ??
@@ -214,30 +214,33 @@ class CurrencySettingsScreen extends StatelessWidget {
                           FontAwesomeIcons.coins.fontPackage,
                     );
 
-                    if (currency == null) {
-                      controller.addCurrency(newCurrency);
-                    } else {
-                      int idx = controller.currencies.indexWhere(
-                        (e) => e.id == currency.id,
-                      );
-                      if (idx != -1) {
-                        if (isBase.value) {
-                          for (
-                            int i = 0;
-                            i < controller.currencies.length;
-                            i++
-                          ) {
-                            controller.currencies[i] = controller.currencies[i]
-                                .copyWith(isBase: false);
-                          }
-                        }
-                        controller.currencies[idx] = newCurrency;
+                      bool success;
+                      if (currency == null) {
+                        success = await controller.addCurrency(newCurrency);
+                      } else {
+                        success = await controller.updateCurrency(newCurrency);
                       }
-                    }
-                    Get.back();
-                    Get.snackbar('تم', 'تم حفظ بيانات العملة');
-                  },
-                ),
+                      
+                      if (success) {
+                        Get.back();
+                        Get.snackbar(
+                          'تم الحفظ',
+                          'تم حفظ بيانات العملة بنجاح',
+                          backgroundColor: KasbyColors.success.withOpacity(0.9),
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      } else {
+                        Get.snackbar(
+                          'خطأ',
+                          'فشل في حفظ بيانات العملة',
+                          backgroundColor: KasbyColors.error.withOpacity(0.9),
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      }
+                    },
+                  ),
                 TextButton(
                   onPressed: () => Get.back(),
                   child: const Text(
@@ -275,9 +278,18 @@ class CurrencySettingsScreen extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
-              controller.deleteCurrency(id);
-              Get.back();
+            onPressed: () async {
+              final success = await controller.deleteCurrency(id);
+              if (success) {
+                Get.back();
+                Get.snackbar(
+                  'تم الحذف',
+                  'تم حذف العملة بنجاح',
+                  backgroundColor: KasbyColors.error.withOpacity(0.9),
+                  colorText: Colors.white,
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              }
             },
             child: const Text(
               'حذف',

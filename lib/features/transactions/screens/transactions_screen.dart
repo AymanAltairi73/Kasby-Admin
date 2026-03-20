@@ -142,8 +142,8 @@ class TransactionsScreen extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: transaction.type == 'Deposit'
-                      ? KasbyColors.success.withValues(alpha: 0.2)
-                      : KasbyColors.warning.withValues(alpha: 0.2),
+                      ? KasbyColors.success.withOpacity(0.2)
+                      : KasbyColors.warning.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -188,7 +188,7 @@ class TransactionsScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.2),
+                  color: statusColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -209,7 +209,7 @@ class TransactionsScreen extends StatelessWidget {
                 child: _buildInfoItem(
                   icon: FontAwesomeIcons.wallet,
                   label: 'المبلغ',
-                  value: '\$${transaction.amount.toStringAsFixed(2)}',
+                  value: '\$${transaction.amount.toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
                   color: KasbyColors.primaryGold,
                 ),
               ),
@@ -231,7 +231,7 @@ class TransactionsScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: KasbyColors.error.withValues(alpha: 0.1),
+                color: KasbyColors.error.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -469,13 +469,13 @@ class TransactionsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? KasbyColors.primaryGold.withValues(alpha: 0.2)
+              ? KasbyColors.primaryGold.withOpacity(0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? KasbyColors.primaryGold
-                : KasbyColors.textSecondary.withValues(alpha: 0.3),
+                : KasbyColors.textSecondary.withOpacity(0.3),
           ),
         ),
         child: Text(
@@ -559,7 +559,7 @@ class TransactionsScreen extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+          color: KasbyColors.primaryGold.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: KasbyColors.primaryGold, size: 20),
@@ -637,11 +637,11 @@ class TransactionsScreen extends StatelessWidget {
           children: [
             _buildSummaryRow(
               'إجمالي التداول:',
-              '\$${(summary['total_volume'] as double).toStringAsFixed(2)}',
+              '\$${(summary['total_volume'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
             _buildSummaryRow(
               'صافي التدفق:',
-              '\$${(summary['net_flow'] as double).toStringAsFixed(2)}',
+              '\$${(summary['net_flow'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
             _buildSummaryRow(
               'عدد الإيداعات:',
@@ -653,7 +653,7 @@ class TransactionsScreen extends StatelessWidget {
             ),
             _buildSummaryRow(
               'متوسط الإيداع:',
-              '\$${(summary['average_deposit'] as double).toStringAsFixed(2)}',
+              '\$${(summary['average_deposit'] as double).toStringAsFixed(4).replaceAll(RegExp(r"([.]*0+)(?!.*\d)"), "")}',
             ),
           ],
         ),

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import '../../users/models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
@@ -16,6 +17,7 @@ class AuthController extends GetxController {
   final isCheckingAuth = true.obs;
   final userRole = ''.obs;
   final userName = ''.obs;
+  final profile = Rxn<User>();
   final isBiometricAvailable = false.obs;
   final rememberMe = false.obs;
   final savedEmail = ''.obs;
@@ -39,6 +41,7 @@ class AuthController extends GetxController {
           isLoggedIn.value = true;
           userRole.value = 'Admin';
           userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
+          await _fetchFullProfile(session.user.id);
         } else {
           // Not an admin — sign out
           await SupabaseService.auth.signOut();
@@ -199,6 +202,9 @@ class AuthController extends GetxController {
       isLoggedIn.value = true;
       userRole.value = 'Admin';
       userName.value = response.user?.userMetadata?['full_name'] ?? 'المدير';
+      if (response.user != null) {
+        await _fetchFullProfile(response.user!.id);
+      }
 
       debugPrint(
         '[AuthController] ✓ Login SUCCESS — userName: ${userName.value}',
@@ -241,6 +247,42 @@ class AuthController extends GetxController {
         colorText: Colors.white,
       );
       return false;
+    }
+  }
+
+  /// Fetch complete profile from Supabase
+  Future<void> _fetchFullProfile(String userId) async {
+    try {
+      final response = await SupabaseService.client
+          .from('profiles')
+          .select('*, wallets!wallets_user_id_fkey(*)')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response != null) {
+        profile.value = User.fromSupabase(response);
+        userName.value = profile.value?.name ?? userName.value;
+        userRole.value = profile.value?.role ?? userRole.value;
+        debugPrint('[AuthController] ✓ Full profile fetched: ${profile.value?.name}');
+      }
+    } catch (e) {
+      debugPrint('[AuthController] ⚠ Error fetching full profile: $e');
+    }
+  }
+
+  /// Public method to refresh profile
+  Future<void> refreshProfile() async {
+    final userId = SupabaseService.auth.currentUser?.id;
+    if (userId != null) {
+      await _fetchFullProfile(userId);
+    }
+  }
+
+  /// Update just the avatar URL in the profile
+  Future<void> updateAvatar(String url) async {
+    final p = profile.value;
+    if (p != null) {
+      profile.value = p.copyWith(avatarUrl: url);
     }
   }
 

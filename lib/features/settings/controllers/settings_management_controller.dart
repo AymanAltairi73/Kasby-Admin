@@ -125,7 +125,10 @@ class SettingsManagementController extends GetxController {
               id: e['id'].toString(),
               label: e['label'] ?? '',
               value: e['value'] ?? '',
-              category: e['category'] ?? '',
+              category: e['category']?.toString().toLowerCase() ?? 'deposit',
+              percentage: (e['percentage'] as num?)?.toDouble(),
+              fixedAmount: (e['fixed_amount'] as num?)?.toDouble(),
+              isActive: e['is_active'] ?? true,
             ),
           ),
         );
@@ -191,7 +194,9 @@ class SettingsManagementController extends GetxController {
               id: e['id'].toString(),
               label: e['label'] ?? '',
               value: e['value']?.toString() ?? '0',
-              tier: e['tier'] ?? 'Normal',
+              tier: e['tier']?.toString().toLowerCase() ?? 'normal',
+              isUnlimited: e['is_unlimited'] ?? false,
+              category: e['category']?.toString().toLowerCase(),
             ),
           ),
         );
@@ -285,25 +290,25 @@ class SettingsManagementController extends GetxController {
         id: '1',
         label: 'الإيداع البنكي',
         value: '1.5%',
-        category: 'Deposit',
+        category: 'deposit',
       ),
       FeeItem(
         id: '2',
         label: 'بطاقة الائتمان',
         value: '2.5%',
-        category: 'Deposit',
+        category: 'deposit',
       ),
       FeeItem(
         id: '3',
         label: 'السحب البنكي',
         value: '\$10.00',
-        category: 'Withdraw',
+        category: 'withdraw',
       ),
       FeeItem(
         id: '4',
         label: 'رسوم الإدارة سنوية',
         value: '2.0%',
-        category: 'Investment',
+        category: 'investment',
       ),
     ]);
   }
@@ -339,42 +344,48 @@ class SettingsManagementController extends GetxController {
         id: '1',
         label: 'الحد الأدنى للإيداع',
         value: '50',
-        tier: 'Normal',
+        tier: 'normal',
+        category: 'deposit',
       ),
       LimitItem(
         id: '2',
         label: 'الحد الأقصى للإيداع (يومي)',
         value: '5000',
-        tier: 'Normal',
+        tier: 'normal',
+        category: 'deposit',
       ),
       LimitItem(
         id: '3',
         label: 'الحد الأدنى للإيداع',
         value: '10',
-        tier: 'VIP',
+        tier: 'vip',
+        category: 'deposit',
       ),
       LimitItem(
         id: '4',
         label: 'الحد الأقصى للسحب (شهري)',
-        value: 'Unlimited',
-        tier: 'VIP',
+        value: '0',
+        tier: 'vip',
+        isUnlimited: true,
+        category: 'withdraw',
       ),
     ]);
   }
 
+
   // ─────────── CRUD Actions → Supabase ───────────
 
   // Maintenance
-  void toggleMaintenance(bool value) async {
+  Future<bool> toggleMaintenance(bool value) async {
     isMaintenanceMode.value = value;
+    if (!_isUuid(settingsId.value)) return true;
     try {
-      await SupabaseService.client
-          .from('system_settings')
-          .update({
-            'is_maintenance_mode': value,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', settingsId.value);
+      await SupabaseService.client.from('system_settings').update({
+        'is_maintenance_mode': value,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', settingsId.value);
+      _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -382,27 +393,20 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      return false;
     }
-    _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
-    Get.snackbar(
-      'وضع الصيانة',
-      'تم ${value ? 'تفعيل' : 'تعطيل'} وضع الصيانة بنجاح',
-      backgroundColor: KasbyColors.warning.withOpacity(0.9),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 
-  void updateMaintenanceMessage(String message) async {
+  Future<bool> updateMaintenanceMessage(String message) async {
     maintenanceMessage.value = message;
+    if (!_isUuid(settingsId.value)) return true;
     try {
-      await SupabaseService.client
-          .from('system_settings')
-          .update({
-            'maintenance_message': message,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', settingsId.value);
+      await SupabaseService.client.from('system_settings').update({
+        'maintenance_message': message,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', settingsId.value);
+      _logAction('تحديث رسالة الصيانة');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -410,15 +414,8 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      return false;
     }
-    _logAction('تحديث رسالة الصيانة');
-    Get.snackbar(
-      'رسالة الصيانة',
-      'تم تحديث الرسالة بنجاح',
-      backgroundColor: KasbyColors.info.withOpacity(0.9),
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 
   // FAQ — CRUD to Supabase
@@ -590,6 +587,7 @@ class SettingsManagementController extends GetxController {
     }
     // Batch update sort_order in Supabase
     for (int i = 0; i < terms.length; i++) {
+      if (!_isUuid(terms[i].id)) continue;
       try {
         await SupabaseService.client
             .from('terms_sections')
@@ -616,23 +614,19 @@ class SettingsManagementController extends GetxController {
   }
 
   // Fees — update to Supabase
-  void updateFee(String id, String newValue) async {
+  Future<bool> updateFee(String id, String newValue) async {
     int index = fees.indexWhere((e) => e.id == id);
     if (index != -1) {
       fees[index] = fees[index].copyWith(value: newValue);
+      if (!_isUuid(id)) return true; // Local only if not UUID
+
       try {
         await SupabaseService.client
             .from('fees')
             .update({'value': newValue})
             .eq('id', id);
-        
-        Get.snackbar(
-          'تحديث الرسوم',
-          'تم تحديث ${fees[index].label} بنجاح',
-          backgroundColor: KasbyColors.info.withOpacity(0.9),
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        _logAction('تحديث قيمة الرسوم: ${fees[index].label}');
+        return true;
       } catch (e, stackTrace) {
         AppLoggerService.logError(
           controller: 'SettingsManagementController',
@@ -640,13 +634,14 @@ class SettingsManagementController extends GetxController {
           error: e,
           stackTrace: stackTrace,
         );
+        return false;
       }
-      _logAction('تحديث قيمة الرسوم: ${fees[index].label}');
     }
+    return false;
   }
 
   // Currencies — CRUD to Supabase
-  void addCurrency(CurrencyItem currency) async {
+  Future<bool> addCurrency(CurrencyItem currency) async {
     if (currency.isBase) {
       for (int i = 0; i < currencies.length; i++) {
         currencies[i] = currencies[i].copyWith(isBase: false);
@@ -659,10 +654,10 @@ class SettingsManagementController extends GetxController {
         'code': currency.code,
         'rate': currency.rate,
         'is_base': currency.isBase,
-        'icon_code': currency.iconCode,
-        'icon_family': currency.iconFamily,
-        'icon_package': currency.iconPackage,
+        // icon_code, icon_family, icon_package are missing in DB
       });
+      _logAction('إضافة عملة جديدة: ${currency.name}');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -670,14 +665,56 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      return false;
     }
-    _logAction('إضافة عملة جديدة: ${currency.name}');
   }
 
-  void deleteCurrency(String id) async {
+  Future<bool> updateCurrency(CurrencyItem currency) async {
+    int index = currencies.indexWhere((e) => e.id == currency.id);
+    if (index == -1) return false;
+
+    if (currency.isBase) {
+      for (int i = 0; i < currencies.length; i++) {
+        currencies[i] = currencies[i].copyWith(isBase: false);
+      }
+    }
+    currencies[index] = currency;
+
+    if (!_isUuid(currency.id)) return true; // Local only if not UUID
+
+    try {
+      await SupabaseService.client
+          .from('currencies')
+          .update({
+            'name': currency.name,
+            'code': currency.code,
+            'rate': currency.rate,
+            'is_base': currency.isBase,
+            // icon_code, icon_family, icon_package are missing in DB
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', currency.id);
+      _logAction('تحديث عملة: ${currency.name}');
+      return true;
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'SettingsManagementController',
+        method: 'updateCurrency',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return false;
+    }
+  }
+
+  Future<bool> deleteCurrency(String id) async {
     currencies.removeWhere((e) => e.id == id);
+    if (!_isUuid(id)) return true;
+
     try {
       await SupabaseService.client.from('currencies').delete().eq('id', id);
+      _logAction('حذف عملة');
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SettingsManagementController',
@@ -685,20 +722,24 @@ class SettingsManagementController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
+      return false;
     }
-    _logAction('حذف عملة');
   }
 
   // Limits — update to Supabase
-  void updateLimit(String id, String newValue) async {
+  Future<bool> updateLimit(String id, String newValue) async {
     int index = limits.indexWhere((e) => e.id == id);
     if (index != -1) {
       limits[index] = limits[index].copyWith(value: newValue);
+      if (!_isUuid(id)) return true; // Local only if not UUID
+
       try {
         await SupabaseService.client
             .from('transaction_limits')
             .update({'value': newValue})
             .eq('id', id);
+        _logAction('تحديث حد المعاملة: ${limits[index].label}');
+        return true;
       } catch (e, stackTrace) {
         AppLoggerService.logError(
           controller: 'SettingsManagementController',
@@ -706,9 +747,10 @@ class SettingsManagementController extends GetxController {
           error: e,
           stackTrace: stackTrace,
         );
+        return false;
       }
-      _logAction('تحديث حد المعاملة: ${limits[index].label}');
     }
+    return false;
   }
 
   void _logAction(String details) {
@@ -717,5 +759,12 @@ class SettingsManagementController extends GetxController {
       action: 'تعديل الإعدادات',
       details: details,
     );
+  }
+
+  bool _isUuid(String id) {
+    return RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      caseSensitive: false,
+    ).hasMatch(id);
   }
 }

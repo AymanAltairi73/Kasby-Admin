@@ -26,6 +26,7 @@ class User {
   final String referralCode;
   final List<String> documents;
   final List<UserActivity> activityLog;
+  final DateTime? lastLoginAt;
 
   User({
     required this.id,
@@ -51,6 +52,7 @@ class User {
     this.referralCode = '',
     this.documents = const [],
     this.activityLog = const [],
+    this.lastLoginAt,
   });
 
   User copyWith({
@@ -77,6 +79,7 @@ class User {
     String? referralCode,
     List<String>? documents,
     List<UserActivity>? activityLog,
+    DateTime? lastLoginAt,
   }) {
     return User(
       id: id ?? this.id,
@@ -102,6 +105,7 @@ class User {
       referralCode: referralCode ?? this.referralCode,
       documents: documents ?? this.documents,
       activityLog: activityLog ?? this.activityLog,
+      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
     );
   }
 
@@ -149,6 +153,9 @@ class User {
       telegram: json['telegram'] ?? '',
       avatarUrl: json['avatar_url'] ?? '',
       referralCode: json['referral_code'] ?? '',
+      lastLoginAt: json['admin_profiles'] != null && json['admin_profiles']['last_login_at'] != null
+          ? DateTime.parse(json['admin_profiles']['last_login_at'])
+          : null,
     );
   }
 
@@ -190,6 +197,9 @@ class User {
               json['activityLog'].map((a) => UserActivity.fromJson(a)),
             )
           : [],
+      lastLoginAt: json['lastLoginAt'] != null
+          ? DateTime.parse(json['lastLoginAt'])
+          : null,
     );
   }
 
@@ -218,6 +228,7 @@ class User {
       'referralCode': referralCode,
       'documents': documents,
       'activityLog': activityLog.map((a) => a.toJson()).toList(),
+      'lastLoginAt': lastLoginAt?.toIso8601String(),
     };
   }
 

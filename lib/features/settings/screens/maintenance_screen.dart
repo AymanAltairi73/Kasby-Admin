@@ -70,10 +70,22 @@ class MaintenanceScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              Switch(
+                               Switch(
                                 value: controller.isMaintenanceMode.value,
-                                onChanged: (value) =>
-                                    controller.toggleMaintenance(value),
+                                onChanged: (value) async {
+                                  final success =
+                                      await controller.toggleMaintenance(value);
+                                  if (success) {
+                                    Get.snackbar(
+                                      'وضع الصيانة',
+                                      'تم ${value ? 'تفعيل' : 'تعطيل'} وضع الصيانة بنجاح',
+                                      backgroundColor:
+                                          KasbyColors.warning.withOpacity(0.9),
+                                      colorText: Colors.white,
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                  }
+                                },
                                 activeThumbColor: KasbyColors.primaryGold,
                               ),
                             ],
@@ -143,18 +155,22 @@ class MaintenanceScreen extends StatelessWidget {
                     // Action Buttons
                     KasbyButton(
                       text: 'حفظ و تحديث الحالة',
-                      onPressed: () {
-                        controller.updateMaintenanceMessage(
-                          messageController.text,
-                        );
-                        Get.snackbar(
-                          'تم الحفظ',
-                          'تم تحديث إعدادات وضع الصيانة بنجاح',
-                          backgroundColor: KasbyColors.success.withValues(
-                            alpha: 0.8,
-                          ),
-                          colorText: Colors.white,
-                        );
+                      onPressed: () async {
+                        final success =
+                            await controller.updateMaintenanceMessage(
+                              messageController.text,
+                            );
+                        if (success) {
+                          Get.snackbar(
+                            'تم الحفظ',
+                            'تم تحديث إعدادات وضع الصيانة بنجاح',
+                            backgroundColor: KasbyColors.success.withOpacity(
+                              0.8,
+                            ),
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
                       },
                     ),
                   ],
@@ -222,13 +238,13 @@ class MaintenanceScreen extends StatelessWidget {
           top: -50,
           right: -100,
           size: 300,
-          color: KasbyColors.error.withValues(alpha: 0.05),
+          color: KasbyColors.error.withOpacity(0.05),
         ),
         _buildOrb(
           bottom: -100,
           left: -100,
           size: 400,
-          color: KasbyColors.primaryGold.withValues(alpha: 0.05),
+          color: KasbyColors.primaryGold.withOpacity(0.05),
         ),
       ],
     );

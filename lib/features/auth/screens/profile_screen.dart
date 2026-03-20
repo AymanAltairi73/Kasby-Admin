@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -24,12 +26,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController phoneController;
+  late TextEditingController whatsappController;
+  late TextEditingController telegramController;
+  late TextEditingController provinceController;
+  late TextEditingController cityController;
+  late TextEditingController addressController;
   late TextEditingController passwordController;
   late TextEditingController confirmPasswordController;
 
   // Admin profile data (read-only display)
   String _role = '';
-  String _lastLoginAt = '';
+  DateTime? _lastLoginAt;
   bool _isActive = true;
   bool _isLoading = true;
   String _errorMessage = '';
@@ -41,6 +48,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     nameController = TextEditingController();
     emailController = TextEditingController();
     phoneController = TextEditingController();
+    whatsappController = TextEditingController();
+    telegramController = TextEditingController();
+    provinceController = TextEditingController();
+    cityController = TextEditingController();
+    addressController = TextEditingController();
     passwordController = TextEditingController();
     confirmPasswordController = TextEditingController();
     _loadAdminProfile();
@@ -51,6 +63,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
+    whatsappController.dispose();
+    telegramController.dispose();
+    provinceController.dispose();
+    cityController.dispose();
+    addressController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -58,78 +75,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Load admin profile from Supabase
   Future<void> _loadAdminProfile() async {
-    debugPrint('[ProfileScreen] ▶ Loading admin profile from Supabase...');
+    debugPrint('[ProfileScreen] ▶ Loading admin profile...');
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final user = SupabaseService.auth.currentUser;
-      if (user == null) {
-        debugPrint('[ProfileScreen] ✗ No authenticated user found');
-        setState(() {
-          _errorMessage = 'لا يوجد مستخدم مسجل الدخول';
-          _isLoading = false;
-        });
-        return;
-      }
+      // Refresh profile data from AuthController
+      await _authController.refreshProfile();
+      final p = _authController.profile.value;
 
-      debugPrint('[ProfileScreen] ℹ User ID: ${user.id}');
-      debugPrint('[ProfileScreen] ℹ User email: ${user.email}');
-
-      // 1. Get data from auth.users metadata
-      emailController.text = user.email ?? '';
-      phoneController.text = user.phone ?? user.userMetadata?['phone'] ?? '';
-      nameController.text = user.userMetadata?['full_name'] ?? '';
-
-      // 2. Try to get admin profile from admin_profiles table
-      try {
-        final adminProfile = await SupabaseService.client
-            .from('admin_profiles')
-            .select()
-            .eq('id', user.id)
-            .maybeSingle();
-
-        if (adminProfile != null) {
-          debugPrint('[ProfileScreen] ✓ Admin profile found');
-          debugPrint('[ProfileScreen] ℹ Admin data: $adminProfile');
-          setState(() {
-            nameController.text =
-                adminProfile['full_name'] ?? nameController.text;
-            _role = adminProfile['role'] ?? 'viewer';
-            _isActive = adminProfile['is_active'] ?? true;
-            _lastLoginAt = adminProfile['last_login_at'] ?? '';
-          });
-        } else {
-          debugPrint(
-            '[ProfileScreen] ⚠ No admin_profiles row found — using auth metadata',
-          );
-          setState(() {
-            _role = 'admin';
-          });
+      if (p == null) {
+        debugPrint('[ProfileScreen] ✗ No profile data found in AuthController');
+        // Fallback to basic session info
+        final user = SupabaseService.auth.currentUser;
+        if (user != null) {
+          emailController.text = user.email ?? '';
+          nameController.text = user.userMetadata?['full_name'] ?? '';
         }
-      } catch (e, stackTrace) {
-        debugPrint('[ProfileScreen] ⚠ Error fetching admin_profiles: $e');
-        AppLoggerService.logError(
-          controller: 'ProfileScreen',
-          method: '_loadAdminProfile.adminProfiles',
-          error: e,
-          stackTrace: stackTrace,
-        );
-        // Use auth metadata as fallback
-        setState(() {
-          _role = 'admin';
-        });
+      } else {
+        debugPrint('[ProfileScreen] ✓ Profile data loaded from AuthController');
+        nameController.text = p.name;
+        emailController.text = p.email;
+        phoneController.text = p.phone;
+        whatsappController.text = p.whatsapp;
+        telegramController.text = p.telegram;
+        provinceController.text = p.province;
+        cityController.text = p.city;
+        addressController.text = p.address;
+        
+        _role = p.role;
+        _isActive = p.status == 'active';
+        _lastLoginAt = p.lastLoginAt;
       }
-
-      debugPrint('[ProfileScreen] ✓ Profile loaded successfully');
-      debugPrint('[ProfileScreen] ℹ Name: ${nameController.text}');
-      debugPrint('[ProfileScreen] ℹ Email: ${emailController.text}');
-      debugPrint('[ProfileScreen] ℹ Role: $_role');
     } catch (e, stackTrace) {
       debugPrint('[ProfileScreen] ✗ PROFILE LOAD ERROR: $e');
-      debugPrint('[ProfileScreen] StackTrace: $stackTrace');
       AppLoggerService.logError(
         controller: 'ProfileScreen',
         method: '_loadAdminProfile',
@@ -143,6 +124,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  /// Pick and upload avatar to Supabase Storage
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (image == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final user = SupabaseService.auth.currentUser;
+      if (user == null) return;
+
+      final file = File(image.path);
+      final fileExt = image.path.split('.').last;
+      final fileName = '${user.id}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = fileName;
+
+      debugPrint('[ProfileScreen] ▶ Uploading avatar: $filePath');
+
+      // 1. Upload to Supabase Storage
+      await SupabaseService.client.storage
+          .from('avatars')
+          .upload(filePath, file);
+
+      // 2. Get Public URL
+      final String publicUrl = SupabaseService.client.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+      debugPrint('[ProfileScreen] ✓ Avatar uploaded: $publicUrl');
+
+      // 3. Update profiles table
+      await SupabaseService.client
+          .from('profiles')
+          .update({'avatar_url': publicUrl})
+          .eq('id', user.id);
+
+      // 4. Update AuthController state
+      _authController.updateAvatar(publicUrl);
+
+      Get.snackbar(
+        'تم التحديث',
+        'تمت تحديث الصورة الشخصية بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: KasbyColors.success.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      debugPrint('[ProfileScreen] ✗ AVATAR UPLOAD ERROR: $e');
+      Get.snackbar(
+        'خطأ',
+        'فشل رفع الصورة. تأكد من وجود صلاحية الوصول للملفات.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: KasbyColors.error.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -167,7 +213,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       debugPrint('[ProfileScreen] ✓ Auth metadata updated');
 
-      // 2. Update admin_profiles table
+      // 2. Update profiles table (SSOT)
+      await SupabaseService.client
+          .from('profiles')
+          .update({
+            'full_name': nameController.text.trim(),
+            'whatsapp': whatsappController.text.trim(),
+            'telegram': telegramController.text.trim(),
+            'province': provinceController.text.trim(),
+            'city': cityController.text.trim(),
+            'address': addressController.text.trim(),
+          })
+          .eq('id', user.id);
+      debugPrint('[ProfileScreen] ✓ profiles updated');
+
+      // 3. Update admin_profiles table if it exists
       try {
         await SupabaseService.client
             .from('admin_profiles')
@@ -175,12 +235,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .eq('id', user.id);
         debugPrint('[ProfileScreen] ✓ admin_profiles updated');
       } catch (e) {
-        debugPrint(
-          '[ProfileScreen] ⚠ admin_profiles update failed (may not exist): $e',
-        );
+        debugPrint('[ProfileScreen] ℹ admin_profiles update skipped or failed');
       }
 
-      // 3. Update password if provided
+      // 4. Update password if provided
       if (passwordController.text.isNotEmpty) {
         if (passwordController.text != confirmPasswordController.text) {
           debugPrint('[ProfileScreen] ✗ Password mismatch');
@@ -204,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update AuthController state
-      _authController.userName.value = nameController.text.trim();
+      await _authController.refreshProfile();
 
       Get.snackbar(
         'تم التحديث',
@@ -299,114 +357,315 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 )
               : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 100,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 110, 20, 50),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Majestic Avatar
-                      _buildMajesticAvatar(),
-                      const SizedBox(height: 48),
+                      // ─── Avatar ─────────────────────────────────
+                      Center(child: _buildMajesticAvatar()),
+                      const SizedBox(height: 12),
 
-                      // Personal Info
+                      // Name under avatar
+                      Obx(() => Center(
+                        child: Text(
+                          _authController.profile.value?.name.isNotEmpty == true
+                              ? _authController.profile.value!.name
+                              : nameController.text,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      )),
+                      const SizedBox(height: 4),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: KasbyColors.primaryGold.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: KasbyColors.primaryGold.withValues(alpha: 0.4)),
+                          ),
+                          child: Text(
+                            _getRoleLabel(_role),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: KasbyColors.primaryGold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      // ─── Account Status Banner ───────────────────
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: (_isActive ? KasbyColors.success : KasbyColors.error)
+                              .withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (_isActive ? KasbyColors.success : KasbyColors.error)
+                                .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _isActive ? Icons.verified_rounded : Icons.block_rounded,
+                              color: _isActive ? KasbyColors.success : KasbyColors.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _isActive ? 'الحساب نشط ' : 'الحساب موقوف',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: _isActive ? KasbyColors.success : KasbyColors.error,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_lastLoginAt != null)
+                              Text(
+                                _formatDate(_lastLoginAt),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: (_isActive ? KasbyColors.success : KasbyColors.error)
+                                      .withValues(alpha: 0.7),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ─── Personal Info ────────────────────────────
                       _buildInfoSection('المعلومات الشخصية', [
-                        KasbyTextField(
-                          controller: nameController,
-                          hintText: 'الاسم الكامل',
-                          prefixIcon: Icons.person_outline,
+                        _buildLabeledField(
+                          label: 'الاسم الكامل',
+                          icon: Icons.person_outline_rounded,
+                          child: KasbyTextField(
+                            controller: nameController,
+                            hintText: 'أدخل اسمك الكامل',
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        KasbyTextField(
-                          controller: emailController,
-                          hintText: 'البريد الإلكتروني',
-                          prefixIcon: Icons.email_outlined,
-                          enabled: false,
+                        const SizedBox(height: 20),
+                        _buildReadOnlyTile(
+                          label: 'البريد الإلكتروني',
+                          value: emailController.text,
+                          icon: Icons.email_outlined,
                         ),
-                        const SizedBox(height: 16),
-                        KasbyTextField(
-                          controller: phoneController,
-                          hintText: 'رقم الهاتف',
-                          prefixIcon: Icons.phone_android_outlined,
-                          enabled: false,
+                        const SizedBox(height: 12),
+                        _buildReadOnlyTile(
+                          label: 'رقم الهاتف',
+                          value: phoneController.text.isNotEmpty
+                              ? phoneController.text
+                              : 'غير محدد',
+                          icon: Icons.phone_android_outlined,
                         ),
                       ], delay: 100),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                      // Account Status
-                      _buildInfoSection('حالة الحساب', [
+                      // ─── Social ────────────────────────────────
+                      _buildInfoSection('التواصل الاجتماعي', [
+                        _buildLabeledField(
+                          label: 'واتساب',
+                          icon: Icons.chat_bubble_outline_rounded,
+                          child: KasbyTextField(
+                            controller: whatsappController,
+                            hintText: '+967 7XX XXX XXX',
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabeledField(
+                          label: 'تليجرام',
+                          icon: Icons.send_outlined,
+                          child: KasbyTextField(
+                            controller: telegramController,
+                            hintText: '@username',
+                          ),
+                        ),
+                      ], delay: 150),
+                      const SizedBox(height: 20),
+
+                      // ─── Address ──────────────────────────────
+                      _buildInfoSection('العنوان والموقع', [
                         Row(
                           children: [
                             Expanded(
-                              child: _buildStatusBadge(
-                                'الدور',
-                                _getRoleLabel(_role),
-                                KasbyColors.primaryGold,
+                              child: _buildLabeledField(
+                                label: 'المحافظة',
+                                icon: Icons.map_outlined,
+                                child: KasbyTextField(
+                                  controller: provinceController,
+                                  hintText: 'اسم المحافظة',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: _buildStatusBadge(
-                                'الحالة',
-                                _isActive ? 'نشط' : 'معطل',
-                                _isActive
-                                    ? KasbyColors.success
-                                    : KasbyColors.error,
+                              child: _buildLabeledField(
+                                label: 'المدينة',
+                                icon: Icons.location_city_outlined,
+                                child: KasbyTextField(
+                                  controller: cityController,
+                                  hintText: 'اسم المدينة',
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        if (_lastLoginAt.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: 16,
-                                color: KasbyColors.textSecondary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'آخر تسجيل دخول: ${_formatDate(_lastLoginAt)}',
-                                style: const TextStyle(
-                                  color: KasbyColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 20),
+                        _buildLabeledField(
+                          label: 'العنوان التفصيلي',
+                          icon: Icons.home_outlined,
+                          child: KasbyTextField(
+                            controller: addressController,
+                            hintText: 'الشارع، الحي...',
+                            maxLines: 2,
                           ),
-                        ],
-                      ], delay: 200),
-                      const SizedBox(height: 24),
-
-                      // Security Card
-                      _buildInfoSection('تغيير كلمة المرور', [
-                        KasbyTextField(
-                          controller: passwordController,
-                          hintText: 'كلمة المرور الجديدة',
-                          prefixIcon: Icons.lock_outline,
-                          obscureText: true,
                         ),
-                        const SizedBox(height: 16),
-                        KasbyTextField(
-                          controller: confirmPasswordController,
-                          hintText: 'تأكيد كلمة المرور',
-                          prefixIcon: Icons.lock_reset,
-                          obscureText: true,
+                      ], delay: 200),
+                      const SizedBox(height: 20),
+
+                      // ─── Security ─────────────────────────────
+                      _buildInfoSection('الأمان وكلمة المرور', [
+                        _buildLabeledField(
+                          label: 'كلمة المرور الجديدة',
+                          icon: Icons.lock_outline_rounded,
+                          child: KasbyTextField(
+                            controller: passwordController,
+                            hintText: '8 أحرف أو أكثر',
+                            obscureText: true,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildLabeledField(
+                          label: 'تأكيد كلمة المرور',
+                          icon: Icons.lock_reset_rounded,
+                          child: KasbyTextField(
+                            controller: confirmPasswordController,
+                            hintText: 'أعد كتابة كلمة المرور',
+                            obscureText: true,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '⚠ اترك كلمة المرور فارغة إذا لم ترد تغييرها',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: KasbyColors.textSecondary.withValues(alpha: 0.7),
+                            ),
+                          ),
                         ),
                       ], delay: 300),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 36),
 
-                      // Save Button
+                      // ─── Save Button ─────────────────────────
                       KasbyButton(
-                        text: 'تحديث الهوية الرقمية',
+                        text: 'حفظ التغييرات',
                         onPressed: _saveProfile,
                         isLoading: _isLoading,
                       ),
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabeledField({
+    required String label,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: KasbyColors.primaryGold),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: KasbyColors.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyTile({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: KasbyColors.primaryGold),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: KasbyColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: KasbyColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              'للقراءة فقط',
+              style: TextStyle(
+                fontSize: 10,
+                color: KasbyColors.textSecondary,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -425,19 +684,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } catch (_) {
-      return dateStr;
-    }
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'غير متوفر';
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildMajesticAvatar() {
     return Stack(
       alignment: Alignment.center,
       children: [
+        // Pulsing background orbs
+        _buildOrb(size: 180, color: KasbyColors.primaryGold.withValues(alpha: 0.05)),
+        
         Container(
           width: 160,
           height: 160,
@@ -445,81 +703,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
             shape: BoxShape.circle,
             border: Border.all(
               color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-              width: 2,
+              width: 1,
             ),
           ),
         ),
-        Container(
-          width: 130,
-          height: 130,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: KasbyColors.primaryGold.withValues(alpha: 0.15),
-                blurRadius: 40,
-                spreadRadius: 10,
+        
+        // Main Avatar Container
+        GestureDetector(
+          onTap: _pickAndUploadAvatar,
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    gradient: KasbyColors.primaryGradient,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: KasbyColors.primaryGold, width: 2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: _authController.profile.value?.avatarUrl.isNotEmpty == true
+                        ? Image.network(
+                            _authController.profile.value!.avatarUrl,
+                            fit: BoxFit.cover,
+                            width: 120,
+                            height: 120,
+                            errorBuilder: (_, __, ___) => _buildInitial(),
+                          )
+                        : _buildInitial(),
+                  ),
+                ),
+              ),
+              
+              // Edit Icon
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: KasbyColors.primaryGold, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.camera_enhance_rounded,
+                  size: 18,
+                  color: KasbyColors.primaryGold,
+                ),
               ),
             ],
-          ),
-        ),
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: KasbyColors.primaryGradient,
-            shape: BoxShape.circle,
-            border: Border.all(color: KasbyColors.primaryGold, width: 3),
-          ),
-          child: Center(
-            child: Text(
-              nameController.text.isNotEmpty
-                  ? nameController.text[0].toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                color: Colors.black,
-              ),
-            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatusBadge(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: color.withValues(alpha: 0.7),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              color: color,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
+  Widget _buildInitial() {
+    return Text(
+      nameController.text.isNotEmpty ? nameController.text[0].toUpperCase() : '?',
+      style: const TextStyle(
+        fontSize: 48,
+        fontWeight: FontWeight.w900,
+        color: Colors.black,
       ),
     );
   }
+
 
   Widget _buildInfoSection(
     String title,

@@ -68,34 +68,61 @@ class FeeItem {
   final String label;
   final String value;
   final String category;
+  final double? percentage;
+  final double? fixedAmount;
+  final bool isActive;
 
   FeeItem({
     required this.id,
     required this.label,
     required this.value,
     required this.category,
+    this.percentage,
+    this.fixedAmount,
+    this.isActive = true,
   });
 
-  FeeItem copyWith({String? label, String? value, String? category}) {
+  FeeItem copyWith({
+    String? label,
+    String? value,
+    String? category,
+    double? percentage,
+    double? fixedAmount,
+    bool? isActive,
+  }) {
     return FeeItem(
       id: id,
       label: label ?? this.label,
       value: value ?? this.value,
       category: category ?? this.category,
+      percentage: percentage ?? this.percentage,
+      fixedAmount: fixedAmount ?? this.fixedAmount,
+      isActive: isActive ?? this.isActive,
     );
   }
 
   factory FeeItem.fromJson(Map<String, dynamic> json) {
     return FeeItem(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
       label: json['label'] ?? '',
       value: json['value'] ?? '',
       category: json['category'] ?? '',
+      percentage: json['percentage'] is num ? (json['percentage'] as num).toDouble() : null,
+      fixedAmount: json['fixed_amount'] is num ? (json['fixed_amount'] as num).toDouble() : null,
+      isActive: json['is_active'] ?? true,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'label': label, 'value': value, 'category': category};
+    return {
+      'id': id,
+      'label': label,
+      'value': value,
+      'category': category,
+      'percentage': percentage,
+      'fixed_amount': fixedAmount,
+      'is_active': isActive,
+    };
   }
 }
 
@@ -177,33 +204,54 @@ class LimitItem {
   final String label;
   final String value;
   final String tier; // e.g., 'Normal', 'VIP'
+  final bool isUnlimited;
+  final String? category;
 
   LimitItem({
     required this.id,
     required this.label,
     required this.value,
     required this.tier,
+    this.isUnlimited = false,
+    this.category,
   });
 
-  LimitItem copyWith({String? label, String? value, String? tier}) {
+  LimitItem copyWith({
+    String? label,
+    String? value,
+    String? tier,
+    bool? isUnlimited,
+    String? category,
+  }) {
     return LimitItem(
       id: id,
       label: label ?? this.label,
       value: value ?? this.value,
       tier: tier ?? this.tier,
+      isUnlimited: isUnlimited ?? this.isUnlimited,
+      category: category ?? this.category,
     );
   }
 
   factory LimitItem.fromJson(Map<String, dynamic> json) {
     return LimitItem(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
       label: json['label'] ?? '',
-      value: json['value'] ?? '',
+      value: json['value']?.toString() ?? '0',
       tier: json['tier'] ?? '',
+      isUnlimited: json['is_unlimited'] ?? false,
+      category: json['category'],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'label': label, 'value': value, 'tier': tier};
+    return {
+      'id': id,
+      'label': label,
+      'value': value,
+      'tier': tier,
+      'is_unlimited': isUnlimited,
+      'category': category,
+    };
   }
 }

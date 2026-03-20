@@ -192,10 +192,29 @@ class FeeSettingsScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 KasbyButton(
                   text: 'حفظ التغييرات',
-                  onPressed: () {
-                    controller.updateFee(fee.id, valueController.text);
-                    Get.back();
-                    Get.snackbar('تم', 'تم تحديث الرسوم بنجاح');
+                  onPressed: () async {
+                    final success = await controller.updateFee(
+                      fee.id,
+                      valueController.text,
+                    );
+                    if (success) {
+                      Get.back();
+                      Get.snackbar(
+                        'تم التحديث',
+                        'تم تحديث ${fee.label} بنجاح',
+                        backgroundColor: KasbyColors.success.withOpacity(0.9),
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    } else {
+                      Get.snackbar(
+                        'خطأ',
+                        'فشل في تحديث الرسوم',
+                        backgroundColor: KasbyColors.error.withOpacity(0.9),
+                        colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    }
                   },
                 ),
                 TextButton(
