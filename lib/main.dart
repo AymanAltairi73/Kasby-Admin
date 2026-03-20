@@ -46,6 +46,7 @@ import 'core/services/supabase_service.dart';
 import 'core/services/app_logger_service.dart';
 import 'features/subscriptions/controllers/subscription_controller.dart';
 import 'features/subscriptions/screens/subscriptions_screen.dart';
+import 'features/kyc/screens/kyc_management_screen.dart';
 import 'core/localization/admin_translations.dart';
 
 Future<void> main() async {
@@ -145,6 +146,10 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(
           name: '/subscriptions',
           page: () => const SubscriptionsScreen(),
+        ),
+        GetPage(
+          name: '/kyc',
+          page: () => const KycManagementScreen(),
         ),
       ],
 

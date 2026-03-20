@@ -726,6 +726,7 @@ class DashboardScreen extends StatelessWidget {
       _ActionItem('السلفات', FontAwesomeIcons.handHoldingDollar, KasbyColors.success, route: '/loans'),
       _ActionItem('الإشعارات', FontAwesomeIcons.bullhorn, KasbyColors.warning, route: '/notifications'),
       _ActionItem('الاشتراكات', FontAwesomeIcons.crown, KasbyColors.primaryGold, route: '/subscriptions'),
+      _ActionItem('توثيق الهوية', FontAwesomeIcons.idCard, Colors.cyanAccent, route: '/kyc'),
     ];
 
     return GridView.builder(

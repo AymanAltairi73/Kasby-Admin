@@ -52,31 +52,105 @@ class NotificationController extends GetxController {
   }
 
   /// Send notification — persisted to Supabase
+  /// Inserts one row per target user (user_id is NOT NULL in DB)
   Future<void> sendNotification(
     String title,
     String message,
-    String target,
-  ) async {
+    String target, {
+    String? specificUserId,
+  }) async {
     final notification = NotificationModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       message: message,
       target: target,
       sentAt: DateTime.now(),
-      status: 'Sent',
+      status: 'sent',
     );
 
     sentNotifications.insert(0, notification);
 
     try {
-      await SupabaseService.client.from('notifications').insert({
+      // Determine which user IDs to send to
+      List<String> userIds = [];
+
+      switch (target) {
+        case 'all':
+          final users = await SupabaseService.client
+              .from('profiles')
+              .select('id');
+          userIds = (users as List).map((u) => u['id'] as String).toList();
+          break;
+
+        case 'active':
+          final users = await SupabaseService.client
+              .from('profiles')
+              .select('id')
+              .eq('is_active', true);
+          userIds = (users as List).map((u) => u['id'] as String).toList();
+          break;
+
+        case 'investors':
+          // Users who have active investments
+          final investors = await SupabaseService.client
+              .from('user_investments')
+              .select('user_id')
+              .eq('status', 'active');
+          userIds = (investors as List)
+              .map((u) => u['user_id'] as String)
+              .toSet()
+              .toList(); // unique IDs
+          break;
+
+        case 'agents':
+          // Fetch agent user IDs from agents table
+          final agents = await SupabaseService.client
+              .from('agents')
+              .select('user_id');
+          userIds = (agents as List)
+              .where((a) => a['user_id'] != null)
+              .map((a) => a['user_id'] as String)
+              .toSet()
+              .toList();
+          break;
+
+        case 'specific':
+          if (specificUserId != null && specificUserId.isNotEmpty) {
+            userIds = [specificUserId];
+          } else {
+            debugPrint('[NotificationController] ⚠ No user selected for specific target');
+            return;
+          }
+          break;
+
+        default:
+          final users = await SupabaseService.client
+              .from('profiles')
+              .select('id');
+          userIds = (users as List).map((u) => u['id'] as String).toList();
+      }
+
+      if (userIds.isEmpty) {
+        debugPrint('[NotificationController] ⚠ No users found for target: $target');
+        return;
+      }
+
+      // Build batch rows
+      final now = DateTime.now().toIso8601String();
+      final sentBy = SupabaseService.auth.currentUser?.id;
+      final rows = userIds.map((uid) => {
+        'user_id': uid,
         'title': title,
         'message': message,
         'target': target,
-        'sent_at': DateTime.now().toIso8601String(),
-        'status': 'Sent',
-        'sent_by': SupabaseService.auth.currentUser?.id,
-      });
+        'sent_at': now,
+        'status': 'sent',
+        'sent_by': sentBy,
+      }).toList();
+
+      // Insert all at once (batch)
+      await SupabaseService.client.from('notifications').insert(rows);
+      debugPrint('[NotificationController] √ Sent notification to ${userIds.length} users');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'NotificationController',
@@ -84,7 +158,6 @@ class NotificationController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      // Notification is still shown locally even if persist fails
     }
   }
 
@@ -101,20 +174,33 @@ class NotificationController extends GetxController {
       message: message,
       target: target,
       sentAt: scheduledTime,
-      status: 'Scheduled',
+      status: 'scheduled',
     );
 
     sentNotifications.insert(0, notification);
 
     try {
-      await SupabaseService.client.from('notifications').insert({
+      // Fetch target users
+      final users = await SupabaseService.client
+          .from('profiles')
+          .select('id');
+      final userIds = (users as List).map((u) => u['id'] as String).toList();
+
+      if (userIds.isEmpty) return;
+
+      final sentBy = SupabaseService.auth.currentUser?.id;
+      final rows = userIds.map((uid) => {
+        'user_id': uid,
         'title': title,
         'message': message,
         'target': target,
         'sent_at': scheduledTime.toIso8601String(),
-        'status': 'Scheduled',
-        'sent_by': SupabaseService.auth.currentUser?.id,
-      });
+        'status': 'scheduled',
+        'sent_by': sentBy,
+      }).toList();
+
+      await SupabaseService.client.from('notifications').insert(rows);
+      debugPrint('[NotificationController] √ Scheduled notification for ${userIds.length} users');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'NotificationController',

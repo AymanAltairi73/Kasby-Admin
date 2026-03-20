@@ -7,6 +7,7 @@ import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notification_controller.dart';
+import '../../users/controllers/user_controller.dart';
 
 /// Notifications Screen
 /// Send push notifications to users
@@ -18,6 +19,8 @@ class NotificationsScreen extends StatelessWidget {
     final titleController = TextEditingController();
     final messageController = TextEditingController();
     final selectedTarget = 'all'.obs;
+    final selectedUserId = Rxn<String>();
+    final selectedUserName = ''.obs;
     final notificationTitle = ''.obs;
     final notificationMessage = ''.obs;
 
@@ -46,13 +49,15 @@ class NotificationsScreen extends StatelessWidget {
                     'all',
                     selectedTarget,
                     FontAwesomeIcons.users,
+                    'إرسال لجميع المسجلين في المنصة',
                   ),
                   const SizedBox(height: 8),
                   _buildTargetOption(
-                    'المستخدمون النشطون فقط',
+                    'المستخدمون النشطون',
                     'active',
                     selectedTarget,
                     FontAwesomeIcons.userCheck,
+                    'فقط الحسابات المفعّلة',
                   ),
                   const SizedBox(height: 8),
                   _buildTargetOption(
@@ -60,17 +65,35 @@ class NotificationsScreen extends StatelessWidget {
                     'investors',
                     selectedTarget,
                     FontAwesomeIcons.chartLine,
+                    'من لديهم استثمارات نشطة',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTargetOption(
+                    'الوكلاء',
+                    'agents',
+                    selectedTarget,
+                    FontAwesomeIcons.networkWired,
+                    'شبكة الوكلاء والموزعين',
                   ),
                   const SizedBox(height: 8),
                   _buildTargetOption(
                     'مستخدم محدد',
                     'specific',
                     selectedTarget,
-                    FontAwesomeIcons.user,
+                    FontAwesomeIcons.userPen,
+                    'اختيار مستخدم واحد بالاسم',
                   ),
                 ],
               ),
             ),
+            // Show user picker when 'specific' is selected
+            Obx(() {
+              if (selectedTarget.value != 'specific') return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _buildUserPicker(selectedUserId, selectedUserName),
+              );
+            }),
             const SizedBox(height: 24),
 
             // Notification Content
@@ -241,6 +264,7 @@ class NotificationsScreen extends StatelessWidget {
                             titleController.text,
                             messageController.text,
                             selectedTarget.value,
+                            specificUserId: selectedUserId.value,
                           );
                           Get.snackbar(
                             'نجح',
@@ -399,6 +423,7 @@ class NotificationsScreen extends StatelessWidget {
     String value,
     RxString selectedTarget,
     IconData icon,
+    String subtitle,
   ) {
     final isSelected = selectedTarget.value == value;
     return GestureDetector(
@@ -425,15 +450,30 @@ class NotificationsScreen extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? KasbyColors.textPrimary
-                      : KasbyColors.textBody,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected
+                          ? KasbyColors.textPrimary
+                          : KasbyColors.textBody,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isSelected
+                          ? KasbyColors.primaryGold.withValues(alpha: 0.7)
+                          : KasbyColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (isSelected)
@@ -448,14 +488,109 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildUserPicker(Rxn<String> selectedUserId, RxString selectedUserName) {
+    final userController = Get.find<UserController>();
+    return KasbyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'اختر المستخدم',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: KasbyColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(() {
+            if (selectedUserId.value != null) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: KasbyColors.primaryGold.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(FontAwesomeIcons.userCheck, size: 16, color: KasbyColors.primaryGold),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        selectedUserName.value,
+                        style: const TextStyle(color: KasbyColors.textPrimary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        selectedUserId.value = null;
+                        selectedUserName.value = '';
+                      },
+                      child: const Icon(Icons.close, size: 18, color: KasbyColors.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return SizedBox(
+              height: 180,
+              child: Obx(() {
+                final users = userController.users;
+                if (users.isEmpty) {
+                  return const Center(
+                    child: Text('لا يوجد مستخدمين', style: TextStyle(color: KasbyColors.textSecondary)),
+                  );
+                }
+                return ListView.separated(
+                  itemCount: users.length,
+                  separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    return ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: KasbyColors.primaryGold.withValues(alpha: 0.15),
+                        child: Text(
+                          user.name.isNotEmpty ? user.name[0] : '?',
+                          style: const TextStyle(color: KasbyColors.primaryGold, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      title: Text(
+                        user.name,
+                        style: const TextStyle(color: KasbyColors.textPrimary, fontSize: 13),
+                      ),
+                      subtitle: Text(
+                        user.email,
+                        style: const TextStyle(color: KasbyColors.textSecondary, fontSize: 11),
+                      ),
+                      onTap: () {
+                        selectedUserId.value = user.id;
+                        selectedUserName.value = user.name;
+                      },
+                    );
+                  },
+                );
+              }),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   String _getTargetText(String target) {
     switch (target) {
       case 'all':
         return 'جميع المستخدمين';
       case 'active':
-        return 'المستخدمون النشطون فقط';
+        return 'المستخدمون النشطون';
       case 'investors':
         return 'المستثمرون';
+      case 'agents':
+        return 'الوكلاء';
       case 'specific':
         return 'مستخدم محدد';
       default:
