@@ -403,8 +403,8 @@ class UserListScreen extends StatelessWidget {
                           user.avatarUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.person,
-                            size: 24,
+                            Icons.account_circle_rounded,
+                            size: 32,
                             color: Colors.white,
                           ),
                           loadingBuilder: (context, child, loadingProgress) {
@@ -418,8 +418,8 @@ class UserListScreen extends StatelessWidget {
                           },
                         )
                       : const Icon(
-                          Icons.person,
-                          size: 24,
+                          Icons.account_circle_rounded,
+                          size: 32,
                           color: Colors.white,
                         ),
                 ),
@@ -651,6 +651,7 @@ class UserListScreen extends StatelessWidget {
     final whatsappController = TextEditingController();
     final telegramController = TextEditingController();
     final emailController = TextEditingController();
+    final avatarUrlController = TextEditingController();
 
     final isFormValid = false.obs;
 
@@ -744,6 +745,12 @@ class UserListScreen extends StatelessWidget {
                           ? ValidationUtils.validateEmail(v)
                           : null,
                     ),
+                    const SizedBox(height: 12),
+                    KasbyTextField(
+                      controller: avatarUrlController,
+                      hintText: 'رابط صورة الملف الشخصي (اختياري)',
+                      prefixIcon: Icons.image_outlined,
+                    ),
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
@@ -774,6 +781,7 @@ class UserListScreen extends StatelessWidget {
                                           whatsapp: whatsappController.text,
                                           telegram: telegramController.text,
                                           email: emailController.text,
+                                          avatarUrl: avatarUrlController.text,
                                         );
                                         Get.back(); // Close dialog
                                       },

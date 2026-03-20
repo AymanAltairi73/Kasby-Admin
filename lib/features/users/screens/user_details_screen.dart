@@ -17,7 +17,6 @@ import '../../chat/models/chat_model.dart';
 import '../../chat/screens/chat_details_screen.dart';
 import 'edit_user_screen.dart';
 
-
 /// User Details Screen
 /// Show detailed user information and admin actions
 class UserDetailsScreen extends StatefulWidget {
@@ -44,7 +43,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('تفاصيل المستخدم'),
@@ -83,7 +81,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               ),
               PopupMenuItem(
                 child: Text(
-                  widget.user.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
+                  widget.user.status == 'Active'
+                      ? 'حظر المستخدم'
+                      : 'تفعيل المستخدم',
                   style: TextStyle(
                     color: widget.user.status == 'Active'
                         ? KasbyColors.error
@@ -171,149 +171,304 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // User Header
-            KasbyCard(
-              child: Column(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      gradient: KasbyColors.primaryGradient,
-                      shape: BoxShape.circle,
-                    ),
-                    child: ClipOval(
-                      child: widget.user.avatarUrl.isNotEmpty
-                          ? Image.network(
-                              widget.user.avatarUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.person,
-                                size: 40,
+              // User Header
+              KasbyCard(
+                child: Column(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        gradient: KasbyColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: widget.user.avatarUrl.isNotEmpty
+                            ? Image.network(
+                                widget.user.avatarUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.account_circle_rounded,
+                                      size: 56,
+                                      color: Colors.black,
+                                    ),
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          color: Colors.black,
+                                        ),
+                                      );
+                                    },
+                              )
+                            : const Icon(
+                                Icons.account_circle_rounded,
+                                size: 56,
                                 color: Colors.black,
                               ),
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    color: Colors.black,
-                                  ),
-                                );
-                              },
-                            )
-                          : const Icon(
-                              Icons.person,
-                              size: 40,
-                              color: Colors.black,
-                            ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Name & Badges
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.user.name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: KasbyColors.textPrimary,
-                        ),
-                      ),
-                      if (widget.user.accountType == 'VIP')
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.stars_rounded,
-                            color: KasbyColors.primaryGold,
-                            size: 24,
-                          ),
-                        )
-                      else if (widget.user.accountType == 'Verified')
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.verified_rounded,
-                            color: KasbyColors.info,
-                            size: 24,
+                    // Name & Badges
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.user.name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: KasbyColors.textPrimary,
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+                        if (widget.user.accountType == 'VIP')
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              Icons.stars_rounded,
+                              color: KasbyColors.primaryGold,
+                              size: 24,
+                            ),
+                          )
+                        else if (widget.user.accountType == 'Verified')
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              Icons.verified_rounded,
+                              color: KasbyColors.info,
+                              size: 24,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
 
-                  // Email & Phone
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.email,
-                        size: 16,
-                        color: KasbyColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.user.email,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: KasbyColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.phone,
-                        size: 16,
-                        color: KasbyColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.user.phone,
-                        textDirection: ui.TextDirection.ltr,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: KasbyColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (widget.user.address.isNotEmpty)
+                    // Email & Phone
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          Icons.location_on_outlined,
+                          Icons.email,
                           size: 16,
                           color: KasbyColors.textSecondary,
                         ),
                         const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            widget.user.address,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: KasbyColors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
+                        Text(
+                          widget.user.email,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: KasbyColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
-                  const SizedBox(height: 12),
-                  // Communication Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (widget.user.whatsapp.isNotEmpty)
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.phone,
+                          size: 16,
+                          color: KasbyColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.user.phone,
+                          textDirection: ui.TextDirection.ltr,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: KasbyColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (widget.user.address.isNotEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: KasbyColors.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              widget.user.address,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: KasbyColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 12),
+                    // Communication Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (widget.user.whatsapp.isNotEmpty)
+                          _buildCommunicationButton(
+                            icon: FontAwesomeIcons.whatsapp,
+                            color: const Color(0xFF25D366),
+                            label: 'واتساب',
+                            onTap: () => _launchUrl(
+                              'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
+                              fallbackMessage:
+                                  'يرجى التأكد من تثبيت واتساب على جهازك',
+                            ),
+                          ),
+                        if (widget.user.whatsapp.isNotEmpty)
+                          const SizedBox(width: 20),
+                        if (widget.user.telegram.isNotEmpty)
+                          _buildCommunicationButton(
+                            icon: FontAwesomeIcons.telegram,
+                            color: const Color(0xFF24A1DE),
+                            label: 'تيليجرام',
+                            onTap: () => _launchUrl(
+                              widget.user.telegram.startsWith('http')
+                                  ? widget.user.telegram
+                                  : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
+                              fallbackMessage:
+                                  'يرجى التأكد من تثبيت تليجرام على جهازك',
+                            ),
+                          ),
+                        if (widget.user.telegram.isNotEmpty)
+                          const SizedBox(width: 20),
+                        _buildCommunicationButton(
+                          icon: Icons.phone_forwarded_rounded,
+                          color: KasbyColors.info,
+                          label: 'اتصال',
+                          onTap: () => _launchUrl('tel:${widget.user.phone}'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Status Badges Row
+                    Wrap(
+                      spacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        Obx(() {
+                          final currUser =
+                              userController.getUserById(widget.user.id) ??
+                              widget.user;
+                          return _buildStatusBadge(
+                            label: currUser.status == 'Active'
+                                ? 'نشط'
+                                : 'محظور',
+                            color: currUser.status == 'Active'
+                                ? KasbyColors.success
+                                : KasbyColors.error,
+                          );
+                        }),
+                        _buildStatusBadge(
+                          label: widget.user.country,
+                          color: KasbyColors.info,
+                          icon: Icons.public,
+                        ),
+                        Obx(() {
+                          final currUser =
+                              userController.getUserById(widget.user.id) ??
+                              widget.user;
+                          return _buildStatusBadge(
+                            label: 'KYC: ${currUser.kycStatus}',
+                            color: currUser.kycStatus == 'Verified'
+                                ? KasbyColors.success
+                                : (currUser.kycStatus == 'Pending'
+                                      ? KasbyColors.warning
+                                      : KasbyColors.error),
+                            icon: Icons.how_to_reg,
+                          );
+                        }),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Member Since
+                    Directionality(
+                      textDirection: ui.TextDirection.ltr,
+                      child: Text(
+                        'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(widget.user.createdAt)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: KasbyColors.textSecondary,
+                        ),
+                      ),
+                    ),
+
+                    // KYC Actions (If Pending)
+                    if (widget.user.kycStatus == 'Pending')
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.close, size: 16),
+                              label: const Text('رفض'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: KasbyColors.error,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () {
+                                // Mock Action
+                                Get.snackbar('تم', 'تم رفض وثائق التوثيق');
+                              },
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.check, size: 16),
+                              label: const Text('توثيق الحساب'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: KasbyColors.success,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () {
+                                // Mock Action
+                                final updated = widget.user.copyWith(
+                                  kycStatus: 'Verified',
+                                  accountType: 'Verified',
+                                );
+                                userController.updateUser(updated);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Quick Communication & Chat Section
+              KasbyGlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'قنوات التواصل المباشر',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: KasbyColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
                         _buildCommunicationButton(
                           icon: FontAwesomeIcons.whatsapp,
                           color: const Color(0xFF25D366),
@@ -324,12 +479,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 'يرجى التأكد من تثبيت واتساب على جهازك',
                           ),
                         ),
-                      if (widget.user.whatsapp.isNotEmpty) const SizedBox(width: 20),
-                      if (widget.user.telegram.isNotEmpty)
                         _buildCommunicationButton(
                           icon: FontAwesomeIcons.telegram,
                           color: const Color(0xFF24A1DE),
-                          label: 'تيليجرام',
+                          label: 'تليجرام',
                           onTap: () => _launchUrl(
                             widget.user.telegram.startsWith('http')
                                 ? widget.user.telegram
@@ -338,369 +491,89 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 'يرجى التأكد من تثبيت تليجرام على جهازك',
                           ),
                         ),
-                      if (widget.user.telegram.isNotEmpty) const SizedBox(width: 20),
-                      _buildCommunicationButton(
-                        icon: Icons.phone_forwarded_rounded,
-                        color: KasbyColors.info,
-                        label: 'اتصال',
-                        onTap: () => _launchUrl('tel:${widget.user.phone}'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Status Badges Row
-                  Wrap(
-                    spacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      Obx(() {
-                        final currUser = userController.getUserById(widget.user.id) ?? widget.user;
-                        return _buildStatusBadge(
-                          label: currUser.status == 'Active' ? 'نشط' : 'محظور',
-                          color: currUser.status == 'Active'
-                              ? KasbyColors.success
-                              : KasbyColors.error,
-                        );
-                      }),
-                      _buildStatusBadge(
-                        label: widget.user.country,
-                        color: KasbyColors.info,
-                        icon: Icons.public,
-                      ),
-                      Obx(() {
-                        final currUser = userController.getUserById(widget.user.id) ?? widget.user;
-                        return _buildStatusBadge(
-                          label: 'KYC: ${currUser.kycStatus}',
-                          color: currUser.kycStatus == 'Verified'
-                              ? KasbyColors.success
-                              : (currUser.kycStatus == 'Pending'
-                                    ? KasbyColors.warning
-                                    : KasbyColors.error),
-                          icon: Icons.how_to_reg,
-                        );
-                      }),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Member Since
-                  Directionality(
-                    textDirection: ui.TextDirection.ltr,
-                    child: Text(
-                      'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(widget.user.createdAt)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: KasbyColors.textSecondary,
-                      ),
+                      ],
                     ),
-                  ),
-
-                  // KYC Actions (If Pending)
-                  if (widget.user.kycStatus == 'Pending')
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.close, size: 16),
-                            label: const Text('رفض'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: KasbyColors.error,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              // Mock Action
-                              Get.snackbar('تم', 'تم رفض وثائق التوثيق');
-                            },
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.check, size: 16),
-                            label: const Text('توثيق الحساب'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: KasbyColors.success,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              // Mock Action
-                              final updated = widget.user.copyWith(
-                                kycStatus: 'Verified',
-                                accountType: 'Verified',
-                              );
-                              userController.updateUser(updated);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Quick Communication & Chat Section
-            KasbyGlassCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'قنوات التواصل المباشر',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: KasbyColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildCommunicationButton(
-                        icon: FontAwesomeIcons.whatsapp,
-                        color: const Color(0xFF25D366),
-                        label: 'واتساب',
-                        onTap: () => _launchUrl(
-                          'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
-                          fallbackMessage:
-                              'يرجى التأكد من تثبيت واتساب على جهازك',
-                        ),
-                      ),
-                      _buildCommunicationButton(
-                        icon: FontAwesomeIcons.telegram,
-                        color: const Color(0xFF24A1DE),
-                        label: 'تليجرام',
-                        onTap: () => _launchUrl(
-                          widget.user.telegram.startsWith('http')
-                              ? widget.user.telegram
-                              : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
-                          fallbackMessage:
-                              'يرجى التأكد من تثبيت تليجرام على جهازك',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(color: Colors.white10),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            KasbyColors.primaryGold.withValues(alpha: 0.2),
-                            KasbyColors.primaryGold.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: KasbyColors.primaryGold.withValues(alpha: 0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: KasbyColors.primaryGold.withValues(
-                              alpha: 0.1,
-                            ),
-                            blurRadius: 15,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: () {
-                          // Navigate to instant chat
-                          Get.to(
-                            () => const ChatDetailsScreen(),
-                            arguments: ChatConversation(
-                              id: '', // Empty ID signifies a potentially new conversation
-                              userId: widget.user.id,
-                              userName: widget.user.name,
-                              lastMessage: 'بدء محادثة جديدة',
-                              lastMessageTime: DateTime.now(),
-                              isOnline: true,
-                            ),
-                          );
-                        },
-                        icon: const Icon(
-                          FontAwesomeIcons.commentDots,
-                          color: KasbyColors.primaryGold,
-                        ),
-                        label: const Text(
-                          'بدء دردشة فورية',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            const SizedBox(height: 24),
-            // Quick Actions Section
-            _buildQuickActions(context, userController),
-            const SizedBox(height: 24),
-
-            // Wallet Section
-            const Text(
-              'المحفظة',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              final currUser = userController.getUserById(widget.user.id) ?? widget.user;
-              return Row(
-                children: [
-                  Expanded(
-                    child: _buildWalletCard(
-                      title: 'الرصيد المتاح',
-                      amount: currUser.walletBalance,
-                      icon: FontAwesomeIcons.wallet,
-                      color: KasbyColors.primaryGold,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildWalletCard(
-                      title: 'المستثمر',
-                      amount: currUser.investedAmount,
-                      icon: FontAwesomeIcons.chartLine,
-                      color: KasbyColors.success,
-                    ),
-                  ),
-                ],
-              );
-            }),
-            const SizedBox(height: 12),
-            Obx(() {
-              final currUser = userController.getUserById(widget.user.id) ?? widget.user;
-              return _buildWalletCard(
-                title: 'المعلق',
-                amount: currUser.pendingAmount,
-                icon: FontAwesomeIcons.clockRotateLeft,
-                color: KasbyColors.warning,
-              );
-            }),
-            const SizedBox(height: 24),
-
-            // Investments Section
-            const Text(
-              'الاستثمارات النشطة',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              if (userController.isDetailsLoading.value) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: CircularProgressIndicator(color: KasbyColors.primaryGold),
-                  ),
-                );
-              }
-              
-              if (userController.selectedUserInvestments.isEmpty) {
-                return KasbyCard(
-                  child: const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Text(
-                        'لا توجد استثمارات نشطة',
-                        style: TextStyle(color: KasbyColors.textSecondary),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: userController.selectedUserInvestments.length,
-                itemBuilder: (context, index) {
-                  final inv = userController.selectedUserInvestments[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: KasbyGlassCard(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: KasbyColors.success.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(FontAwesomeIcons.chartPie, color: KasbyColors.success, size: 20),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  inv.planName,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                                Text(
-                                  'تاريخ الاستحقاق: ${DateFormat('yyyy/MM/dd').format(inv.endDate)}',
-                                  style: const TextStyle(fontSize: 12, color: KasbyColors.textSecondary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '\$${inv.amount.toStringAsFixed(2)}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: KasbyColors.primaryGold),
-                              ),
-                              Text(
-                                '${inv.status}',
-                                style: const TextStyle(fontSize: 10, color: KasbyColors.success),
-                              ),
+                    const SizedBox(height: 24),
+                    const Divider(color: Colors.white10),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              KasbyColors.primaryGold.withValues(alpha: 0.2),
+                              KasbyColors.primaryGold.withValues(alpha: 0.05),
                             ],
                           ),
-                        ],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: KasbyColors.primaryGold.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: KasbyColors.primaryGold.withValues(
+                                alpha: 0.1,
+                              ),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: () {
+                            // Navigate to instant chat
+                            Get.to(
+                              () => const ChatDetailsScreen(),
+                              arguments: ChatConversation(
+                                id: '', // Empty ID signifies a potentially new conversation
+                                userId: widget.user.id,
+                                userName: widget.user.name,
+                                lastMessage: 'بدء محادثة جديدة',
+                                lastMessageTime: DateTime.now(),
+                                isOnline: true,
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            FontAwesomeIcons.commentDots,
+                            color: KasbyColors.primaryGold,
+                          ),
+                          label: const Text(
+                            'بدء دردشة فورية',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  );
-                },
-              );
-            }),
-            const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
-            // Documents Section
-            if (widget.user.documents.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              // Quick Actions Section
+              _buildQuickActions(context, userController),
+              const SizedBox(height: 24),
+
+              // Wallet Section
               const Text(
-                'الوثائق المقدمة',
+                'المحفظة',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -708,55 +581,378 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 200,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widget.user.documents.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 12),
+              Obx(() {
+                final currUser =
+                    userController.getUserById(widget.user.id) ?? widget.user;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _buildWalletCard(
+                        title: 'الرصيد المتاح',
+                        amount: currUser.walletBalance,
+                        icon: FontAwesomeIcons.wallet,
+                        color: KasbyColors.primaryGold,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildWalletCard(
+                        title: 'المستثمر',
+                        amount: currUser.investedAmount,
+                        icon: FontAwesomeIcons.chartLine,
+                        color: KasbyColors.success,
+                      ),
+                    ),
+                  ],
+                );
+              }),
+              const SizedBox(height: 12),
+              Obx(() {
+                final currUser =
+                    userController.getUserById(widget.user.id) ?? widget.user;
+                return _buildWalletCard(
+                  title: 'المعلق',
+                  amount: currUser.pendingAmount,
+                  icon: FontAwesomeIcons.clockRotateLeft,
+                  color: KasbyColors.warning,
+                );
+              }),
+              const SizedBox(height: 24),
+
+              // Investments Section
+              const Text(
+                'الاستثمارات النشطة',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: KasbyColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Obx(() {
+                if (userController.isDetailsLoading.value) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: CircularProgressIndicator(
+                        color: KasbyColors.primaryGold,
+                      ),
+                    ),
+                  );
+                }
+
+                if (userController.selectedUserInvestments.isEmpty) {
+                  return KasbyCard(
+                    child: const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'لا توجد استثمارات نشطة',
+                          style: TextStyle(color: KasbyColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userController.selectedUserInvestments.length,
                   itemBuilder: (context, index) {
-                    return SizedBox(
-                      width: 300,
+                    final inv = userController.selectedUserInvestments[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
                       child: KasbyGlassCard(
-                        padding: EdgeInsets.zero,
-                        child: Stack(
-                          fit: StackFit.expand,
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
-                            Image.asset(
-                              widget.user.documents[index], // Assuming local assets for mock
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Icon(
-                                    Icons.broken_image,
-                                    color: Colors.white54,
-                                    size: 50,
-                                  ),
-                                );
-                              },
-                            ),
                             Container(
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withValues(alpha: 0.7),
-                                  ],
+                                color: KasbyColors.success.withValues(
+                                  alpha: 0.1,
                                 ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                FontAwesomeIcons.chartPie,
+                                color: KasbyColors.success,
+                                size: 20,
                               ),
                             ),
-                            Positioned(
-                              bottom: 12,
-                              right: 12,
-                              child: Text(
-                                'وثيقة ${index + 1}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    inv.planName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    'تاريخ الاستحقاق: ${DateFormat('yyyy/MM/dd').format(inv.endDate)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: KasbyColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '\$${inv.amount.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: KasbyColors.primaryGold,
+                                  ),
                                 ),
+                                Text(
+                                  '${inv.status}',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: KasbyColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+              const SizedBox(height: 24),
+
+              // Documents Section
+              if (widget.user.documents.isNotEmpty) ...[
+                const Text(
+                  'الوثائق المقدمة',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: KasbyColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 200,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: widget.user.documents.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 300,
+                        child: KasbyGlassCard(
+                          padding: EdgeInsets.zero,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.asset(
+                                widget
+                                    .user
+                                    .documents[index], // Assuming local assets for mock
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      color: Colors.white54,
+                                      size: 50,
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.7),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 12,
+                                right: 12,
+                                child: Text(
+                                  'وثيقة ${index + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Verify/Reject Actions for Pending KYC
+                if (widget.user.kycStatus == 'Pending')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('قبول وتوثيق'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.success,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () => _showVerifyConfirmation(
+                              context,
+                              userController,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.cancel_outlined),
+                            label: const Text('رفض الوثائق'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: KasbyColors.error,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () =>
+                                _showRejectDialog(context, userController),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 24),
+              ],
+
+              // Activity Log
+              const Text(
+                'سجل النشاط',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: KasbyColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Obx(() {
+                if (userController.isDetailsLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: KasbyColors.primaryGold,
+                    ),
+                  );
+                }
+
+                if (userController.selectedUserActivities.isEmpty) {
+                  return KasbyCard(
+                    child: const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'لا يوجد نشاط مسجل',
+                          style: TextStyle(color: KasbyColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userController.selectedUserActivities.length,
+                  itemBuilder: (context, index) {
+                    final activity =
+                        userController.selectedUserActivities[index];
+                    IconData icon;
+                    Color iconColor;
+
+                    switch (activity.type) {
+                      case 'Security':
+                        icon = Icons.security;
+                        iconColor = KasbyColors.info;
+                        break;
+                      case 'Transaction':
+                        icon = Icons.account_balance_wallet;
+                        iconColor = KasbyColors.primaryGold;
+                        break;
+                      case 'System':
+                        icon = Icons.settings;
+                        iconColor = KasbyColors.textSecondary;
+                        break;
+                      default:
+                        icon = Icons.info_outline;
+                        iconColor = Colors.white70;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: KasbyGlassCard(
+                        padding: const EdgeInsets.all(12),
+                        opacity: 0.05,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(icon, color: iconColor, size: 16),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    activity.action,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    activity.details,
+                                    style: const TextStyle(
+                                      color: KasbyColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat(
+                                'MM/dd HH:mm',
+                                'en',
+                              ).format(activity.timestamp),
+                              style: const TextStyle(
+                                color: KasbyColors.textSecondary,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -764,255 +960,126 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       ),
                     );
                   },
-                ),
-              ),
+                );
+              }),
 
-              // Verify/Reject Actions for Pending KYC
-              if (widget.user.kycStatus == 'Pending')
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.check_circle_outline),
-                          label: const Text('قبول وتوثيق'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: KasbyColors.success,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () =>
-                              _showVerifyConfirmation(context, userController),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.cancel_outlined),
-                          label: const Text('رفض الوثائق'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: KasbyColors.error,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () =>
-                              _showRejectDialog(context, userController),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               const SizedBox(height: 24),
+
+              // Transaction History
+              const Text(
+                'سجل المعاملات',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: KasbyColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Obx(() {
+                if (userController.isDetailsLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: KasbyColors.primaryGold,
+                    ),
+                  );
+                }
+
+                if (userController.selectedUserTransactions.isEmpty) {
+                  return KasbyCard(
+                    child: const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.0),
+                        child: Text(
+                          'لا توجد معاملات',
+                          style: TextStyle(color: KasbyColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userController.selectedUserTransactions.length,
+                  itemBuilder: (context, index) {
+                    final txn = userController.selectedUserTransactions[index];
+                    final isPositive =
+                        txn.type == 'deposit' ||
+                        txn.type == 'investment_profit';
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: KasbyGlassCard(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color:
+                                    (isPositive
+                                            ? KasbyColors.success
+                                            : KasbyColors.error)
+                                        .withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isPositive
+                                    ? Icons.arrow_downward
+                                    : Icons.arrow_upward,
+                                color: isPositive
+                                    ? KasbyColors.success
+                                    : KasbyColors.error,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    txn.type,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat(
+                                      'yyyy/MM/dd HH:mm',
+                                    ).format(txn.createdAt),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: KasbyColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${isPositive ? "+" : "-"}\$${txn.amount.abs().toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isPositive
+                                    ? KasbyColors.success
+                                    : KasbyColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
             ],
-
-            // Activity Log
-            const Text(
-              'سجل النشاط',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              if (userController.isDetailsLoading.value) {
-                return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
-              }
-
-              if (userController.selectedUserActivities.isEmpty) {
-                return KasbyCard(
-                  child: const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Text(
-                        'لا يوجد نشاط مسجل',
-                        style: TextStyle(color: KasbyColors.textSecondary),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: userController.selectedUserActivities.length,
-                itemBuilder: (context, index) {
-                  final activity = userController.selectedUserActivities[index];
-                  IconData icon;
-                  Color iconColor;
-
-                  switch (activity.type) {
-                    case 'Security':
-                      icon = Icons.security;
-                      iconColor = KasbyColors.info;
-                      break;
-                    case 'Transaction':
-                      icon = Icons.account_balance_wallet;
-                      iconColor = KasbyColors.primaryGold;
-                      break;
-                    case 'System':
-                      icon = Icons.settings;
-                      iconColor = KasbyColors.textSecondary;
-                      break;
-                    default:
-                      icon = Icons.info_outline;
-                      iconColor = Colors.white70;
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: KasbyGlassCard(
-                      padding: const EdgeInsets.all(12),
-                      opacity: 0.05,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: iconColor.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(icon, color: iconColor, size: 16),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  activity.action,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  activity.details,
-                                  style: const TextStyle(
-                                    color: KasbyColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            DateFormat(
-                              'MM/dd HH:mm',
-                              'en',
-                            ).format(activity.timestamp),
-                            style: const TextStyle(
-                              color: KasbyColors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            }),
-
-            const SizedBox(height: 24),
-
-            // Transaction History
-            const Text(
-              'سجل المعاملات',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              if (userController.isDetailsLoading.value) {
-                return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
-              }
-
-              if (userController.selectedUserTransactions.isEmpty) {
-                return KasbyCard(
-                  child: const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Text(
-                        'لا توجد معاملات',
-                        style: TextStyle(color: KasbyColors.textSecondary),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: userController.selectedUserTransactions.length,
-                itemBuilder: (context, index) {
-                  final txn = userController.selectedUserTransactions[index];
-                  final isPositive = txn.type == 'deposit' || txn.type == 'investment_profit';
-                  
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: KasbyGlassCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: (isPositive ? KasbyColors.success : KasbyColors.error).withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              isPositive ? Icons.arrow_downward : Icons.arrow_upward,
-                              color: isPositive ? KasbyColors.success : KasbyColors.error,
-                              size: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  txn.type,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                                Text(
-                                  DateFormat('yyyy/MM/dd HH:mm').format(txn.createdAt),
-                                  style: const TextStyle(fontSize: 12, color: KasbyColors.textSecondary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            '${isPositive ? "+" : "-"}\$${txn.amount.abs().toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: isPositive ? KasbyColors.success : KasbyColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            }),
-          ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildStatusBadge({
     required String label,
@@ -1144,7 +1211,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 isDangerous: true,
                 confirmText: 'رفض',
                 onConfirm: () {
-                  controller.rejectDocuments(widget.user.id, reasonController.text);
+                  controller.rejectDocuments(
+                    widget.user.id,
+                    reasonController.text,
+                  );
                 },
               );
             } else {
@@ -1313,14 +1383,21 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               ),
               const SizedBox(width: 12),
               Obx(() {
-                final currUser = controller.getUserById(widget.user.id) ?? widget.user;
+                final currUser =
+                    controller.getUserById(widget.user.id) ?? widget.user;
                 return _buildActionItem(
                   label: currUser.status == 'Active' ? 'حظر' : 'تفعيل',
-                  icon: currUser.status == 'Active' ? Icons.block : Icons.check_circle_outline,
-                  color: currUser.status == 'Active' ? KasbyColors.error : KasbyColors.success,
+                  icon: currUser.status == 'Active'
+                      ? Icons.block
+                      : Icons.check_circle_outline,
+                  color: currUser.status == 'Active'
+                      ? KasbyColors.error
+                      : KasbyColors.success,
                   onTap: () {
                     KasbyConfirmationDialog.show(
-                      title: currUser.status == 'Active' ? 'حظر المستخدم' : 'تفعيل المستخدم',
+                      title: currUser.status == 'Active'
+                          ? 'حظر المستخدم'
+                          : 'تفعيل المستخدم',
                       message: currUser.status == 'Active'
                           ? 'هل أنت متأكد من حظر المستخدم "${currUser.name}"؟'
                           : 'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
@@ -1401,7 +1478,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
     final uri = Uri.parse(url);
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         Get.snackbar(
           'تنبيه',
@@ -1414,7 +1494,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       }
     } catch (e) {
       debugPrint('Launch error: $e');
-      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط، تأكد من تثبيت التطبيق');
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء محاولة فتح الرابط، تأكد من تثبيت التطبيق',
+      );
     }
   }
 }

@@ -29,6 +29,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   late final TextEditingController _whatsappController;
   late final TextEditingController _telegramController;
   late final TextEditingController _emailController;
+  late final TextEditingController _avatarUrlController;
 
   final _isFormValid = true.obs;
   final _isLoading = false.obs;
@@ -44,6 +45,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _whatsappController = TextEditingController(text: widget.user.whatsapp);
     _telegramController = TextEditingController(text: widget.user.telegram);
     _emailController = TextEditingController(text: widget.user.email);
+    _avatarUrlController = TextEditingController(text: widget.user.avatarUrl);
   }
 
   @override
@@ -56,6 +58,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     _whatsappController.dispose();
     _telegramController.dispose();
     _emailController.dispose();
+    _avatarUrlController.dispose();
     super.dispose();
   }
 
@@ -84,6 +87,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
             whatsapp: _whatsappController.text.trim(),
             telegram: _telegramController.text.trim(),
             email: _emailController.text.trim(),
+            avatarUrl: _avatarUrlController.text.trim(),
           );
           
           await controller.updateUser(updatedUser);
@@ -204,6 +208,12 @@ class _EditUserScreenState extends State<EditUserScreen> {
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
                             validator: (v) => v != null && v.isNotEmpty ? ValidationUtils.validateEmail(v) : null,
+                          ),
+                          const SizedBox(height: 16),
+                          KasbyTextField(
+                            controller: _avatarUrlController,
+                            hintText: 'رابط صورة الملف الشخصي',
+                            prefixIcon: Icons.image_outlined,
                           ),
                         ],
                       ),

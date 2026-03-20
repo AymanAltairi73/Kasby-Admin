@@ -362,36 +362,38 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildHorizontalStats(DashboardController dc) {
     return SizedBox(
       height: 100,
-      child: Obx(() => ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _buildStatChip(
-            title: 'المستخدمين',
-            value: NumberFormat('#,###').format(dc.totalUsers),
-            icon: FontAwesomeIcons.users,
-            color: KasbyColors.glowGold,
-          ),
-          _buildStatChip(
-            title: 'النشطون',
-            value: NumberFormat('#,###').format(dc.activeUsers),
-            icon: FontAwesomeIcons.userCheck,
-            color: KasbyColors.glowGreen,
-          ),
-          _buildStatChip(
-            title: 'معاملات معلقة',
-            value: NumberFormat('#,###').format(dc.pendingTransactions),
-            icon: FontAwesomeIcons.clockRotateLeft,
-            color: KasbyColors.glowOrange,
-          ),
-          _buildStatChip(
-            title: 'حجم التداول',
-            value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
-            icon: FontAwesomeIcons.arrowTrendUp,
-            color: KasbyColors.glowBlue,
-          ),
-        ],
-      )),
+      child: Obx(
+        () => ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: [
+            _buildStatChip(
+              title: 'المستخدمين',
+              value: NumberFormat('#,###').format(dc.totalUsers),
+              icon: FontAwesomeIcons.users,
+              color: KasbyColors.glowGold,
+            ),
+            _buildStatChip(
+              title: 'النشطون',
+              value: NumberFormat('#,###').format(dc.activeUsers),
+              icon: FontAwesomeIcons.userCheck,
+              color: KasbyColors.glowGreen,
+            ),
+            _buildStatChip(
+              title: 'معاملات معلقة',
+              value: NumberFormat('#,###').format(dc.pendingTransactions),
+              icon: FontAwesomeIcons.clockRotateLeft,
+              color: KasbyColors.glowOrange,
+            ),
+            // _buildStatChip(
+            //   title: 'حجم التداول',
+            //   value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
+            //   icon: FontAwesomeIcons.arrowTrendUp,
+            //   color: KasbyColors.glowBlue,
+            // ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -533,27 +535,29 @@ class DashboardScreen extends StatelessWidget {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildFinancialCards(DashboardController dc) {
-    return Obx(() => Row(
-      children: [
-        Expanded(
-          child: _buildFinancialTile(
-            title: 'إجمالي الاستثمار',
-            value: '\$${NumberFormat('#,##0').format(dc.totalInvested)}',
-            icon: FontAwesomeIcons.chartPie,
-            color: KasbyColors.glowBlue,
+    return Obx(
+      () => Row(
+        children: [
+          Expanded(
+            child: _buildFinancialTile(
+              title: 'إجمالي الاستثمار',
+              value: '\$${NumberFormat('#,##0').format(dc.totalInvested)}',
+              icon: FontAwesomeIcons.chartPie,
+              color: KasbyColors.glowBlue,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildFinancialTile(
-            title: 'الأرباح المحققة',
-            value: '\$${NumberFormat('#,##0').format(dc.totalProfits)}',
-            icon: FontAwesomeIcons.moneyBillTrendUp,
-            color: KasbyColors.glowGreen,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildFinancialTile(
+              title: 'الأرباح المحققة',
+              value: '\$${NumberFormat('#,##0').format(dc.totalProfits)}',
+              icon: FontAwesomeIcons.moneyBillTrendUp,
+              color: KasbyColors.glowGreen,
+            ),
           ),
-        ),
-      ],
-    ));
+        ],
+      ),
+    );
   }
 
   Widget _buildFinancialTile({
@@ -718,15 +722,55 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildActionHub() {
     final actions = [
-      _ActionItem('المستخدمين', FontAwesomeIcons.usersGear, KasbyColors.primaryGold, route: '/users'),
-      _ActionItem('المعاملات', FontAwesomeIcons.moneyBillTransfer, KasbyColors.error, page: 2),
-      _ActionItem('الاستثمار', FontAwesomeIcons.chartPie, KasbyColors.info, route: '/investment-plans'),
-      _ActionItem('الوكلاء', FontAwesomeIcons.networkWired, KasbyColors.glowOrange, page: 1),
-      _ActionItem('الإعدادات', FontAwesomeIcons.gears, Colors.purpleAccent, route: '/settings'),
-      _ActionItem('السلفات', FontAwesomeIcons.handHoldingDollar, KasbyColors.success, route: '/loans'),
-      _ActionItem('الإشعارات', FontAwesomeIcons.bullhorn, KasbyColors.warning, route: '/notifications'),
-      _ActionItem('الاشتراكات', FontAwesomeIcons.crown, KasbyColors.primaryGold, route: '/subscriptions'),
-      _ActionItem('توثيق الهوية', FontAwesomeIcons.idCard, Colors.cyanAccent, route: '/kyc'),
+      _ActionItem(
+        'المستخدمين',
+        FontAwesomeIcons.usersGear,
+        KasbyColors.primaryGold,
+        route: '/users',
+      ),
+      _ActionItem(
+        'المعاملات',
+        FontAwesomeIcons.moneyBillTransfer,
+        KasbyColors.error,
+        page: 2,
+      ),
+      _ActionItem(
+        'الاستثمار',
+        FontAwesomeIcons.chartPie,
+        KasbyColors.info,
+        route: '/investment-plans',
+      ),
+      _ActionItem(
+        'الوكلاء',
+        FontAwesomeIcons.networkWired,
+        KasbyColors.glowOrange,
+        page: 1,
+      ),
+      _ActionItem(
+        'الإعدادات',
+        FontAwesomeIcons.gears,
+        Colors.purpleAccent,
+        route: '/settings',
+      ),
+      _ActionItem(
+        'السلفات',
+        FontAwesomeIcons.handHoldingDollar,
+        KasbyColors.success,
+        route: '/loans',
+      ),
+      // _ActionItem('الإشعارات', FontAwesomeIcons.bullhorn, KasbyColors.warning, route: '/notifications'),
+      _ActionItem(
+        'الاشتراكات',
+        FontAwesomeIcons.crown,
+        KasbyColors.primaryGold,
+        route: '/subscriptions',
+      ),
+      _ActionItem(
+        'توثيق الهوية',
+        FontAwesomeIcons.idCard,
+        Colors.cyanAccent,
+        route: '/kyc',
+      ),
     ];
 
     return GridView.builder(
@@ -760,11 +804,7 @@ class DashboardScreen extends StatelessWidget {
                   color: action.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  action.icon,
-                  color: action.color,
-                  size: 18,
-                ),
+                child: Icon(action.icon, color: action.color, size: 18),
               ),
               const SizedBox(height: 8),
               Text(
@@ -823,8 +863,7 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Obx(() {
-          if (auditController.isLoading.value &&
-              auditController.logs.isEmpty) {
+          if (auditController.isLoading.value && auditController.logs.isEmpty) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
@@ -850,19 +889,15 @@ class DashboardScreen extends StatelessWidget {
             );
           }
           return Column(
-            children: auditController.logs
-                .take(4)
-                .toList()
-                .asMap()
-                .entries
-                .map((entry) {
-                  final log = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _buildLogItem(log),
-                  );
-                })
-                .toList(),
+            children: auditController.logs.take(4).toList().asMap().entries.map(
+              (entry) {
+                final log = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildLogItem(log),
+                );
+              },
+            ).toList(),
           );
         }),
       ],

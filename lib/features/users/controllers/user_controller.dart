@@ -14,8 +14,10 @@ import '../models/user_activity_model.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
-  final ProfileRepository _profileRepo = ProfileRepository(SupabaseService.client);
-  
+  final ProfileRepository _profileRepo = ProfileRepository(
+    SupabaseService.client,
+  );
+
   final users = <User>[].obs;
   final filteredUsers = <User>[].obs;
   final isLoading = false.obs;
@@ -25,7 +27,7 @@ class UserController extends GetxController {
   final selectedTimeFilter = TimeFilter.all.obs;
   final selectedCountry = ''.obs;
   final selectedAccountType = ''.obs;
-  
+
   // Extra User Details (for details screen)
   final selectedUserInvestments = <UserInvestment>[].obs;
   final selectedUserTransactions = <Transaction>[].obs;
@@ -84,14 +86,17 @@ class UserController extends GetxController {
   /// Load more users for pagination
   Future<void> loadMoreUsers() async {
     if (isLoading.value) return;
-    
+
     debugPrint('[UserController] ▶ Loading more users...');
     try {
       final nextFrom = users.length;
       final nextTo = nextFrom + 49;
-      
-      final response = await _profileRepo.getProfilesPaginated(from: nextFrom, to: nextTo);
-      
+
+      final response = await _profileRepo.getProfilesPaginated(
+        from: nextFrom,
+        to: nextTo,
+      );
+
       if (response.isNotEmpty) {
         users.addAll(response);
         _applyFilters();
@@ -377,10 +382,10 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await _profileRepo.callRpc(
-        'fn_admin_add_balance',
-        {'p_user_id': userId, 'p_amount': amount},
-      );
+      await _profileRepo.callRpc('fn_admin_add_balance', {
+        'p_user_id': userId,
+        'p_amount': amount,
+      });
 
       await loadUsers();
       Get.snackbar(
@@ -410,10 +415,10 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await _profileRepo.callRpc(
-        'fn_admin_deduct_balance',
-        {'p_user_id': userId, 'p_amount': amount},
-      );
+      await _profileRepo.callRpc('fn_admin_deduct_balance', {
+        'p_user_id': userId,
+        'p_amount': amount,
+      });
 
       await loadUsers();
       Get.snackbar(
@@ -447,6 +452,7 @@ class UserController extends GetxController {
     String whatsapp = '',
     String telegram = '',
     String email = '',
+    String avatarUrl = '',
   }) async {
     try {
       // Generate email if not provided
@@ -505,6 +511,7 @@ class UserController extends GetxController {
         'city': city,
         'whatsapp': whatsapp.isNotEmpty ? whatsapp : null,
         'telegram': telegram.isNotEmpty ? telegram : null,
+        'avatar_url': avatarUrl.isNotEmpty ? avatarUrl : null,
         'status': 'active',
         'kyc_status': 'unverified',
         'account_tier': 'free',
@@ -612,7 +619,7 @@ class UserController extends GetxController {
   Future<void> loadUserExtraDetails(String userId) async {
     debugPrint('[UserController] ▶ Loading extra details for user: $userId');
     isDetailsLoading.value = true;
-    
+
     // Clear previous data
     selectedUserInvestments.clear();
     selectedUserTransactions.clear();
@@ -629,11 +636,13 @@ class UserController extends GetxController {
       selectedUserInvestments.value = results[0] as List<UserInvestment>;
       selectedUserTransactions.value = results[1] as List<Transaction>;
       selectedUserActivities.value = results[2] as List<UserActivity>;
-      
-      debugPrint('[UserController] ✓ Loaded details: '
-          '${selectedUserInvestments.length} inv, '
-          '${selectedUserTransactions.length} txns, '
-          '${selectedUserActivities.length} acts');
+
+      debugPrint(
+        '[UserController] ✓ Loaded details: '
+        '${selectedUserInvestments.length} inv, '
+        '${selectedUserTransactions.length} txns, '
+        '${selectedUserActivities.length} acts',
+      );
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'UserController',
