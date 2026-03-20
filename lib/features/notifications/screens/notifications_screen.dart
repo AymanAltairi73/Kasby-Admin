@@ -259,7 +259,7 @@ class NotificationsScreen extends StatelessWidget {
                       TextButton(
                         onPressed: () {
                           Get.back();
-                          final nController = Get.put(NotificationController());
+                          final nController = Get.find<NotificationController>();
                           nController.sendNotification(
                             titleController.text,
                             messageController.text,
@@ -347,7 +347,7 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   Widget _buildNotificationHistory() {
-    final nController = Get.put(NotificationController());
+    final nController = Get.find<NotificationController>();
     return Obx(() {
       if (nController.sentNotifications.isEmpty) {
         return const Center(

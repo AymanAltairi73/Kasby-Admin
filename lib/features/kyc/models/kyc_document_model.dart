@@ -10,6 +10,8 @@ class KycDocument {
   final String? rejectionReason;
   final DateTime uploadedAt;
   final String? userName; // From profiles JOIN
+  final String? userPhone;
+  final String? userEmail;
 
   KycDocument({
     required this.id,
@@ -22,6 +24,8 @@ class KycDocument {
     this.rejectionReason,
     required this.uploadedAt,
     this.userName,
+    this.userPhone,
+    this.userEmail,
   });
 
   factory KycDocument.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,16 @@ class KycDocument {
           ? json['profiles']['full_name'] 
           : (json['profiles!kyc_documents_user_id_fkey'] != null 
               ? json['profiles!kyc_documents_user_id_fkey']['full_name'] 
+              : null),
+      userPhone: json['profiles'] != null 
+          ? json['profiles']['phone'] 
+          : (json['profiles!kyc_documents_user_id_fkey'] != null 
+              ? json['profiles!kyc_documents_user_id_fkey']['phone'] 
+              : null),
+      userEmail: json['profiles'] != null 
+          ? json['profiles']['email'] 
+          : (json['profiles!kyc_documents_user_id_fkey'] != null 
+              ? json['profiles!kyc_documents_user_id_fkey']['email'] 
               : null),
     );
   }

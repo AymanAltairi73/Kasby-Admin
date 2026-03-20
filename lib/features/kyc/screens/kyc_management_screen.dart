@@ -2,10 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../controllers/kyc_controller.dart';
 import '../models/kyc_document_model.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
+
+/// Simple full-screen image viewer with Zoom
+class ImageViewerScreen extends StatelessWidget {
+  final String imageUrl;
+  final String title;
+
+  const ImageViewerScreen({super.key, required this.imageUrl, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
+            },
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 100, color: Colors.white54),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class KycManagementScreen extends StatelessWidget {
   const KycManagementScreen({super.key});
@@ -114,6 +150,7 @@ class KycDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<KycController>();
+    final firstDoc = documents.first;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
@@ -122,24 +159,98 @@ class KycDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: documents.length,
-        itemBuilder: (context, index) {
-          final doc = documents[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          // User Details Section
+          _buildSectionHeader('بيانات المستخدم'),
+          _buildInfoCard([
+            _buildInfoRow('الاسم الكامل', userName, Icons.person),
+            _buildInfoRow('رقم الهاتف', firstDoc.userPhone ?? 'غير متوفر', Icons.phone, canCopy: true),
+            _buildInfoRow('البريد الإلكتروني', firstDoc.userEmail ?? 'غير متوفر', Icons.email, canCopy: true),
+          ]),
+          
+          const SizedBox(height: 32),
+          
+          _buildSectionHeader('المستندات المرفقة'),
+          ...documents.map((doc) => _buildDocumentItem(context, controller, doc)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: KasbyColors.primaryGold),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(List<Widget> children) {
+    return KasbyGlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      opacity: 0.1,
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon, {bool canCopy = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: KasbyColors.primaryGold),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTypeLabel(doc.documentType),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
+                Text(label, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
+                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+              ],
+            ),
+          ),
+          if (canCopy && value != 'غير متوفر')
+            IconButton(
+              icon: Icon(Icons.copy, size: 16, color: Colors.white.withValues(alpha: 0.3)),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: value));
+                Get.snackbar('تم النسخ', 'تم نسخ $label', snackPosition: SnackPosition.BOTTOM, duration: const Duration(seconds: 1));
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentItem(BuildContext context, KycController controller, KycDocument doc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTypeLabel(doc.documentType),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => Get.to(() => ImageViewerScreen(imageUrl: doc.documentUrl, title: _docTypeLabel(doc.documentType))),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Stack(
+                children: [
+                  Image.network(
                     doc.documentUrl,
                     width: double.infinity,
-                    fit: BoxFit.fitWidth,
+                    fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
@@ -148,68 +259,76 @@ class KycDetailsScreen extends StatelessWidget {
                         child: const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold)),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 100,
-                      color: Colors.white.withValues(alpha: 0.05),
-                      child: const Center(child: Icon(Icons.error_outline, color: KasbyColors.error)),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.zoom_in, color: Colors.white, size: 14),
+                          SizedBox(width: 4),
+                          Text('اضغط للتكبير', style: TextStyle(color: Colors.white, fontSize: 10)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
-                          foregroundColor: KasbyColors.success,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () => _confirmApproval(context, controller, doc),
-                        child: const Text('قبول المستند', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
-                          foregroundColor: KasbyColors.error,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () => _confirmRejection(context, controller, doc),
-                        child: const Text('رفض المستند', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
+                    foregroundColor: KasbyColors.success,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => _confirmApproval(context, controller, doc),
+                  child: const Text('قبول المستند', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
+                    foregroundColor: KasbyColors.error,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () => _confirmRejection(context, controller, doc),
+                  child: const Text('رفض المستند', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTypeLabel(String type) {
-    String label = '';
+    String label = _docTypeLabel(type);
     IconData icon = FontAwesomeIcons.file;
     
     switch (type) {
       case 'selfie':
-        label = 'صورة سيلفي الشخصية';
         icon = FontAwesomeIcons.camera;
         break;
       case 'id_card_front':
-        label = 'الهوية من الأمام';
-        icon = FontAwesomeIcons.idCard;
-        break;
       case 'id_card_back':
-        label = 'الهوية من الخلف';
         icon = FontAwesomeIcons.idCard;
         break;
     }
@@ -226,21 +345,36 @@ class KycDetailsScreen extends StatelessWidget {
     );
   }
 
+  String _docTypeLabel(String type) {
+    switch (type) {
+      case 'selfie': return 'صورة سيلفي الشخصية';
+      case 'id_card_front': return 'الهوية من الأمام';
+      case 'id_card_back': return 'الهوية من الخلف';
+      default: return 'مستند توثيق';
+    }
+  }
+
   void _confirmApproval(BuildContext context, KycController controller, KycDocument doc) {
     Get.dialog(
       AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
         title: const Text('تأكيد القبول', style: TextStyle(color: Colors.white)),
-        content: const Text('هل أنت متأكد من قبول هذا المستند؟', style: TextStyle(color: Colors.white70)),
+        content: const Text('هل أنت متأكد من قبول هذا المستند؟ سيتم تحديث حالة المستخدم تلقائياً.', style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
             onPressed: () async {
               Get.back();
-              final success = await controller.updateStatus(id: doc.id, status: 'verified');
+              final success = await controller.updateStatus(
+                id: doc.id, 
+                status: 'verified',
+                userId: doc.userId,
+              );
               if (success) {
-                Get.snackbar('تم', 'تم قبول المستند بنجاح', snackPosition: SnackPosition.BOTTOM, backgroundColor: KasbyColors.success.withValues(alpha: 0.8), colorText: Colors.white);
-                if (documents.length <= 1) Get.back();
+                Get.snackbar('تم', 'تم قبول المستند وتوثيق الحساب ✅', snackPosition: SnackPosition.BOTTOM, backgroundColor: KasbyColors.success.withValues(alpha: 0.8), colorText: Colors.white);
+                if (controller.pendingDocuments.where((d) => d.userId == doc.userId).isEmpty) {
+                  Get.back();
+                }
               }
             },
             child: const Text('نعم، قبول', style: TextStyle(color: KasbyColors.success)),
@@ -287,11 +421,14 @@ class KycDetailsScreen extends StatelessWidget {
               final success = await controller.updateStatus(
                 id: doc.id, 
                 status: 'rejected', 
+                userId: doc.userId,
                 rejectionReason: reasonController.text,
               );
               if (success) {
-                Get.snackbar('تم', 'تم رفض المستند بنجاح', snackPosition: SnackPosition.BOTTOM, backgroundColor: KasbyColors.error.withValues(alpha: 0.8), colorText: Colors.white);
-                if (documents.length <= 1) Get.back();
+                Get.snackbar('تم', 'تم رفض المستند بنجاح ❌', snackPosition: SnackPosition.BOTTOM, backgroundColor: KasbyColors.error.withValues(alpha: 0.8), colorText: Colors.white);
+                if (controller.pendingDocuments.where((d) => d.userId == doc.userId).isEmpty) {
+                  Get.back();
+                }
               }
             },
             child: const Text('تأكيد الرفض', style: TextStyle(color: KasbyColors.error)),

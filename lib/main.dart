@@ -47,6 +47,7 @@ import 'core/services/app_logger_service.dart';
 import 'features/subscriptions/controllers/subscription_controller.dart';
 import 'features/subscriptions/screens/subscriptions_screen.dart';
 import 'features/kyc/screens/kyc_management_screen.dart';
+import 'features/notifications/controllers/notification_controller.dart';
 import 'core/localization/admin_translations.dart';
 
 Future<void> main() async {
@@ -78,6 +79,7 @@ Future<void> main() async {
   Get.put(ChatController());
   Get.put(RewardsController());
   Get.put(SubscriptionController());
+  Get.put(NotificationController());
 
   runApp(const KasbyAdminApp());
 }
