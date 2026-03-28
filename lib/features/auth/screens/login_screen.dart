@@ -242,33 +242,33 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
 
                         // Register Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'ليس لديك حساب؟',
-                              style: TextStyle(
-                                color: KasbyColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  Get.to(() => const RegisterScreen()),
-                              child: const Text(
-                                'إنشاء حساب جديد',
-                                style: TextStyle(
-                                  color: KasbyColors.primaryGold,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                        //     const Text(
+                        //       'ليس لديك حساب؟',
+                        //       style: TextStyle(
+                        //         color: KasbyColors.textSecondary,
+                        //         fontSize: 14,
+                        //       ),
+                        //     ),
+                        //     TextButton(
+                        //       onPressed: () =>
+                        //           Get.to(() => const RegisterScreen()),
+                        //       child: const Text(
+                        //         'إنشاء حساب جديد',
+                        //         style: TextStyle(
+                        //           color: KasbyColors.primaryGold,
+                        //           fontWeight: FontWeight.bold,
+                        //           fontSize: 14,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   ),

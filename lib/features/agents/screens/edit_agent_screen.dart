@@ -20,6 +20,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
   final _formKey = GlobalKey<FormState>();
   final Agent? agent = Get.arguments;
   late final AgentController controller;
+  String selectedAvailability = 'available';
 
   late final TextEditingController nameController;
   late final TextEditingController countryController;
@@ -48,6 +49,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
     emailController = TextEditingController(text: agent?.email ?? '');
     telegramController = TextEditingController(text: agent?.telegram ?? '');
     whatsappController = TextEditingController(text: agent?.whatsapp ?? '');
+    selectedAvailability = agent?.availabilityStatus ?? 'available';
 
     // Initial validation check
     WidgetsBinding.instance.addPostFrameCallback((_) => _validate());
@@ -95,6 +97,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               'whatsapp': whatsappController.text,
               'telegram': telegramController.text,
               'email': emailController.text,
+              'availability_status': selectedAvailability,
             });
           } else {
             await controller.createAgent(
@@ -107,6 +110,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
               whatsapp: whatsappController.text,
               telegram: telegramController.text,
               email: emailController.text,
+              availabilityStatus: selectedAvailability,
             );
           }
           
@@ -267,7 +271,44 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
+                    KasbyGlassCard(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'حالة التوفر',
+                            style: TextStyle(
+                              color: KasbyColors.primaryGold,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildAvailabilityOption(
+                            status: 'available',
+                            label: 'متاح الآن',
+                            color: Colors.green,
+                            icon: Icons.check_circle_rounded,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildAvailabilityOption(
+                            status: 'busy',
+                            label: 'مشغول',
+                            color: Colors.orange,
+                            icon: Icons.access_time_filled_rounded,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildAvailabilityOption(
+                            status: 'unavailable',
+                            label: 'غير متوفر',
+                            color: Colors.grey,
+                            icon: Icons.do_not_disturb_on_rounded,
+                          ),
+                        ],
+                      ),
+                    ),
                     Obx(() => SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -340,6 +381,48 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
         boxShadow: [
           BoxShadow(color: color, blurRadius: 100, spreadRadius: 50),
         ],
+      ),
+    );
+  }
+  Widget _buildAvailabilityOption({
+    required String status,
+    required String label,
+    required Color color,
+    required IconData icon,
+  }) {
+    final isSelected = selectedAvailability == status;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          selectedAvailability = status;
+        });
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.white12,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.white54, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? color : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected) Icon(Icons.check_circle, color: color, size: 20),
+          ],
+        ),
       ),
     );
   }

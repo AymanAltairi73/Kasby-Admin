@@ -114,15 +114,17 @@ class TransactionsScreen extends StatelessWidget {
     String statusText;
 
     switch (transaction.status) {
-      case 'Pending':
+      case 'pending':
         statusColor = KasbyColors.warning;
         statusText = 'معلق';
         break;
-      case 'Approved':
+      case 'approved':
+      case 'completed':
         statusColor = KasbyColors.success;
-        statusText = 'موافق عليه';
+        statusText = 'موافقة';
         break;
-      case 'Rejected':
+      case 'rejected':
+      case 'failed':
         statusColor = KasbyColors.error;
         statusText = 'مرفوض';
         break;
@@ -141,16 +143,16 @@ class TransactionsScreen extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: transaction.type == 'Deposit'
+                  color: (transaction.type == 'deposit' || transaction.type == 'admin_credit' || transaction.type == 'profit')
                       ? KasbyColors.success.withOpacity(0.2)
                       : KasbyColors.warning.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  transaction.type == 'Deposit'
+                  (transaction.type == 'deposit' || transaction.type == 'admin_credit' || transaction.type == 'profit')
                       ? FontAwesomeIcons.arrowDown
                       : FontAwesomeIcons.arrowUp,
-                  color: transaction.type == 'Deposit'
+                  color: (transaction.type == 'deposit' || transaction.type == 'admin_credit' || transaction.type == 'profit')
                       ? KasbyColors.success
                       : KasbyColors.warning,
                   size: 20,
@@ -171,9 +173,11 @@ class TransactionsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      transaction.type == 'Deposit'
+                      transaction.type == 'deposit'
                           ? 'إيداع استثماري'
-                          : 'تسوية مالية',
+                          : transaction.type == 'admin_credit'
+                              ? 'إيداع إداري'
+                              : 'تسوية مالية',
                       style: const TextStyle(
                         fontSize: 14,
                         color: KasbyColors.textSecondary,
@@ -255,7 +259,7 @@ class TransactionsScreen extends StatelessWidget {
               ),
             ),
           ],
-          if (transaction.status == 'Pending') ...[
+          if (transaction.status == 'pending') ...[
             const SizedBox(height: 16),
             Row(
               children: [
@@ -423,23 +427,29 @@ class TransactionsScreen extends StatelessWidget {
               Obx(
                 () => Row(
                   children: [
-                    _buildSimpleFilterChip(
-                      'الكل',
-                      controller.selectedType.value == 'Both',
-                      () => controller.setTypeFilter('Both'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildSimpleFilterChip(
-                      'إيداع استثماري',
-                      controller.selectedType.value == 'Deposit',
-                      () => controller.setTypeFilter('Deposit'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildSimpleFilterChip(
-                      'سحب',
-                      controller.selectedType.value == 'Withdrawal',
-                      () => controller.setTypeFilter('Withdrawal'),
-                    ),
+                      _buildSimpleFilterChip(
+                        'الكل',
+                        controller.selectedType.value == 'Both',
+                        () => controller.setTypeFilter('Both'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'إيداع',
+                        controller.selectedType.value == 'deposit',
+                        () => controller.setTypeFilter('deposit'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'سحب',
+                        controller.selectedType.value == 'withdrawal',
+                        () => controller.setTypeFilter('withdrawal'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildSimpleFilterChip(
+                        'أرباح',
+                        controller.selectedType.value == 'profit',
+                        () => controller.setTypeFilter('profit'),
+                      ),
                   ],
                 ),
               ),

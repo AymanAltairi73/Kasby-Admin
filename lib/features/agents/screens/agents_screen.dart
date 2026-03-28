@@ -9,6 +9,7 @@ import '../../../core/widgets/kasby_confirmation_dialog.dart';
 import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
 import '../../../core/models/time_filter.dart';
+import 'agent_applications_screen.dart';
 
 /// Agents Screen
 /// Manage agents (proxies) and their performance with a dazzling Iraq focus
@@ -171,6 +172,11 @@ class AgentsScreen extends StatelessWidget {
             ],
           ),
 
+          IconButton(
+            icon: const Icon(Icons.mark_email_unread_rounded),
+            tooltip: 'طلبات الانضمام',
+            onPressed: () => Get.to(() => const AgentApplicationsScreen()),
+          ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded),
             onPressed: () => Get.toNamed('/edit-agent'),

@@ -10,7 +10,8 @@ class Agent {
   final String whatsapp;
   final String telegram;
   final String email;
-  final String status; // Active, Inactive
+  final String status; // active, inactive, suspended
+  final String availabilityStatus; // available, busy, unavailable
   final bool isAvailableNow;
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
   final int totalTransactions;
@@ -28,6 +29,7 @@ class Agent {
     required this.telegram,
     required this.email,
     required this.status,
+    required this.availabilityStatus,
     required this.isAvailableNow,
     required this.supportedMethods,
     required this.totalTransactions,
@@ -45,6 +47,7 @@ class Agent {
     String? telegram,
     String? email,
     String? status,
+    String? availabilityStatus,
     bool? isAvailableNow,
     List<String>? supportedMethods,
     int? totalTransactions,
@@ -62,6 +65,7 @@ class Agent {
       telegram: telegram ?? this.telegram,
       email: email ?? this.email,
       status: status ?? this.status,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
       isAvailableNow: isAvailableNow ?? this.isAvailableNow,
       supportedMethods: supportedMethods ?? this.supportedMethods,
       totalTransactions: totalTransactions ?? this.totalTransactions,
@@ -104,6 +108,7 @@ class Agent {
       telegram: profile?['telegram'] ?? json['telegram'] ?? '',
       email: profile?['email'] ?? json['email'] ?? '',
       status: json['status'] ?? 'active',
+      availabilityStatus: json['availability_status'] ?? (json['is_available_now'] == true ? 'available' : 'unavailable'),
       isAvailableNow: json['is_available_now'] ?? false,
       supportedMethods: parseSupportedMethods(json['supported_methods']),
       totalTransactions: json['total_transactions'] ?? 0,
@@ -126,7 +131,8 @@ class Agent {
       whatsapp: json['whatsapp'] ?? (json['phone'] ?? ''),
       telegram: json['telegram'] ?? '',
       email: json['email'] ?? '',
-      status: json['status'] ?? 'Active',
+      status: json['status'] ?? 'active',
+      availabilityStatus: json['availability_status'] ?? (json['is_available_now'] == true ? 'available' : 'unavailable'),
       isAvailableNow:
           json['isAvailableNow'] ?? json['is_available_now'] ?? false,
       supportedMethods: List<String>.from(
@@ -155,6 +161,7 @@ class Agent {
       'telegram': telegram,
       'email': email,
       'status': status,
+      'availabilityStatus': availabilityStatus,
       'isAvailableNow': isAvailableNow,
       'supportedMethods': supportedMethods,
       'totalTransactions': totalTransactions,
@@ -169,6 +176,7 @@ class Agent {
     return {
       'id': id,
       'status': status,
+      'availability_status': availabilityStatus,
       'is_available_now': isAvailableNow,
       'supported_methods': supportedMethods, // JSONB in kasby_new.sql
       'total_transactions': totalTransactions,

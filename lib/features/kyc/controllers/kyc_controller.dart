@@ -75,9 +75,10 @@ class KycController extends GetxController {
       
       await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
 
-      // 4. Log in activity_logs (Audit)
-      await SupabaseService.client.from('activity_logs').insert({
+      // 4. Log in system_logs (Audit)
+      await SupabaseService.client.from('system_logs').insert({
         'actor_id': adminId,
+        'actor_role': 'admin',
         'action': 'KYC Review',
         'entity_type': 'kyc_document',
         'entity_id': id,

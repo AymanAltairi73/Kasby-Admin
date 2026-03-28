@@ -131,6 +131,7 @@ class AgentController extends GetxController {
     String whatsapp = '',
     String telegram = '',
     String email = '',
+    String availabilityStatus = 'available',
   }) async {
     try {
       debugPrint('[AgentController] ▶ Creating agent in Unified system: $name');
@@ -160,8 +161,9 @@ class AgentController extends GetxController {
       // 2. Create Agent record linked to this profile
       await SupabaseService.client.from('agents').insert({
         'id': profileId,
-        'status': 'Active',
-        'is_available_now': true,
+        'status': 'active',
+        'availability_status': availabilityStatus,
+        'is_available_now': availabilityStatus == 'available',
         'supported_methods': [
           if (whatsapp.isNotEmpty) 'WhatsApp',
           if (telegram.isNotEmpty) 'Telegram',
@@ -210,6 +212,7 @@ class AgentController extends GetxController {
         'whatsapp',
         'telegram',
         'email',
+        'availability_status',
       ];
       final Map<String, dynamic> profileData = {};
       final Map<String, dynamic> agentData = {};

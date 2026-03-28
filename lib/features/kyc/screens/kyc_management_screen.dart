@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import '../controllers/kyc_controller.dart';
 import '../models/kyc_document_model.dart';

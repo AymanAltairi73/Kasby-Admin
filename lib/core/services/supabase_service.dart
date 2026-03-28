@@ -52,4 +52,13 @@ class SupabaseService {
 
   /// Shortcut for auth.
   static GoTrueClient get auth => client.auth;
+
+  /// Listen to auth state changes.
+  static Stream<AuthState> get onAuthStateChange => auth.onAuthStateChange;
+
+  /// Current authenticated user's ID, or null if not logged in.
+  static String? get userId => auth.currentUser?.id;
+
+  /// Whether a user is currently logged in.
+  static bool get isLoggedIn => auth.currentUser != null;
 }

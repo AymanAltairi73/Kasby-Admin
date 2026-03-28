@@ -31,12 +31,12 @@ class TransactionController extends GetxController {
 
   /// Pending deposits getter
   List<Transaction> get pendingDeposits => transactions
-      .where((t) => t.status == 'Pending' && t.type == 'Deposit')
+      .where((t) => t.status == 'pending' && t.type == 'deposit')
       .toList();
 
   /// Pending withdrawals getter
   List<Transaction> get pendingWithdrawals => transactions
-      .where((t) => t.status == 'Pending' && t.type == 'Withdrawal')
+      .where((t) => t.status == 'pending' && t.type == 'withdrawal')
       .toList();
 
   /// Load transactions from Supabase with user names
@@ -67,13 +67,13 @@ class TransactionController extends GetxController {
 
   void _calculateStats() {
     totalDeposits.value = transactions
-        .where((t) => t.type == 'Deposit' && t.status == 'Approved')
+        .where((t) => (t.type == 'deposit' || t.type == 'admin_credit') && (t.status == 'approved' || t.status == 'completed'))
         .fold(0.0, (sum, t) => sum + t.amount);
     totalWithdrawals.value = transactions
-        .where((t) => t.type == 'Withdrawal' && t.status == 'Approved')
+        .where((t) => (t.type == 'withdrawal' || t.type == 'admin_debit') && (t.status == 'approved' || t.status == 'completed'))
         .fold(0.0, (sum, t) => sum + t.amount);
     pendingCount.value = transactions
-        .where((t) => t.status == 'Pending')
+        .where((t) => t.status == 'pending')
         .length;
   }
 
@@ -229,9 +229,9 @@ class TransactionController extends GetxController {
     final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
     if (txn == null) return;
 
-    if (txn.type == 'Deposit') {
+    if (txn.type == 'deposit') {
       await approveDeposit(txnId);
-    } else if (txn.type == 'Withdrawal') {
+    } else if (txn.type == 'withdrawal') {
       await approveWithdrawal(txnId);
     }
   }

@@ -27,6 +27,7 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     _checkLoginStatus();
+    _listenToAuthChanges(); // Start listening to auth changes
     _loadRememberedCredentials();
   }
 
@@ -64,6 +65,50 @@ class AuthController extends GetxController {
           await _localAuth.canCheckBiometrics ||
           await _localAuth.isDeviceSupported();
     } catch (_) {}
+  }
+
+  /// Listen to Supabase auth state changes for real-time session management
+  void _listenToAuthChanges() {
+    SupabaseService.onAuthStateChange.listen((data) async {
+      final event = data.event;
+      final session = data.session;
+      debugPrint('[AuthController] authStateChange: ${event.name}');
+
+      switch (event) {
+        case AuthChangeEvent.signedIn:
+        case AuthChangeEvent.tokenRefreshed:
+          if (session != null) {
+            final isAdmin = await _checkIsAdmin();
+            if (isAdmin) {
+              isLoggedIn.value = true;
+              userRole.value = 'Admin';
+              userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
+              await _fetchFullProfile(session.user.id);
+            } else {
+              debugPrint('[AuthController] Non-admin signed in — enforcing logout');
+              await SupabaseService.auth.signOut();
+            }
+          }
+          break;
+
+        case AuthChangeEvent.signedOut:
+          isLoggedIn.value = false;
+          userRole.value = '';
+          userName.value = '';
+          profile.value = null;
+          // Navigation is handled by AuthWrapper in main.dart
+          break;
+
+        case AuthChangeEvent.userUpdated:
+          if (session != null) {
+            await _fetchFullProfile(session.user.id);
+          }
+          break;
+
+        default:
+          break;
+      }
+    });
   }
 
   /// Check if current user is an admin
