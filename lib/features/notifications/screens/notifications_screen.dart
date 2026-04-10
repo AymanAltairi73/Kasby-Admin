@@ -25,7 +25,7 @@ class NotificationsScreen extends StatelessWidget {
     final notificationMessage = ''.obs;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إرسال إشعار')),
+      appBar: AppBar(title: const Text('إضافة إشعار')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
