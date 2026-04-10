@@ -22,7 +22,6 @@ import 'features/settings/screens/terms_screen.dart';
 import 'features/settings/screens/faq_screen.dart';
 import 'features/settings/screens/maintenance_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
-import 'features/dashboard/screens/audit_logs_screen.dart';
 import 'core/controllers/theme_controller.dart';
 import 'core/controllers/settings_controller.dart';
 import 'features/users/controllers/user_controller.dart';

@@ -891,19 +891,19 @@ class DashboardScreen extends StatelessWidget {
   //   }
   // }
 
-  IconData _getActionIcon(String action) {
-    final act = action.toLowerCase();
-    if (act.contains('error')) return Icons.error_outline_rounded;
-    if (act.contains('login') || act.contains('auth')) {
-      return Icons.lock_outline_rounded;
-    }
-    if (act.contains('financial') || act.contains('wallet')) {
-      return Icons.account_balance_wallet_outlined;
-    }
-    if (act.contains('agent')) return Icons.person_search_rounded;
-    if (act.contains('user')) return Icons.people_outline_rounded;
-    return Icons.history_rounded;
-  }
+  // IconData _getActionIcon(String action) {
+  //   final act = action.toLowerCase();
+  //   if (act.contains('error')) return Icons.error_outline_rounded;
+  //   if (act.contains('login') || act.contains('auth')) {
+  //     return Icons.lock_outline_rounded;
+  //   }
+  //   if (act.contains('financial') || act.contains('wallet')) {
+  //     return Icons.account_balance_wallet_outlined;
+  //   }
+  //   if (act.contains('agent')) return Icons.person_search_rounded;
+  //   if (act.contains('user')) return Icons.people_outline_rounded;
+  //   return Icons.history_rounded;
+  // }
 
   // void _showLogoutDialog(AuthController authController) {
   //   Get.dialog(
