@@ -38,8 +38,8 @@ class ChatController extends GetxController {
   late ChatRepository _chatRepository;
   
   StreamSubscription? _conversationsSubscription;
+  final Map<String, RealtimeChannel> _typingChannels = {};
   final Map<String, StreamSubscription> _messageSubscriptions = {};
-  RealtimeChannel? _typingChannel;
   Timer? _reconnectTimer;
   Timer? _typingThrottleTimer;
   final Map<String, Timer> _typingTimers = {};
@@ -63,21 +63,26 @@ class ChatController extends GetxController {
     
     ever(auth.isLoggedIn, (bool loggedIn) {
       if (loggedIn) {
-        debugPrint('[ChatController] ▶ Authenticated. Starting streams...');
-        loadConversations();
-        _startConversationsStream();
-        _setupTypingBroadcast();
+        _initializeChatSystem();
       } else {
-        debugPrint('[ChatController] ℹ Logged out. Stopping streams...');
         _stopAllStreams();
       }
     });
 
+    // Initial check (prevent redundant double-init by ensuring we don't call it if the listener just did)
     if (auth.isLoggedIn.value) {
-      loadConversations();
-      _startConversationsStream();
-      _setupTypingBroadcast();
+      _initializeChatSystem();
     }
+  }
+
+  bool _isInitialized = false;
+  void _initializeChatSystem() {
+    if (_isInitialized) return;
+    _isInitialized = true;
+    
+    debugPrint('[ChatController] ▶ Initializing chat system components...');
+    loadConversations();
+    _startConversationsStream();
   }
 
   void _stopAllStreams() {
@@ -90,13 +95,16 @@ class ChatController extends GetxController {
     }
     _messageSubscriptions.clear();
     
-    _typingChannel?.unsubscribe();
-    _typingChannel = null;
+    for (var chan in _typingChannels.values) {
+      chan.unsubscribe();
+    }
+    _typingChannels.clear();
     
     for (var t in _typingTimers.values) {
       t.cancel();
     }
     _typingTimers.clear();
+    _isInitialized = false;
   }
 
   @override
@@ -179,10 +187,42 @@ class ChatController extends GetxController {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _conversationsSubscription?.cancel();
+    
     _conversationsSubscription = _chatRepository.streamConversations().listen(
       (event) {
-        // Re-fetch to get profile data (stream doesn't support joins easily)
-        loadConversations();
+        debugPrint('[ChatController] ℹ Conversation stream event received (${event.length} items)');
+        
+        // Strategy: Instead of re-fetching EVERYTHING, we update our local list
+        // with the new data from the stream, while preserving joined profile data.
+        final List<ChatConversation> currentList = List.from(conversations);
+        
+        for (var row in event) {
+          final String id = row['id'] as String;
+          final int index = currentList.indexWhere((c) => c.id == id);
+          
+          if (index != -1) {
+            // Update existing conversation PRESERVING profile data (as stream doesn't join)
+            final oldConv = currentList[index];
+            currentList[index] = oldConv.copyWith(
+              lastMessage: row['last_message'],
+              lastMessageTime: row['last_message_at'] != null 
+                  ? DateTime.parse(row['last_message_at']) 
+                  : oldConv.lastMessageTime,
+              unreadCount: row['unread_admin_count'] ?? 0,
+            );
+          } else {
+            // New conversation appeared or first load — here we stick to full fetch once
+            // to ensure we get the profile data correctly.
+            loadConversations();
+            return;
+          }
+        }
+        
+        // Re-sort current list if needed (since stream is ordered, but copyWith might break visual order if not careful)
+        currentList.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+        conversations.assignAll(currentList);
+        _calculateUnread();
+        _updateOnlineStatuses();
       },
       onError: (e) {
         debugPrint('[ChatController] ✗ Conversations stream error: $e');
@@ -212,40 +252,38 @@ class ChatController extends GetxController {
   //  TYPING INDICATORS (BROADCAST)
   // ═══════════════════════════════════════════════════════════
 
-  void _setupTypingBroadcast() {
-    final channelName = 'chat_typing';
-    _typingChannel = SupabaseService.client.channel(channelName);
+  void _setupTypingBroadcast(String conversationId) {
+    if (_typingChannels.containsKey(conversationId)) return;
 
-    _typingChannel!.onBroadcast(
+    final channelName = 'typing:$conversationId';
+    final channel = SupabaseService.client.channel(channelName);
+
+    channel.onBroadcast(
       event: 'typing',
       callback: (payload) {
         final userId = payload['user_id'] as String?;
-        final conversationId = payload['conversation_id'] as String?;
         final currentUserId = SupabaseService.auth.currentUser?.id;
 
-        if (userId != null &&
-            conversationId != null &&
-            userId != currentUserId) {
-          _handleIncomingTyping(userId, conversationId);
+        if (userId != null && userId != currentUserId) {
+          _handleIncomingTyping(userId);
         }
       },
     ).subscribe((status, error) {
-      if (error != null || status == 'CLOSED' || status == 'CHANNEL_ERROR') {
+      if (error != null) {
         AppLoggerService.logChatPerformance(
-          conversationId: 'global',
-          action: 'typing_channel_status',
+          conversationId: conversationId,
+          action: 'typing_channel_error',
           latencyMs: 0,
-          severity: error != null ? 'error' : 'warning',
-          details: {
-            'status': status,
-            'error': error?.toString(),
-          },
+          severity: 'error',
+          details: {'error': error.toString()},
         );
       }
     });
+
+    _typingChannels[conversationId] = channel;
   }
 
-  void _handleIncomingTyping(String userId, String conversationId) {
+  void _handleIncomingTyping(String userId) {
     // Only show typing if it's for an active conversation or globally relevant
     isTyping[userId] = true;
     isTyping.refresh();
@@ -262,14 +300,16 @@ class ChatController extends GetxController {
   void sendTypingEvent(String conversationId) {
     if (_typingThrottleTimer?.isActive ?? false) return;
 
-    final currentUserId = SupabaseService.auth.currentUser?.id;
-    if (currentUserId == null) return;
+    final channel = _typingChannels[conversationId];
+    if (channel == null) {
+      _setupTypingBroadcast(conversationId);
+      return;
+    }
 
-    _typingChannel?.sendBroadcastMessage(
+    channel.sendBroadcastMessage(
       event: 'typing',
       payload: {
-        'user_id': currentUserId,
-        'conversation_id': conversationId,
+        'user_id': SupabaseService.auth.currentUser?.id,
       },
     );
 
@@ -327,6 +367,9 @@ class ChatController extends GetxController {
             );
           },
         );
+    
+    // Also start typing broadcast for this specific conversation
+    _setupTypingBroadcast(conversationId);
   }
 
   void _calculateUnread() {

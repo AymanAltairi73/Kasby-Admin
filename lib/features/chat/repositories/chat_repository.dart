@@ -51,23 +51,14 @@ class ChatRepository extends BaseRepository {
   }) async {
     await safeQuery(
       () async {
-        final data = {
-          'conversation_id': conversationId,
-          'sender_id': senderId,
-          'sender_type': senderType,
-          'content': content,
-          'message_type': messageType.name,
-          'idempotency_key': idempotencyKey,
-        };
-        
-        await client.from('chat_messages').insert(data);
-        
-        // Update last message in conversation
-        await client.from('chat_conversations').update({
-          'last_message': content,
-          'last_message_at': DateTime.now().toIso8601String(),
-          'unread_user_count': 1, // Example: increment unread for user
-        }).eq('id', conversationId);
+        await client.rpc('fn_send_chat_message', params: {
+          'p_conversation_id': conversationId,
+          'p_sender_id': senderId,
+          'p_sender_type': senderType,
+          'p_content': content,
+          'p_message_type': messageType.name,
+          'p_idempotency_key': idempotencyKey,
+        });
       },
       methodName: 'sendMessage',
     );
@@ -87,7 +78,7 @@ class ChatRepository extends BaseRepository {
     return client
         .from('chat_conversations')
         .stream(primaryKey: ['id'])
-        .order('last_message_at');
+        .order('last_message_at', ascending: false);
   }
 
   /// Get or create a conversation for a user
