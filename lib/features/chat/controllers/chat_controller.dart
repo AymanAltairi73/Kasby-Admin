@@ -346,7 +346,7 @@ class ChatController extends GetxController {
             if (messages.containsKey(conversationId)) {
               final oldLen = messages[conversationId]!.length;
               if (newMessages.length > oldLen) {
-                final lastMsg = newMessages.last;
+                final lastMsg = newMessages.first;
                 if (!lastMsg.isMe) {
                   _audioService.playNotification();
                 }
@@ -425,7 +425,7 @@ class ChatController extends GetxController {
       );
       
       if (messages.containsKey(targetConvId)) {
-        messages[targetConvId]!.add(optimisticMessage);
+        messages[targetConvId]!.insert(0, optimisticMessage);
         messages.refresh();
       }
 
@@ -471,10 +471,10 @@ class ChatController extends GetxController {
     }
   }
 
-  Future<void> pickAndSendImage(String conversationId) async {
+  Future<void> pickAndSendImage(String conversationId, ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 70,
         maxWidth: 1200,
       );

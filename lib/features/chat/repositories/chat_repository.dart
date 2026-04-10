@@ -30,7 +30,7 @@ class ChatRepository extends BaseRepository {
             .from('chat_messages')
             .select('*')
             .eq('conversation_id', conversationId)
-            .order('created_at', ascending: true);
+            .order('created_at', ascending: false);
 
         return (response as List)
             .map((json) => ChatMessage.fromSupabase(json, currentUserId))
@@ -70,7 +70,7 @@ class ChatRepository extends BaseRepository {
         .from('chat_messages')
         .stream(primaryKey: ['id'])
         .eq('conversation_id', conversationId)
-        .order('created_at');
+        .order('created_at', ascending: false);
   }
 
   /// Stream conversations

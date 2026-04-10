@@ -1,9 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════
--- Kasby Chat Hardening — SECURE Atomic Messaging
+-- Kasby Chat Hardening — SECURE Atomic Messaging (Final Fixed version)
 -- ═══════════════════════════════════════════════════════════════
 
--- This version includes a security layer to ensure that messages
--- can only be sent by authorized participants (the User or an Admin).
+-- This version fixes the casting error for the message_type column.
+-- Since the database uses a custom ENUM 'message_type', we must explicitly
+-- cast the input string using ::message_type.
 
 CREATE OR REPLACE FUNCTION fn_send_chat_message(
   p_conversation_id UUID,
@@ -21,7 +22,6 @@ DECLARE
   v_target_user_id UUID;
 BEGIN
   -- 1. SECURITY CHECK
-  -- Fetch the conversation to verify ownership
   SELECT user_id INTO v_target_user_id 
   FROM chat_conversations 
   WHERE id = p_conversation_id;
@@ -30,18 +30,18 @@ BEGIN
     RAISE EXCEPTION 'المحادثة غير موجودة (Conversation not found)';
   END IF;
 
-  -- If sender is a 'user', they MUST be the owner of the conversation
+  -- Verify User sender authorization
   IF p_sender_type = 'user' AND p_sender_id != v_target_user_id THEN
     RAISE EXCEPTION 'غير مصرح لك بالإرسال في هذه المحادثة (Unauthorized)';
   END IF;
 
-  -- If sender is 'admin', verify that they actually have an admin role
-  -- (Assuming public.is_admin exists based on previous system logic)
-  IF p_sender_type = 'admin' AND NOT public.is_admin(p_sender_id) THEN
+  -- Verify Admin sender authorization
+  IF p_sender_type = 'admin' AND NOT public.is_admin() THEN
     RAISE EXCEPTION 'عفواً، لا تملك صلاحيات إدارة المحادثات (Admin Access Required)';
   END IF;
 
   -- 2. ATOMIC INSERT
+  -- Added explicit casting (::message_type) to match the database enum type
   INSERT INTO chat_messages (
     conversation_id,
     sender_id,
@@ -54,12 +54,12 @@ BEGIN
     p_sender_id,
     p_sender_type,
     p_content,
-    p_message_type,
+    p_message_type::message_type, -- Cast applied here
     p_idempotency_key
   )
   ON CONFLICT (idempotency_key) DO NOTHING;
 
-  -- 3. METADATA SYNC (Atomic unread increment)
+  -- 3. METADATA SYNC
   UPDATE chat_conversations
   SET 
     last_message = CASE 

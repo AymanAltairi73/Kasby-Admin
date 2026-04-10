@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_animate/flutter_animate.dart';
@@ -37,11 +38,6 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
       // Fallback for new conversations: try to find/create it
       _initializeNewConversation();
     }
-
-    // Jump to bottom on open
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
   }
 
   Future<void> _initializeNewConversation() async {
@@ -51,16 +47,6 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         conversation = chatController.conversations.firstWhere((c) => c.id == newId);
       });
       chatController.listenToMessages(newId);
-    }
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
     }
   }
 
@@ -86,26 +72,29 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                         chatController.isTyping[conversation.userId] ?? false;
 
                     return ListView.builder(
+                      reverse: true, // Newest at bottom
                       controller: _scrollController,
                       padding: const EdgeInsets.all(16),
                       itemCount: messages.length + (isTyping ? 1 : 0),
                       itemBuilder: (context, index) {
-                        if (index == messages.length) {
+                        // In reverse mode, index 0 is at the bottom
+                        if (isTyping && index == 0) {
                           return _buildTypingIndicator();
                         }
 
-                        final msg = messages[index];
-                        final showDateHeader =
-                            index == 0 ||
-                            !_isSameDay(
-                              msg.timestamp,
-                              messages[index - 1].timestamp,
-                            );
+                        final msgIndex = isTyping ? index - 1 : index;
+                        final msg = messages[msgIndex];
+                        
+                        // Date header logic: show if it's the TOP-MOST message of the list
+                        // or the first message of a new day (looking top-to-bottom)
+                        // Note: index N is Top, index 0 is Bottom.
+                        final bool showDateHeader = msgIndex == messages.length - 1 || 
+                          !_isSameDay(msg.timestamp, messages[msgIndex + 1].timestamp);
 
                         return Column(
                           children: [
                             if (showDateHeader) _buildDateHeader(msg.timestamp),
-                            _buildChatBubble(msg, index),
+                            _buildChatBubble(msg, msgIndex),
                           ],
                         );
                       },
@@ -301,15 +290,15 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               ],
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.call_rounded, color: Colors.white70),
-                onPressed: () {
-                  Get.snackbar(
-                    'اتصال صوتي',
-                    'جاري بدء اتصال صوتي مع ${conversation.userName}...',
-                  );
-                },
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.call_rounded, color: Colors.white70),
+              //   onPressed: () {
+              //     Get.snackbar(
+              //       'اتصال صوتي',
+              //       'جاري بدء اتصال صوتي مع ${conversation.userName}...',
+              //     );
+              //   },
+              // ),
               IconButton(
                 icon: Icon(
                   _showSearch ? Icons.close_rounded : Icons.search_rounded,
@@ -472,40 +461,110 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   Get.snackbar('تم النسخ', 'تم نسخ الرسالة إلى الحافظة');
                 },
               ),
-            if (msg.isMe)
-              ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                title: const Text('حذف الرسالة', style: TextStyle(color: Colors.redAccent)),
-                onTap: () {
-                  Get.back();
-                  Get.dialog(
-                    AlertDialog(
-                      backgroundColor: const Color(0xFF1A1A1E),
-                      title: const Text('حذف الرسالة', style: TextStyle(color: Colors.white)),
-                      content: const Text('هل أنت متأكد من حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.', style: TextStyle(color: Colors.white70)),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text('إلغاء', style: TextStyle(color: Colors.white30)),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            chatController.deleteMessage(msg.id, conversation.id);
-                            Get.back();
-                          },
-                          child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+            // Allow admin to delete ANY message for moderation, not just their own
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+              title: const Text('حذف الرسالة', style: TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Get.back();
+                Get.dialog(
+                  AlertDialog(
+                    backgroundColor: const Color(0xFF1A1A1E),
+                    title: const Text('حذف الرسالة', style: TextStyle(color: Colors.white)),
+                    content: const Text('هل أنت متأكد من حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.', style: TextStyle(color: Colors.white70)),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(),
+                        child: const Text('إلغاء', style: TextStyle(color: Colors.white30)),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          chatController.deleteMessage(msg.id, conversation.id);
+                          Get.back();
+                        },
+                        child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
       backgroundColor: Colors.transparent,
     );
   }
+
+  void _showImageSourceSheet() {
+    Get.bottomSheet(
+      KasbyGlassCard(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'إرفاق صورة',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'الكاميرا',
+                  onTap: () {
+                    Get.back();
+                    chatController.pickAndSendImage(conversation.id, ImageSource.camera);
+                  },
+                ),
+                _buildSourceOption(
+                  icon: Icons.photo_library_rounded,
+                  label: 'المعرض',
+                  onTap: () {
+                    Get.back();
+                    chatController.pickAndSendImage(conversation.id, ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _buildSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: KasbyColors.primaryGold.withValues(alpha: 0.2)),
+            ),
+            child: Icon(icon, color: KasbyColors.primaryGold, size: 30),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildMessageInput() {
     return Container(
@@ -523,7 +582,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               Icons.add_photo_alternate_rounded,
               color: Colors.white.withValues(alpha: 0.4),
             ),
-            onPressed: () => chatController.pickAndSendImage(conversation.id),
+            onPressed: _showImageSourceSheet,
           ),
           Expanded(
             child: KasbyGlassCard(
@@ -579,7 +638,6 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         userId: conversation.userId,
       );
       _messageController.clear();
-      _scrollToBottom();
     }
   }
 

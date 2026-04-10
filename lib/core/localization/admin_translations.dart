@@ -48,6 +48,7 @@ class AdminTranslations extends Translations {
       // investment_status
       'enum_invest_active': 'Active',
       'enum_invest_completed': 'Completed',
+      'message_deleted':'This message has been deleted',
       'enum_invest_cancelled': 'Cancelled',
       'enum_invest_matured': 'Matured',
       // loan_status
@@ -170,6 +171,7 @@ class AdminTranslations extends Translations {
       'enum_doc_id_card_front': 'بطاقة هوية (أمامية)',
       'enum_doc_id_card_back': 'بطاقة هوية (خلفية)',
       'enum_doc_passport': 'جواز سفر',
+      'message_deleted':'تم حذف هذه الرسالة',
       'enum_doc_selfie': 'صورة شخصية',
       'enum_doc_proof_of_address': 'إثبات عنوان',
       'enum_doc_other': 'أخرى',
