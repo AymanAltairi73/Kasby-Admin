@@ -11,7 +11,7 @@ class ChatRepository extends BaseRepository {
       () async {
         final response = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url, updated_at)')
+            .select('*, profiles(full_name, avatar_url, updated_at, role)')
             .order('last_message_at', ascending: false);
 
         return (response as List)
@@ -88,7 +88,7 @@ class ChatRepository extends BaseRepository {
         // Try to find existing
         final existing = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url, updated_at)')
+            .select('*, profiles(full_name, avatar_url, updated_at, role)')
             .eq('user_id', userId)
             .maybeSingle();
 
@@ -100,7 +100,7 @@ class ChatRepository extends BaseRepository {
         final created = await client
             .from('chat_conversations')
             .insert({'user_id': userId})
-            .select('*, profiles(full_name, avatar_url, updated_at)')
+            .select('*, profiles(full_name, avatar_url, updated_at, role)')
             .single();
 
         return ChatConversation.fromSupabase(created);

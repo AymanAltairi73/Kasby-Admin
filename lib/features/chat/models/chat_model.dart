@@ -124,7 +124,7 @@ class ChatConversation {
               ? DateTime.parse(profile['last_seen_at']) 
               : (profile['updated_at'] != null ? DateTime.parse(profile['updated_at']) : null))
           : null,
-      isAgent: json['is_agent_chat'] ?? false,
+      isAgent: (json['is_agent_chat'] ?? false) || (profile != null && profile['role'] == 'agent'),
     );
   }
 }
