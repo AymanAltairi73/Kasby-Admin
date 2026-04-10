@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import '../repositories/dashboard_repository.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 import '../../../core/services/presence_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -42,13 +41,8 @@ class DashboardController extends GetxController {
 
       // Fetch urgent alerts separately
       await _fetchUrgentAlerts();
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'DashboardController',
-        method: 'loadDashboardData',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     } finally {
       isLoading.value = false;
     }
@@ -79,17 +73,8 @@ class DashboardController extends GetxController {
           .eq('kyc_status', 'pending');
       pendingKYCCount.value = kycRes;
       
-      AppLoggerService.logInfo(
-        controller: 'DashboardController',
-        method: '_fetchUrgentAlerts',
-        message: 'Fetched urgent alerts: Withdrawals=${pendingWithdrawalsCount.value}, KYC=${pendingKYCCount.value}',
-      );
     } catch (e) {
-      AppLoggerService.logError(
-        controller: 'DashboardController',
-        method: '_fetchUrgentAlerts',
-        error: e,
-      );
+      // Handle silently
     }
   }
 }

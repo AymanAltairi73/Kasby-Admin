@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import '../models/kyc_document_model.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 /// KYC Controller — manages user identity verification
@@ -28,13 +27,8 @@ class KycController extends GetxController {
       pendingDocuments.assignAll(
         (response as List).map((e) => KycDocument.fromJson(e)).toList(),
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'KycController',
-        method: 'loadPendingDocuments',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     } finally {
       isLoading.value = false;
     }
@@ -75,27 +69,12 @@ class KycController extends GetxController {
       
       await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
 
-      // 4. Log in system_logs (Audit)
-      await SupabaseService.client.from('system_logs').insert({
-        'actor_id': adminId,
-        'actor_role': 'admin',
-        'action': 'KYC Review',
-        'entity_type': 'kyc_document',
-        'entity_id': id,
-        'severity': status == 'verified' ? 'info' : 'warning',
-        'details': 'Reviewed KYC for user $userId. Result: $status. Reason: $rejectionReason',
-      });
+      await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
 
       // Refresh list
       await loadPendingDocuments();
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'KycController',
-        method: 'updateStatus',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }

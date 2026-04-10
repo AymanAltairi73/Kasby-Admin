@@ -5,7 +5,6 @@ import 'package:local_auth/local_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../../users/models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 
 /// Authentication Controller
@@ -48,13 +47,8 @@ class AuthController extends GetxController {
           await SupabaseService.auth.signOut();
         }
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: '_checkLoginStatus',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     } finally {
       isCheckingAuth.value = false;
     }
@@ -193,13 +187,7 @@ class AuthController extends GetxController {
         }
       }
       return false;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: 'authenticateWithBiometrics',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -280,15 +268,7 @@ class AuthController extends GetxController {
         colorText: Colors.white,
       );
       return false;
-    } catch (e, stackTrace) {
-      debugPrint('[AuthController] ✗ UNEXPECTED ERROR: $e');
-      debugPrint('[AuthController] StackTrace: $stackTrace');
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: 'login',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       isLoading.value = false;
       Get.snackbar(
         'خطأ غير متوقع',
@@ -396,13 +376,7 @@ class AuthController extends GetxController {
         colorText: Colors.white,
       );
       return false;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: 'signUp',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       isLoading.value = false;
       Get.snackbar(
         'خطأ',
@@ -423,13 +397,7 @@ class AuthController extends GetxController {
         'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AuthController',
-        method: 'forgotPassword',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'حدث خطأ أثناء إرسال رابط إعادة التعيين',

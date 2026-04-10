@@ -1,6 +1,4 @@
-import 'supabase_service.dart';
-
-/// Audit Logger — logs admin actions to Supabase `audit_logs` table
+/// No-op Audit Logger — system removed
 class AuditLogger {
   static Future<void> log({
     required String action,
@@ -9,36 +7,12 @@ class AuditLogger {
     String status = 'success',
     String? targetId,
     String? targetType,
-    String? adminName, // kept for backward compatibility with callers
+    String? adminName,
   }) async {
-    try {
-      final adminId = SupabaseService.auth.currentUser?.id;
-
-      await SupabaseService.client.from('audit_logs').insert({
-        'admin_id': adminId,
-        'action': action,
-        'details': details,
-        'type': type,
-        'status': status,
-        'target_id': targetId,
-        'target_type': targetType,
-      });
-    } catch (e) {
-      // Silently fail — audit logging should not break user flow
-    }
+    // System removed
   }
 
   static Future<List<Map<String, dynamic>>> getLogs({int limit = 50}) async {
-    try {
-      final response = await SupabaseService.client
-          .from('audit_logs')
-          .select()
-          .order('created_at', ascending: false)
-          .limit(limit);
-
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      return [];
-    }
+    return [];
   }
 }

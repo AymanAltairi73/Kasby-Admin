@@ -2,9 +2,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:get/get.dart';
 import '../models/ad_model.dart';
-import '../../../core/services/audit_logger.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 
 class AdController extends GetxController {
   final ads = <Ad>[].obs;
@@ -25,13 +23,8 @@ class AdController extends GetxController {
           .order('created_at', ascending: false);
 
       ads.assignAll((response as List).map((e) => Ad.fromSupabase(e)).toList());
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'loadAds',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     } finally {
       isLoading.value = false;
     }
@@ -51,13 +44,7 @@ class AdController extends GetxController {
           .getPublicUrl(storagePath);
 
       return imageUrl;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'uploadAdImage',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return null;
     }
   }
@@ -76,13 +63,8 @@ class AdController extends GetxController {
             .from('advertisements')
             .remove([storagePath]);
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'deleteAdImage',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Continue
     }
   }
 
@@ -93,15 +75,8 @@ class AdController extends GetxController {
 
       await SupabaseService.client.from('ads').insert(data);
       await loadAds();
-      _logAction('إضافة إعلان جديد: ${ad.titleAr}');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'addAd',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -113,15 +88,8 @@ class AdController extends GetxController {
           .update(ad.toSupabase())
           .eq('id', ad.id);
       await loadAds();
-      _logAction('تحديث الإعلان: ${ad.titleAr}');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'updateAd',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -133,15 +101,8 @@ class AdController extends GetxController {
       }
       await SupabaseService.client.from('ads').delete().eq('id', id);
       await loadAds();
-      _logAction('حذف الإعلان: $title');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'deleteAd',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -154,24 +115,9 @@ class AdController extends GetxController {
           .update({'is_active': newStatus})
           .eq('id', ad.id);
       await loadAds();
-      _logAction(
-        'تغيير حالة الإعلان ${ad.titleAr} إلى: ${newStatus ? 'مفعل' : 'معطل'}',
-      );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AdController',
-        method: 'toggleAdStatus',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Continue
     }
   }
 
-  void _logAction(String details) {
-    AuditLogger.log(
-      adminName: 'SuperAdmin',
-      action: 'إدارة الإعلانات',
-      details: details,
-    );
-  }
 }

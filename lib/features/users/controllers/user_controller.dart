@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
     show AdminUserAttributes;
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../repositories/profile_repository.dart';
@@ -66,13 +66,7 @@ class UserController extends GetxController {
       users.value = response;
       _applyFilters();
       debugPrint('[UserController] ✓ Loaded ${users.length} users');
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'loadUsers',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في تحميل المستخدمين',
@@ -102,13 +96,8 @@ class UserController extends GetxController {
         _applyFilters();
         debugPrint('[UserController] ✓ Loaded ${response.length} more users');
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'loadMoreUsers',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     }
   }
 
@@ -246,13 +235,7 @@ class UserController extends GetxController {
         'تم حظر المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'blockUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في حظر المستخدم',
@@ -277,13 +260,7 @@ class UserController extends GetxController {
         'تم تفعيل المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'activateUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في تفعيل المستخدم',
@@ -301,13 +278,7 @@ class UserController extends GetxController {
       } else {
         await blockUser(userId);
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'toggleBlockUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في تحديث حالة المستخدم',
@@ -332,13 +303,7 @@ class UserController extends GetxController {
         'تم التحقق من المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'verifyKyc',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar('خطأ', 'فشل في التحقق', snackPosition: SnackPosition.BOTTOM);
     }
   }
@@ -356,13 +321,7 @@ class UserController extends GetxController {
         users[idx] = users[idx].copyWith(kycStatus: 'Rejected');
         _applyFilters();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'rejectKyc',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في رفض KYC',
@@ -393,13 +352,7 @@ class UserController extends GetxController {
         'تم إضافة الرصيد بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'addBalance',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في إضافة الرصيد',
@@ -426,13 +379,7 @@ class UserController extends GetxController {
         'تم خصم الرصيد بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'deductBalance',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في خصم الرصيد',
@@ -523,14 +470,7 @@ class UserController extends GetxController {
         'تم إضافة المستخدم بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'addUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
+    } catch (e) {
       String errorMsg = 'فشل في إضافة المستخدم';
       final errStr = e.toString();
       if (errStr.contains('already been registered') ||
@@ -563,13 +503,7 @@ class UserController extends GetxController {
         'تم تحديث بيانات المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'updateUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في تحديث البيانات',
@@ -591,13 +525,7 @@ class UserController extends GetxController {
         'تم حذف المستخدم',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'deleteUser',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في حذف المستخدم',
@@ -643,13 +571,8 @@ class UserController extends GetxController {
         '${selectedUserTransactions.length} txns, '
         '${selectedUserActivities.length} acts',
       );
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'UserController',
-        method: 'loadUserExtraDetails',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Handle silently
     } finally {
       isDetailsLoading.value = false;
     }

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/reward_model.dart';
-import '../../../core/services/audit_logger.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 
 /// Rewards and Gamification Controller
 /// Manages settings for daily rewards, spin wheel prizes, and points rules
@@ -28,13 +26,7 @@ class RewardsController extends GetxController {
     isLoading.value = true;
     try {
       await Future.wait([_loadRewards(), _loadPrizes(), _loadPointRules()]);
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'RewardsController',
-        method: 'loadSettings',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultSettings();
     } finally {
       isLoading.value = false;
@@ -62,13 +54,7 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultRewards();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'RewardsController',
-        method: '_loadRewards',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultRewards();
     }
   }
@@ -94,13 +80,7 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultPrizes();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'RewardsController',
-        method: '_loadPrizes',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultPrizes();
     }
   }
@@ -129,13 +109,7 @@ class RewardsController extends GetxController {
       } else {
         _loadDefaultPointRules();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'RewardsController',
-        method: '_loadPointRules',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultPointRules();
     }
   }
@@ -248,21 +222,9 @@ class RewardsController extends GetxController {
           .from('point_rules')
           .update({'action': updatedRule.action, 'points': updatedRule.points})
           .eq('id', updatedRule.id);
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'RewardsController',
-        method: 'updatePointRule',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
+      // Continue
     }
-
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'تعديل قواعد النقاط',
-      details:
-          'تم تعديل قاعدة: ${updatedRule.action} إلى ${updatedRule.points}',
-    );
   }
 
   /// Update daily reward
@@ -279,20 +241,9 @@ class RewardsController extends GetxController {
               'points_cost': updatedReward.points,
             })
             .eq('id', updatedReward.id);
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'RewardsController',
-          method: 'updateReward',
-          error: e,
-          stackTrace: stackTrace,
-        );
+      } catch (e) {
+        // Continue
       }
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'تعديل قيمة المكافأة',
-        details:
-            'تم تعديل ${updatedReward.title} إلى ${updatedReward.points} نقطة',
-      );
     }
   }
 
@@ -311,19 +262,9 @@ class RewardsController extends GetxController {
               'probability': updatedPrize.probability,
             })
             .eq('id', updatedPrize.id);
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'RewardsController',
-          method: 'updatePrize',
-          error: e,
-          stackTrace: stackTrace,
-        );
+      } catch (e) {
+        // Continue
       }
-      await AuditLogger.log(
-        adminName: 'Admin',
-        action: 'تعديل جوائز العجلة',
-        details: 'تم تعديل جائزة ${updatedPrize.label}',
-      );
     }
   }
 
@@ -351,12 +292,6 @@ class RewardsController extends GetxController {
     for (final rule in [...updatedEarnRules, ...updatedRedeemRules]) {
       await updatePointRule(rule);
     }
-
-    await AuditLogger.log(
-      adminName: 'Admin',
-      action: 'تحديث شامل لإعدادات المكافآت',
-      details: 'تم تحديث قيم المكافآت، الجوائز وقواعد النقاط.',
-    );
 
     isLoading.value = false;
   }

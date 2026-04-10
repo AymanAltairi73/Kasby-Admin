@@ -16,13 +16,13 @@ import 'features/investments/screens/user_investments_screen.dart';
 import 'features/transactions/screens/transactions_screen.dart';
 import 'features/agents/screens/agents_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
+import 'features/notifications/screens/notifications_list_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/settings/screens/terms_screen.dart';
 import 'features/settings/screens/faq_screen.dart';
 import 'features/settings/screens/maintenance_screen.dart';
 import 'features/auth/screens/profile_screen.dart';
 import 'features/dashboard/screens/audit_logs_screen.dart';
-import 'features/dashboard/screens/error_log_screen.dart';
 import 'core/controllers/theme_controller.dart';
 import 'core/controllers/settings_controller.dart';
 import 'features/users/controllers/user_controller.dart';
@@ -30,8 +30,6 @@ import 'features/transactions/controllers/transaction_controller.dart';
 import 'features/investments/controllers/investment_controller.dart';
 import 'features/agents/controllers/agent_controller.dart';
 import 'features/dashboard/controllers/main_controller.dart';
-import 'features/dashboard/controllers/audit_controller.dart';
-import 'features/dashboard/controllers/error_log_controller.dart';
 import 'features/chat/controllers/chat_controller.dart';
 import 'features/chat/screens/chat_list_screen.dart';
 import 'features/chat/screens/chat_details_screen.dart';
@@ -43,7 +41,6 @@ import 'features/loans/screens/loans_screen.dart';
 import 'features/settings/controllers/settings_management_controller.dart';
 import 'features/gamification/controllers/rewards_controller.dart';
 import 'core/services/supabase_service.dart';
-import 'core/services/app_logger_service.dart';
 import 'features/subscriptions/controllers/subscription_controller.dart';
 import 'features/subscriptions/screens/subscriptions_screen.dart';
 import 'features/kyc/screens/kyc_management_screen.dart';
@@ -61,7 +58,6 @@ Future<void> main() async {
 
   // Initialize Services
   await SupabaseService.init();
-  await AppLoggerService.init();
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
@@ -77,19 +73,17 @@ Future<void> main() async {
   await Get.putAsync(() => AdminListenerService().init());
 
   // 3. Subject-Matter Controllers (Lazy Load on Demand)
-  Get.lazyPut(() => SettingsManagementController());
-  Get.lazyPut(() => UserController());
-  Get.lazyPut(() => TransactionController());
-  Get.lazyPut(() => InvestmentController());
-  Get.lazyPut(() => AgentController());
-  Get.lazyPut(() => LoanController());
-  Get.lazyPut(() => MainController());
-  Get.lazyPut(() => AuditController());
-  Get.lazyPut(() => ErrorLogController());
-  Get.lazyPut(() => ChatController());
-  Get.lazyPut(() => RewardsController());
-  Get.lazyPut(() => SubscriptionController());
-  Get.lazyPut(() => NotificationController());
+  Get.lazyPut(() => SettingsManagementController(), fenix: true);
+  Get.lazyPut(() => UserController(), fenix: true);
+  Get.lazyPut(() => TransactionController(), fenix: true);
+  Get.lazyPut(() => InvestmentController(), fenix: true);
+  Get.lazyPut(() => AgentController(), fenix: true);
+  Get.lazyPut(() => LoanController(), fenix: true);
+  Get.lazyPut(() => MainController(), fenix: true);
+  Get.lazyPut(() => ChatController(), fenix: true);
+  Get.lazyPut(() => RewardsController(), fenix: true);
+  Get.lazyPut(() => SubscriptionController(), fenix: true);
+  Get.lazyPut(() => NotificationController(), fenix: true);
 
   runApp(const KasbyAdminApp());
 }
@@ -140,14 +134,19 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(name: '/agents', page: () => const AgentsScreen()),
         GetPage(name: '/loans', page: () => const LoansScreen()),
         GetPage(
-          name: '/notifications',
+          name: '/add-notification',
           page: () => const NotificationsScreen(),
+          binding: BindingsBuilder(() {
+            Get.lazyPut(() => NotificationController());
+          }),
+        ),
+        GetPage(
+          name: '/notifications-list',
+          page: () => const NotificationsListScreen(),
         ),
         GetPage(name: '/rewards', page: () => const RewardsScreen()),
         GetPage(name: '/settings', page: () => const SettingsScreen()),
         GetPage(name: '/profile', page: () => const ProfileScreen()),
-        GetPage(name: '/audit-logs', page: () => const AuditLogsScreen()),
-        GetPage(name: '/error-logs', page: () => const ErrorLogScreen()),
         GetPage(name: '/terms', page: () => const TermsScreen()),
         GetPage(name: '/faq', page: () => const FaqScreen()),
         GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),

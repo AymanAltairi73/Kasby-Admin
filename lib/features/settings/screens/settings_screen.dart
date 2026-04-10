@@ -67,13 +67,6 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة خطط الاشتراك (شهري / سنوي)',
               onTap: () => Get.toNamed('/subscriptions'),
             ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: Icons.bug_report_rounded,
-              title: 'سجلات الأخطاء',
-              subtitle: 'مراقبة الأخطاء الفنية للنظام',
-              onTap: () => Get.toNamed('/error-logs'),
-            ),
             const SizedBox(height: 24),
 
             // Notifications Section
@@ -86,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
               icon: FontAwesomeIcons.bellConcierge,
               title: 'إرسال إشعار',
               subtitle: 'إرسال إشعار لجميع المستخدمين',
-              onTap: () => Get.toNamed('/notifications'),
+              onTap: () => Get.toNamed('/add-notification'),
             ),
             const SizedBox(height: 8),
             _buildSettingCard(

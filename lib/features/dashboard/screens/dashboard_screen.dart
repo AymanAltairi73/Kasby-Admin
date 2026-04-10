@@ -8,10 +8,8 @@ import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../controllers/audit_controller.dart';
 import '../controllers/main_controller.dart';
 import '../../transactions/controllers/transaction_controller.dart';
-import '../models/audit_log_model.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../controllers/dashboard_controller.dart';
 
@@ -23,7 +21,6 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
-    final auditController = Get.find<AuditController>();
     final dashboardController = Get.put(DashboardController());
     final transactionController = Get.find<TransactionController>();
 
@@ -40,7 +37,6 @@ class DashboardScreen extends StatelessWidget {
             onRefresh: () async {
               await Future.wait([
                 dashboardController.loadDashboardData(),
-                auditController.fetchLogs(),
                 transactionController.loadTransactions(),
               ]);
             },
@@ -100,10 +96,6 @@ class DashboardScreen extends StatelessWidget {
                         _buildActionHub(),
                         const SizedBox(height: 28),
 
-                        // ═══════════════════════════════════════
-                        // Section 6: Activity Feed
-                        // ═══════════════════════════════════════
-                        _buildActivitySection(auditController),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -227,7 +219,7 @@ class DashboardScreen extends StatelessWidget {
                   Icons.notifications_none_rounded,
                   color: Colors.white70,
                 ),
-                onPressed: () => Get.toNamed('/notifications'),
+                onPressed: () => Get.toNamed('/notifications-list'),
               ),
               Obx(
                 () => Stack(
@@ -842,146 +834,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  //  SECTION 6: ACTIVITY FEED
-  // ═══════════════════════════════════════════════════════════
-
-  Widget _buildActivitySection(AuditController auditController) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildSectionTitle(
-              icon: FontAwesomeIcons.clockRotateLeft,
-              title: 'آخر التحركات',
-            ),
-            TextButton(
-              onPressed: () => Get.toNamed('/audit-logs'),
-              child: const Row(
-                children: [
-                  Text(
-                    'عرض الكل',
-                    style: TextStyle(
-                      color: KasbyColors.primaryGold,
-                      fontSize: 12,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 10,
-                    color: KasbyColors.primaryGold,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Obx(() {
-          if (auditController.isLoading.value && auditController.logs.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: CircularProgressIndicator(
-                  color: KasbyColors.primaryGold,
-                ),
-              ),
-            );
-          }
-          if (auditController.logs.isEmpty) {
-            return KasbyGlassCard(
-              padding: const EdgeInsets.all(20),
-              opacity: 0.05,
-              child: Center(
-                child: Text(
-                  'لا توجد أنشطة حديثة',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          }
-          return Column(
-            children: auditController.logs.take(4).toList().asMap().entries.map(
-              (entry) {
-                final log = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _buildLogItem(log),
-                );
-              },
-            ).toList(),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildLogItem(AuditLog log) {
-    return KasbyGlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      opacity: 0.05,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _getSeverityColor(log.severity).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _getSeverityColor(log.severity).withValues(alpha: 0.2),
-              ),
-            ),
-            child: Icon(
-              _getActionIcon(log.action),
-              size: 18,
-              color: _getSeverityColor(log.severity),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.action,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  log.adminName,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.35),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Directionality(
-            textDirection: ui.TextDirection.ltr,
-            child: Text(
-              DateFormat('HH:mm', 'en').format(log.timestamp),
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: KasbyColors.primaryGold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════
   //  SHARED HELPERS
@@ -1027,17 +879,17 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Color _getSeverityColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return KasbyColors.error;
-      case 'warning':
-        return KasbyColors.warning;
-      case 'info':
-      default:
-        return KasbyColors.success;
-    }
-  }
+  // Color _getSeverityColor(String severity) {
+  //   switch (severity.toLowerCase()) {
+  //     case 'critical':
+  //       return KasbyColors.error;
+  //     case 'warning':
+  //       return KasbyColors.warning;
+  //     case 'info':
+  //     default:
+  //       return KasbyColors.success;
+  //   }
+  // }
 
   IconData _getActionIcon(String action) {
     final act = action.toLowerCase();

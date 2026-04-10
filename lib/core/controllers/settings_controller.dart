@@ -1,7 +1,5 @@
 import 'package:get/get.dart';
-import '../../core/services/audit_logger.dart';
 import '../../core/services/supabase_service.dart';
-import '../../core/services/app_logger_service.dart';
 import '../../core/services/system_repository.dart';
 import '../models/system_settings_model.dart';
 
@@ -44,13 +42,7 @@ class SettingsController extends GetxController {
         // Create initial row if not exists
         await _createInitialSettings();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsController',
-        method: 'loadSettings',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في تحميل إعدادات النظام',
@@ -101,13 +93,7 @@ class SettingsController extends GetxController {
         'updated_by': adminId,
         'updated_at': DateTime.now().toIso8601String(),
       });
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsController',
-        method: '_saveSettings',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       Get.snackbar(
         'خطأ',
         'فشل في حفظ الإعدادات',
@@ -192,12 +178,6 @@ class SettingsController extends GetxController {
     }
 
     await _saveSettings();
-
-    await AuditLogger.log(
-      adminName: 'SuperAdmin',
-      action: 'تغيير حالة النظام',
-      details: 'تم إجراء $action بنجاح.',
-    );
 
     isLoading.value = false;
     Get.snackbar(

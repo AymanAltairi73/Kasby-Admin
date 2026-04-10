@@ -236,14 +236,6 @@ class ChatController extends GetxController {
             }
           });
         }
-        
-        AppLoggerService.logChatPerformance(
-          conversationId: 'global',
-          action: 'stream_error',
-          latencyMs: 0,
-          severity: 'error',
-          details: {'error': e.toString()},
-        );
       },
     );
   }
@@ -358,13 +350,6 @@ class ChatController extends GetxController {
           },
           onError: (e) {
             debugPrint('[ChatController] ✗ Messages stream error ($conversationId): $e');
-            AppLoggerService.logChatPerformance(
-              conversationId: conversationId,
-              action: 'message_stream_error',
-              latencyMs: 0,
-              severity: 'error',
-              details: {'error': e.toString()},
-            );
           },
         );
     
@@ -432,7 +417,6 @@ class ChatController extends GetxController {
       _audioService.playMessageSent();
 
       final String idempotencyKey = 'msg-${DateTime.now().microsecondsSinceEpoch}-${senderId.substring(0, 5)}';
-      final stopwatch = Stopwatch()..start();
       
       await _chatRepository.sendMessage(
         conversationId: targetConvId,
@@ -440,17 +424,6 @@ class ChatController extends GetxController {
         content: content.trim(),
         messageType: messageType,
         idempotencyKey: idempotencyKey,
-      );
-
-      stopwatch.stop();
-      AppLoggerService.logChatPerformance(
-        conversationId: targetConvId,
-        action: 'send_message_success',
-        latencyMs: stopwatch.elapsedMilliseconds,
-        details: {
-          'message_type': messageType.name,
-          'content_length': content.length,
-        },
       );
     } catch (e) {
       debugPrint('[ChatController] ✗ Error sending message: $e');
@@ -498,7 +471,6 @@ class ChatController extends GetxController {
   }
 
   Future<String?> _uploadImage(File file, String conversationId) async {
-    final stopwatch = Stopwatch()..start();
     try {
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final currentUser = SupabaseService.auth.currentUser;
@@ -507,27 +479,11 @@ class ChatController extends GetxController {
       await SupabaseService.client.storage
           .from('chat_attachments')
           .upload(path, file);
-
-      stopwatch.stop();
-      AppLoggerService.logChatPerformance(
-        conversationId: conversationId,
-        action: 'upload_image_success',
-        latencyMs: stopwatch.elapsedMilliseconds,
-        details: {'file_size': await file.length()},
-      );
-
+      
       return SupabaseService.client.storage
           .from('chat_attachments')
           .getPublicUrl(path);
     } catch (e) {
-      stopwatch.stop();
-      AppLoggerService.logChatPerformance(
-        conversationId: conversationId,
-        action: 'upload_image_failure',
-        latencyMs: stopwatch.elapsedMilliseconds,
-        severity: 'error',
-        details: {'error': e.toString()},
-      );
       debugPrint('[ChatController] ✗ Error uploading image: $e');
       Get.snackbar('خطأ الرفع', 'تعذر رفع الصورة للسيرفر');
       return null;

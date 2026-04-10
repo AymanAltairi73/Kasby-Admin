@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/settings_models.dart';
-import '../../../core/services/audit_logger.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 
 /// Settings Management Controller
@@ -70,13 +68,7 @@ class SettingsManagementController extends GetxController {
       } else {
         _loadDefaultFAQs();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadFAQs',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultFAQs();
     }
   }
@@ -101,13 +93,7 @@ class SettingsManagementController extends GetxController {
       } else {
         _loadDefaultTerms();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadTerms',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultTerms();
     }
   }
@@ -135,13 +121,7 @@ class SettingsManagementController extends GetxController {
       } else {
         _loadDefaultFees();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadFees',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultFees();
     }
   }
@@ -170,13 +150,7 @@ class SettingsManagementController extends GetxController {
       } else {
         _loadDefaultCurrencies();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadCurrencies',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultCurrencies();
     }
   }
@@ -203,13 +177,7 @@ class SettingsManagementController extends GetxController {
       } else {
         _loadDefaultLimits();
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadLimits',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       _loadDefaultLimits();
     }
   }
@@ -229,13 +197,7 @@ class SettingsManagementController extends GetxController {
           maintenanceMessage.value = response['maintenance_message'];
         }
       }
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: '_loadMaintenance',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       // Keep defaults
     }
   }
@@ -384,15 +346,8 @@ class SettingsManagementController extends GetxController {
         'is_maintenance_mode': value,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', settingsId.value);
-      _logAction('تغيير وضع الصيانة إلى: ${value ? 'مفعل' : 'معطل'}');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'toggleMaintenance',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -405,15 +360,8 @@ class SettingsManagementController extends GetxController {
         'maintenance_message': message,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', settingsId.value);
-      _logAction('تحديث رسالة الصيانة');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'updateMaintenanceMessage',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -437,15 +385,8 @@ class SettingsManagementController extends GetxController {
         answer: response['answer'] ?? '',
       );
       faqs.add(newFaq);
-      _logAction('إضافة سؤال شائع: $question');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'addFAQ',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     } finally {
       isSaving.value = false;
@@ -464,15 +405,8 @@ class SettingsManagementController extends GetxController {
           .eq('id', id);
 
       faqs[index] = faqs[index].copyWith(question: question, answer: answer);
-      _logAction('تحديث سؤال شائع: $question');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'updateFAQ',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     } finally {
       isSaving.value = false;
@@ -483,15 +417,8 @@ class SettingsManagementController extends GetxController {
     try {
       await SupabaseService.client.from('faqs').delete().eq('id', id);
       faqs.removeWhere((e) => e.id == id);
-      _logAction('حذف سؤال شائع');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'deleteFAQ',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -518,15 +445,8 @@ class SettingsManagementController extends GetxController {
         order: response['sort_order'] ?? nextOrder,
       );
       terms.add(newTerm);
-      _logAction('إضافة بند شروط: $title');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'addTerm',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     } finally {
       isSaving.value = false;
@@ -545,15 +465,8 @@ class SettingsManagementController extends GetxController {
           .eq('id', id);
 
       terms[index] = terms[index].copyWith(title: title, content: content);
-      _logAction('تحديث بند شروط: $title');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'updateTerm',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     } finally {
       isSaving.value = false;
@@ -564,15 +477,8 @@ class SettingsManagementController extends GetxController {
     try {
       await SupabaseService.client.from('terms_sections').delete().eq('id', id);
       terms.removeWhere((e) => e.id == id);
-      _logAction('حذف بند شروط');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'deleteTerm',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -593,20 +499,14 @@ class SettingsManagementController extends GetxController {
             .from('terms_sections')
             .update({'sort_order': i + 1})
             .eq('id', terms[i].id);
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'SettingsManagementController',
-          method: 'reorderTerms',
-          error: e,
-          stackTrace: stackTrace,
-        );
+      } catch (e) {
+        // Continue
       }
     }
-    _logAction('إعادة ترتيب بنود الشروط');
     Get.snackbar(
       'تم إعادة الترتيب',
       'تم حفظ ترتيب البنود الجديد بنجاح',
-      backgroundColor: KasbyColors.success.withOpacity(0.9),
+      backgroundColor: KasbyColors.success.withValues(alpha: 0.9),
       colorText: Colors.white,
       snackPosition: SnackPosition.BOTTOM,
       icon: const Icon(Icons.reorder_rounded, color: Colors.white),
@@ -625,15 +525,8 @@ class SettingsManagementController extends GetxController {
             .from('fees')
             .update({'value': newValue})
             .eq('id', id);
-        _logAction('تحديث قيمة الرسوم: ${fees[index].label}');
         return true;
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'SettingsManagementController',
-          method: 'updateFee',
-          error: e,
-          stackTrace: stackTrace,
-        );
+      } catch (e) {
         return false;
       }
     }
@@ -656,15 +549,8 @@ class SettingsManagementController extends GetxController {
         'is_base': currency.isBase,
         // icon_code, icon_family, icon_package are missing in DB
       });
-      _logAction('إضافة عملة جديدة: ${currency.name}');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'addCurrency',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -694,15 +580,8 @@ class SettingsManagementController extends GetxController {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', currency.id);
-      _logAction('تحديث عملة: ${currency.name}');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'updateCurrency',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -713,15 +592,8 @@ class SettingsManagementController extends GetxController {
 
     try {
       await SupabaseService.client.from('currencies').delete().eq('id', id);
-      _logAction('حذف عملة');
       return true;
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'SettingsManagementController',
-        method: 'deleteCurrency',
-        error: e,
-        stackTrace: stackTrace,
-      );
+    } catch (e) {
       return false;
     }
   }
@@ -735,30 +607,15 @@ class SettingsManagementController extends GetxController {
 
       try {
         await SupabaseService.client
-            .from('transaction_limits')
+            .from('limits')
             .update({'value': newValue})
             .eq('id', id);
-        _logAction('تحديث حد المعاملة: ${limits[index].label}');
         return true;
-      } catch (e, stackTrace) {
-        AppLoggerService.logError(
-          controller: 'SettingsManagementController',
-          method: 'updateLimit',
-          error: e,
-          stackTrace: stackTrace,
-        );
+      } catch (e) {
         return false;
       }
     }
     return false;
-  }
-
-  void _logAction(String details) {
-    AuditLogger.log(
-      adminName: 'SuperAdmin',
-      action: 'تعديل الإعدادات',
-      details: details,
-    );
   }
 
   bool _isUuid(String id) {
