@@ -119,35 +119,41 @@ class AuthController extends GetxController {
 
     debugPrint('[AuthController] _checkIsAdmin — userId: $userId');
 
-    try {
-      // 1. Direct query to profiles table for the 'role' column (Most reliable)
-      final response = await SupabaseService.client
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-
-      final role = response['role'] as String?;
-      debugPrint('[AuthController] _checkIsAdmin — DB role result: $role');
-
-      if (role == 'admin') return true;
-    } catch (e) {
-      debugPrint(
-        '[AuthController] _checkIsAdmin — DB query failed: $e. Using fallback...',
-      );
-
-      // 2. Fallback: Try RPC is_admin() (Checks role internally)
+    int retryCount = 0;
+    while (retryCount < 2) {
       try {
-        final rpcResult = await SupabaseService.client.rpc('is_admin');
-        if (rpcResult == true) return true;
-      } catch (rpcErr) {
-        debugPrint('[AuthController] _checkIsAdmin — RPC failed: $rpcErr');
-      }
+        // 1. Direct query to profiles table for the 'role' column (Single Source of Truth)
+        final response = await SupabaseService.client
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
 
-      // 3. Last resort: Check appMetadata (Legacy compatibility)
-      final user = SupabaseService.auth.currentUser;
-      final appAdmin = user?.appMetadata['is_admin'];
-      if (appAdmin == true || appAdmin == 'true') return true;
+        final role = response['role'] as String?;
+        debugPrint('[AuthController] _checkIsAdmin — DB role result: $role');
+
+        if (role == 'admin') return true;
+        
+        // If we got a result but it's not admin, no need to retry
+        break; 
+      } catch (e) {
+        retryCount++;
+        debugPrint(
+          '[AuthController] _checkIsAdmin — DB query failed (Attempt $retryCount): $e',
+        );
+        
+        if (retryCount < 2) {
+          // Wait a bit before retrying (staggered startup)
+          await Future.delayed(const Duration(milliseconds: 1500));
+        } else {
+          debugPrint('[AuthController] _checkIsAdmin — All attempts failed. Using metadata fallback...');
+          
+          // 2. Last resort: Check appMetadata (Injected by database trigger)
+          final user = SupabaseService.auth.currentUser;
+          final appAdmin = user?.appMetadata['is_admin'];
+          if (appAdmin == true || appAdmin == 'true') return true;
+        }
+      }
     }
 
     return false;

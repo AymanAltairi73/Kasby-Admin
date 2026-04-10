@@ -163,8 +163,8 @@ class LoansScreen extends StatelessWidget {
 
   Widget _buildLoanCard(Loan loan, int index) {
     final controller = Get.find<LoanController>();
-    final isPending = loan.status == LoanStatus.pending;
-    final isCurrent = loan.status == LoanStatus.current;
+    final isPending = loan.status == LoanStatus.pending || loan.status == LoanStatus.approved;
+    final isActive = loan.status == LoanStatus.active || loan.status == LoanStatus.partial_paid;
     final isOverdue = loan.isOverdue;
 
     return KasbyGlassCard(
@@ -285,7 +285,7 @@ class LoansScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '\$${loan.totalDue.toStringAsFixed(0)}',
+                              '\$${loan.remainingAmount.toStringAsFixed(0)}',
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w900,
@@ -294,7 +294,7 @@ class LoansScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'الأصل: \$${loan.amount.toStringAsFixed(0)}',
+                              'إجمالي القرض: \$${loan.totalDue.toStringAsFixed(0)}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.white38,
@@ -304,7 +304,7 @@ class LoansScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      if (isCurrent || loan.status == LoanStatus.paid)
+                      if (isActive || loan.status == LoanStatus.paid)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -333,7 +333,7 @@ class LoansScreen extends StatelessWidget {
                         ),
                     ],
                   ),
-                  if (isCurrent || loan.status == LoanStatus.paid) ...[
+                  if (isActive || loan.status == LoanStatus.paid) ...[
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -420,7 +420,7 @@ class LoansScreen extends StatelessWidget {
             ),
 
             // Action Buttons Section
-            if (isPending || isCurrent)
+            if (isPending || isActive)
               Container(
                 decoration: BoxDecoration(
                   border: Border(
@@ -462,16 +462,13 @@ class LoansScreen extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (isCurrent) ...[
+                    if (isActive) ...[
                       Expanded(
                         child: _buildActionButton(
-                          label: 'تم السداد',
-                          icon: Icons.done_all_rounded,
-                          color: KasbyColors.success,
-                          onPressed: () => controller.updateLoanStatus(
-                            loan.id,
-                            LoanStatus.paid,
-                          ),
+                          label: 'سجل السداد',
+                          icon: Icons.history_rounded,
+                          color: Colors.white70,
+                          onPressed: () => Get.to(() => LoanDetailScreen(loan: loan)),
                         ),
                       ),
                     ],
@@ -492,7 +489,7 @@ class LoansScreen extends StatelessWidget {
           _buildSummaryItem(
             'نشطة',
             controller.loans
-                .where((l) => l.status == LoanStatus.current)
+                .where((l) => l.status == LoanStatus.active || l.status == LoanStatus.partial_paid)
                 .length
                 .toString(),
             KasbyColors.info,
@@ -648,13 +645,36 @@ class LoansScreen extends StatelessWidget {
   }
 
   void _showRejectDialog(Loan loan) {
+    final TextEditingController reasonController = TextEditingController();
     Get.dialog(
       AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
         title: const Text('رفض السلفة', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'هل أنت متأكد من رفض سلفة البالغ قيمتها \$${loan.amount} للمستخدم ${loan.userName}؟',
-          style: const TextStyle(color: Colors.white70),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'هل أنت متأكد من رفض سلفة البالغ قيمتها \$${loan.amount} للمستخدم ${loan.userName}؟',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: reasonController,
+              maxLines: 2,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'اكتب سبب الرفض هنا...',
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.black26,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -663,10 +683,13 @@ class LoansScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              // Implementation for rejection
-              Get.find<LoanController>().updateLoanStatus(
+              if (reasonController.text.trim().isEmpty) {
+                Get.snackbar('خطأ', 'يرجى كتابة سبب الرفض');
+                return;
+              }
+              Get.find<LoanController>().rejectLoan(
                 loan.id,
-                LoanStatus.defaulted,
+                reasonController.text.trim(),
               );
               Get.back();
             },

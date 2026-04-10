@@ -331,6 +331,7 @@ $$ LANGUAGE plpgsql STABLE SET search_path = public;
 -- ============================================================
 -- 2. SECURITY HELPERS
 -- ============================================================
+DROP FUNCTION IF EXISTS public.get_my_role() CASCADE;
 CREATE OR REPLACE FUNCTION public.get_my_role()
 RETURNS role_type AS $$
 BEGIN
@@ -338,6 +339,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
 
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -345,6 +347,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
 
+DROP FUNCTION IF EXISTS public.is_agent() CASCADE;
 CREATE OR REPLACE FUNCTION public.is_agent()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -686,8 +689,13 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
     edited_text     TEXT,
     edited_at       TIMESTAMPTZ,
     reactions       TEXT[],
+    idempotency_key TEXT UNIQUE,
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_msg_conv ON public.chat_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_msg_idempotency ON public.chat_messages(idempotency_key);
+CREATE INDEX IF NOT EXISTS idx_msg_created ON public.chat_messages(created_at DESC);
 
 -- ============================================================
 -- 13. NOTIFICATIONS (الإشعارات)

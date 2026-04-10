@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/chat_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/chat_model.dart';
+import 'package:flutter/services.dart';
 
 class ChatDetailsScreen extends StatefulWidget {
   const ChatDetailsScreen({super.key});
@@ -16,9 +19,11 @@ class ChatDetailsScreen extends StatefulWidget {
 
 class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late ChatConversation conversation;
   late ChatController chatController;
+  bool _showSearch = false;
 
   @override
   void initState() {
@@ -72,11 +77,11 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
           SafeArea(
             child: Column(
               children: [
+                if (_showSearch) _buildSearchBar(),
                 // Messages Area
                 Expanded(
                   child: Obx(() {
-                    final messages =
-                        chatController.messages[conversation.id] ?? [];
+                    final messages = chatController.getFilteredMessages(conversation.id);
                     final isTyping =
                         chatController.isTyping[conversation.userId] ?? false;
 
@@ -116,6 +121,41 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+      ),
+      child: KasbyGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        opacity: 0.05,
+        child: TextField(
+          controller: _searchController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'ابحث في الرسائل...',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+            border: InputBorder.none,
+            prefixIcon: const Icon(Icons.search, size: 18, color: Colors.white30),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.close, size: 16, color: Colors.white30),
+              onPressed: () {
+                _searchController.clear();
+                chatController.searchQuery.value = '';
+                setState(() => _showSearch = false);
+              },
+            ),
+          ),
+          onChanged: (value) => chatController.searchQuery.value = value,
+        ),
+      ),
+    ).animate().fadeIn().slideY(begin: -0.5, end: 0);
   }
 
   bool _isSameDay(DateTime d1, DateTime d2) {
@@ -209,60 +249,50 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     backgroundColor: KasbyColors.primaryGold.withValues(
                       alpha: 0.2,
                     ),
-                    child: Text(
-                      conversation.userName[0],
-                      style: const TextStyle(
-                        color: KasbyColors.primaryGold,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    backgroundImage: (conversation.userAvatar != null && conversation.userAvatar!.isNotEmpty)
+                        ? CachedNetworkImageProvider(conversation.userAvatar!)
+                        : null,
+                    child: (conversation.userAvatar == null || conversation.userAvatar!.isEmpty)
+                        ? Text(
+                            conversation.userName[0],
+                            style: const TextStyle(
+                              color: KasbyColors.primaryGold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
+                Flexible(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        conversation.userName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          conversation.userName,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Obx(() {
-                        final isTyping =
-                            chatController.isTyping[conversation.id] ?? false;
-                        return Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: isTyping || conversation.isOnline
-                                    ? KasbyColors.success
-                                    : Colors.grey,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                isTyping
-                                    ? 'يكتب الآن...'
-                                    : (conversation.isOnline
-                                          ? 'نشط الآن'
-                                          : 'غير متصل'),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isTyping
-                                      ? KasbyColors.success
-                                      : Colors.white.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ),
-                          ],
+                        final currentConv = chatController.conversations.firstWhere(
+                          (c) => c.id == conversation.id,
+                          orElse: () => conversation,
+                        );
+                        final isTyping = chatController.isTyping[conversation.userId] ?? false;
+                        
+                        return _buildStatusBadge(
+                          isOnline: currentConv.isOnline,
+                          isTyping: isTyping,
+                          lastSeen: currentConv.lastSeenAt,
                         );
                       }),
                     ],
@@ -281,12 +311,12 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.videocam_rounded, color: Colors.white70),
+                icon: Icon(
+                  _showSearch ? Icons.close_rounded : Icons.search_rounded,
+                  color: Colors.white70,
+                ),
                 onPressed: () {
-                  Get.snackbar(
-                    'اتصال مرئي',
-                    'جاري بدء اتصال مرئي مع ${conversation.userName}...',
-                  );
+                  setState(() => _showSearch = !_showSearch);
                 },
               ),
               IconButton(
@@ -304,6 +334,38 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   }
 
   Widget _buildChatBubble(ChatMessage msg, int index) {
+    if (msg.isDeleted) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Align(
+          alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.block_flipped, size: 12, color: Colors.white.withValues(alpha: 0.2)),
+                const SizedBox(width: 8),
+                Text(
+                  'message_deleted'.tr,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -311,62 +373,137 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: msg.isMe
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
-            children: [
-              Container(
-                constraints: BoxConstraints(maxWidth: Get.width * 0.75),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: msg.isMe
-                      ? KasbyColors.primaryGold.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(20),
-                    topRight: const Radius.circular(20),
-                    bottomLeft: Radius.circular(msg.isMe ? 20 : 5),
-                    bottomRight: Radius.circular(msg.isMe ? 5 : 20),
+          GestureDetector(
+            onLongPress: () => _showMessageActions(msg),
+            child: Column(
+              crossAxisAlignment: msg.isMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  constraints: BoxConstraints(maxWidth: Get.width * 0.75),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                  border: Border.all(
+                  decoration: BoxDecoration(
                     color: msg.isMe
-                        ? KasbyColors.primaryGold.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: Text(
-                  msg.content,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    DateFormat('HH:mm', 'ar').format(msg.timestamp),
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white.withValues(alpha: 0.3),
+                        ? KasbyColors.primaryGold.withValues(alpha: 0.15)
+                        : Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: Radius.circular(msg.isMe ? 20 : 5),
+                      bottomRight: Radius.circular(msg.isMe ? 5 : 20),
+                    ),
+                    border: Border.all(
+                      color: msg.isMe
+                          ? KasbyColors.primaryGold.withValues(alpha: 0.3)
+                          : Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
-                  if (msg.isMe) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.done_all_rounded,
-                      size: 12,
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
+                  child: msg.type == MessageType.image
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: msg.content,
+                            placeholder: (context, url) => Container(
+                              width: 150,
+                              height: 150,
+                              color: Colors.white.withValues(alpha: 0.05),
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (context, url, e) => const Icon(Icons.error_outline),
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Text(
+                          msg.content,
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      DateFormat('HH:mm', 'ar').format(msg.timestamp),
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
                     ),
+                    if (msg.isMe) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.done_all_rounded,
+                        size: 13,
+                        color: msg.readAt != null
+                            ? KasbyColors.primaryGold
+                            : Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showMessageActions(ChatMessage msg) {
+    Get.bottomSheet(
+      KasbyGlassCard(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (msg.type == MessageType.text)
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: Colors.white70),
+                title: const Text('نسخ النص', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: msg.content));
+                  Get.back();
+                  Get.snackbar('تم النسخ', 'تم نسخ الرسالة إلى الحافظة');
+                },
+              ),
+            if (msg.isMe)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                title: const Text('حذف الرسالة', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  Get.back();
+                  Get.dialog(
+                    AlertDialog(
+                      backgroundColor: const Color(0xFF1A1A1E),
+                      title: const Text('حذف الرسالة', style: TextStyle(color: Colors.white)),
+                      content: const Text('هل أنت متأكد من حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.', style: TextStyle(color: Colors.white70)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(),
+                          child: const Text('إلغاء', style: TextStyle(color: Colors.white30)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            chatController.deleteMessage(msg.id, conversation.id);
+                            Get.back();
+                          },
+                          child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -386,24 +523,29 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               Icons.add_photo_alternate_rounded,
               color: Colors.white.withValues(alpha: 0.4),
             ),
-            onPressed: () {},
+            onPressed: () => chatController.pickAndSendImage(conversation.id),
           ),
           Expanded(
             child: KasbyGlassCard(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               opacity: 0.1,
-              child: TextField(
-                controller: _messageController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'اكتب رسالتك...',
-                  hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.3),
+                child: TextField(
+                  controller: _messageController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'اكتب رسالتك...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                    border: InputBorder.none,
                   ),
-                  border: InputBorder.none,
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      chatController.sendTypingEvent(conversation.id);
+                    }
+                  },
+                  onSubmitted: (_) => _handleSend(),
                 ),
-                onSubmitted: (_) => _handleSend(),
-              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -443,13 +585,114 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
 
   Widget _buildNebulaBackground() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A)],
+          colors: [
+            const Color(0xFF0E0E11),
+            const Color(0xFF0E0E11).withValues(alpha: 0.8),
+            KasbyColors.primaryGold.withValues(alpha: 0.05),
+            const Color(0xFF0E0E11),
+          ],
         ),
+      ),
+      child: Stack(
+        children: [
+          // Subtle dots pattern
+          Opacity(
+            opacity: 0.03,
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: GridPainter(),
+            ),
+          ),
+        ],
       ),
     );
   }
+  String _formatLastSeen(DateTime? lastSeenAt) {
+    if (lastSeenAt == null) return 'غير متصل';
+    final now = DateTime.now();
+    final diff = now.difference(lastSeenAt);
+
+    if (diff.inMinutes < 1) return 'منذ قليل';
+    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
+    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
+    if (diff.inDays < 7) return 'منذ ${diff.inDays} يوم';
+
+    return 'في ${DateFormat('MMM d', 'ar').format(lastSeenAt)}';
+  }
+
+  Widget _buildStatusBadge({
+    required bool isOnline,
+    required bool isTyping,
+    DateTime? lastSeen,
+  }) {
+    final color = (isOnline || isTyping) ? KasbyColors.success : Colors.white24;
+    final text = isTyping 
+        ? 'يكتب الآن...' 
+        : (isOnline ? 'نشط الآن' : 'آخر ظهور ${_formatLastSeen(lastSeen)}');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (isOnline || isTyping)
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.5),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: color.withValues(alpha: 0.9),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = KasbyColors.primaryGold
+      ..strokeWidth = 1;
+
+    for (double i = 0; i < size.width; i += 30) {
+      for (double j = 0; j < size.height; j += 30) {
+        canvas.drawCircle(Offset(i, j), 0.5, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

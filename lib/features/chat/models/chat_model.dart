@@ -7,7 +7,10 @@ class ChatMessage {
   final String content;
   final DateTime timestamp;
   final MessageType type;
+  final DateTime? readAt;
   final bool isMe;
+  final bool isDeleted;
+  final String? idempotencyKey;
 
   ChatMessage({
     required this.id,
@@ -16,7 +19,10 @@ class ChatMessage {
     required this.content,
     required this.timestamp,
     this.type = MessageType.text,
+    this.readAt,
     required this.isMe,
+    this.isDeleted = false,
+    this.idempotencyKey,
   });
 
   factory ChatMessage.fromSupabase(Map<String, dynamic> json, String currentUserId) {
@@ -29,7 +35,10 @@ class ChatMessage {
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       type: _parseMessageType(json['message_type']),
+      readAt: json['read_at'] != null ? DateTime.parse(json['read_at']) : null,
       isMe: json['sender_id'] == currentUserId,
+      isDeleted: json['is_deleted'] ?? false,
+      idempotencyKey: json['idempotency_key'],
     );
   }
 
@@ -52,6 +61,7 @@ class ChatConversation {
   final DateTime lastMessageTime;
   final int unreadCount;
   final bool isOnline;
+  final DateTime? lastSeenAt;
   final bool isAgent;
 
   ChatConversation({
@@ -63,8 +73,30 @@ class ChatConversation {
     required this.lastMessageTime,
     this.unreadCount = 0,
     this.isOnline = false,
+    this.lastSeenAt,
     this.isAgent = false,
   });
+
+  ChatConversation copyWith({
+    bool? isOnline,
+    DateTime? lastSeenAt,
+    String? lastMessage,
+    DateTime? lastMessageTime,
+    int? unreadCount,
+  }) {
+    return ChatConversation(
+      id: id,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      lastMessage: lastMessage ?? this.lastMessage,
+      lastMessageTime: lastMessageTime ?? this.lastMessageTime,
+      unreadCount: unreadCount ?? this.unreadCount,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      isAgent: isAgent,
+    );
+  }
 
   factory ChatConversation.fromSupabase(Map<String, dynamic> json) {
     var profileData = json['profiles'];
@@ -87,6 +119,11 @@ class ChatConversation {
           : DateTime.now(),
       unreadCount: json['unread_admin_count'] ?? 0,
       isOnline: false,
+      lastSeenAt: profile != null 
+          ? (profile['last_seen_at'] != null 
+              ? DateTime.parse(profile['last_seen_at']) 
+              : (profile['updated_at'] != null ? DateTime.parse(profile['updated_at']) : null))
+          : null,
       isAgent: json['is_agent_chat'] ?? false,
     );
   }

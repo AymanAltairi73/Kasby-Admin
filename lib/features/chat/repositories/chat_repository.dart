@@ -11,7 +11,7 @@ class ChatRepository extends BaseRepository {
       () async {
         final response = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url)')
+            .select('*, profiles(full_name, avatar_url, updated_at)')
             .order('last_message_at', ascending: false);
 
         return (response as List)
@@ -47,6 +47,7 @@ class ChatRepository extends BaseRepository {
     required String content,
     String senderType = 'admin',
     MessageType messageType = MessageType.text,
+    String? idempotencyKey,
   }) async {
     await safeQuery(
       () async {
@@ -56,6 +57,7 @@ class ChatRepository extends BaseRepository {
           'sender_type': senderType,
           'content': content,
           'message_type': messageType.name,
+          'idempotency_key': idempotencyKey,
         };
         
         await client.from('chat_messages').insert(data);
@@ -95,7 +97,7 @@ class ChatRepository extends BaseRepository {
         // Try to find existing
         final existing = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url)')
+            .select('*, profiles(full_name, avatar_url, updated_at)')
             .eq('user_id', userId)
             .maybeSingle();
 
@@ -107,12 +109,22 @@ class ChatRepository extends BaseRepository {
         final created = await client
             .from('chat_conversations')
             .insert({'user_id': userId})
-            .select('*, profiles(full_name, avatar_url)')
+            .select('*, profiles(full_name, avatar_url, updated_at)')
             .single();
 
         return ChatConversation.fromSupabase(created);
       },
       methodName: 'getOrCreateConversation',
+    );
+  }
+
+  /// Delete a message
+  Future<void> deleteMessage(String messageId) async {
+    await safeQuery(
+      () async {
+        await client.from('chat_messages').update({'is_deleted': true}).eq('id', messageId);
+      },
+      methodName: 'deleteMessage',
     );
   }
 }

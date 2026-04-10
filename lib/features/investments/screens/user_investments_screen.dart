@@ -8,7 +8,7 @@ import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 
 /// User Investments Screen
-/// View active and completed user investments
+/// View pending, active and completed user investments
 class UserInvestmentsScreen extends StatelessWidget {
   const UserInvestmentsScreen({super.key});
 
@@ -17,17 +17,18 @@ class UserInvestmentsScreen extends StatelessWidget {
     final controller = Get.put(InvestmentController());
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('استثمارات المستخدمين'),
-          bottom: const TabBar(
+          title: Text('user_investments'.tr),
+          bottom: TabBar(
             indicatorColor: KasbyColors.primaryGold,
             labelColor: KasbyColors.primaryGold,
             unselectedLabelColor: KasbyColors.textSecondary,
             tabs: [
-              Tab(text: 'النشطة'),
-              Tab(text: 'المكتملة'),
+              Tab(text: 'tab_pending_investments'.tr),
+              Tab(text: 'tab_active_investments'.tr),
+              Tab(text: 'tab_completed_investments'.tr),
             ],
           ),
         ),
@@ -41,6 +42,7 @@ class UserInvestmentsScreen extends StatelessWidget {
 
           return TabBarView(
             children: [
+              _buildInvestmentsList(controller.pendingInvestments),
               _buildInvestmentsList(controller.activeInvestments),
               _buildInvestmentsList(controller.completedInvestments),
             ],
@@ -59,12 +61,12 @@ class UserInvestmentsScreen extends StatelessWidget {
         color: KasbyColors.primaryGold,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 100),
+          children: [
+            const SizedBox(height: 100),
             Center(
               child: Text(
-                'لا توجد استثمارات',
-                style: TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
+                'no_investments_found'.tr,
+                style: const TextStyle(color: KasbyColors.textSecondary, fontSize: 16),
               ),
             ),
           ],
@@ -82,17 +84,18 @@ class UserInvestmentsScreen extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final investment = investments[index];
-          return _buildInvestmentCard(investment);
+          return _buildInvestmentCard(context, investment);
         },
       ),
     );
   }
 
-  Widget _buildInvestmentCard(UserInvestment investment) {
-    final progress = investment.status == 'Active'
+  Widget _buildInvestmentCard(BuildContext context, UserInvestment investment) {
+    final isPending = investment.status.toLowerCase() == 'pending';
+    final progress = (investment.status.toLowerCase() == 'active' || investment.status.toLowerCase() == 'completed')
         ? (DateTime.now().difference(investment.startDate).inDays /
               investment.endDate.difference(investment.startDate).inDays)
-        : 1.0;
+        : 0.0;
 
     return KasbyCard(
       child: Column(
@@ -109,7 +112,7 @@ class UserInvestmentsScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    investment.userName[0],
+                    investment.userName.isNotEmpty ? investment.userName[0] : '?',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -148,19 +151,15 @@ class UserInvestmentsScreen extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: investment.status == 'Active'
-                      ? KasbyColors.success.withValues(alpha: 0.2)
-                      : KasbyColors.info.withValues(alpha: 0.2),
+                  color: _getStatusColor(investment.status).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  investment.status == 'Active' ? 'نشط' : 'مكتمل',
+                  _getStatusLabel(investment.status),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: investment.status == 'Active'
-                        ? KasbyColors.success
-                        : KasbyColors.info,
+                    color: _getStatusColor(investment.status),
                   ),
                 ),
               ),
@@ -172,7 +171,7 @@ class UserInvestmentsScreen extends StatelessWidget {
               Expanded(
                 child: _buildInfoItem(
                   icon: FontAwesomeIcons.wallet,
-                  label: 'المبلغ',
+                  label: 'amount'.tr,
                   value: '\$${investment.amount.toStringAsFixed(2)}',
                   color: KasbyColors.primaryGold,
                 ),
@@ -180,7 +179,7 @@ class UserInvestmentsScreen extends StatelessWidget {
               Expanded(
                 child: _buildInfoItem(
                   icon: FontAwesomeIcons.chartLine,
-                  label: 'الربح المتوقع',
+                  label: 'expected_profit'.tr,
                   value: '\$${investment.expectedProfit.toStringAsFixed(2)}',
                   color: KasbyColors.success,
                 ),
@@ -193,14 +192,14 @@ class UserInvestmentsScreen extends StatelessWidget {
               Expanded(
                 child: _buildInfoItem(
                   icon: FontAwesomeIcons.percent,
-                  label: 'نسبة الربح',
+                  label: 'tooltip_profit_percentage'.tr,
                   value: '${investment.profitPercentage}%',
                   color: KasbyColors.info,
                 ),
               ),
             ],
           ),
-          if (investment.status == 'Active') ...[
+          if (investment.status.toLowerCase() == 'active') ...[
             const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,6 +234,38 @@ class UserInvestmentsScreen extends StatelessWidget {
                       KasbyColors.primaryGold,
                     ),
                     minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (isPending) ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _confirmApproval(context, investment),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: Text('activate_now'.tr),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KasbyColors.success,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showRejectDialog(context, investment),
+                    icon: const Icon(Icons.cancel_outlined, size: 18),
+                    label: Text('reject'.tr),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: KasbyColors.error,
+                      side: const BorderSide(color: KasbyColors.error),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
               ],
@@ -280,6 +311,111 @@ class UserInvestmentsScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return KasbyColors.success;
+      case 'pending':
+        return KasbyColors.primaryGold;
+      case 'matured':
+      case 'completed':
+        return KasbyColors.info;
+      case 'rejected':
+      case 'cancelled':
+        return KasbyColors.error;
+      default:
+        return KasbyColors.textSecondary;
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'active'.tr;
+      case 'pending':
+        return 'pending'.tr;
+      case 'matured':
+      case 'completed':
+        return 'completed'.tr;
+      case 'rejected':
+        return 'rejected'.tr;
+      case 'cancelled':
+        return 'enum_status_cancelled'.tr;
+      default:
+        return status;
+    }
+  }
+
+  void _confirmApproval(BuildContext context, UserInvestment inv) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: Text('confirm_now'.tr),
+        content: Text('${'confirm_approve_investment'.tr} (${inv.userName})'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء', style: TextStyle(color: KasbyColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              Get.find<InvestmentController>().approveUserInvestment(inv.id);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: KasbyColors.success),
+            child: Text('confirm'.tr, style: const TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRejectDialog(BuildContext context, UserInvestment inv) {
+    final reasonController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: KasbyColors.surface,
+        title: Text('reject_investment_title'.tr),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('rejection_reason_hint'.tr),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              decoration: InputDecoration(
+                hintText: 'rejection_reason_hint'.tr,
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء', style: TextStyle(color: KasbyColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (reasonController.text.trim().isEmpty) {
+                Get.snackbar('خطأ', 'يرجى إدخال سبب الرفض');
+                return;
+              }
+              Get.back();
+              Get.find<InvestmentController>().rejectUserInvestment(
+                inv.id,
+                reasonController.text.trim(),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: KasbyColors.error),
+            child: Text('confirm'.tr, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 }

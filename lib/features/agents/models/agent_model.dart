@@ -1,6 +1,7 @@
 /// Agent Model — maps to `agents` table in Supabase
 class Agent {
   final String id;
+  final String userId; // Added for profiles reference
   final String name;
   final String country;
   final String province;
@@ -19,6 +20,7 @@ class Agent {
 
   Agent({
     required this.id,
+    required this.userId,
     required this.name,
     required this.country,
     required this.province,
@@ -38,6 +40,7 @@ class Agent {
 
   Agent copyWith({
     String? name,
+    String? userId,
     String? country,
     String? province,
     String? city,
@@ -55,6 +58,7 @@ class Agent {
   }) {
     return Agent(
       id: id,
+      userId: userId ?? this.userId,
       name: name ?? this.name,
       country: country ?? this.country,
       province: province ?? this.province,
@@ -93,6 +97,7 @@ class Agent {
 
     return Agent(
       id: json['id'] ?? '',
+      userId: json['user_id'] ?? json['id'] ?? '',
       name: profile?['full_name'] ?? json['full_name'] ?? json['name'] ?? '',
       country:
           profile?['country_code'] ??
@@ -122,6 +127,7 @@ class Agent {
   factory Agent.fromJson(Map<String, dynamic> json) {
     return Agent(
       id: json['id'] ?? '',
+      userId: json['user_id'] ?? json['id'] ?? '',
       name: json['name'] ?? json['full_name'] ?? '',
       country: json['country'] ?? '',
       province: json['province'] ?? '',
@@ -151,6 +157,7 @@ class Agent {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'user_id': userId,
       'name': name,
       'country': country,
       'province': province,
@@ -175,6 +182,7 @@ class Agent {
   Map<String, dynamic> toSupabase() {
     return {
       'id': id,
+      'user_id': userId,
       'status': status,
       'availability_status': availabilityStatus,
       'is_available_now': isAvailableNow,

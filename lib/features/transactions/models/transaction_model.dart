@@ -11,6 +11,11 @@ class Transaction {
   final String? proofUrl;
   final DateTime createdAt;
   final DateTime? processedAt;
+  final String? counterpartUserId;
+  final String? counterpartUserName;
+  final String currency;
+  final double? runningBalance;
+  final String? referenceId;
 
   Transaction({
     required this.id,
@@ -23,6 +28,11 @@ class Transaction {
     this.proofUrl,
     required this.createdAt,
     this.processedAt,
+    this.counterpartUserId,
+    this.counterpartUserName,
+    this.currency = 'USD',
+    this.runningBalance,
+    this.referenceId,
   });
 
   Transaction copyWith({
@@ -32,6 +42,8 @@ class Transaction {
     DateTime? processedAt,
     String? userName,
     double? amount,
+    String? counterpartUserName,
+    double? runningBalance,
   }) {
     return Transaction(
       id: id,
@@ -44,6 +56,11 @@ class Transaction {
       proofUrl: proofUrl ?? this.proofUrl,
       createdAt: createdAt,
       processedAt: processedAt ?? this.processedAt,
+      counterpartUserId: counterpartUserId,
+      counterpartUserName: counterpartUserName ?? this.counterpartUserName,
+      currency: currency,
+      runningBalance: runningBalance ?? this.runningBalance,
+      referenceId: referenceId,
     );
   }
 
@@ -56,6 +73,13 @@ class Transaction {
       uName = profile['full_name'] ?? '';
     }
 
+    // Extract counterpart name if joined
+    String cpName = '';
+    final cpProfile = json['counterpart_profile'];
+    if (cpProfile is Map) {
+      cpName = cpProfile['full_name'] ?? '';
+    }
+
     return Transaction(
       id: json['id'] ?? '',
       userId: json['user_id'] ?? '',
@@ -63,7 +87,7 @@ class Transaction {
       type: json['type'] ?? 'deposit',
       amount: (json['amount'] ?? 0.0).toDouble(),
       status: json['status'] ?? 'pending',
-      reason: json['rejection_reason'],
+      reason: json['rejection_reason'] ?? json['reason'],
       proofUrl: json['proof_url'],
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
@@ -71,6 +95,13 @@ class Transaction {
       processedAt: json['processed_at'] != null
           ? DateTime.parse(json['processed_at'])
           : null,
+      counterpartUserId: json['counterpart_user_id'],
+      counterpartUserName: cpName,
+      currency: json['currency'] ?? 'USD',
+      runningBalance: json['running_balance'] != null
+          ? (json['running_balance'] as num).toDouble()
+          : null,
+      referenceId: json['reference_id'],
     );
   }
 
@@ -96,6 +127,15 @@ class Transaction {
           : (json['processed_at'] != null
                 ? DateTime.parse(json['processed_at'])
                 : null),
+      counterpartUserId: json['counterpartUserId'] ?? json['counterpart_user_id'],
+      counterpartUserName: json['counterpartUserName'],
+      currency: json['currency'] ?? 'USD',
+      runningBalance: json['runningBalance'] != null
+          ? (json['runningBalance'] as num).toDouble()
+          : (json['running_balance'] != null
+                ? (json['running_balance'] as num).toDouble()
+                : null),
+      referenceId: json['referenceId'] ?? json['reference_id'],
     );
   }
 
@@ -111,6 +151,11 @@ class Transaction {
       'proofUrl': proofUrl,
       'createdAt': createdAt.toIso8601String(),
       'processedAt': processedAt?.toIso8601String(),
+      'counterpartUserId': counterpartUserId,
+      'counterpartUserName': counterpartUserName,
+      'currency': currency,
+      'runningBalance': runningBalance,
+      'referenceId': referenceId,
     };
   }
 }

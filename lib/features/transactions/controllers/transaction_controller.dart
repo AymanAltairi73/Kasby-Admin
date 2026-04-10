@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
@@ -27,6 +28,26 @@ class TransactionController extends GetxController {
   void onInit() {
     super.onInit();
     loadTransactions();
+    _listenToTransactions();
+  }
+
+  // ─── TRANSACTIONS LISTENER ────────────────────────────
+  StreamSubscription? _transactionSubscription;
+
+  void _listenToTransactions() {
+    _transactionSubscription?.cancel();
+    _transactionSubscription = SupabaseService.client
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .listen((data) async {
+          debugPrint('[TransactionController] ℹ️ Transactions updated via stream');
+          
+          // Re-fetch with joins to ensure user names are present (stream doesn't support joins)
+          await loadTransactions();
+        }, onError: (error) {
+          debugPrint('[TransactionController] ❌ Stream error: $error');
+        });
   }
 
   /// Pending deposits getter
@@ -37,6 +58,22 @@ class TransactionController extends GetxController {
   /// Pending withdrawals getter
   List<Transaction> get pendingWithdrawals => transactions
       .where((t) => t.status == 'pending' && t.type == 'withdrawal')
+      .toList();
+
+  /// All deposits getter
+  List<Transaction> get allDeposits => transactions
+      .where((t) => t.type == 'deposit' || t.type == 'admin_credit' || t.type == 'profit')
+      .toList();
+
+  /// All withdrawals getter
+  List<Transaction> get allWithdrawals => transactions
+
+      .where((t) => t.type == 'withdrawal' || t.type == 'admin_debit')
+      .toList();
+
+  /// All transfers getter
+  List<Transaction> get allTransfers => transactions
+      .where((t) => t.type == 'transfer_in' || t.type == 'transfer_out')
       .toList();
 
   /// Load transactions from Supabase with user names
@@ -120,7 +157,11 @@ class TransactionController extends GetxController {
     }
 
     if (selectedType.value != 'Both' && selectedType.value != 'all') {
-      result = result.where((t) => t.type == selectedType.value).toList();
+      if (selectedType.value == 'transfer') {
+        result = result.where((t) => t.type == 'transfer_in' || t.type == 'transfer_out').toList();
+      } else {
+        result = result.where((t) => t.type == selectedType.value).toList();
+      }
     }
 
     if (selectedStatus.value != 'all') {
@@ -197,15 +238,17 @@ class TransactionController extends GetxController {
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await _transactionRepo.processTransaction(
-        'fn_process_withdrawal',
+        'approve_withdrawal',
         {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
       await loadTransactions();
       Get.snackbar(
         'تم',
-        'تمت الموافقة على السحب',
+        'تمت الموافقة على السحب بنجاح',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.withValues(alpha: 0.1),
+        colorText: Colors.green,
       );
     } catch (e, stackTrace) {
       AppLoggerService.logError(
@@ -236,15 +279,18 @@ class TransactionController extends GetxController {
     }
   }
 
-  /// Reject a transaction via RPC — positional reason parameter for UI compat
+  /// Reject a transaction via RPC
   Future<void> rejectTransaction(String txnId, [String reason = '']) async {
     try {
       isLoading.value = true;
       debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId');
       final adminId = SupabaseService.auth.currentUser?.id;
 
+      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
+      final fnName = (txn?.type == 'withdrawal') ? 'reject_withdrawal' : 'fn_reject_transaction';
+
       await _transactionRepo.processTransaction(
-        'fn_reject_transaction',
+        fnName,
         {
           'p_txn_id': txnId,
           'p_admin_id': adminId,
@@ -257,6 +303,8 @@ class TransactionController extends GetxController {
         'تم',
         'تم رفض المعاملة',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.1),
+        colorText: Colors.red,
       );
     } catch (e, stackTrace) {
       AppLoggerService.logError(
@@ -273,5 +321,11 @@ class TransactionController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  @override
+  void onClose() {
+    _transactionSubscription?.cancel();
+    super.onClose();
   }
 }

@@ -50,6 +50,10 @@ import 'features/kyc/screens/kyc_management_screen.dart';
 import 'features/notifications/controllers/notification_controller.dart';
 import 'core/services/admin_listener_service.dart';
 import 'core/localization/admin_translations.dart';
+import 'core/services/presence_service.dart';
+import 'core/services/network_service.dart';
+import 'core/widgets/connectivity_banner.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,27 +65,31 @@ Future<void> main() async {
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
-  await initializeDateFormatting('en', null);
-
-  // Initialize GetX Controllers (Global)
+  // 1. Core Services & Auth (Dependencies for most things)
   Get.put(AuthController());
+  Get.put(AudioService());
   Get.put(ThemeController());
   Get.put(SettingsController());
-  Get.put(SettingsManagementController());
-  Get.put(UserController());
-  Get.put(TransactionController());
-  Get.put(InvestmentController());
-  Get.put(AgentController());
-  Get.put(LoanController());
-  Get.put(MainController());
-  Get.put(AuditController());
-  Get.put(ErrorLogController());
-  Get.put(AudioService());
-  Get.put(ChatController());
-  Get.put(RewardsController());
-  Get.put(SubscriptionController());
-  Get.put(NotificationController());
+
+  // 2. Real-time Infrastructure (Async init)
+  await Get.putAsync(() => NetworkService().init());
+  await Get.putAsync(() => PresenceService().init());
   await Get.putAsync(() => AdminListenerService().init());
+
+  // 3. Subject-Matter Controllers (Lazy Load on Demand)
+  Get.lazyPut(() => SettingsManagementController());
+  Get.lazyPut(() => UserController());
+  Get.lazyPut(() => TransactionController());
+  Get.lazyPut(() => InvestmentController());
+  Get.lazyPut(() => AgentController());
+  Get.lazyPut(() => LoanController());
+  Get.lazyPut(() => MainController());
+  Get.lazyPut(() => AuditController());
+  Get.lazyPut(() => ErrorLogController());
+  Get.lazyPut(() => ChatController());
+  Get.lazyPut(() => RewardsController());
+  Get.lazyPut(() => SubscriptionController());
+  Get.lazyPut(() => NotificationController());
 
   runApp(const KasbyAdminApp());
 }
@@ -158,6 +166,9 @@ class KasbyAdminApp extends StatelessWidget {
       ],
 
       // Check if user is already logged in
+      builder: (context, child) {
+        return ConnectivityBanner(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }

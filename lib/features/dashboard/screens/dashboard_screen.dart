@@ -72,7 +72,7 @@ class DashboardScreen extends StatelessWidget {
                         // ═══════════════════════════════════════
                         // Section 3: Urgent Alerts
                         // ═══════════════════════════════════════
-                        _buildUrgentAlerts(transactionController),
+                        _buildUrgentAlerts(dashboardController),
 
                         // ═══════════════════════════════════════
                         // Section 4: Financial Overview
@@ -268,14 +268,14 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(
-                  Icons.power_settings_new_rounded,
-                  color: KasbyColors.error,
-                ),
-                onPressed: () => _showLogoutDialog(authController),
-              ),
-              const SizedBox(width: 8),
+              // IconButton(
+              //   icon: const Icon(
+              //     Icons.power_settings_new_rounded,
+              //     color: KasbyColors.error,
+              //   ),
+              //   onPressed: () => _showLogoutDialog(authController),
+              // ),
+              // const SizedBox(width: 8),
             ],
           ),
         ),
@@ -379,12 +379,12 @@ class DashboardScreen extends StatelessWidget {
               icon: FontAwesomeIcons.userCheck,
               color: KasbyColors.glowGreen,
             ),
-            _buildStatChip(
-              title: 'معاملات معلقة',
-              value: NumberFormat('#,###').format(dc.pendingTransactions),
-              icon: FontAwesomeIcons.clockRotateLeft,
-              color: KasbyColors.glowOrange,
-            ),
+            // _buildStatChip(
+            //   title: 'معاملات معلقة',
+            //   value: NumberFormat('#,###').format(dc.pendingTransactions),
+            //   icon: FontAwesomeIcons.clockRotateLeft,
+            //   color: KasbyColors.glowOrange,
+            // ),
             // _buildStatChip(
             //   title: 'حجم التداول',
             //   value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
@@ -458,76 +458,93 @@ class DashboardScreen extends StatelessWidget {
   //  SECTION 3: URGENT ALERTS
   // ═══════════════════════════════════════════════════════════
 
-  Widget _buildUrgentAlerts(TransactionController transactionController) {
+  Widget _buildUrgentAlerts(DashboardController dc) {
     return Obx(() {
-      final pendingWithdrawals = transactionController.pendingWithdrawals;
-      if (pendingWithdrawals.isEmpty) return const SizedBox.shrink();
+      final wCount = dc.pendingWithdrawalsCount.value;
+      final kCount = dc.pendingKYCCount.value;
+      
+      if (wCount == 0 && kCount == 0) return const SizedBox.shrink();
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 20),
-        child: KasbyGlassCard(
-          padding: const EdgeInsets.all(14),
-          color: KasbyColors.error.withValues(alpha: 0.06),
-          borderColor: KasbyColors.error.withValues(alpha: 0.2),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: KasbyColors.error.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.warning_amber_rounded,
-                  color: KasbyColors.error,
-                  size: 20,
-                ),
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          children: [
+            if (wCount > 0)
+              _buildAlertCard(
+                title: 'طلبات سحب معلقة',
+                subtitle: '$wCount طلب سحب بانتظار الموافقة',
+                icon: Icons.account_balance_wallet_rounded,
+                color: KasbyColors.error,
+                onTap: () => Get.toNamed('/transactions', arguments: 1),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'طلبات سحب معلقة',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${pendingWithdrawals.length} طلب بانتظار الموافقة',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
+            if (wCount > 0 && kCount > 0) const SizedBox(height: 12),
+            if (kCount > 0)
+              _buildAlertCard(
+                title: 'توثيق هوية معلق',
+                subtitle: '$kCount حساب بانتظار التوثيق',
+                icon: Icons.verified_user_rounded,
+                color: KasbyColors.info,
+                onTap: () => Get.toNamed('/kyc'),
               ),
-              TextButton(
-                onPressed: () => Get.toNamed('/transactions', arguments: 1),
-                style: TextButton.styleFrom(
-                  backgroundColor: KasbyColors.error.withValues(alpha: 0.15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  'مراجعة',
-                  style: TextStyle(
-                    color: KasbyColors.error,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       );
     });
+  }
+
+  Widget _buildAlertCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return KasbyGlassCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      color: color.withValues(alpha: 0.1),
+      borderColor: color.withValues(alpha: 0.3),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: color.withValues(alpha: 0.5),
+            size: 14,
+          ),
+        ],
+      ),
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -1036,93 +1053,93 @@ class DashboardScreen extends StatelessWidget {
     return Icons.history_rounded;
   }
 
-  void _showLogoutDialog(AuthController authController) {
-    Get.dialog(
-      Center(
-        child: KasbyGlassCard(
-          margin: const EdgeInsets.symmetric(horizontal: 32),
-          padding: const EdgeInsets.all(24),
-          opacity: 0.1,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: KasbyColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  color: KasbyColors.error,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'تسجيل الخروج',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'إلغاء',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: KasbyColors.error.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: KasbyColors.error.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          Get.back();
-                          authController.logout();
-                        },
-                        child: const Text(
-                          'تأكيد الخروج',
-                          style: TextStyle(
-                            color: KasbyColors.error,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // void _showLogoutDialog(AuthController authController) {
+  //   Get.dialog(
+  //     Center(
+  //       child: KasbyGlassCard(
+  //         margin: const EdgeInsets.symmetric(horizontal: 32),
+  //         padding: const EdgeInsets.all(24),
+  //         opacity: 0.1,
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(16),
+  //               decoration: BoxDecoration(
+  //                 color: KasbyColors.error.withValues(alpha: 0.1),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: const Icon(
+  //                 Icons.logout_rounded,
+  //                 color: KasbyColors.error,
+  //                 size: 32,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 24),
+  //             const Text(
+  //               'تسجيل الخروج',
+  //               style: TextStyle(
+  //                 fontSize: 20,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Colors.white,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             Text(
+  //               'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+  //             ),
+  //             const SizedBox(height: 32),
+  //             Row(
+  //               children: [
+  //                 Expanded(
+  //                   child: TextButton(
+  //                     onPressed: () => Get.back(),
+  //                     child: Text(
+  //                       'إلغاء',
+  //                       style: TextStyle(
+  //                         color: Colors.white.withValues(alpha: 0.5),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 16),
+  //                 Expanded(
+  //                   child: Container(
+  //                     decoration: BoxDecoration(
+  //                       color: KasbyColors.error.withValues(alpha: 0.2),
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       border: Border.all(
+  //                         color: KasbyColors.error.withValues(alpha: 0.3),
+  //                       ),
+  //                     ),
+  //                     child: TextButton(
+  //                       onPressed: () {
+  //                         Get.back();
+  //                         authController.logout();
+  //                       },
+  //                       child: const Text(
+  //                         'تأكيد الخروج',
+  //                         style: TextStyle(
+  //                           color: KasbyColors.error,
+  //                           fontWeight: FontWeight.bold,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
-/// Simple data class for action items
+// Simple data class for action items
 class _ActionItem {
   final String title;
   final IconData icon;

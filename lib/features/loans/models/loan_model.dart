@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum LoanStatus { pending, current, paid, delayed, defaulted }
+enum LoanStatus { pending, approved, active, partial_paid, paid, overdue, defaulted, rejected }
 
 /// Loan Model — maps to `loans` table in Supabase
 class Loan {
@@ -10,10 +10,12 @@ class Loan {
   final double amount;
   final double interestRate;
   final double totalDue;
+  final double remainingAmount;
   final double paidAmount;
   final DateTime loanDate;
   final DateTime repaymentDate;
   final LoanStatus status;
+  final String? rejectionReason;
 
   Loan({
     required this.id,
@@ -22,10 +24,12 @@ class Loan {
     required this.amount,
     this.interestRate = 0.0,
     this.totalDue = 0.0,
+    this.remainingAmount = 0.0,
     this.paidAmount = 0.0,
     required this.loanDate,
     required this.repaymentDate,
     required this.status,
+    this.rejectionReason,
   });
 
   Loan copyWith({
@@ -33,10 +37,12 @@ class Loan {
     double? amount,
     double? interestRate,
     double? totalDue,
+    double? remainingAmount,
     double? paidAmount,
     DateTime? loanDate,
     DateTime? repaymentDate,
     LoanStatus? status,
+    String? rejectionReason,
   }) {
     return Loan(
       id: id,
@@ -45,10 +51,12 @@ class Loan {
       amount: amount ?? this.amount,
       interestRate: interestRate ?? this.interestRate,
       totalDue: totalDue ?? this.totalDue,
+      remainingAmount: remainingAmount ?? this.remainingAmount,
       paidAmount: paidAmount ?? this.paidAmount,
       loanDate: loanDate ?? this.loanDate,
       repaymentDate: repaymentDate ?? this.repaymentDate,
       status: status ?? this.status,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
     );
   }
 
@@ -56,14 +64,20 @@ class Loan {
     switch (status) {
       case LoanStatus.pending:
         return 'قيد الانتظار';
-      case LoanStatus.current:
-        return 'جاري السداد';
+      case LoanStatus.approved:
+        return 'تمت الموافقة';
+      case LoanStatus.active:
+        return 'نشطة / جاري السداد';
+      case LoanStatus.partial_paid:
+        return 'سداد جزئي';
       case LoanStatus.paid:
         return 'تم السداد بنجاح';
-      case LoanStatus.delayed:
-        return 'متأخر عن السداد';
+      case LoanStatus.overdue:
+        return 'متأخرة عن السداد';
       case LoanStatus.defaulted:
-        return 'متعثر كلياً';
+        return 'متعثرة كلياً';
+      case LoanStatus.rejected:
+        return 'مرفوضة';
     }
   }
 
@@ -71,14 +85,20 @@ class Loan {
     switch (status) {
       case LoanStatus.pending:
         return Colors.orange;
-      case LoanStatus.current:
+      case LoanStatus.approved:
+        return Colors.cyan;
+      case LoanStatus.active:
         return Colors.blue;
+      case LoanStatus.partial_paid:
+        return Colors.teal;
       case LoanStatus.paid:
         return Colors.green;
-      case LoanStatus.delayed:
+      case LoanStatus.overdue:
         return Colors.red;
       case LoanStatus.defaulted:
         return Colors.grey;
+      case LoanStatus.rejected:
+        return Colors.red.shade900;
     }
   }
 
@@ -89,34 +109,35 @@ class Loan {
   }
 
   double get percentProgress {
-    final totalDuration = repaymentDate.difference(loanDate).inMilliseconds;
-    if (totalDuration <= 0) return 1.0;
-    
-    final elapsed = DateTime.now().difference(loanDate).inMilliseconds;
-    if (elapsed <= 0) return 0.0;
-    
-    final progress = elapsed / totalDuration;
-    return progress.clamp(0.0, 1.0);
+    if (totalDue <= 0) return 0.0;
+    return (paidAmount / totalDue).clamp(0.0, 1.0);
   }
 
   bool get isOverdue {
     if (status == LoanStatus.paid) return false;
-    return DateTime.now().isAfter(repaymentDate);
+    return DateTime.now().isAfter(repaymentDate) || status == LoanStatus.overdue;
   }
 
   static LoanStatus _parseStatus(String? status) {
     switch (status) {
       case 'pending':
         return LoanStatus.pending;
+      case 'approved':
+        return LoanStatus.approved;
+      case 'active':
       case 'current':
-        return LoanStatus.current;
+        return LoanStatus.active;
+      case 'partial_paid':
+        return LoanStatus.partial_paid;
       case 'paid':
         return LoanStatus.paid;
-      case 'delayed':
       case 'overdue':
-        return LoanStatus.delayed;
+      case 'delayed':
+        return LoanStatus.overdue;
       case 'defaulted':
         return LoanStatus.defaulted;
+      case 'rejected':
+        return LoanStatus.rejected;
       default:
         return LoanStatus.pending;
     }
@@ -137,6 +158,7 @@ class Loan {
       amount: (json['amount'] ?? 0.0).toDouble(),
       interestRate: (json['interest_rate'] ?? 0.0).toDouble(),
       totalDue: (json['total_due'] ?? 0.0).toDouble(),
+      remainingAmount: (json['remaining_amount'] ?? 0.0).toDouble(),
       paidAmount: (json['paid_amount'] ?? 0.0).toDouble(),
       loanDate: json['loan_date'] != null
           ? DateTime.parse(json['loan_date'])
@@ -147,6 +169,7 @@ class Loan {
           ? DateTime.parse(json['repayment_date'])
           : DateTime.now(),
       status: _parseStatus(json['status']),
+      rejectionReason: json['rejection_reason'],
     );
   }
 
@@ -159,6 +182,7 @@ class Loan {
       amount: (json['amount'] ?? 0.0).toDouble(),
       interestRate: (json['interestRate'] ?? json['interest_rate'] ?? 0.0).toDouble(),
       totalDue: (json['totalDue'] ?? json['total_due'] ?? 0.0).toDouble(),
+      remainingAmount: (json['remaining_amount'] ?? 0.0).toDouble(),
       paidAmount: (json['paidAmount'] ?? json['paid_amount'] ?? 0.0).toDouble(),
       loanDate: json['loanDate'] != null
           ? DateTime.parse(json['loanDate'])
@@ -170,26 +194,24 @@ class Loan {
           : (json['repayment_date'] != null
                 ? DateTime.parse(json['repayment_date'])
                 : DateTime.now()),
-      status: json['status'] is String
-          ? _parseStatus(json['status'])
-          : LoanStatus.values.firstWhere(
-              (e) => e.toString() == json['status'],
-              orElse: () => LoanStatus.current,
-            ),
+      status: _parseStatus(json['status']),
+      rejectionReason: json['rejectionReason'] ?? json['rejection_reason'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userName': userName,
+      'user_id': userId,
       'amount': amount,
-      'interestRate': interestRate,
-      'totalDue': totalDue,
-      'paidAmount': paidAmount,
-      'loanDate': loanDate.toIso8601String(),
-      'repaymentDate': repaymentDate.toIso8601String(),
-      'status': status.toString(),
+      'interest_rate': interestRate,
+      'total_due': totalDue,
+      'remaining_amount': remainingAmount,
+      'paid_amount': paidAmount,
+      'loan_date': loanDate.toIso8601String(),
+      'repayment_date': repaymentDate.toIso8601String(),
+      'status': status.name,
+      'rejection_reason': rejectionReason,
     };
   }
 }

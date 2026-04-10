@@ -17,7 +17,7 @@ class TransactionRepository extends BaseRepository {
       () async {
         var query = client
             .from(tableName)
-            .select('*, profiles!transactions_user_id_fkey!left(full_name)');
+            .select('*, profiles!transactions_user_id_fkey(full_name), counterpart_profile:profiles!transactions_counterpart_user_id_fkey(full_name)');
 
         if (type != null && type != 'Both' && type != 'all') {
           query = query.eq('type', type);

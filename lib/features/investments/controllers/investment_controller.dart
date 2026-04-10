@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class InvestmentController extends GetxController {
     super.onInit();
     loadPlans();
     loadUserInvestments();
+    _listenToUserInvestments();
   }
 
   /// Load investment plans from Supabase
@@ -78,6 +80,86 @@ class InvestmentController extends GetxController {
       );
     }
     isLoading.value = false;
+  }
+
+  // ─── USER INVESTMENTS LISTENER ──────────────────────────
+  StreamSubscription? _userInvestmentsSubscription;
+
+  void _listenToUserInvestments() {
+    _userInvestmentsSubscription?.cancel();
+    _userInvestmentsSubscription = SupabaseService.client
+        .from('user_investments')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .listen((data) async {
+          debugPrint('[InvestmentController] ℹ️ User investments updated via stream');
+          
+          // Re-fetch with joins to ensure names are present (stream doesn't support joins)
+          await loadUserInvestments();
+        }, onError: (error) {
+          debugPrint('[InvestmentController] ❌ Stream error: $error');
+        });
+  }
+
+  /// Approve a pending investment
+  Future<void> approveUserInvestment(String investmentId) async {
+    isLoading.value = true;
+    try {
+      final response = await SupabaseService.client.rpc(
+        'approve_investment',
+        params: {
+          'p_investment_id': investmentId,
+          'p_admin_id': SupabaseService.userId,
+        },
+      );
+
+      final result = response as Map<String, dynamic>;
+      if (result['success'] == true) {
+        Get.snackbar(
+          'نجح',
+          'تمت الموافقة على الاستثمار وتفعيله',
+          backgroundColor: KasbyColors.success.withValues(alpha: 0.1),
+          colorText: KasbyColors.success,
+        );
+      } else {
+        throw result['error'] ?? 'فشل الموافقة';
+      }
+    } catch (e) {
+      Get.snackbar('خطأ', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Reject a pending investment
+  Future<void> rejectUserInvestment(String investmentId, String reason) async {
+    isLoading.value = true;
+    try {
+      final response = await SupabaseService.client.rpc(
+        'reject_investment',
+        params: {
+          'p_investment_id': investmentId,
+          'p_admin_id': SupabaseService.userId,
+          'p_reason': reason,
+        },
+      );
+
+      final result = response as Map<String, dynamic>;
+      if (result['success'] == true) {
+        Get.snackbar(
+          'تم الرفض',
+          'تم رفض الاستثمار بنجاح',
+          backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
+          colorText: KasbyColors.error,
+        );
+      } else {
+        throw result['error'] ?? 'فشل الرفض';
+      }
+    } catch (e) {
+      Get.snackbar('خطأ', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   /// Upload plan image to Supabase Storage
@@ -262,8 +344,19 @@ class InvestmentController extends GetxController {
     return userInvestments.where((inv) => inv.status == 'active').toList();
   }
 
+  /// Get pending investments
+  List<UserInvestment> get pendingInvestments {
+    return userInvestments.where((inv) => inv.status == 'pending').toList();
+  }
+
   /// Get completed investments
   List<UserInvestment> get completedInvestments {
     return userInvestments.where((inv) => inv.status == 'matured').toList();
+  }
+
+  @override
+  void onClose() {
+    _userInvestmentsSubscription?.cancel();
+    super.onClose();
   }
 }

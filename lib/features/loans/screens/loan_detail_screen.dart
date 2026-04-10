@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/loan_model.dart';
+import '../controllers/loan_controller.dart';
 
 /// Loan Detail Screen
 /// Comprehensive view of a single loan including financial breakdown and status history
@@ -47,6 +49,11 @@ class LoanDetailScreen extends StatelessWidget {
                   
                   // Financial Breakdown
                   _buildFinancialBreakdown(loan, currencyFormat),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Repayment History
+                  _buildRepaymentHistory(context, loan, currencyFormat, dateFormat),
                   
                   const SizedBox(height: 20),
                   
@@ -164,11 +171,81 @@ class LoanDetailScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('المبلغ الأصلي', format.format(loan.amount)),
+          _buildDetailRow('قيمة القرض', format.format(loan.amount)),
           _buildDetailRow('نسبة الفائدة', '${loan.interestRate}%'),
-          _buildDetailRow('قيمة الفائدة', format.format(loan.totalDue - loan.amount)),
+          _buildDetailRow('إجمالي المستحق', format.format(loan.totalDue), color: Colors.white70),
           const Divider(color: Colors.white10, height: 32),
-          _buildDetailRow('الإجمالي', format.format(loan.totalDue), isBold: true, color: KasbyColors.primaryGold),
+          _buildDetailRow('المدفوع', format.format(loan.paidAmount), color: KasbyColors.success),
+          _buildDetailRow('المتبقي للسداد', format.format(loan.remainingAmount), isBold: true, color: KasbyColors.primaryGold),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRepaymentHistory(BuildContext context, Loan loan, NumberFormat currencyFormat, DateFormat dateFormat) {
+    final controller = Get.find<LoanController>();
+
+    return KasbyGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'سجل عمليات السداد',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: controller.fetchRepayments(loan.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: KasbyColors.primaryGold));
+              }
+              
+              final repayments = snapshot.data ?? [];
+              
+              if (repayments.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Text('لا توجد عمليات سداد مسجلة', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: repayments.length,
+                separatorBuilder: (context, index) => const Divider(color: Colors.white10),
+                itemBuilder: (context, index) {
+                  final rep = repayments[index];
+                  final amount = (rep['amount'] as num?)?.toDouble() ?? 0.0;
+                  final type = rep['type'] == 'full' ? 'سداد كلي' : 'سداد جزئي';
+                  final date = rep['created_at'] != null ? DateTime.parse(rep['created_at']) : DateTime.now();
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(type, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                            Text(dateFormat.format(date), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                          ],
+                        ),
+                        Text(
+                          currencyFormat.format(amount),
+                          style: const TextStyle(color: KasbyColors.success, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ],
       ),
     );
@@ -185,9 +262,9 @@ class LoanDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _buildTimelineItem('تاريخ الطلب', format.format(loan.loanDate), Icons.add_circle_outline),
-          _buildTimelineItem('تاريخ الاستحقاق', format.format(loan.repaymentDate), Icons.event_available, isLast: true),
+          _buildTimelineItem('تاريخ الاستحقاق', format.format(loan.repaymentDate), Icons.event_available, isLast: loan.status != LoanStatus.paid),
           if (loan.status == LoanStatus.paid)
-             _buildTimelineItem('تاريخ السداد الكامل', format.format(DateTime.now()), Icons.check_circle_outline, color: KasbyColors.success),
+             _buildTimelineItem('تاريخ السداد الكامل', format.format(DateTime.now()), Icons.check_circle_outline, color: KasbyColors.success, isLast: true),
         ],
       ),
     );
@@ -267,10 +344,13 @@ class LoanDetailScreen extends StatelessWidget {
   IconData _getStatusIcon(LoanStatus status) {
     switch (status) {
       case LoanStatus.pending: return Icons.hourglass_empty_rounded;
-      case LoanStatus.current: return Icons.trending_up_rounded;
+      case LoanStatus.approved: return Icons.thumb_up_alt_rounded;
+      case LoanStatus.active: return Icons.trending_up_rounded;
+      case LoanStatus.partial_paid: return Icons.payments_rounded;
       case LoanStatus.paid: return Icons.verified_user_rounded;
-      case LoanStatus.delayed: return Icons.warning_amber_rounded;
+      case LoanStatus.overdue: return Icons.warning_amber_rounded;
       case LoanStatus.defaulted: return Icons.block_rounded;
+      case LoanStatus.rejected: return Icons.cancel_rounded;
     }
   }
 }

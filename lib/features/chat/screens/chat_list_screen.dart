@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/chat_controller.dart';
@@ -190,14 +191,19 @@ class ChatListScreen extends StatelessWidget {
                   ),
                   child: CircleAvatar(
                     backgroundColor: Colors.black26,
-                    child: Text(
-                      conv.userName[0],
-                      style: const TextStyle(
-                        color: KasbyColors.primaryGold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
+                    backgroundImage: (conv.userAvatar != null && conv.userAvatar!.isNotEmpty)
+                        ? CachedNetworkImageProvider(conv.userAvatar!)
+                        : null,
+                    child: (conv.userAvatar == null || conv.userAvatar!.isEmpty)
+                        ? Text(
+                            conv.userName[0],
+                            style: const TextStyle(
+                              color: KasbyColors.primaryGold,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
                 if (conv.isOnline)
@@ -233,12 +239,28 @@ class ChatListScreen extends StatelessWidget {
                           fontSize: 16,
                         ),
                       ),
-                      Text(
-                        DateFormat('HH:mm', 'ar').format(conv.lastMessageTime),
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
-                          fontSize: 10,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            DateFormat('HH:mm', 'ar').format(conv.lastMessageTime),
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              fontSize: 10,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            conv.isOnline ? 'نشط' : _formatLastSeenInList(conv.lastSeenAt),
+                            style: TextStyle(
+                              color: conv.isOnline 
+                                  ? KasbyColors.success 
+                                  : Colors.white.withValues(alpha: 0.8),
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -301,5 +323,16 @@ class ChatListScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatLastSeenInList(DateTime? lastSeen) {
+    if (lastSeen == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(lastSeen);
+
+    if (diff.inMinutes < 5) return 'نشط مؤخراً';
+    if (diff.inMinutes < 60) return 'نشط منذ ${diff.inMinutes}د';
+    if (diff.inHours < 24) return 'نشط منذ ${diff.inHours}س';
+    return DateFormat('d/M', 'ar').format(lastSeen);
   }
 }

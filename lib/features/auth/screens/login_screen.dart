@@ -5,7 +5,6 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/auth_controller.dart';
-import 'register_screen.dart';
 
 /// Login Screen
 /// Admin authentication with username and password

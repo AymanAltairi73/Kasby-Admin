@@ -8,7 +8,7 @@ import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_confirmation_dialog.dart';
 import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
-import '../../../core/models/time_filter.dart';
+import '../../chat/controllers/chat_controller.dart' as kasby_chat;
 import 'agent_applications_screen.dart';
 
 /// Agents Screen
@@ -32,145 +32,145 @@ class AgentsScreen extends StatelessWidget {
             icon: const Icon(Icons.search_rounded),
             onPressed: () => _showSearchDialog(context, controller),
           ),
-          // Time Filter Dropdown
-          PopupMenuButton<TimeFilter>(
-            icon: const Icon(Icons.filter_list_rounded),
-            tooltip: 'تصفية حسب الوقت',
-            onSelected: (TimeFilter filter) {
-              controller.selectedTimeFilter.value = filter;
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: TimeFilter.all,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.all_inclusive,
-                      size: 18,
-                      color:
-                          controller.selectedTimeFilter.value == TimeFilter.all
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('الكل'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: TimeFilter.daily,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.today,
-                      size: 18,
-                      color:
-                          controller.selectedTimeFilter.value ==
-                              TimeFilter.daily
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('اليوم'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: TimeFilter.weekly,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.date_range,
-                      size: 18,
-                      color:
-                          controller.selectedTimeFilter.value ==
-                              TimeFilter.weekly
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('الأسبوع'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: TimeFilter.monthly,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_month,
-                      size: 18,
-                      color:
-                          controller.selectedTimeFilter.value ==
-                              TimeFilter.monthly
-                          ? KasbyColors.primaryGold
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('الشهر'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // // Time Filter Dropdown
+          // PopupMenuButton<TimeFilter>(
+          //   icon: const Icon(Icons.filter_list_rounded),
+          //   tooltip: 'تصفية حسب الوقت',
+          //   onSelected: (TimeFilter filter) {
+          //     controller.selectedTimeFilter.value = filter;
+          //   },
+          //   itemBuilder: (context) => [
+          //     PopupMenuItem(
+          //       value: TimeFilter.all,
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.all_inclusive,
+          //             size: 18,
+          //             color:
+          //                 controller.selectedTimeFilter.value == TimeFilter.all
+          //                 ? KasbyColors.primaryGold
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('الكل'),
+          //         ],
+          //       ),
+          //     ),
+          //     PopupMenuItem(
+          //       value: TimeFilter.daily,
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.today,
+          //             size: 18,
+          //             color:
+          //                 controller.selectedTimeFilter.value ==
+          //                     TimeFilter.daily
+          //                 ? KasbyColors.primaryGold
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('اليوم'),
+          //         ],
+          //       ),
+          //     ),
+          //     PopupMenuItem(
+          //       value: TimeFilter.weekly,
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.date_range,
+          //             size: 18,
+          //             color:
+          //                 controller.selectedTimeFilter.value ==
+          //                     TimeFilter.weekly
+          //                 ? KasbyColors.primaryGold
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('الأسبوع'),
+          //         ],
+          //       ),
+          //     ),
+          //     PopupMenuItem(
+          //       value: TimeFilter.monthly,
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.calendar_month,
+          //             size: 18,
+          //             color:
+          //                 controller.selectedTimeFilter.value ==
+          //                     TimeFilter.monthly
+          //                 ? KasbyColors.primaryGold
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('الشهر'),
+          //         ],
+          //       ),
+          //     ),
+          //   ],
+          // ),
           // Status Filter Dropdown
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.people_outline_rounded),
-            tooltip: 'تصفية حسب الحالة',
-            onSelected: (String status) {
-              controller.filterByStatus(status);
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'All',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.all_inclusive,
-                      size: 18,
-                      color: controller.selectedStatus.value == 'All'
-                          ? KasbyColors.info
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('الكل'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Active',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 18,
-                      color: controller.selectedStatus.value == 'Active'
-                          ? KasbyColors.success
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('نشط'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Inactive',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.block,
-                      size: 18,
-                      color: controller.selectedStatus.value == 'Inactive'
-                          ? KasbyColors.error
-                          : Colors.white60,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('معطل'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // PopupMenuButton<String>(
+          //   icon: const Icon(Icons.people_outline_rounded),
+          //   tooltip: 'تصفية حسب الحالة',
+          //   onSelected: (String status) {
+          //     controller.filterByStatus(status);
+          //   },
+          //   itemBuilder: (context) => [
+          //     PopupMenuItem(
+          //       value: 'All',
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.all_inclusive,
+          //             size: 18,
+          //             color: controller.selectedStatus.value == 'All'
+          //                 ? KasbyColors.info
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('الكل'),
+          //         ],
+          //       ),
+          //     ),
+          //     PopupMenuItem(
+          //       value: 'Active',
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.check_circle_outline,
+          //             size: 18,
+          //             color: controller.selectedStatus.value == 'Active'
+          //                 ? KasbyColors.success
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('نشط'),
+          //         ],
+          //       ),
+          //     ),
+          //     PopupMenuItem(
+          //       value: 'Inactive',
+          //       child: Row(
+          //         children: [
+          //           Icon(
+          //             Icons.block,
+          //             size: 18,
+          //             color: controller.selectedStatus.value == 'Inactive'
+          //                 ? KasbyColors.error
+          //                 : Colors.white60,
+          //           ),
+          //           const SizedBox(width: 8),
+          //           Text('معطل'),
+          //         ],
+          //       ),
+          //     ),
+          //   ],
+          // ),
 
           IconButton(
             icon: const Icon(Icons.mark_email_unread_rounded),
@@ -493,6 +493,10 @@ class AgentsScreen extends StatelessWidget {
                       ),
                       onSelected: (value) {
                         switch (value) {
+                          case 'chat':
+                            final chatController = Get.find<kasby_chat.ChatController>();
+                            chatController.startChatWithUser(agent.userId);
+                            break;
                           case 'edit':
                             Get.toNamed('/edit-agent', arguments: agent);
                             break;
@@ -509,6 +513,18 @@ class AgentsScreen extends StatelessWidget {
                         }
                       },
                       itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'chat',
+                          child: Row(
+                            children: [
+                              Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 22, color: KasbyColors.info),
+                              const SizedBox(width: 12),
+                              const Text('بدء محادثة',
+                                  style: TextStyle(fontSize: 14)),
+                            ],
+                          ),
+                        ),
                         PopupMenuItem(
                           value: 'edit',
                           child: Row(

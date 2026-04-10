@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'supabase_service.dart';
 
 /// AppLoggerService — Centralized error logging for production Fintech apps.
@@ -144,6 +145,47 @@ class AppLoggerService {
     } catch (_) {
       // Silently fail logging
     }
+  }
+
+  /// Specialized logging for chat performance and delivery tracking.
+  static Future<void> logChatPerformance({
+    required String conversationId,
+    required String action, // 'send_message', 'upload_image', 'fetch_messages'
+    required int latencyMs,
+    String severity = 'info',
+    Map<String, dynamic>? details,
+  }) async {
+    try {
+      final connectivity = await (Connectivity().checkConnectivity());
+      final connectionType = connectivity.isNotEmpty ? connectivity.first.name : 'unknown';
+
+      await logActivity(
+        action: 'CHAT_$action'.toUpperCase(),
+        entityType: 'chat_conversation',
+        entityId: conversationId,
+        severity: severity,
+        details: {
+          'latency_ms': latencyMs,
+          'network_type': connectionType,
+          if (details != null) ...details,
+        },
+      );
+    } catch (_) {
+      // Never block the UI
+    }
+  }
+
+  /// Log an info message (shortcut for logActivity)
+  static Future<void> logInfo({
+    required String controller,
+    required String method,
+    required String message,
+  }) async {
+    await logActivity(
+      action: 'INFO: $controller.$method',
+      details: {'message': message},
+      severity: 'info',
+    );
   }
 
   /// Sanitize sensitive data from error messages

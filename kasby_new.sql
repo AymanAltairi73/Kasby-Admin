@@ -393,9 +393,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     edited_text         TEXT,
     edited_at           TIMESTAMPTZ,
     reactions           TEXT[] DEFAULT '{}',
+    idempotency_key     TEXT UNIQUE,
     created_at          TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_msg_conv ON chat_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_msg_idempotency ON chat_messages(idempotency_key);
 CREATE INDEX IF NOT EXISTS idx_msg_created ON chat_messages(created_at DESC);
 
 CREATE TABLE IF NOT EXISTS notifications (

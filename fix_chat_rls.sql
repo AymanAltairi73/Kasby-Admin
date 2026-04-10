@@ -6,10 +6,10 @@
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-    -- التحقق من دور المستخدم في جدول profiles
-    RETURN EXISTS (
-        SELECT 1 FROM public.profiles 
-        WHERE id = auth.uid() AND role = 'admin'
+    RETURN (
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+        OR
+        EXISTS (SELECT 1 FROM public.admin_profiles WHERE id = auth.uid() AND role = 'admin')
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
@@ -30,6 +30,21 @@ TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS "Users view own chats" ON public.chat_conversations;
+CREATE POLICY "Users view own chats"
+ON public.chat_conversations
+FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users update own chats" ON public.chat_conversations;
+CREATE POLICY "Users update own chats"
+ON public.chat_conversations
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
 -- 3. تفعيل السياسة لجدول الرسائل
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
@@ -44,7 +59,31 @@ TO authenticated
 USING (public.is_admin())
 WITH CHECK (public.is_admin());
 
--- 4. التأكد من صلاحيات الوصول لجدول البروفايلات (لجبت البيانات الملحقة)
+DROP POLICY IF EXISTS "Users view own messages" ON public.chat_messages;
+CREATE POLICY "Users view own messages"
+ON public.chat_messages
+FOR SELECT
+TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.chat_conversations
+        WHERE id = conversation_id AND user_id = auth.uid()
+    )
+);
+
+DROP POLICY IF EXISTS "Users insert own messages" ON public.chat_messages;
+CREATE POLICY "Users insert own messages"
+ON public.chat_messages
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    sender_id = auth.uid() AND
+    EXISTS (
+        SELECT 1 FROM public.chat_conversations
+        WHERE id = conversation_id AND user_id = auth.uid()
+    )
+);
+
 DROP POLICY IF EXISTS "Anyone view profiles" ON public.profiles;
 CREATE POLICY "Anyone view profiles" 
 ON public.profiles 
@@ -52,6 +91,18 @@ FOR SELECT
 TO authenticated 
 USING (true);
 
--- ملاحظة: إذا كنت لا ترى المستخدمين، تأكد أن حسابك في جدول profiles يحمل دور 'admin'
--- يمكنك تشغيل هذا الأمر لترقية حسابك (استبدل UUID بمعرف حسابك):
--- UPDATE public.profiles SET role = 'admin' WHERE id = 'YOUR_USER_ID';
+-- 5. تفعيل ميزة الوقت الفعلي (Realtime)
+ALTER TABLE public.chat_messages REPLICA IDENTITY FULL;
+ALTER TABLE public.chat_conversations REPLICA IDENTITY FULL;
+
+-- إضافة الجداول للنشر الخاص بالوقت الفعلي
+-- ملاحظة: إذا كان هناك خطأ "already exists"، تجاهله.
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'chat_messages') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'chat_conversations') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_conversations;
+    END IF;
+END $$;

@@ -46,13 +46,13 @@ class LoanController extends GetxController {
     isLoading.value = false;
   }
 
-  List<Loan> get currentLoans => _filterLoans(LoanStatus.current);
-  List<Loan> get paidLoans => _filterLoans(LoanStatus.paid);
-  List<Loan> get delayedLoans => _filterLoans(LoanStatus.delayed);
+  List<Loan> get currentLoans => _filterLoansByStatuses([LoanStatus.active, LoanStatus.partial_paid, LoanStatus.approved, LoanStatus.overdue]);
+  List<Loan> get paidLoans => _filterLoansByStatuses([LoanStatus.paid]);
+  List<Loan> get delayedLoans => _filterLoansByStatuses([LoanStatus.overdue, LoanStatus.defaulted]);
 
-  List<Loan> _filterLoans(LoanStatus status) {
+  List<Loan> _filterLoansByStatuses(List<LoanStatus> statuses) {
     return loans.where((loan) {
-      final matchesStatus = loan.status == status;
+      final matchesStatus = statuses.contains(loan.status);
       final query = searchQuery.value.toLowerCase();
       final matchesSearch =
           loan.userName.toLowerCase().contains(query) ||
@@ -66,17 +66,35 @@ class LoanController extends GetxController {
     searchQuery.value = query;
   }
 
+  /// Fetch repayments for a specific loan
+  Future<List<Map<String, dynamic>>> fetchRepayments(String loanId) async {
+    try {
+      final response = await SupabaseService.client
+          .from('loan_repayments')
+          .select()
+          .eq('loan_id', loanId)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint('Error fetching repayments: $e');
+      return [];
+    }
+  }
+
   /// Approve a pending loan via RPC (atomic: credits wallet + logs transaction)
   Future<void> approveLoan(String loanId) async {
     try {
       isLoading.value = true;
       debugPrint('[LoanController] ▶ Approving loan: $loanId');
+      
+      // We will use the existing approve logic but ensure the status updates correctly
+      // In the hardened system, approval sets status to 'approved' or 'active'
       final adminId = SupabaseService.auth.currentUser?.id;
-
-      await SupabaseService.client.rpc(
-        'fn_approve_loan',
-        params: {'p_loan_id': loanId, 'p_admin_id': adminId},
-      );
+      
+      await SupabaseService.client.rpc('fn_approve_loan', params: {
+        'p_loan_id': loanId,
+        'p_admin_id': adminId,
+      });
 
       await loadLoans();
       Get.snackbar('نجح', 'تم الموافقة على القرض بنجاح');
@@ -87,51 +105,26 @@ class LoanController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar(
-        'خطأ',
-        'فشل في الموافقة على القرض',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('خطأ', 'فشل في الموافقة على القرض');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Update loan status (Admin Action) — uses RPC for financial actions
+  /// Update loan status (Admin Action)
   Future<void> updateLoanStatus(String loanId, LoanStatus newStatus) async {
     try {
       isLoading.value = true;
+      
+      final adminId = SupabaseService.auth.currentUser?.id;
 
-      if (newStatus == LoanStatus.current) {
-        // Approving a loan: use RPC
-        await approveLoan(loanId);
-        return;
-      }
+      await SupabaseService.client.rpc('fn_update_loan_status', params: {
+        'p_loan_id': loanId,
+        'p_admin_id': adminId,
+        'p_new_status': newStatus.name,
+      });
 
-      // For non-financial status changes (delayed, etc.)
-      // These don't affect wallets so direct update is acceptable
-      String statusStr;
-      switch (newStatus) {
-        case LoanStatus.paid:
-          statusStr = 'paid';
-          break;
-        case LoanStatus.delayed:
-          statusStr = 'delayed';
-          break;
-        default:
-          statusStr = 'current';
-      }
-
-      await SupabaseService.client
-          .from('loans')
-          .update({'status': statusStr})
-          .eq('id', loanId);
-
-      final index = loans.indexWhere((l) => l.id == loanId);
-      if (index != -1) {
-        loans[index] = loans[index].copyWith(status: newStatus);
-      }
-
+      await loadLoans();
       Get.snackbar('نجح', 'تم تحديث حالة القرض بنجاح');
     } catch (e, stackTrace) {
       AppLoggerService.logError(
@@ -140,11 +133,36 @@ class LoanController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      Get.snackbar(
-        'خطأ',
-        'فشل في تحديث حالة القرض',
-        snackPosition: SnackPosition.BOTTOM,
+      Get.snackbar('خطأ', 'فشل في تحديث حالة القرض');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Reject a loan with a reason
+  Future<void> rejectLoan(String loanId, String reason) async {
+    try {
+      isLoading.value = true;
+      debugPrint('[LoanController] ▶ Rejecting loan: $loanId with reason: $reason');
+      
+      final adminId = SupabaseService.auth.currentUser?.id;
+
+      await SupabaseService.client.rpc('fn_reject_loan', params: {
+        'p_loan_id': loanId,
+        'p_admin_id': adminId,
+        'p_reason': reason,
+      });
+
+      await loadLoans();
+      Get.snackbar('نجح', 'تم رفض القرض وإرسال السبب');
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'rejectLoan',
+        error: e,
+        stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في رفض القرض');
     } finally {
       isLoading.value = false;
     }

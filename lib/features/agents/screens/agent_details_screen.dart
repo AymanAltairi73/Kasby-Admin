@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/agent_model.dart';
+import '../../chat/screens/chat_details_screen.dart';
+import '../../chat/models/chat_model.dart';
 
 class AgentDetailsScreen extends StatelessWidget {
   const AgentDetailsScreen({super.key});
@@ -199,40 +201,108 @@ class AgentDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   KasbyGlassCard(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    child: Column(
                       children: [
-                        _buildCommAction(
-                          icon: FontAwesomeIcons.whatsapp,
-                          color: const Color(0xFF25D366),
-                          label: 'واتساب',
-                          onPressed: () => _launchService(
-                            'https://wa.me/${agent.whatsapp.replaceAll('+', '')}',
-                            'يرجى التأكد من تثبيت واتساب',
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildCommAction(
+                              icon: FontAwesomeIcons.whatsapp,
+                              color: const Color(0xFF25D366),
+                              label: 'واتساب',
+                              onPressed: () => _launchService(
+                                'https://wa.me/${agent.whatsapp.replaceAll('+', '')}',
+                                'يرجى التأكد من تثبيت واتساب',
+                              ),
+                            ),
+                            _buildCommAction(
+                              icon: FontAwesomeIcons.telegram,
+                              color: const Color(0xFF24A1DE),
+                              label: 'تليجرام',
+                              onPressed: () => _launchService(
+                                agent.telegram.startsWith('http')
+                                    ? agent.telegram
+                                    : 'https://t.me/${agent.telegram.replaceAll('@', '')}',
+                                'يرجى التأكد من تثبيت تليجرام',
+                              ),
+                            ),
+                            _buildCommAction(
+                              icon: Icons.phone_forwarded_rounded,
+                              color: KasbyColors.info,
+                              label: 'اتصال',
+                              onPressed: () => _launchService('tel:${agent.phone}'),
+                            ),
+                          ],
                         ),
-                        _buildCommAction(
-                          icon: FontAwesomeIcons.telegram,
-                          color: const Color(0xFF24A1DE),
-                          label: 'تليجرام',
-                          onPressed: () => _launchService(
-                            agent.telegram.startsWith('http')
-                                ? agent.telegram
-                                : 'https://t.me/${agent.telegram.replaceAll('@', '')}',
-                            'يرجى التأكد من تثبيت تليجرام',
+                        const SizedBox(height: 24),
+                        const Divider(color: Colors.white10),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  KasbyColors.primaryGold.withValues(alpha: 0.2),
+                                  KasbyColors.primaryGold.withValues(alpha: 0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: KasbyColors.primaryGold.withValues(alpha: 0.3),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: () {
+                                // Navigate to instant chat
+                                Get.to(
+                                  () => const ChatDetailsScreen(),
+                                  arguments: ChatConversation(
+                                    id: '', // Empty ID signifies a potentially new conversation
+                                    userId: agent.userId, // UPDATED: Using userId corresponding to profiles.id
+                                    userName: agent.name,
+                                    lastMessage: 'بدء محادثة جديدة',
+                                    lastMessageTime: DateTime.now(),
+                                    isOnline: true,
+                                    isAgent: true,
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                FontAwesomeIcons.commentDots,
+                                color: KasbyColors.primaryGold,
+                              ),
+                              label: const Text(
+                                'بدء دردشة فورية',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        _buildCommAction(
-                          icon: Icons.phone_forwarded_rounded,
-                          color: KasbyColors.info,
-                          label: 'اتصال',
-                          onPressed: () => _launchService('tel:${agent.phone}'),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
