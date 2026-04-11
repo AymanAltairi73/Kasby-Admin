@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/settings_models.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/kasby_colors.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 /// Settings Management Controller
 /// Manages FAQs, Terms, Fees, Currencies, Limits, and Maintenance
@@ -346,6 +347,16 @@ class SettingsManagementController extends GetxController {
         'is_maintenance_mode': value,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', settingsId.value);
+
+      // Send Global User Notification if maintenance is enabled
+      if (value) {
+        Get.find<NotificationController>().sendNotification(
+          '🏗️ أعمال صيانة',
+          'النظام حالياً في مرحلة التحديث الدوري لضمان أفضل خدمة. سنعود إليكم قريباً.',
+          'all',
+        );
+      }
+
       return true;
     } catch (e) {
       return false;

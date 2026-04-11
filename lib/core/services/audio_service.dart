@@ -15,14 +15,8 @@ class AudioService extends GetxService {
     try {
       await _player.stop();
       await _player.play(AssetSource('sounds/message_sent.mp3'));
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AudioService',
-        method: 'playMessageSent',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      Get.log('Error playing sound: $e');
+    } catch (e) {
+      Get.log('Error playing sound (message_sent): $e');
     }
   }
 
@@ -30,14 +24,8 @@ class AudioService extends GetxService {
     try {
       await _player.stop();
       await _player.play(AssetSource('sounds/notification.mp3'));
-    } catch (e, stackTrace) {
-      AppLoggerService.logError(
-        controller: 'AudioService',
-        method: 'playNotification',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      Get.log('Error playing sound: $e');
+    } catch (e) {
+      Get.log('Error playing sound (notification): $e');
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../models/loan_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 /// Loan Controller — manages loans from Supabase `loans` table
 /// All status changes use RPCs for atomicity and ledger integrity
@@ -96,6 +97,17 @@ class LoanController extends GetxController {
         'p_admin_id': adminId,
       });
 
+      // Send User Notification
+      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
+      if (loan != null) {
+        Get.find<NotificationController>().sendNotification(
+          '💰 مبروك!',
+          'تمت الموافقة على طلب القرض الخاص بك، تم إضافة المبلغ إلى محفظتك.',
+          'specific',
+          specificUserId: loan.userId,
+        );
+      }
+
       await loadLoans();
       Get.snackbar('نجح', 'تم الموافقة على القرض بنجاح');
     } catch (e, stackTrace) {
@@ -152,6 +164,17 @@ class LoanController extends GetxController {
         'p_admin_id': adminId,
         'p_reason': reason,
       });
+
+      // Send User Notification
+      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
+      if (loan != null) {
+        Get.find<NotificationController>().sendNotification(
+          '⚠️ طلب القرض',
+          'تم رفض طلب القرض الخاص بك. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.',
+          'specific',
+          specificUserId: loan.userId,
+        );
+      }
 
       await loadLoans();
       Get.snackbar('نجح', 'تم رفض القرض وإرسال السبب');

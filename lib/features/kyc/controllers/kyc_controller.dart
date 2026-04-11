@@ -60,14 +60,12 @@ class KycController extends GetxController {
         'kyc_status': profileKycStatus,
       }).eq('id', userId);
 
-      // 3. Send Notification to user
+      // 3. Send Notification to user (Genius Unified Text)
       final notifController = Get.find<NotificationController>();
-      final title = status == 'verified' ? 'تم توثيق الهوية ✅' : 'فشل توثيق الهوية ❌';
-      final message = status == 'verified' 
-          ? 'تهانينا! تم قبول مستنداتك وتوثيق حسابك بنجاح.' 
-          : 'نعتذر، تم رفض المستند المرفوع. السبب: ${rejectionReason ?? "غير محدد"}. يرجى المحاولة مرة أخرى.';
-      
-      await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
+      final title = status == 'verified' ? '✅ توثيق الحساب' : '❌ تنبيه التوثيق';
+      final message = status == 'verified'
+          ? 'تم توثيق حسابك بنجاح! يمكنك الآن الاستمتاع بكافة مميزات التطبيق.'
+          : 'نعتذر، تم رفض طلب التوثيق الخاص بك. السبب: ${rejectionReason ?? "غير محدد"}. يرجى المحاولة مرة أخرى.';
 
       await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
 

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 class AgentApplicationModel {
   final String id;
@@ -84,11 +85,17 @@ class AgentApplicationsController extends GetxController {
       );
 
       if (response['success'] == true) {
-        Get.snackbar(
-          'تم بنجاح',
-          'تمت الموافقة على الطلب وتعيين الصلاحيات',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        // Send User Notification
+        final app = applications.firstWhereOrNull((a) => a.id == applicationId);
+        if (app != null) {
+          Get.find<NotificationController>().sendNotification(
+            '🌟 مبروك! انضممت للوكلاء',
+            'تمت الموافقة على طلب انضمامك كوكيل رسمي. يمكنك الآن البدء في تقديم الخدمات.',
+            'specific',
+            specificUserId: app.userId,
+          );
+        }
+
         loadApplications();
       } else {
         Get.snackbar('خطأ', response['message'] ?? 'فشل في قبول الطلب');
@@ -113,16 +120,17 @@ class AgentApplicationsController extends GetxController {
   Future<void> rejectApplication(String applicationId) async {
     isLoading.value = true;
     try {
-      await SupabaseService.client
-          .from('agent_applications')
-          .update({'status': 'rejected'})
-          .eq('id', applicationId);
+      // Send User Notification
+      final app = applications.firstWhereOrNull((a) => a.id == applicationId);
+      if (app != null) {
+        Get.find<NotificationController>().sendNotification(
+          '⚠️ طلب الوكالة',
+          'نعتذر، لم يتم قبول طلب انضمامك كوكيل في الوقت الحالي. يمكنك المحاولة مستقبلاً.',
+          'specific',
+          specificUserId: app.userId,
+        );
+      }
 
-      Get.snackbar(
-        'تم',
-        'تم رفض الطلب',
-        snackPosition: SnackPosition.BOTTOM,
-      );
       loadApplications();
     } catch (e, stackTrace) {
       AppLoggerService.logError(

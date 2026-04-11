@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/kasby_colors.dart';
 import 'core/theme/kasby_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
@@ -60,6 +62,35 @@ Future<void> main() async {
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
+
+  // --- BEGIN GENIUS NOTIFICATION SYSTEM ---
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'high_importance_channel', // id
+    'High Importance Notifications', // title
+    description: 'This channel is used for important notifications.',
+    importance: Importance.high,
+    sound: RawResourceAndroidNotificationSound('notification'),
+    playSound: true,
+  );
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // Request high importance for Firebase (active state)
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+  // --- END GENIUS NOTIFICATION SYSTEM ---
+
   // 1. Core Services & Auth (Dependencies for most things)
   Get.put(AuthController());
   Get.put(AudioService());

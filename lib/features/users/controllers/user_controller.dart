@@ -11,6 +11,7 @@ import '../repositories/profile_repository.dart';
 import '../../investments/models/investment_model.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../models/user_activity_model.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
 class UserController extends GetxController {
@@ -230,6 +231,14 @@ class UserController extends GetxController {
         _applyFilters();
       }
 
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '⚠️ تنبيه الحساب',
+        'تم حظر حسابك مؤقتاً. يرجى التواصل مع الدعم الفني للاستفسار.',
+        'specific',
+        specificUserId: userId,
+      );
+
       Get.snackbar(
         'تم',
         'تم حظر المستخدم',
@@ -254,6 +263,14 @@ class UserController extends GetxController {
         users[idx] = users[idx].copyWith(status: 'active');
         _applyFilters();
       }
+
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '✅ تنبيه الحساب',
+        'تم تفعيل حسابك مرة أخرى! يمكنك الآن الدخول واستخدام التطبيق.',
+        'specific',
+        specificUserId: userId,
+      );
 
       Get.snackbar(
         'تم',
@@ -292,6 +309,14 @@ class UserController extends GetxController {
     try {
       await _profileRepo.updateProfile(userId, {'kyc_status': 'Verified'});
 
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '✅ توثيق الحساب',
+        'تم توثيق حسابك بنجاح! يمكنك الآن الاستمتاع بكافة مميزات التطبيق.',
+        'specific',
+        specificUserId: userId,
+      );
+
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
         users[idx] = users[idx].copyWith(kycStatus: 'Verified');
@@ -315,6 +340,14 @@ class UserController extends GetxController {
   Future<void> rejectKyc(String userId) async {
     try {
       await _profileRepo.updateProfile(userId, {'kyc_status': 'Rejected'});
+
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '❌ تنبيه التوثيق',
+        'نعتذر، تم رفض طلب التوثيق الخاص بك. يرجى مراجعة البيانات والمحاولة مرة أخرى.',
+        'specific',
+        specificUserId: userId,
+      );
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
@@ -346,6 +379,14 @@ class UserController extends GetxController {
         'p_amount': amount,
       });
 
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '⚖️ تحديث رصيد',
+        'قام النظام بتحديث رصيد محفظتك بمبلغ $amount. تفقد سجل المعاملات للتفاصيل.',
+        'specific',
+        specificUserId: userId,
+      );
+
       await loadUsers();
       Get.snackbar(
         'تم',
@@ -372,6 +413,14 @@ class UserController extends GetxController {
         'p_user_id': userId,
         'p_amount': amount,
       });
+
+      // Send User Notification
+      Get.find<NotificationController>().sendNotification(
+        '⚖️ تحديث رصيد',
+        'قام النظام بخصم مبلغ $amount من محفظتك. تفقد سجل المعاملات للتفاصيل.',
+        'specific',
+        specificUserId: userId,
+      );
 
       await loadUsers();
       Get.snackbar(

@@ -5,6 +5,7 @@ import '../models/transaction_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
+import '../../notifications/controllers/notification_controller.dart';
 import '../repositories/transaction_repository.dart';
 
 /// Transaction Controller — manages financial transactions from Supabase
@@ -208,6 +209,17 @@ class TransactionController extends GetxController {
         {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
+      // Send User Notification
+      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
+      if (txn != null) {
+        Get.find<NotificationController>().sendNotification(
+          '📥 إيداع ناجح',
+          'تم تأكيد عملية الإيداع وإضافة الرصيد إلى حسابك بنجاح.',
+          'specific',
+          specificUserId: txn.userId,
+        );
+      }
+
       await loadTransactions();
       Get.snackbar(
         'تم',
@@ -241,6 +253,17 @@ class TransactionController extends GetxController {
         'approve_withdrawal',
         {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
+
+      // Send User Notification
+      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
+      if (txn != null) {
+        Get.find<NotificationController>().sendNotification(
+          '📤 سحب ناجح',
+          'تمت الموافقة على طلب السحب الخاص بك، المبلغ في طريقه إليك.',
+          'specific',
+          specificUserId: txn.userId,
+        );
+      }
 
       await loadTransactions();
       Get.snackbar(
@@ -297,6 +320,16 @@ class TransactionController extends GetxController {
           'p_reason': reason.isNotEmpty ? reason : 'رفض بواسطة المدير',
         },
       );
+
+      // Send User Notification
+      if (txn != null) {
+        Get.find<NotificationController>().sendNotification(
+          '⚠️ تنبيه مالي',
+          'تم رفض المعاملة المالية رقم ${txn.id}. يرجى مراجعة السبب في قائمة المعاملات.',
+          'specific',
+          specificUserId: txn.userId,
+        );
+      }
 
       await loadTransactions();
       Get.snackbar(
