@@ -59,9 +59,13 @@ class InvestmentController extends GetxController {
       final response = await SupabaseService.client
           .from('user_investments')
           .select(
-            '*, profiles!user_investments_user_id_fkey!left(full_name), investment_plans!user_investments_plan_id_fkey!left(name_ar)',
+            '*, profiles!user_investments_user_id_fkey(full_name), investment_plans!user_investments_plan_id_fkey(name_ar)',
           )
           .order('created_at', ascending: false);
+
+      if (response != null && (response as List).isNotEmpty) {
+        debugPrint('[InvestmentController] ℹ️ Raw First Row: ${response[0]}');
+      }
 
       userInvestments.assignAll(
         (response as List).map((e) => UserInvestment.fromSupabase(e)).toList(),

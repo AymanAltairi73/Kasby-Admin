@@ -1,4 +1,6 @@
 /// Transaction Model — maps to `transactions` table in Supabase
+import '../../../core/utils/numeric_utils.dart';
+
 class Transaction {
   final String id;
   final String userId;
@@ -85,7 +87,7 @@ class Transaction {
       userId: json['user_id'] ?? '',
       userName: uName,
       type: json['type'] ?? 'deposit',
-      amount: (json['amount'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount']),
       status: json['status'] ?? 'pending',
       reason: json['rejection_reason'] ?? json['reason'],
       proofUrl: json['proof_url'],
@@ -99,7 +101,7 @@ class Transaction {
       counterpartUserName: cpName,
       currency: json['currency'] ?? 'USD',
       runningBalance: json['running_balance'] != null
-          ? (json['running_balance'] as num).toDouble()
+          ? safeToDouble(json['running_balance'])
           : null,
       referenceId: json['reference_id'],
     );
@@ -113,7 +115,7 @@ class Transaction {
       userId: json['userId'] ?? json['user_id'] ?? '',
       userName: json['userName'] ?? '',
       type: json['type'] ?? 'deposit',
-      amount: (json['amount'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount']),
       status: json['status'] ?? 'pending',
       reason: json['reason'] ?? json['rejection_reason'],
       proofUrl: json['proofUrl'] ?? json['proof_url'],
@@ -131,9 +133,9 @@ class Transaction {
       counterpartUserName: json['counterpartUserName'],
       currency: json['currency'] ?? 'USD',
       runningBalance: json['runningBalance'] != null
-          ? (json['runningBalance'] as num).toDouble()
+          ? safeToDouble(json['runningBalance'])
           : (json['running_balance'] != null
-                ? (json['running_balance'] as num).toDouble()
+                ? safeToDouble(json['running_balance'])
                 : null),
       referenceId: json['referenceId'] ?? json['reference_id'],
     );

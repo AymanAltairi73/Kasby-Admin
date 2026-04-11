@@ -613,7 +613,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildDialogLabel('مستوى المخاطرة'),
                   DropdownButtonFormField<String>(
-                    value: selectedRiskLevel,
+                    initialValue: selectedRiskLevel,
                     dropdownColor: KasbyColors.surface,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(

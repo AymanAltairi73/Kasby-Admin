@@ -1,3 +1,5 @@
+import '../../../core/utils/numeric_utils.dart';
+
 /// Investment Plan Model — maps to `investment_plans` table in Supabase
 class InvestmentPlan {
   final String id;
@@ -64,13 +66,13 @@ class InvestmentPlan {
       id: json['id'] ?? '',
       nameAr: json['name_ar'] ?? json['name'] ?? '',
       nameEn: json['name_en'],
-      profitPercentage: (json['profit_percentage'] ?? 0.0).toDouble(),
-      minAmount: (json['min_amount'] ?? 0.0).toDouble(),
-      maxAmount: (json['max_amount'] ?? 0.0).toDouble(),
+      profitPercentage: safeToDouble(json['profit_percentage'] ?? json['profitPercentage']),
+      minAmount: safeToDouble(json['min_amount'] ?? json['minAmount']),
+      maxAmount: safeToDouble(json['max_amount'] ?? json['maxAmount']),
       availableAmounts: json['available_amounts'] != null
           ? List<double>.from(
               (json['available_amounts'] as List).map(
-                (x) => (x as num).toDouble(),
+                (x) => safeToDouble(x),
               ),
             )
           : null,
@@ -223,9 +225,9 @@ class UserInvestment {
       userName: uName,
       planId: json['plan_id'] ?? '',
       planName: pName,
-      amount: (json['amount'] ?? 0.0).toDouble(),
-      profitPercentage: (json['profit_percentage'] ?? 0.0).toDouble(),
-      expectedProfit: (json['expected_profit'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount']),
+      profitPercentage: safeToDouble(json['profit_percentage'] ?? json['profitPercentage']),
+      expectedProfit: safeToDouble(json['expected_profit'] ?? json['expectedProfit']),
       startDate: json['start_date'] != null
           ? DateTime.parse(json['start_date'])
           : DateTime.now(),

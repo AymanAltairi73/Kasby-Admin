@@ -1,4 +1,5 @@
 import 'user_activity_model.dart';
+import '../../../core/utils/numeric_utils.dart';
 
 /// User Model — maps to `profiles` + `wallets` tables in Supabase
 /// Updated to align with kasby_new.sql schema (no role column, country_code, referral)
@@ -118,15 +119,15 @@ class User {
     double investBal = 0.0;
     double pendingBal = 0.0;
     if (wallet is List && wallet.isNotEmpty) {
-      availBal = (wallet[0]['available_balance'] ?? 0).toDouble();
-      profBal = (wallet[0]['profit_balance'] ?? 0).toDouble();
-      investBal = (wallet[0]['invested_balance'] ?? 0).toDouble();
-      pendingBal = (wallet[0]['pending_balance'] ?? 0).toDouble();
+      availBal = safeToDouble(wallet[0]['available_balance']);
+      profBal = safeToDouble(wallet[0]['profit_balance']);
+      investBal = safeToDouble(wallet[0]['invested_balance']);
+      pendingBal = safeToDouble(wallet[0]['pending_balance']);
     } else if (wallet is Map) {
-      availBal = (wallet['available_balance'] ?? 0).toDouble();
-      profBal = (wallet['profit_balance'] ?? 0).toDouble();
-      investBal = (wallet['invested_balance'] ?? 0).toDouble();
-      pendingBal = (wallet['pending_balance'] ?? 0).toDouble();
+      availBal = safeToDouble(wallet['available_balance']);
+      profBal = safeToDouble(wallet['profit_balance']);
+      investBal = safeToDouble(wallet['invested_balance']);
+      pendingBal = safeToDouble(wallet['pending_balance']);
     }
 
     return User(
@@ -178,10 +179,10 @@ class User {
           json['account_tier'] ??
           'free',
       kycStatus: json['kycStatus'] ?? json['kyc_status'] ?? 'unverified',
-      walletBalance: (json['walletBalance'] ?? 0.0).toDouble(),
-      profitBalance: (json['profitBalance'] ?? 0.0).toDouble(),
-      investedAmount: (json['investedAmount'] ?? 0.0).toDouble(),
-      pendingAmount: (json['pendingAmount'] ?? 0.0).toDouble(),
+      walletBalance: safeToDouble(json['walletBalance']),
+      profitBalance: safeToDouble(json['profitBalance']),
+      investedAmount: safeToDouble(json['investedAmount']),
+      pendingAmount: safeToDouble(json['pendingAmount']),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : (json['created_at'] != null

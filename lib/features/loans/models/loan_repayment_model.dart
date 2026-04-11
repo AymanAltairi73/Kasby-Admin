@@ -1,4 +1,6 @@
 
+import '../../../core/utils/numeric_utils.dart';
+
 enum RepaymentType { full, partial }
 
 class LoanRepayment {
@@ -26,7 +28,7 @@ class LoanRepayment {
     return LoanRepayment(
       id: json['id'] ?? '',
       loanId: json['loan_id'] ?? '',
-      amount: (json['amount'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount']),
       paymentMethod: json['payment_method'] ?? 'نقدي',
       notes: json['notes'],
       receiptId: json['receipt_id'],

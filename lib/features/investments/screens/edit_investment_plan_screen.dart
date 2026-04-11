@@ -493,7 +493,7 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
         Switch(
           value: isActive,
           onChanged: (val) => setState(() => isActive = val),
-          activeColor: KasbyColors.primaryGold,
+          activeThumbColor: KasbyColors.primaryGold,
         ),
       ],
     );

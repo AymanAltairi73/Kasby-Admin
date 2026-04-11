@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/numeric_utils.dart';
 
 enum LoanStatus { pending, approved, active, partial_paid, paid, overdue, defaulted, rejected }
 
@@ -155,11 +156,11 @@ class Loan {
       id: json['id'] ?? '',
       userId: json['user_id'] ?? '',
       userName: uName,
-      amount: (json['amount'] ?? 0.0).toDouble(),
-      interestRate: (json['interest_rate'] ?? 0.0).toDouble(),
-      totalDue: (json['total_due'] ?? 0.0).toDouble(),
-      remainingAmount: (json['remaining_amount'] ?? 0.0).toDouble(),
-      paidAmount: (json['paid_amount'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount']),
+      interestRate: safeToDouble(json['interest_rate'] ?? json['interestRate']),
+      totalDue: safeToDouble(json['total_due'] ?? json['totalDue']),
+      remainingAmount: safeToDouble(json['remaining_amount'] ?? json['remainingAmount']),
+      paidAmount: safeToDouble(json['paid_amount'] ?? json['paidAmount']),
       loanDate: json['loan_date'] != null
           ? DateTime.parse(json['loan_date'])
           : (json['created_at'] != null
@@ -179,11 +180,11 @@ class Loan {
       id: json['id'] ?? '',
       userId: json['userId'] ?? json['user_id'] ?? '',
       userName: json['userName'] ?? '',
-      amount: (json['amount'] ?? 0.0).toDouble(),
-      interestRate: (json['interestRate'] ?? json['interest_rate'] ?? 0.0).toDouble(),
-      totalDue: (json['totalDue'] ?? json['total_due'] ?? 0.0).toDouble(),
-      remainingAmount: (json['remaining_amount'] ?? 0.0).toDouble(),
-      paidAmount: (json['paidAmount'] ?? json['paid_amount'] ?? 0.0).toDouble(),
+      amount: safeToDouble(json['amount'] ?? json['amount']),
+      interestRate: safeToDouble(json['interestRate'] ?? json['interest_rate']),
+      totalDue: safeToDouble(json['totalDue'] ?? json['total_due']),
+      remainingAmount: safeToDouble(json['remaining_amount'] ?? json['remaining_amount']),
+      paidAmount: safeToDouble(json['paidAmount'] ?? json['paid_amount']),
       loanDate: json['loanDate'] != null
           ? DateTime.parse(json['loanDate'])
           : (json['loan_date'] != null
