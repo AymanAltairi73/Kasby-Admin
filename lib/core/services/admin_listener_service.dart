@@ -7,10 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 
 class AdminListenerService extends GetxService {
-  RealtimeChannel? _transactionChannel;
-  RealtimeChannel? _applicationChannel;
-  RealtimeChannel? _kycChannel;
-  RealtimeChannel? _loanChannel;
+  RealtimeChannel? _adminChannel;
   Timer? _reconnectTimer;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
@@ -40,99 +37,84 @@ class AdminListenerService extends GetxService {
     _reconnectTimer = null;
     _cleanupListeners(); // Avoid duplicate subscriptions
 
+    _adminChannel = SupabaseService.client.channel('admin-global');
+
     // 1. Listen for new pending transactions (deposits/withdrawals)
-    _transactionChannel = SupabaseService.client
-        .channel('admin-transactions')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'transactions',
-          callback: (payload) {
-            final status = payload.newRecord['status'];
-            final type = payload.newRecord['type'];
-            
-            // Play sound for new pending deposits/withdrawals
-            if (status == 'pending' && (type == 'deposit' || type == 'withdrawal')) {
-              Get.find<AudioService>().playNotification();
-              _showLocalNotification(
-                title: '💰 معاملة جديدة',
-                body: 'لديك طلب ${type == 'deposit' ? 'إيداع' : 'سحب'} جديد بانتظار الموافقة',
-              );
-            }
-          },
-        )
-        .subscribe((status, [error]) {
-          if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
-            Get.printError(info: '[AdminListener] Transaction stream status: $status, error: $error');
-            _handleRetry();
-          }
-        });
+    _adminChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'transactions',
+      callback: (payload) {
+        final status = payload.newRecord['status'];
+        final type = payload.newRecord['type'];
+        if (status == 'pending' && (type == 'deposit' || type == 'withdrawal')) {
+          Get.find<AudioService>().playNotification();
+          _showLocalNotification(
+            title: '💰 معاملة جديدة',
+            body: 'لديك طلب ${type == 'deposit' ? 'إيداع' : 'سحب'} جديد بانتظار الموافقة',
+          );
+        }
+      },
+    );
 
     // 2. Listen for new agent applications
-    _applicationChannel = SupabaseService.client
-        .channel('admin-applications')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'agent_applications',
-          callback: (payload) {
-            final status = payload.newRecord['status'];
-            if (status == 'pending') {
-              Get.find<AudioService>().playNotification();
-              _showLocalNotification(
-                title: '🌟 طلب وكالة',
-                body: 'هناك طلب انضمام وكيل جديد بانتظار المراجعة',
-              );
-            }
-          },
-        )
-        .subscribe((status, [error]) {
-          if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
-            Get.printError(info: '[AdminListener] Application stream status: $status, error: $error');
-            _handleRetry();
-          }
-        });
+    _adminChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'agent_applications',
+      callback: (payload) {
+        final status = payload.newRecord['status'];
+        if (status == 'pending') {
+          Get.find<AudioService>().playNotification();
+          _showLocalNotification(
+            title: '🌟 طلب وكالة',
+            body: 'هناك طلب انضمام وكيل جديد بانتظار المراجعة',
+          );
+        }
+      },
+    );
 
-    // 3. Listen for new KYC submissions
-    _kycChannel = SupabaseService.client
-        .channel('admin-kyc')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'profiles',
-          callback: (payload) {
-            final newKyc = payload.newRecord['kyc_status'];
-            final oldKyc = payload.oldRecord['kyc_status'];
-            if (newKyc == 'pending' && oldKyc != 'pending') {
-              Get.find<AudioService>().playNotification();
-              _showLocalNotification(
-                title: '🆔 توثيق جديد',
-                body: 'قام مستخدم برفع مستندات توثيق جديدة، يرجى مراجعتها',
-              );
-            }
-          },
-        )
-        .subscribe();
+    // 3. Listen for new KYC submissions (profiles update)
+    _adminChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.update,
+      schema: 'public',
+      table: 'profiles',
+      callback: (payload) {
+        final newKyc = payload.newRecord['kyc_status'];
+        final oldKyc = payload.oldRecord['kyc_status'];
+        if (newKyc == 'pending' && oldKyc != 'pending') {
+          Get.find<AudioService>().playNotification();
+          _showLocalNotification(
+            title: '🆔 توثيق جديد',
+            body: 'قام مستخدم برفع مستندات توثيق جديدة، يرجى مراجعتها',
+          );
+        }
+      },
+    );
 
     // 4. Listen for new Loan applications
-    _loanChannel = SupabaseService.client
-        .channel('admin-loans')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'loans',
-          callback: (payload) {
-            final status = payload.newRecord['status'];
-            if (status == 'pending') {
-              Get.find<AudioService>().playNotification();
-              _showLocalNotification(
-                title: '💸 طلب قرض',
-                body: 'قام مستخدم بتقديم طلب قرض جديد، تفقد قائمة القروض',
-              );
-            }
-          },
-        )
-        .subscribe();
+    _adminChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'loans',
+      callback: (payload) {
+        final status = payload.newRecord['status'];
+        if (status == 'pending') {
+          Get.find<AudioService>().playNotification();
+          _showLocalNotification(
+            title: '💸 طلب قرض',
+            body: 'قام مستخدم بتقديم طلب قرض جديد، تفقد قائمة القروض',
+          );
+        }
+      },
+    );
+
+    _adminChannel!.subscribe((status, [error]) {
+      if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
+        Get.printError(info: '[AdminListener] Global stream status: $status, error: $error');
+        _handleRetry();
+      }
+    });
   }
 
   void _handleRetry() {
@@ -147,14 +129,8 @@ class AdminListenerService extends GetxService {
   void _cleanupListeners() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    _transactionChannel?.unsubscribe();
-    _transactionChannel = null;
-    _applicationChannel?.unsubscribe();
-    _applicationChannel = null;
-    _kycChannel?.unsubscribe();
-    _kycChannel = null;
-    _loanChannel?.unsubscribe();
-    _loanChannel = null;
+    _adminChannel?.unsubscribe();
+    _adminChannel = null;
   }
 
   Future<void> _showLocalNotification({required String title, required String body}) async {

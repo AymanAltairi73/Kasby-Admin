@@ -1,6 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:get/get.dart';
-import 'app_logger_service.dart';
 
 class AudioService extends GetxService {
   late AudioPlayer _player;

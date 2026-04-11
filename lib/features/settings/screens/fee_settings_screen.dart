@@ -21,53 +21,63 @@ class FeeSettingsScreen extends StatelessWidget {
         onRefresh: () => controller.loadSettings(),
         color: KasbyColors.primaryGold,
         child: Obx(
-          () => SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFeeSection(
-                  context,
-                  controller,
-                  title: 'رسوم الإيداع',
-                  icon: FontAwesomeIcons.arrowDown,
-                  fees: controller.fees
-                      .where((e) => e.category == 'Deposit')
-                      .toList(),
+          () {
+            if (controller.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: KasbyColors.primaryGold,
                 ),
-                const SizedBox(height: 24),
-                _buildFeeSection(
-                  context,
-                  controller,
-                  title: 'رسوم السحب',
-                  icon: FontAwesomeIcons.arrowUp,
-                  fees: controller.fees
-                      .where((e) => e.category == 'Withdraw')
-                      .toList(),
-                ),
-                const SizedBox(height: 24),
-                _buildFeeSection(
-                  context,
-                  controller,
-                  title: 'رسوم الاستثمار',
-                  icon: FontAwesomeIcons.chartPie,
-                  fees: controller.fees
-                      .where((e) => e.category == 'Investment')
-                      .toList(),
-                ),
-                const SizedBox(height: 40),
-                KasbyButton(
-                  text: 'إضافة نوع رسوم جديد',
-                  isOutlined: true,
-                  onPressed: () => Get.snackbar(
-                    'تنبيه',
-                    'هذه الميزة ستتوفر في التحديث القادم',
+              );
+            }
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFeeSection(
+                    context,
+                    controller,
+                    title: 'رسوم الإيداع',
+                    icon: FontAwesomeIcons.arrowDown,
+                    fees: controller.fees
+                        .where((e) => e.category == 'Deposit')
+                        .toList(),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 24),
+                  _buildFeeSection(
+                    context,
+                    controller,
+                    title: 'رسوم السحب',
+                    icon: FontAwesomeIcons.arrowUp,
+                    fees: controller.fees
+                        .where((e) => e.category == 'Withdraw')
+                        .toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFeeSection(
+                    context,
+                    controller,
+                    title: 'رسوم الاستثمار',
+                    icon: FontAwesomeIcons.chartPie,
+                    fees: controller.fees
+                        .where((e) => e.category == 'Investment')
+                        .toList(),
+                  ),
+                  const SizedBox(height: 40),
+                  KasbyButton(
+                    text: 'إضافة نوع رسوم جديد',
+                    isOutlined: true,
+                    onPressed: () => Get.snackbar(
+                      'تنبيه',
+                      'هذه الميزة ستتوفر في التحديث القادم',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

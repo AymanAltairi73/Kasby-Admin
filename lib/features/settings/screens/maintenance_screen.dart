@@ -33,7 +33,11 @@ class MaintenanceScreen extends StatelessWidget {
           SafeArea(
             child: Obx(() {
               if (controller.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: KasbyColors.primaryGold,
+                  ),
+                );
               }
 
               return SingleChildScrollView(

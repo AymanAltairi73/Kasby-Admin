@@ -40,6 +40,14 @@ class TermsScreen extends StatelessWidget {
           _buildCelestialBackground(),
           SafeArea(
             child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: KasbyColors.primaryGold,
+                  ),
+                );
+              }
+
               if (controller.terms.isEmpty) {
                 return _buildEmptyState(context, controller);
               }

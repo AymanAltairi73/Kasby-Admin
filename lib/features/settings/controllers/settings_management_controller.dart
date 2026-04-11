@@ -558,7 +558,9 @@ class SettingsManagementController extends GetxController {
         'code': currency.code,
         'rate': currency.rate,
         'is_base': currency.isBase,
-        // icon_code, icon_family, icon_package are missing in DB
+        'icon_code': currency.iconCode,
+        'icon_family': currency.iconFamily,
+        'icon_package': currency.iconPackage,
       });
       return true;
     } catch (e) {
@@ -587,7 +589,9 @@ class SettingsManagementController extends GetxController {
             'code': currency.code,
             'rate': currency.rate,
             'is_base': currency.isBase,
-            // icon_code, icon_family, icon_package are missing in DB
+            'icon_code': currency.iconCode,
+            'icon_family': currency.iconFamily,
+            'icon_package': currency.iconPackage,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', currency.id);
@@ -618,7 +622,7 @@ class SettingsManagementController extends GetxController {
 
       try {
         await SupabaseService.client
-            .from('limits')
+            .from('transaction_limits')
             .update({'value': newValue})
             .eq('id', id);
         return true;

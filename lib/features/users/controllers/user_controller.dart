@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'
-    show AdminUserAttributes;
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
-// import '../../../core/services/supabase_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../repositories/profile_repository.dart';
@@ -394,11 +392,17 @@ class UserController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      Get.snackbar(
-        'خطأ',
-        'فشل في إضافة الرصيد',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      String msg = 'فشل في إضافة الرصيد';
+      if (e is PostgrestException) {
+        if (e.message.contains('Insufficient balance')) {
+          msg = 'الرصيد غير كافٍ لإتمام هذه المعاملة';
+        } else if (e.code == '23514') {
+          msg = 'خطأ في قيود البيانات — يرجى مراجعة حالة المعاملة';
+        } else {
+          msg = e.message;
+        }
+      }
+      Get.snackbar('خطأ', msg, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -429,11 +433,17 @@ class UserController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      Get.snackbar(
-        'خطأ',
-        'فشل في خصم الرصيد',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      String msg = 'فشل في خصم الرصيد';
+      if (e is PostgrestException) {
+        if (e.message.contains('Insufficient balance')) {
+          msg = 'الرصيد غير كافٍ في المحفظة';
+        } else if (e.code == '23514') {
+          msg = 'خطأ في قيود البيانات — يرجى مراجعة البيانات';
+        } else {
+          msg = e.message;
+        }
+      }
+      Get.snackbar('خطأ', msg, snackPosition: SnackPosition.BOTTOM);
     }
   }
 

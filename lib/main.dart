@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/theme/kasby_colors.dart';
 import 'core/theme/kasby_theme.dart';
@@ -64,8 +65,23 @@ Future<void> main() async {
   await initializeDateFormatting('ar', null);
 
   // --- BEGIN GENIUS NOTIFICATION SYSTEM ---
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  try {
+    // Initialize Firebase
+    await Firebase.initializeApp();
 
+    // Request high importance for Firebase (active state)
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  } catch (e) {
+    debugPrint('[GENIUS] Firebase not initialized or configured: $e');
+    // App will still function using Supabase Realtime listeners
+  }
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'high_importance_channel', // id
     'High Importance Notifications', // title
@@ -82,13 +98,6 @@ Future<void> main() async {
   const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
   const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-  // Request high importance for Firebase (active state)
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
   // --- END GENIUS NOTIFICATION SYSTEM ---
 
   // 1. Core Services & Auth (Dependencies for most things)

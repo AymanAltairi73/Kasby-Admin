@@ -20,40 +20,50 @@ class TransactionLimitsScreen extends StatelessWidget {
         onRefresh: () => controller.loadSettings(),
         color: KasbyColors.primaryGold,
         child: Obx(
-          () => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-            _buildLimitSection(
-              context,
-              controller,
-              title: 'المستخدم العادي',
-              limits: controller.limits
-                  .where((e) => e.tier == 'Normal')
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-            _buildLimitSection(
-              context,
-              controller,
-              title: 'المستخدم الموثق / VIP',
-              limits: controller.limits.where((e) => e.tier == 'VIP').toList(),
-            ),
-            const SizedBox(height: 40),
-            KasbyButton(
-              text: 'إضافة حد جديد',
-              isOutlined: true,
-              onPressed: () => Get.snackbar(
-                'تنبيه',
-                'يمكنك تعديل الحدود الحالية فقط في هذا الإصدار',
-              ),
-            ),
-          ],
+          () {
+            if (controller.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: KasbyColors.primaryGold,
+                ),
+              );
+            }
+
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildLimitSection(
+                  context,
+                  controller,
+                  title: 'المستخدم العادي',
+                  limits: controller.limits
+                      .where((e) => e.tier == 'normal')
+                      .toList(),
+                ),
+                const SizedBox(height: 24),
+                _buildLimitSection(
+                  context,
+                  controller,
+                  title: 'المستخدم الموثق / VIP',
+                  limits: controller.limits.where((e) => e.tier == 'vip').toList(),
+                ),
+                const SizedBox(height: 40),
+                KasbyButton(
+                  text: 'إضافة حد جديد',
+                  isOutlined: true,
+                  onPressed: () => Get.snackbar(
+                    'تنبيه',
+                    'يمكنك تعديل الحدود الحالية فقط في هذا الإصدار',
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildLimitSection(
     BuildContext context,
@@ -189,6 +199,7 @@ class TransactionLimitsScreen extends StatelessWidget {
                     }
                   },
                 ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => Get.back(),
                   child: const Text(

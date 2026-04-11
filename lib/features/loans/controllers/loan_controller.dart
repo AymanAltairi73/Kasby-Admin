@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/loan_model.dart';
+import '../models/loan_repayment_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
@@ -68,17 +69,77 @@ class LoanController extends GetxController {
   }
 
   /// Fetch repayments for a specific loan
-  Future<List<Map<String, dynamic>>> fetchRepayments(String loanId) async {
+  /// Fetch repayments for a specific loan
+  Future<List<LoanRepayment>> fetchRepayments(String loanId) async {
     try {
       final response = await SupabaseService.client
           .from('loan_repayments')
           .select()
           .eq('loan_id', loanId)
           .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(response as List);
+      
+      return (response as List).map((e) => LoanRepayment.fromSupabase(e)).toList();
     } catch (e) {
       debugPrint('Error fetching repayments: $e');
       return [];
+    }
+  }
+
+  /// Record a manual repayment (Admin Action)
+  Future<void> recordRepayment({
+    required String loanId,
+    required double amount,
+    required String paymentMethod,
+    String? notes,
+    String? receiptId,
+    required RepaymentType type,
+  }) async {
+    try {
+      isLoading.value = true;
+      final adminId = SupabaseService.auth.currentUser?.id;
+
+      // 1. Record the repayment in DB
+      await SupabaseService.client.from('loan_repayments').insert({
+        'loan_id': loanId,
+        'amount': amount,
+        'payment_method': paymentMethod,
+        'notes': notes,
+        'receipt_id': receiptId,
+        'type': type == RepaymentType.full ? 'full' : 'partial',
+        'recorded_by': adminId,
+      });
+
+      // 2. Trigger RPC to balance the loan and update status
+      // This RPC should update loans.paid_amount, remaining_amount, and potentially final status
+      await SupabaseService.client.rpc('fn_process_loan_repayment', params: {
+        'p_loan_id': loanId,
+        'p_amount': amount,
+        'p_admin_id': adminId,
+      });
+
+      // 3. Send Notification to user
+      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
+      if (loan != null) {
+        Get.find<NotificationController>().sendNotification(
+          '💳 تأكيد سداد قسط',
+          'تم استلام مبلغ $amount قسطاً قرضكم. شكراً لالتزامكم.',
+          'specific',
+          specificUserId: loan.userId,
+        );
+      }
+
+      await loadLoans();
+      Get.snackbar('نجح', 'تم تسجيل دفعة السداد وتحديث حالة القرض');
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'recordRepayment',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      Get.snackbar('خطأ', 'فشل في تسجيل الدفعة: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 

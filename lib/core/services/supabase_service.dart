@@ -32,7 +32,13 @@ class SupabaseService {
 
   /// Initialize Supabase — must be called before runApp().
   static Future<void> init() async {
-    await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
+    await Supabase.initialize(
+      url: _supabaseUrl,
+      anonKey: _supabaseAnonKey,
+      realtimeClientOptions: const RealtimeClientOptions(
+        timeout: Duration(seconds: 30),
+      ),
+    );
 
     // Create admin client if service role key is available
     if (_serviceRoleKey.isNotEmpty) {

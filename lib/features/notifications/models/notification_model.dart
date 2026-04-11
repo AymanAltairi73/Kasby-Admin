@@ -4,6 +4,7 @@ class NotificationModel {
   final String title;
   final String message;
   final String target; // e.g., "All Users", "Specific User ID", "Agents"
+  final String type; // e.g., "financial", "system", "notification"
   final String? targetUserId;
   final DateTime sentAt;
   final String status; // Sent, Scheduled, Failed
@@ -13,6 +14,7 @@ class NotificationModel {
     required this.title,
     required this.message,
     required this.target,
+    this.type = 'notification',
     this.targetUserId,
     required this.sentAt,
     required this.status,
@@ -24,6 +26,7 @@ class NotificationModel {
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       target: json['target'] ?? 'All',
+      type: json['type'] ?? 'notification',
       targetUserId: json['target_user_id'] ?? json['targetUserId'],
       sentAt: json['sentAt'] != null
           ? DateTime.parse(json['sentAt'])
@@ -40,6 +43,7 @@ class NotificationModel {
       'title': title,
       'message': message,
       'target': target,
+      'type': type,
       'target_user_id': targetUserId,
       'sentAt': sentAt.toIso8601String(),
       'status': status,

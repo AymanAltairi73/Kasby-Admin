@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/loan_model.dart';
+import '../models/loan_repayment_model.dart';
 import '../controllers/loan_controller.dart';
 
 /// Loan Detail Screen
@@ -189,12 +190,23 @@ class LoanDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'سجل عمليات السداد',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'سجل عمليات السداد',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              if (loan.status != LoanStatus.paid && loan.status != LoanStatus.rejected)
+                TextButton.icon(
+                  onPressed: () => _showRecordRepaymentDialog(context, controller),
+                  icon: const Icon(Icons.add_circle_outline, size: 20, color: KasbyColors.primaryGold),
+                  label: const Text('تسجيل دفعة', style: TextStyle(color: KasbyColors.primaryGold, fontSize: 13)),
+                ),
+            ],
           ),
-          const SizedBox(height: 16),
-          FutureBuilder<List<Map<String, dynamic>>>(
+          const SizedBox(height: 12),
+          FutureBuilder<List<LoanRepayment>>(
             future: controller.fetchRepayments(loan.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -219,26 +231,60 @@ class LoanDetailScreen extends StatelessWidget {
                 separatorBuilder: (context, index) => const Divider(color: Colors.white10),
                 itemBuilder: (context, index) {
                   final rep = repayments[index];
-                  final amount = (rep['amount'] as num?)?.toDouble() ?? 0.0;
-                  final type = rep['type'] == 'full' ? 'سداد كلي' : 'سداد جزئي';
-                  final date = rep['created_at'] != null ? DateTime.parse(rep['created_at']) : DateTime.now();
+                  final amount = rep.amount;
+                  final type = rep.type == RepaymentType.full ? 'سداد كلي' : 'سداد جزئي';
+                  final date = rep.createdAt;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(type, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                            Text(dateFormat.format(date), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(type, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                Text(dateFormat.format(date), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                              ],
+                            ),
+                            Text(
+                              currencyFormat.format(amount),
+                              style: const TextStyle(color: KasbyColors.success, fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
                           ],
                         ),
-                        Text(
-                          currencyFormat.format(amount),
-                          style: const TextStyle(color: KasbyColors.success, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
+                        if (rep.paymentMethod.isNotEmpty || (rep.notes != null && rep.notes!.isNotEmpty)) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  rep.paymentMethod,
+                                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                                ),
+                              ),
+                              if (rep.notes != null && rep.notes!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    rep.notes!,
+                                    style: const TextStyle(color: Colors.white38, fontSize: 10, fontStyle: FontStyle.italic),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -352,5 +398,106 @@ class LoanDetailScreen extends StatelessWidget {
       case LoanStatus.defaulted: return Icons.block_rounded;
       case LoanStatus.rejected: return Icons.cancel_rounded;
     }
+  }
+
+  void _showRecordRepaymentDialog(BuildContext context, LoanController controller) {
+    final amountController = TextEditingController();
+    final notesController = TextEditingController();
+    final receiptController = TextEditingController();
+    String selectedMethod = 'نقدي';
+    RepaymentType selectedType = RepaymentType.partial;
+
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text('تسجيل دفعة سداد يدوية', style: TextStyle(color: Colors.white, fontSize: 18), textAlign: TextAlign.center),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'المبلغ المستلم',
+                  labelStyle: TextStyle(color: Colors.white54),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedMethod,
+                dropdownColor: const Color(0xFF1A1A2E),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'وسيلة الدفع',
+                  labelStyle: TextStyle(color: Colors.white54),
+                ),
+                items: ['نقدي', 'تحويل بنكي', 'محفظة كاسبي', 'أخرى'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                onChanged: (v) => selectedMethod = v ?? 'نقدي',
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<RepaymentType>(
+                value: selectedType,
+                dropdownColor: const Color(0xFF1A1A2E),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'نوع السداد',
+                  labelStyle: TextStyle(color: Colors.white54),
+                ),
+                items: const [
+                  DropdownMenuItem(value: RepaymentType.partial, child: Text('سداد جزئي')),
+                  DropdownMenuItem(value: RepaymentType.full, child: Text('سداد كلي (إغلاق السلفة)')),
+                ],
+                onChanged: (v) => selectedType = v ?? RepaymentType.partial,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: receiptController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'رقم الإيصال / المرجع',
+                  labelStyle: TextStyle(color: Colors.white54),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: notesController,
+                maxLines: 2,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات إضافية',
+                  labelStyle: TextStyle(color: Colors.white54),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء', style: TextStyle(color: Colors.white54))),
+          ElevatedButton(
+            onPressed: () async {
+              final amt = double.tryParse(amountController.text) ?? 0.0;
+              if (amt <= 0) {
+                Get.snackbar('تنبيه', 'يرجى إدخال مبلغ صحيح');
+                return;
+              }
+              Get.back();
+              await controller.recordRepayment(
+                loanId: loan.id,
+                amount: amt,
+                paymentMethod: selectedMethod,
+                type: selectedType,
+                notes: notesController.text,
+                receiptId: receiptController.text,
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: KasbyColors.primaryGold),
+            child: const Text('تسجيل الآن', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 }

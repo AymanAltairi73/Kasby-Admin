@@ -42,24 +42,34 @@ class FaqScreen extends StatelessWidget {
               onRefresh: () => controller.loadSettings(),
               color: KasbyColors.primaryGold,
               child: Obx(
-                () => ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(24),
-                  itemCount: controller.faqs.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) return _buildHeader();
-                    final faq = controller.faqs[index - 1];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildFaqItem(
-                        context,
-                        controller,
-                        faq,
-                        index: index,
+                () {
+                  if (controller.isLoading.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: KasbyColors.primaryGold,
                       ),
                     );
-                  },
-                ),
+                  }
+
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    itemCount: controller.faqs.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) return _buildHeader();
+                      final faq = controller.faqs[index - 1];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildFaqItem(
+                          context,
+                          controller,
+                          faq,
+                          index: index,
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ),

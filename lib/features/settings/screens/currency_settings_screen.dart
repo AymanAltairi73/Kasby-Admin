@@ -21,29 +21,39 @@ class CurrencySettingsScreen extends StatelessWidget {
         onRefresh: () => controller.loadSettings(),
         color: KasbyColors.primaryGold,
         child: Obx(
-          () => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-            ...controller.currencies.map(
-              (currency) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildCurrencyCard(context, controller, currency),
-              ),
-            ),
-            const SizedBox(height: 24),
-            KasbyButton(
-              text: 'إضافة عملة جديدة',
-              onPressed: () => _showAddDialog(context, controller),
-              isOutlined: true,
-              icon: Icons.add,
-            ),
-          ],
+          () {
+            if (controller.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: KasbyColors.primaryGold,
+                ),
+              );
+            }
+
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                ...controller.currencies.map(
+                  (currency) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildCurrencyCard(context, controller, currency),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                KasbyButton(
+                  text: 'إضافة عملة جديدة',
+                  onPressed: () => _showAddDialog(context, controller),
+                  isOutlined: true,
+                  icon: Icons.add,
+                ),
+              ],
+            );
+          },
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildCurrencyCard(
     BuildContext context,
