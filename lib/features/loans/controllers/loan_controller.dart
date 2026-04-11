@@ -48,9 +48,18 @@ class LoanController extends GetxController {
     isLoading.value = false;
   }
 
-  List<Loan> get currentLoans => _filterLoansByStatuses([LoanStatus.active, LoanStatus.partial_paid, LoanStatus.approved, LoanStatus.overdue]);
+  List<Loan> get pendingLoans => _filterLoansByStatuses([LoanStatus.pending]);
+
+  List<Loan> get currentLoans => _filterLoansByStatuses([
+        LoanStatus.active,
+        LoanStatus.partial_paid,
+        LoanStatus.approved,
+      ]);
+
   List<Loan> get paidLoans => _filterLoansByStatuses([LoanStatus.paid]);
-  List<Loan> get delayedLoans => _filterLoansByStatuses([LoanStatus.overdue, LoanStatus.defaulted]);
+
+  List<Loan> get delayedLoans =>
+      _filterLoansByStatuses([LoanStatus.overdue, LoanStatus.defaulted]);
 
   List<Loan> _filterLoansByStatuses(List<LoanStatus> statuses) {
     return loans.where((loan) {
@@ -68,8 +77,7 @@ class LoanController extends GetxController {
     searchQuery.value = query;
   }
 
-  /// Fetch repayments for a specific loan
-  /// Fetch repayments for a specific loan
+  /// Fetch repayment history for a specific loan
   Future<List<LoanRepayment>> fetchRepayments(String loanId) async {
     try {
       final response = await SupabaseService.client
@@ -77,10 +85,17 @@ class LoanController extends GetxController {
           .select()
           .eq('loan_id', loanId)
           .order('created_at', ascending: false);
-      
-      return (response as List).map((e) => LoanRepayment.fromSupabase(e)).toList();
-    } catch (e) {
-      debugPrint('Error fetching repayments: $e');
+
+      return (response as List)
+          .map((e) => LoanRepayment.fromSupabase(e))
+          .toList();
+    } catch (e, stackTrace) {
+      AppLoggerService.logError(
+        controller: 'LoanController',
+        method: 'fetchRepayments',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -111,11 +126,14 @@ class LoanController extends GetxController {
 
       // 2. Trigger RPC to balance the loan and update status
       // This RPC should update loans.paid_amount, remaining_amount, and potentially final status
-      await SupabaseService.client.rpc('fn_process_loan_repayment', params: {
-        'p_loan_id': loanId,
-        'p_amount': amount,
-        'p_admin_id': adminId,
-      });
+      await SupabaseService.client.rpc(
+        'fn_process_loan_repayment',
+        params: {
+          'p_loan_id': loanId,
+          'p_amount': amount,
+          'p_admin_id': adminId,
+        },
+      );
 
       // 3. Send Notification to user
       final loan = loans.firstWhereOrNull((l) => l.id == loanId);
@@ -148,15 +166,15 @@ class LoanController extends GetxController {
     try {
       isLoading.value = true;
       debugPrint('[LoanController] ▶ Approving loan: $loanId');
-      
+
       // We will use the existing approve logic but ensure the status updates correctly
       // In the hardened system, approval sets status to 'approved' or 'active'
       final adminId = SupabaseService.auth.currentUser?.id;
-      
-      await SupabaseService.client.rpc('fn_approve_loan', params: {
-        'p_loan_id': loanId,
-        'p_admin_id': adminId,
-      });
+
+      await SupabaseService.client.rpc(
+        'fn_approve_loan',
+        params: {'p_loan_id': loanId, 'p_admin_id': adminId},
+      );
 
       // Send User Notification
       final loan = loans.firstWhereOrNull((l) => l.id == loanId);
@@ -188,14 +206,17 @@ class LoanController extends GetxController {
   Future<void> updateLoanStatus(String loanId, LoanStatus newStatus) async {
     try {
       isLoading.value = true;
-      
+
       final adminId = SupabaseService.auth.currentUser?.id;
 
-      await SupabaseService.client.rpc('fn_update_loan_status', params: {
-        'p_loan_id': loanId,
-        'p_admin_id': adminId,
-        'p_new_status': newStatus.name,
-      });
+      await SupabaseService.client.rpc(
+        'fn_update_loan_status',
+        params: {
+          'p_loan_id': loanId,
+          'p_admin_id': adminId,
+          'p_new_status': newStatus.toDbStatus(),
+        },
+      );
 
       await loadLoans();
       Get.snackbar('نجح', 'تم تحديث حالة القرض بنجاح');
@@ -216,15 +237,20 @@ class LoanController extends GetxController {
   Future<void> rejectLoan(String loanId, String reason) async {
     try {
       isLoading.value = true;
-      debugPrint('[LoanController] ▶ Rejecting loan: $loanId with reason: $reason');
-      
+      debugPrint(
+        '[LoanController] ▶ Rejecting loan: $loanId with reason: $reason',
+      );
+
       final adminId = SupabaseService.auth.currentUser?.id;
 
-      await SupabaseService.client.rpc('fn_reject_loan', params: {
-        'p_loan_id': loanId,
-        'p_admin_id': adminId,
-        'p_reason': reason,
-      });
+      await SupabaseService.client.rpc(
+        'fn_reject_loan',
+        params: {
+          'p_loan_id': loanId,
+          'p_admin_id': adminId,
+          'p_reason': reason,
+        },
+      );
 
       // Send User Notification
       final loan = loans.firstWhereOrNull((l) => l.id == loanId);
@@ -251,4 +277,5 @@ class LoanController extends GetxController {
       isLoading.value = false;
     }
   }
+
 }

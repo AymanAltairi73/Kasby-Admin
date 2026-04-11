@@ -20,7 +20,7 @@ class LoansScreen extends StatelessWidget {
     final controller = Get.put(LoanController());
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -53,6 +53,7 @@ class LoansScreen extends StatelessWidget {
                   labelColor: KasbyColors.primaryGold,
                   unselectedLabelColor: Colors.white60,
                   tabs: [
+                    Tab(text: 'طلبات جديدة'),
                     Tab(text: 'السلفات الحالية'),
                     Tab(text: 'السلفات المدفوعة'),
                     Tab(text: 'السلفات المتأخرة'),
@@ -81,6 +82,7 @@ class LoansScreen extends StatelessWidget {
                       }
                       return TabBarView(
                         children: [
+                          _buildLoansList(controller.pendingLoans),
                           _buildLoansList(controller.currentLoans),
                           _buildLoansList(controller.paidLoans),
                           _buildLoansList(controller.delayedLoans),
@@ -163,8 +165,11 @@ class LoansScreen extends StatelessWidget {
 
   Widget _buildLoanCard(Loan loan, int index) {
     final controller = Get.find<LoanController>();
-    final isPending = loan.status == LoanStatus.pending || loan.status == LoanStatus.approved;
-    final isActive = loan.status == LoanStatus.active || loan.status == LoanStatus.partial_paid;
+    final isPending =
+        loan.status == LoanStatus.pending || loan.status == LoanStatus.approved;
+    final isActive =
+        loan.status == LoanStatus.active ||
+        loan.status == LoanStatus.partial_paid;
     final isOverdue = loan.isOverdue;
 
     return KasbyGlassCard(
@@ -468,7 +473,8 @@ class LoansScreen extends StatelessWidget {
                           label: 'سجل السداد',
                           icon: Icons.history_rounded,
                           color: Colors.white70,
-                          onPressed: () => Get.to(() => LoanDetailScreen(loan: loan)),
+                          onPressed: () =>
+                              Get.to(() => LoanDetailScreen(loan: loan)),
                         ),
                       ),
                     ],
@@ -489,7 +495,11 @@ class LoansScreen extends StatelessWidget {
           _buildSummaryItem(
             'نشطة',
             controller.loans
-                .where((l) => l.status == LoanStatus.active || l.status == LoanStatus.partial_paid)
+                .where(
+                  (l) =>
+                      l.status == LoanStatus.active ||
+                      l.status == LoanStatus.partial_paid,
+                )
                 .length
                 .toString(),
             KasbyColors.info,

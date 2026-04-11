@@ -341,7 +341,7 @@ class SettingsManagementController extends GetxController {
   // Maintenance
   Future<bool> toggleMaintenance(bool value) async {
     isMaintenanceMode.value = value;
-    if (!_isUuid(settingsId.value)) return true;
+    if (!_isValidSettingsId(settingsId.value)) return true;
     try {
       await SupabaseService.client.from('system_settings').update({
         'is_maintenance_mode': value,
@@ -365,7 +365,7 @@ class SettingsManagementController extends GetxController {
 
   Future<bool> updateMaintenanceMessage(String message) async {
     maintenanceMessage.value = message;
-    if (!_isUuid(settingsId.value)) return true;
+    if (!_isValidSettingsId(settingsId.value)) return true;
     try {
       await SupabaseService.client.from('system_settings').update({
         'maintenance_message': message,
@@ -504,7 +504,7 @@ class SettingsManagementController extends GetxController {
     }
     // Batch update sort_order in Supabase
     for (int i = 0; i < terms.length; i++) {
-      if (!_isUuid(terms[i].id)) continue;
+      if (!_isValidSettingsId(terms[i].id)) continue;
       try {
         await SupabaseService.client
             .from('terms_sections')
@@ -529,7 +529,7 @@ class SettingsManagementController extends GetxController {
     int index = fees.indexWhere((e) => e.id == id);
     if (index != -1) {
       fees[index] = fees[index].copyWith(value: newValue);
-      if (!_isUuid(id)) return true; // Local only if not UUID
+      if (!_isValidSettingsId(id)) return true; // Local only if not UUID
 
       try {
         await SupabaseService.client
@@ -579,7 +579,7 @@ class SettingsManagementController extends GetxController {
     }
     currencies[index] = currency;
 
-    if (!_isUuid(currency.id)) return true; // Local only if not UUID
+    if (!_isValidSettingsId(currency.id)) return true; // Local only if not UUID
 
     try {
       await SupabaseService.client
@@ -603,7 +603,7 @@ class SettingsManagementController extends GetxController {
 
   Future<bool> deleteCurrency(String id) async {
     currencies.removeWhere((e) => e.id == id);
-    if (!_isUuid(id)) return true;
+    if (!_isValidSettingsId(id)) return true;
 
     try {
       await SupabaseService.client.from('currencies').delete().eq('id', id);
@@ -618,7 +618,7 @@ class SettingsManagementController extends GetxController {
     int index = limits.indexWhere((e) => e.id == id);
     if (index != -1) {
       limits[index] = limits[index].copyWith(value: newValue);
-      if (!_isUuid(id)) return true; // Local only if not UUID
+      if (!_isValidSettingsId(id)) return true; // Local only if not UUID
 
       try {
         await SupabaseService.client
@@ -633,7 +633,8 @@ class SettingsManagementController extends GetxController {
     return false;
   }
 
-  bool _isUuid(String id) {
+  bool _isValidSettingsId(String id) {
+    if (id == 'global') return true;
     return RegExp(
       r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
       caseSensitive: false,

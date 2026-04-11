@@ -117,8 +117,8 @@ class InvestmentController extends GetxController {
         },
       );
 
-      final result = response as Map<String, dynamic>;
-      if (result['success'] == true) {
+      final result = response;
+      if (result is Map && result['success'] == true) {
         Get.snackbar(
           'نجح',
           'تمت الموافقة على الاستثمار وتفعيله',
@@ -126,7 +126,12 @@ class InvestmentController extends GetxController {
           colorText: KasbyColors.success,
         );
       } else {
-        throw result['error'] ?? 'فشل الموافقة';
+        // Fallback for void or boolean success
+        if (result == true || result == null) {
+           Get.snackbar('نجح', 'تمت المعالجة بنجاح');
+        } else {
+           throw (result is Map ? result['error'] : 'Unknown error') ?? 'فشل الموافقة';
+        }
       }
     } catch (e) {
       Get.snackbar('خطأ', e.toString());
@@ -148,8 +153,8 @@ class InvestmentController extends GetxController {
         },
       );
 
-      final result = response as Map<String, dynamic>;
-      if (result['success'] == true) {
+      final result = response;
+      if (result is Map && result['success'] == true) {
         Get.snackbar(
           'تم الرفض',
           'تم رفض الاستثمار بنجاح',
@@ -157,7 +162,11 @@ class InvestmentController extends GetxController {
           colorText: KasbyColors.error,
         );
       } else {
-        throw result['error'] ?? 'فشل الرفض';
+        if (result == true || result == null) {
+           Get.snackbar('نجح', 'تم الرفض بنجاح');
+        } else {
+           throw (result is Map ? result['error'] : 'Unknown error') ?? 'فشل الرفض';
+        }
       }
     } catch (e) {
       Get.snackbar('خطأ', e.toString());

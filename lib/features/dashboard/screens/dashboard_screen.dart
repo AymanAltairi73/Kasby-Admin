@@ -188,29 +188,37 @@ class DashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 16),
               child: GestureDetector(
                 onTap: () => Get.toNamed('/profile'),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: KasbyColors.primaryGold.withValues(alpha: 0.5),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: KasbyColors.primaryGold.withValues(alpha: 0.2),
-                        blurRadius: 10,
+                child: Obx(() {
+                  final avatarUrl = authController.profile.value?.avatarUrl;
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: KasbyColors.primaryGold.withValues(alpha: 0.5),
+                        width: 2,
                       ),
-                    ],
-                  ),
-                  child: const CircleAvatar(
-                    backgroundColor: Colors.black26,
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: KasbyColors.primaryGold,
-                      size: 20,
+                      boxShadow: [
+                        BoxShadow(
+                          color: KasbyColors.primaryGold.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
-                  ),
-                ),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black26,
+                      backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                          ? NetworkImage(avatarUrl)
+                          : null,
+                      child: avatarUrl == null || avatarUrl.isEmpty
+                          ? const Icon(
+                              Icons.person_rounded,
+                              color: KasbyColors.primaryGold,
+                              size: 20,
+                            )
+                          : null,
+                    ),
+                  );
+                }),
               ),
             ),
             actions: [

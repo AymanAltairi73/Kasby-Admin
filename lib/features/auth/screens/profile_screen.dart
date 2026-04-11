@@ -748,18 +748,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: KasbyColors.primaryGold, width: 2),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: _authController.profile.value?.avatarUrl.isNotEmpty == true
-                        ? Image.network(
-                            _authController.profile.value!.avatarUrl,
-                            fit: BoxFit.cover,
-                            width: 120,
-                            height: 120,
-                            errorBuilder: (_, __, ___) => _buildInitial(),
-                          )
-                        : _buildInitial(),
-                  ),
+                  child: Obx(() {
+                    final avatarUrl = _authController.profile.value?.avatarUrl;
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: avatarUrl != null && avatarUrl.isNotEmpty
+                          ? Image.network(
+                              avatarUrl,
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                              errorBuilder: (_, __, ___) => _buildInitial(),
+                            )
+                          : _buildInitial(),
+                    );
+                  }),
                 ),
               ),
               

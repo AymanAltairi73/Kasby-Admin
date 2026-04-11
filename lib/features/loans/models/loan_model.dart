@@ -159,7 +159,9 @@ class Loan {
       amount: safeToDouble(json['amount']),
       interestRate: safeToDouble(json['interest_rate'] ?? json['interestRate']),
       totalDue: safeToDouble(json['total_due'] ?? json['totalDue']),
-      remainingAmount: safeToDouble(json['remaining_amount'] ?? json['remainingAmount']),
+      remainingAmount: safeToDouble(json['remaining_amount'] ?? json['remainingAmount']) > 0 
+          ? safeToDouble(json['remaining_amount'] ?? json['remainingAmount'])
+          : (safeToDouble(json['total_due'] ?? json['totalDue']) - safeToDouble(json['paid_amount'] ?? json['paidAmount'])),
       paidAmount: safeToDouble(json['paid_amount'] ?? json['paidAmount']),
       loanDate: json['loan_date'] != null
           ? DateTime.parse(json['loan_date'])
@@ -214,5 +216,29 @@ class Loan {
       'status': status.name,
       'rejection_reason': rejectionReason,
     };
+  }
+}
+
+extension LoanStatusExtension on LoanStatus {
+  /// Convert enum to exact string expected by DB Enum
+  String toDbStatus() {
+    switch (this) {
+      case LoanStatus.pending:
+        return 'pending';
+      case LoanStatus.approved:
+        return 'approved';
+      case LoanStatus.active:
+        return 'current'; // DB uses 'current'
+      case LoanStatus.partial_paid:
+        return 'partial_paid';
+      case LoanStatus.paid:
+        return 'paid';
+      case LoanStatus.overdue:
+        return 'delayed'; // DB uses 'delayed'
+      case LoanStatus.defaulted:
+        return 'defaulted';
+      case LoanStatus.rejected:
+        return 'rejected';
+    }
   }
 }
