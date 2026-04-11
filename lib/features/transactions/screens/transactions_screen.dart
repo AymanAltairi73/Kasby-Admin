@@ -636,13 +636,13 @@ class TransactionsScreen extends StatelessWidget {
   //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
   //       decoration: BoxDecoration(
   //         color: isSelected
-  //             ? KasbyColors.primaryGold.withOpacity(0.2)
+  //             ? KasbyColors.primaryGold.withValues(alpha: 0.2)
   //             : Colors.transparent,
   //         borderRadius: BorderRadius.circular(12),
   //         border: Border.all(
   //           color: isSelected
   //               ? KasbyColors.primaryGold
-  //               : KasbyColors.textSecondary.withOpacity(0.3),
+  //               : KasbyColors.textSecondary.withValues(alpha: 0.3),
   //         ),
   //       ),
   //       child: Text(label,
@@ -718,7 +718,7 @@ class TransactionsScreen extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: KasbyColors.primaryGold.withOpacity(0.1),
+          color: KasbyColors.primaryGold.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(icon, color: KasbyColors.primaryGold, size: 20),

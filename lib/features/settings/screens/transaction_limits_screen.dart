@@ -184,7 +184,7 @@ class TransactionLimitsScreen extends StatelessWidget {
                       Get.snackbar(
                         'تم التحديث',
                         'تم تحديث الحد بنجاح',
-                        backgroundColor: KasbyColors.success.withOpacity(0.9),
+                        backgroundColor: KasbyColors.success.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );
@@ -192,7 +192,7 @@ class TransactionLimitsScreen extends StatelessWidget {
                       Get.snackbar(
                         'خطأ',
                         'فشل في تحديث الحد',
-                        backgroundColor: KasbyColors.error.withOpacity(0.9),
+                        backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );

@@ -96,7 +96,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
             'تم التحديث',
             'تم تحديث بيانات المستخدم بنجاح',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: KasbyColors.success.withOpacity(0.7),
+            backgroundColor: KasbyColors.success.withValues(alpha: 0.7),
             colorText: Colors.white,
           );
         } catch (e) {
@@ -104,7 +104,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
             'خطأ',
             'فشل تحديث البيانات: $e',
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: KasbyColors.error.withOpacity(0.7),
+            backgroundColor: KasbyColors.error.withValues(alpha: 0.7),
             colorText: Colors.white,
           );
         } finally {
@@ -269,7 +269,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 8,
-                          shadowColor: KasbyColors.primaryGold.withOpacity(0.4),
+                          shadowColor: KasbyColors.primaryGold.withValues(alpha: 0.4),
                         ),
                         child: _isLoading.value
                             ? const CircularProgressIndicator(color: Colors.black)

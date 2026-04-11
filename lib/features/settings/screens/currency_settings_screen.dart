@@ -236,7 +236,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                         Get.snackbar(
                           'تم الحفظ',
                           'تم حفظ بيانات العملة بنجاح',
-                          backgroundColor: KasbyColors.success.withOpacity(0.9),
+                          backgroundColor: KasbyColors.success.withValues(alpha: 0.9),
                           colorText: Colors.white,
                           snackPosition: SnackPosition.BOTTOM,
                         );
@@ -244,7 +244,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                         Get.snackbar(
                           'خطأ',
                           'فشل في حفظ بيانات العملة',
-                          backgroundColor: KasbyColors.error.withOpacity(0.9),
+                          backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                           colorText: Colors.white,
                           snackPosition: SnackPosition.BOTTOM,
                         );
@@ -295,7 +295,7 @@ class CurrencySettingsScreen extends StatelessWidget {
                 Get.snackbar(
                   'تم الحذف',
                   'تم حذف العملة بنجاح',
-                  backgroundColor: KasbyColors.error.withOpacity(0.9),
+                  backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                   colorText: Colors.white,
                   snackPosition: SnackPosition.BOTTOM,
                 );

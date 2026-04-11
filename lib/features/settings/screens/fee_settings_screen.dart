@@ -212,7 +212,7 @@ class FeeSettingsScreen extends StatelessWidget {
                       Get.snackbar(
                         'تم التحديث',
                         'تم تحديث ${fee.label} بنجاح',
-                        backgroundColor: KasbyColors.success.withOpacity(0.9),
+                        backgroundColor: KasbyColors.success.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );
@@ -220,7 +220,7 @@ class FeeSettingsScreen extends StatelessWidget {
                       Get.snackbar(
                         'خطأ',
                         'فشل في تحديث الرسوم',
-                        backgroundColor: KasbyColors.error.withOpacity(0.9),
+                        backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );

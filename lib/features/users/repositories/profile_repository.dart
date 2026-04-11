@@ -69,7 +69,7 @@ class ProfileRepository extends BaseRepository {
       () async {
         final response = await client
             .from('user_investments')
-            .select('*, investment_plans(*)')
+            .select('*, investment_plans!user_investments_plan_id_fkey(*)')
             .eq('user_id', userId)
             .order('start_date', ascending: false);
 

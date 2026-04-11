@@ -234,7 +234,7 @@ class FaqScreen extends StatelessWidget {
                       Get.snackbar(
                         'نجاح',
                         faq == null ? 'تم إضافة السؤال الشائع بنجاح' : 'تم تحديث السؤال الشائع بنجاح',
-                        backgroundColor: KasbyColors.success.withOpacity(0.9),
+                        backgroundColor: KasbyColors.success.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );
@@ -242,7 +242,7 @@ class FaqScreen extends StatelessWidget {
                       Get.snackbar(
                         'خطأ',
                         'فشل في العملية، يرجى المحاولة مرة أخرى',
-                        backgroundColor: KasbyColors.error.withOpacity(0.9),
+                        backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                         colorText: Colors.white,
                         snackPosition: SnackPosition.BOTTOM,
                       );
@@ -293,7 +293,7 @@ class FaqScreen extends StatelessWidget {
                 Get.snackbar(
                   'نجاح',
                   'تم حذف السؤال الشائع بنجاح',
-                  backgroundColor: KasbyColors.error.withOpacity(0.9),
+                  backgroundColor: KasbyColors.error.withValues(alpha: 0.9),
                   colorText: Colors.white,
                   snackPosition: SnackPosition.BOTTOM,
                 );

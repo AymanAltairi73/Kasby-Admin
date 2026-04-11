@@ -84,7 +84,7 @@ class MaintenanceScreen extends StatelessWidget {
                                       'وضع الصيانة',
                                       'تم ${value ? 'تفعيل' : 'تعطيل'} وضع الصيانة بنجاح',
                                       backgroundColor:
-                                          KasbyColors.warning.withOpacity(0.9),
+                                          KasbyColors.warning.withValues(alpha: 0.9),
                                       colorText: Colors.white,
                                       snackPosition: SnackPosition.BOTTOM,
                                     );
@@ -242,13 +242,13 @@ class MaintenanceScreen extends StatelessWidget {
           top: -50,
           right: -100,
           size: 300,
-          color: KasbyColors.error.withOpacity(0.05),
+          color: KasbyColors.error.withValues(alpha: 0.05),
         ),
         _buildOrb(
           bottom: -100,
           left: -100,
           size: 400,
-          color: KasbyColors.primaryGold.withOpacity(0.05),
+          color: KasbyColors.primaryGold.withValues(alpha: 0.05),
         ),
       ],
     );
