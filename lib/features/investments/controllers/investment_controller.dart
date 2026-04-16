@@ -367,6 +367,13 @@ class InvestmentController extends GetxController {
     return userInvestments.where((inv) => inv.status == 'matured').toList();
   }
 
+  /// Get rejected/cancelled investments
+  List<UserInvestment> get rejectedInvestments {
+    return userInvestments
+        .where((inv) => inv.status == 'cancelled' || inv.status == 'rejected')
+        .toList();
+  }
+
   @override
   void onClose() {
     _userInvestmentsSubscription?.cancel();

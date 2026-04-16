@@ -462,7 +462,7 @@ class DashboardScreen extends StatelessWidget {
     return Obx(() {
       final wCount = dc.pendingWithdrawalsCount.value;
       final kCount = dc.pendingKYCCount.value;
-      
+
       if (wCount == 0 && kCount == 0) return const SizedBox.shrink();
 
       return Padding(
@@ -841,7 +841,6 @@ class DashboardScreen extends StatelessWidget {
       },
     );
   }
-
 
   // ═══════════════════════════════════════════════════════════
   //  SHARED HELPERS

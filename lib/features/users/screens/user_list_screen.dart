@@ -402,11 +402,12 @@ class UserListScreen extends StatelessWidget {
                       ? Image.network(
                           user.avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.account_circle_rounded,
-                            size: 32,
-                            color: Colors.white,
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.account_circle_rounded,
+                                size: 32,
+                                color: Colors.white,
+                              ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
@@ -625,7 +626,10 @@ class UserListScreen extends StatelessWidget {
   static Future<void> _launchUrl(String url, {String? fallbackMessage}) async {
     final uri = Uri.parse(url);
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         Get.snackbar(
           'تنبيه',
@@ -638,7 +642,10 @@ class UserListScreen extends StatelessWidget {
       }
     } catch (e) {
       debugPrint('Launch error: $e');
-      Get.snackbar('خطأ', 'حدث خطأ أثناء محاولة فتح الرابط، تأكد من تثبيت التطبيق');
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء محاولة فتح الرابط، تأكد من تثبيت التطبيق',
+      );
     }
   }
 

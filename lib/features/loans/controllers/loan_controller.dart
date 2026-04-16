@@ -52,7 +52,7 @@ class LoanController extends GetxController {
 
   List<Loan> get currentLoans => _filterLoansByStatuses([
         LoanStatus.active,
-        LoanStatus.partial_paid,
+        LoanStatus.partialPaid,
         LoanStatus.approved,
       ]);
 

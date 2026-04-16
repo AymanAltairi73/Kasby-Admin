@@ -128,6 +128,8 @@ class User {
       profBal = safeToDouble(wallet['profit_balance']);
       investBal = safeToDouble(wallet['invested_balance']);
       pendingBal = safeToDouble(wallet['pending_balance']);
+    } else {
+      debugPrint('[UserModel] ⚠️ Wallet data is missing, empty, or incorrectly mapped for user ${json['id']}: $wallet');
     }
 
     return User(

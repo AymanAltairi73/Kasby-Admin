@@ -169,7 +169,7 @@ class LoansScreen extends StatelessWidget {
         loan.status == LoanStatus.pending || loan.status == LoanStatus.approved;
     final isActive =
         loan.status == LoanStatus.active ||
-        loan.status == LoanStatus.partial_paid;
+        loan.status == LoanStatus.partialPaid;
     final isOverdue = loan.isOverdue;
 
     return KasbyGlassCard(
@@ -498,7 +498,7 @@ class LoansScreen extends StatelessWidget {
                 .where(
                   (l) =>
                       l.status == LoanStatus.active ||
-                      l.status == LoanStatus.partial_paid,
+                      l.status == LoanStatus.partialPaid,
                 )
                 .length
                 .toString(),

@@ -32,6 +32,7 @@ class AgentsScreen extends StatelessWidget {
             icon: const Icon(Icons.search_rounded),
             onPressed: () => _showSearchDialog(context, controller),
           ),
+
           // // Time Filter Dropdown
           // PopupMenuButton<TimeFilter>(
           //   icon: const Icon(Icons.filter_list_rounded),
@@ -171,7 +172,6 @@ class AgentsScreen extends StatelessWidget {
           //     ),
           //   ],
           // ),
-
           IconButton(
             icon: const Icon(Icons.mark_email_unread_rounded),
             tooltip: 'طلبات الانضمام',
@@ -364,7 +364,6 @@ class AgentsScreen extends StatelessWidget {
   }
 
   Widget _buildAgentCard(Agent agent, AgentController controller, int index) {
-
     return KasbyGlassCard(
       onTap: () => Get.toNamed('/agent-details', arguments: agent),
       padding: const EdgeInsets.all(0),
@@ -448,7 +447,9 @@ class AgentsScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: KasbyColors.primaryGold.withValues(alpha: 0.1),
+                                  color: KasbyColors.primaryGold.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -494,7 +495,8 @@ class AgentsScreen extends StatelessWidget {
                       onSelected: (value) {
                         switch (value) {
                           case 'chat':
-                            final chatController = Get.find<kasby_chat.ChatController>();
+                            final chatController =
+                                Get.find<kasby_chat.ChatController>();
                             chatController.startChatWithUser(agent.userId);
                             break;
                           case 'edit':
@@ -517,11 +519,16 @@ class AgentsScreen extends StatelessWidget {
                           value: 'chat',
                           child: Row(
                             children: [
-                              Icon(Icons.chat_bubble_outline_rounded,
-                                  size: 22, color: KasbyColors.info),
+                              Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 22,
+                                color: KasbyColors.info,
+                              ),
                               const SizedBox(width: 12),
-                              const Text('بدء محادثة',
-                                  style: TextStyle(fontSize: 14)),
+                              const Text(
+                                'بدء محادثة',
+                                style: TextStyle(fontSize: 14),
+                              ),
                             ],
                           ),
                         ),
@@ -529,11 +536,16 @@ class AgentsScreen extends StatelessWidget {
                           value: 'edit',
                           child: Row(
                             children: [
-                              Icon(Icons.edit_note_rounded,
-                                  size: 22, color: KasbyColors.primaryGold),
+                              Icon(
+                                Icons.edit_note_rounded,
+                                size: 22,
+                                color: KasbyColors.primaryGold,
+                              ),
                               const SizedBox(width: 12),
-                              const Text('تحديث البيانات',
-                                  style: TextStyle(fontSize: 14)),
+                              const Text(
+                                'تحديث البيانات',
+                                style: TextStyle(fontSize: 14),
+                              ),
                             ],
                           ),
                         ),
@@ -563,12 +575,19 @@ class AgentsScreen extends StatelessWidget {
                           value: 'delete',
                           child: Row(
                             children: [
-                              const Icon(Icons.delete_sweep_rounded,
-                                  size: 22, color: KasbyColors.error),
+                              const Icon(
+                                Icons.delete_sweep_rounded,
+                                size: 22,
+                                color: KasbyColors.error,
+                              ),
                               const SizedBox(width: 12),
-                              const Text('حذف الوكيل',
-                                  style: TextStyle(
-                                      color: KasbyColors.error, fontSize: 14)),
+                              const Text(
+                                'حذف الوكيل',
+                                style: TextStyle(
+                                  color: KasbyColors.error,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -584,7 +603,9 @@ class AgentsScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.05),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -635,7 +656,8 @@ class AgentsScreen extends StatelessWidget {
                             color: iconColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                                color: iconColor.withValues(alpha: 0.2)),
+                              color: iconColor.withValues(alpha: 0.2),
+                            ),
                           ),
                           child: Icon(iconData, size: 14, color: iconColor),
                         );
@@ -650,7 +672,6 @@ class AgentsScreen extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildStatusIndicator(String status) {
     final isActive = status.toLowerCase() == 'active';

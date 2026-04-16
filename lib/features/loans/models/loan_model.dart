@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/numeric_utils.dart';
 
-enum LoanStatus { pending, approved, active, partial_paid, paid, overdue, defaulted, rejected }
+enum LoanStatus {
+  pending,
+  approved,
+  active,
+  partialPaid,
+  paid,
+  overdue,
+  defaulted,
+  rejected
+}
 
 /// Loan Model — maps to `loans` table in Supabase
 class Loan {
@@ -69,7 +78,7 @@ class Loan {
         return 'تمت الموافقة';
       case LoanStatus.active:
         return 'نشطة / جاري السداد';
-      case LoanStatus.partial_paid:
+      case LoanStatus.partialPaid:
         return 'سداد جزئي';
       case LoanStatus.paid:
         return 'تم السداد بنجاح';
@@ -90,7 +99,7 @@ class Loan {
         return Colors.cyan;
       case LoanStatus.active:
         return Colors.blue;
-      case LoanStatus.partial_paid:
+      case LoanStatus.partialPaid:
         return Colors.teal;
       case LoanStatus.paid:
         return Colors.green;
@@ -123,13 +132,11 @@ class Loan {
     switch (status) {
       case 'pending':
         return LoanStatus.pending;
-      case 'approved':
-        return LoanStatus.approved;
+      case 'partial_paid':
+        return LoanStatus.partialPaid;
       case 'active':
       case 'current':
         return LoanStatus.active;
-      case 'partial_paid':
-        return LoanStatus.partial_paid;
       case 'paid':
         return LoanStatus.paid;
       case 'overdue':
@@ -228,13 +235,13 @@ extension LoanStatusExtension on LoanStatus {
       case LoanStatus.approved:
         return 'approved';
       case LoanStatus.active:
-        return 'current'; // DB uses 'current'
-      case LoanStatus.partial_paid:
+        return 'current';
+      case LoanStatus.partialPaid:
         return 'partial_paid';
       case LoanStatus.paid:
         return 'paid';
       case LoanStatus.overdue:
-        return 'delayed'; // DB uses 'delayed'
+        return 'delayed';
       case LoanStatus.defaulted:
         return 'defaulted';
       case LoanStatus.rejected:

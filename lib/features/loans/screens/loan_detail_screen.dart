@@ -392,7 +392,7 @@ class LoanDetailScreen extends StatelessWidget {
       case LoanStatus.pending: return Icons.hourglass_empty_rounded;
       case LoanStatus.approved: return Icons.thumb_up_alt_rounded;
       case LoanStatus.active: return Icons.trending_up_rounded;
-      case LoanStatus.partial_paid: return Icons.payments_rounded;
+      case LoanStatus.partialPaid: return Icons.payments_rounded;
       case LoanStatus.paid: return Icons.verified_user_rounded;
       case LoanStatus.overdue: return Icons.warning_amber_rounded;
       case LoanStatus.defaulted: return Icons.block_rounded;
