@@ -7,6 +7,7 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../models/investment_model.dart';
+import '../../notifications/controllers/notification_controller.dart';
 
 /// Investment Controller — manages investment plans & user investments from Supabase
 class InvestmentController extends GetxController {
@@ -119,6 +120,17 @@ class InvestmentController extends GetxController {
 
       final result = response;
       if (result is Map && result['success'] == true) {
+        // Find investment to get userId
+        final inv = userInvestments.firstWhereOrNull((i) => i.id == investmentId);
+        if (inv != null) {
+          Get.find<NotificationController>().sendNotification(
+            '🌟 استثمار مفعل',
+            'تمت الموافقة على خطة الاستثمار "${inv.planName}" وهي الآن مفعلة وتحقق لك الأرباح.',
+            'specific',
+            specificUserId: inv.userId,
+          );
+        }
+
         Get.snackbar(
           'نجح',
           'تمت الموافقة على الاستثمار وتفعيله',
@@ -155,6 +167,17 @@ class InvestmentController extends GetxController {
 
       final result = response;
       if (result is Map && result['success'] == true) {
+        // Find investment to get userId
+        final inv = userInvestments.firstWhereOrNull((i) => i.id == investmentId);
+        if (inv != null) {
+          Get.find<NotificationController>().sendNotification(
+            '⚠️ رفض الاستثمار',
+            'تم رفض طلب الاستثمار الخاص بك. السبب: $reason',
+            'specific',
+            specificUserId: inv.userId,
+          );
+        }
+
         Get.snackbar(
           'تم الرفض',
           'تم رفض الاستثمار بنجاح',

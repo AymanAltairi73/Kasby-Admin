@@ -199,9 +199,17 @@ class TransactionController extends GetxController {
 
   /// Approve a deposit transaction via RPC
   Future<void> approveDeposit(String txnId) async {
+    final txnIndex = transactions.indexWhere((t) => t.id == txnId);
+    if (txnIndex == -1) return;
+    final originalStatus = transactions[txnIndex].status;
+
+    // Optimistic UI Update
+    transactions[txnIndex] = transactions[txnIndex].copyWith(status: 'approved');
+    _applyFilters();
+    _calculateStats();
+
     try {
-      isLoading.value = true;
-      debugPrint('[TransactionController] ▶ Approving deposit: $txnId');
+      debugPrint('[TransactionController] ▶ Approving deposit: $txnId (Optimistic)');
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await _transactionRepo.processTransaction(
@@ -210,23 +218,24 @@ class TransactionController extends GetxController {
       );
 
       // Send User Notification
-      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
-      if (txn != null) {
-        Get.find<NotificationController>().sendNotification(
-          '📥 إيداع ناجح',
-          'تم تأكيد عملية الإيداع وإضافة الرصيد إلى حسابك بنجاح.',
-          'specific',
-          specificUserId: txn.userId,
-        );
-      }
+      Get.find<NotificationController>().sendNotification(
+        '📥 إيداع ناجح',
+        'تم تأكيد عملية الإيداع وإضافة الرصيد إلى حسابك بنجاح.',
+        'specific',
+        specificUserId: transactions[txnIndex].userId,
+      );
 
-      await loadTransactions();
       Get.snackbar(
         'تم',
         'تمت الموافقة على الإيداع',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e, stackTrace) {
+      // Rollback
+      transactions[txnIndex] = transactions[txnIndex].copyWith(status: originalStatus);
+      _applyFilters();
+      _calculateStats();
+
       AppLoggerService.logError(
         controller: 'TransactionController',
         method: 'approveDeposit',
@@ -238,15 +247,21 @@ class TransactionController extends GetxController {
         'فشل في الموافقة على الإيداع',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } finally {
-      isLoading.value = false;
     }
   }
 
   /// Approve a withdrawal transaction via RPC
   Future<void> approveWithdrawal(String txnId) async {
+    final txnIndex = transactions.indexWhere((t) => t.id == txnId);
+    if (txnIndex == -1) return;
+    final originalStatus = transactions[txnIndex].status;
+
+    // Optimistic UI Update
+    transactions[txnIndex] = transactions[txnIndex].copyWith(status: 'approved');
+    _applyFilters();
+    _calculateStats();
+
     try {
-      isLoading.value = true;
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await _transactionRepo.processTransaction(
@@ -255,17 +270,13 @@ class TransactionController extends GetxController {
       );
 
       // Send User Notification
-      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
-      if (txn != null) {
-        Get.find<NotificationController>().sendNotification(
-          '📤 سحب ناجح',
-          'تمت الموافقة على طلب السحب الخاص بك، المبلغ في طريقه إليك.',
-          'specific',
-          specificUserId: txn.userId,
-        );
-      }
+      Get.find<NotificationController>().sendNotification(
+        '📤 سحب ناجح',
+        'تمت الموافقة على طلب السحب الخاص بك، المبلغ في طريقه إليك.',
+        'specific',
+        specificUserId: transactions[txnIndex].userId,
+      );
 
-      await loadTransactions();
       Get.snackbar(
         'تم',
         'تمت الموافقة على السحب بنجاح',
@@ -274,6 +285,11 @@ class TransactionController extends GetxController {
         colorText: Colors.green,
       );
     } catch (e, stackTrace) {
+      // Rollback
+      transactions[txnIndex] = transactions[txnIndex].copyWith(status: originalStatus);
+      _applyFilters();
+      _calculateStats();
+
       AppLoggerService.logError(
         controller: 'TransactionController',
         method: 'approveWithdrawal',
@@ -285,8 +301,6 @@ class TransactionController extends GetxController {
         'فشل في الموافقة على السحب',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -304,13 +318,20 @@ class TransactionController extends GetxController {
 
   /// Reject a transaction via RPC
   Future<void> rejectTransaction(String txnId, [String reason = '']) async {
-    try {
-      isLoading.value = true;
-      debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId');
-      final adminId = SupabaseService.auth.currentUser?.id;
+    final txnIndex = transactions.indexWhere((t) => t.id == txnId);
+    if (txnIndex == -1) return;
+    final txn = transactions[txnIndex];
+    final originalStatus = txn.status;
 
-      final txn = transactions.firstWhereOrNull((t) => t.id == txnId);
-      final fnName = (txn?.type == 'withdrawal') ? 'reject_withdrawal' : 'fn_reject_transaction';
+    // Optimistic UI Update
+    transactions[txnIndex] = transactions[txnIndex].copyWith(status: 'rejected');
+    _applyFilters();
+    _calculateStats();
+
+    try {
+      debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId (Optimistic)');
+      final adminId = SupabaseService.auth.currentUser?.id;
+      final fnName = (txn.type == 'withdrawal') ? 'reject_withdrawal' : 'fn_reject_transaction';
 
       await _transactionRepo.processTransaction(
         fnName,
@@ -322,16 +343,13 @@ class TransactionController extends GetxController {
       );
 
       // Send User Notification
-      if (txn != null) {
-        Get.find<NotificationController>().sendNotification(
-          '⚠️ تنبيه مالي',
-          'تم رفض المعاملة المالية رقم ${txn.id}. يرجى مراجعة السبب في قائمة المعاملات.',
-          'specific',
-          specificUserId: txn.userId,
-        );
-      }
+      Get.find<NotificationController>().sendNotification(
+        '⚠️ تنبيه مالي',
+        'تم رفض المعاملة المالية رقم ${txn.id}. يرجى مراجعة السبب في قائمة المعاملات.',
+        'specific',
+        specificUserId: txn.userId,
+      );
 
-      await loadTransactions();
       Get.snackbar(
         'تم',
         'تم رفض المعاملة',
@@ -340,6 +358,11 @@ class TransactionController extends GetxController {
         colorText: Colors.red,
       );
     } catch (e, stackTrace) {
+      // Rollback
+      transactions[txnIndex] = transactions[txnIndex].copyWith(status: originalStatus);
+      _applyFilters();
+      _calculateStats();
+
       AppLoggerService.logError(
         controller: 'TransactionController',
         method: 'rejectTransaction',
@@ -351,8 +374,6 @@ class TransactionController extends GetxController {
         'فشل في رفض المعاملة',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } finally {
-      isLoading.value = false;
     }
   }
 

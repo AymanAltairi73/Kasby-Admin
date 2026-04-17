@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
@@ -48,8 +49,7 @@ class AdminListenerService extends GetxService {
         final status = payload.newRecord['status'];
         final type = payload.newRecord['type'];
         if (status == 'pending' && (type == 'deposit' || type == 'withdrawal')) {
-          Get.find<AudioService>().playNotification();
-          _showLocalNotification(
+          _showAdminAlert(
             title: '💰 معاملة جديدة',
             body: 'لديك طلب ${type == 'deposit' ? 'إيداع' : 'سحب'} جديد بانتظار الموافقة',
           );
@@ -65,8 +65,7 @@ class AdminListenerService extends GetxService {
       callback: (payload) {
         final status = payload.newRecord['status'];
         if (status == 'pending') {
-          Get.find<AudioService>().playNotification();
-          _showLocalNotification(
+          _showAdminAlert(
             title: '🌟 طلب وكالة',
             body: 'هناك طلب انضمام وكيل جديد بانتظار المراجعة',
           );
@@ -83,8 +82,7 @@ class AdminListenerService extends GetxService {
         final newKyc = payload.newRecord['kyc_status'];
         final oldKyc = payload.oldRecord['kyc_status'];
         if (newKyc == 'pending' && oldKyc != 'pending') {
-          Get.find<AudioService>().playNotification();
-          _showLocalNotification(
+          _showAdminAlert(
             title: '🆔 توثيق جديد',
             body: 'قام مستخدم برفع مستندات توثيق جديدة، يرجى مراجعتها',
           );
@@ -100,10 +98,25 @@ class AdminListenerService extends GetxService {
       callback: (payload) {
         final status = payload.newRecord['status'];
         if (status == 'pending') {
-          Get.find<AudioService>().playNotification();
-          _showLocalNotification(
+          _showAdminAlert(
             title: '💸 طلب قرض',
             body: 'قام مستخدم بتقديم طلب قرض جديد، تفقد قائمة القروض',
+          );
+        }
+      },
+    );
+
+    // 5. Listen for new Investment applications
+    _adminChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'user_investments',
+      callback: (payload) {
+        final status = payload.newRecord['status'];
+        if (status == 'pending') {
+          _showAdminAlert(
+            title: '📈 استثمار جديد',
+            body: 'هناك طلب استثمار جديد بانتظار المراجعة والموافقة',
           );
         }
       },
@@ -131,6 +144,35 @@ class AdminListenerService extends GetxService {
     _reconnectTimer = null;
     _adminChannel?.unsubscribe();
     _adminChannel = null;
+  }
+
+  void _showAdminAlert({required String title, required String body}) {
+    // 1. Play sound
+    Get.find<AudioService>().playNotification();
+
+    // 2. Show Local OS Notification
+    _showLocalNotification(title: title, body: body);
+
+    // 3. Show In-App Snackbar for immediate visual feedback
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        body,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFF16161E).withValues(alpha: 0.95),
+        colorText: const Color(0xFFC9A24D), // Kasby Gold
+        duration: const Duration(seconds: 5),
+        margin: const EdgeInsets.all(12),
+        borderRadius: 16,
+        boxShadows: [
+          BoxShadow(
+            color: const Color(0xFFC9A24D).withValues(alpha: 0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ],
+      );
+    }
   }
 
   Future<void> _showLocalNotification({required String title, required String body}) async {

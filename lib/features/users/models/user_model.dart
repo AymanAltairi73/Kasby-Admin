@@ -3,6 +3,8 @@ import '../../../core/utils/numeric_utils.dart';
 
 /// User Model — maps to `profiles` + `wallets` tables in Supabase
 /// Updated to align with kasby_new.sql schema (no role column, country_code, referral)
+import 'package:flutter/foundation.dart';
+
 class User {
   final String id;
   final String name;
