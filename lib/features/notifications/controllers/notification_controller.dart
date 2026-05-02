@@ -18,7 +18,7 @@ class NotificationController extends GetxController {
 
   /// Load notifications from Supabase
   Future<void> loadNotifications() async {
-    debugPrint('[NotificationController] ▶ Loading notifications...');
+    debugPrint('[NotificationController][loadNotifications] Fetching data from /notifications');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -27,6 +27,7 @@ class NotificationController extends GetxController {
           .order('sent_at', ascending: false)
           .limit(100);
 
+      debugPrint('[NotificationController][loadNotifications] Response: ${response.length} notifications');
       sentNotifications.assignAll(
         (response as List).map(
           (e) => NotificationModel(
@@ -39,7 +40,11 @@ class NotificationController extends GetxController {
           ),
         ),
       );
+      debugPrint('[NotificationController][loadNotifications] Successfully loaded ${sentNotifications.length} notifications');
     } catch (e, stackTrace) {
+      debugPrint('[NotificationController][loadNotifications] Error: $e');
+      debugPrint('[NotificationController][loadNotifications] Stack trace: $stackTrace');
+      debugPrint('[NotificationController][loadNotifications] Endpoint: /notifications');
       AppLoggerService.logError(
         controller: 'NotificationController',
         method: 'loadNotifications',

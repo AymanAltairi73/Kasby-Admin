@@ -21,18 +21,32 @@ class LoanController extends GetxController {
 
   /// Load loans from Supabase with user names
   Future<void> loadLoans() async {
-    debugPrint('[LoanController] ▶ Loading loans from Supabase...');
+    debugPrint('[LoanController][loadLoans] Fetching data from /loans');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
           .from('loans')
-          .select('*, profiles!loans_user_id_fkey!left(full_name)')
+          .select('''
+            *,
+            profiles!loans_user_id_fkey!left(
+              full_name,
+              email,
+              phone
+            )
+          ''')
           .order('created_at', ascending: false);
 
+      debugPrint('[LoanController][loadLoans] Response: ${response.length} loans');
+      
       loans.assignAll(
-        (response as List).map((e) => Loan.fromSupabase(e)).toList(),
+        (response as List?)?.map((e) => Loan.fromSupabase(e)).toList() ?? [],
       );
+      
+      debugPrint('[LoanController][loadLoans] Successfully loaded ${loans.length} loans');
     } catch (e, stackTrace) {
+      debugPrint('[LoanController][loadLoans] Error: $e');
+      debugPrint('[LoanController][loadLoans] Stack trace: $stackTrace');
+      debugPrint('[LoanController][loadLoans] Endpoint: /loans');
       AppLoggerService.logError(
         controller: 'LoanController',
         method: 'loadLoans',
@@ -41,7 +55,7 @@ class LoanController extends GetxController {
       );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل القروض',
+        'فشل في تحميل القروض: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -79,23 +93,37 @@ class LoanController extends GetxController {
 
   /// Fetch repayment history for a specific loan
   Future<List<LoanRepayment>> fetchRepayments(String loanId) async {
+    debugPrint('[LoanController][fetchRepayments] Fetching repayments for loan: $loanId');
     try {
       final response = await SupabaseService.client
           .from('loan_repayments')
-          .select()
+          .select('''
+            *,
+            admin_profiles:profiles!loan_repayments_recorded_by_fkey(
+              full_name,
+              email
+            )
+          ''')
           .eq('loan_id', loanId)
           .order('created_at', ascending: false);
 
-      return (response as List)
-          .map((e) => LoanRepayment.fromSupabase(e))
-          .toList();
+      final repayments = (response as List?)
+          ?.map((e) => LoanRepayment.fromSupabase(e))
+          .toList() ?? [];
+          
+      debugPrint('[LoanController][fetchRepayments] Successfully loaded ${repayments.length} repayments');
+      return repayments;
     } catch (e, stackTrace) {
+      debugPrint('[LoanController][fetchRepayments] Error: $e');
+      debugPrint('[LoanController][fetchRepayments] Stack trace: $stackTrace');
+      debugPrint('[LoanController][fetchRepayments] Endpoint: /loan_repayments');
       AppLoggerService.logError(
         controller: 'LoanController',
         method: 'fetchRepayments',
         error: e,
         stackTrace: stackTrace,
       );
+      Get.snackbar('خطأ', 'فشل في تحميل سجل السداد: ${e.toString()}');
       return [];
     }
   }

@@ -35,27 +35,37 @@ class SettingsManagementController extends GetxController {
 
   /// Load all settings from Supabase
   Future<void> loadSettings() async {
-    debugPrint('[SettingsController] ▶ Loading all settings...');
+    debugPrint('[SettingsController][loadSettings] Fetching data from multiple endpoints');
     isLoading.value = true;
-    await Future.wait([
-      _loadFAQs(),
-      _loadTerms(),
-      _loadFees(),
-      _loadCurrencies(),
-      _loadLimits(),
-      _loadMaintenance(),
-    ]);
-    isLoading.value = false;
+    try {
+      await Future.wait([
+        _loadFAQs(),
+        _loadTerms(),
+        _loadFees(),
+        _loadCurrencies(),
+        _loadLimits(),
+        _loadMaintenance(),
+      ]);
+      debugPrint('[SettingsController][loadSettings] All settings loaded successfully');
+    } catch (e, stackTrace) {
+      debugPrint('[SettingsController][loadSettings] Error: $e');
+      debugPrint('[SettingsController][loadSettings] Stack trace: $stackTrace');
+      debugPrint('[SettingsController][loadSettings] Endpoint: /faqs, /terms_sections, /fees, /currencies, /transaction_limits, /system_settings');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─────────── Loaders ───────────
 
   Future<void> _loadFAQs() async {
+    debugPrint('[SettingsController][_loadFAQs] Fetching from /faqs');
     try {
       final response = await SupabaseService.client
           .from('faqs')
           .select()
           .order('created_at', ascending: true);
+      debugPrint('[SettingsController][_loadFAQs] Response: ${response.length} FAQs');
       if ((response as List).isNotEmpty) {
         faqs.assignAll(
           response.map(
@@ -66,20 +76,27 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
+        debugPrint('[SettingsController][_loadFAQs] Successfully loaded ${faqs.length} FAQs');
       } else {
+        debugPrint('[SettingsController][_loadFAQs] No FAQs found, loading defaults');
         _loadDefaultFAQs();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[SettingsController][_loadFAQs] Error: $e');
+      debugPrint('[SettingsController][_loadFAQs] Stack trace: $stackTrace');
+      debugPrint('[SettingsController][_loadFAQs] Endpoint: /faqs');
       _loadDefaultFAQs();
     }
   }
 
   Future<void> _loadTerms() async {
+    debugPrint('[SettingsController][_loadTerms] Fetching from /terms_sections');
     try {
       final response = await SupabaseService.client
           .from('terms_sections')
           .select()
           .order('sort_order', ascending: true);
+      debugPrint('[SettingsController][_loadTerms] Response: ${response.length} term sections');
       if ((response as List).isNotEmpty) {
         terms.assignAll(
           response.map(
@@ -91,20 +108,30 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
+        debugPrint('[SettingsController][_loadTerms] Successfully loaded ${terms.length} term sections');
       } else {
+        debugPrint('[SettingsController][_loadTerms] No terms found, loading defaults');
         _loadDefaultTerms();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[SettingsController][_loadTerms] Error: $e');
+      debugPrint('[SettingsController][_loadTerms] Stack trace: $stackTrace');
+      debugPrint('[SettingsController][_loadTerms] Endpoint: /terms_sections');
       _loadDefaultTerms();
     }
   }
 
   Future<void> _loadFees() async {
     try {
+      debugPrint('[SettingsController] ▶ Loading fees from Supabase...');
+      
       final response = await SupabaseService.client
           .from('fees')
           .select()
           .order('created_at', ascending: true);
+          
+      debugPrint('[SettingsController] ℹ️ Fees response length: ${response.length}');
+      
       if ((response as List).isNotEmpty) {
         fees.assignAll(
           response.map(
@@ -119,10 +146,13 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
+        debugPrint('[SettingsController] ✅ Loaded ${fees.length} fees');
       } else {
+        debugPrint('[SettingsController] ⚠️ No fees found, loading defaults');
         _loadDefaultFees();
       }
     } catch (e) {
+      debugPrint('[SettingsController] ❌ Error loading fees: $e');
       _loadDefaultFees();
     }
   }
@@ -158,10 +188,15 @@ class SettingsManagementController extends GetxController {
 
   Future<void> _loadLimits() async {
     try {
+      debugPrint('[SettingsController] ▶ Loading transaction limits from Supabase...');
+      
       final response = await SupabaseService.client
           .from('transaction_limits')
           .select()
           .order('created_at', ascending: true);
+          
+      debugPrint('[SettingsController] ℹ️ Limits response length: ${response.length}');
+      
       if ((response as List).isNotEmpty) {
         limits.assignAll(
           response.map(
@@ -175,10 +210,13 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
+        debugPrint('[SettingsController] ✅ Loaded ${limits.length} limits');
       } else {
+        debugPrint('[SettingsController] ⚠️ No limits found, loading defaults');
         _loadDefaultLimits();
       }
     } catch (e) {
+      debugPrint('[SettingsController] ❌ Error loading limits: $e');
       _loadDefaultLimits();
     }
   }
@@ -527,21 +565,37 @@ class SettingsManagementController extends GetxController {
   // Fees — update to Supabase
   Future<bool> updateFee(String id, String newValue) async {
     int index = fees.indexWhere((e) => e.id == id);
-    if (index != -1) {
-      fees[index] = fees[index].copyWith(value: newValue);
-      if (!_isValidSettingsId(id)) return true; // Local only if not UUID
-
-      try {
-        await SupabaseService.client
-            .from('fees')
-            .update({'value': newValue})
-            .eq('id', id);
-        return true;
-      } catch (e) {
-        return false;
-      }
+    if (index == -1) {
+      debugPrint('[SettingsController] ❌ Fee with id $id not found');
+      return false;
     }
-    return false;
+    
+    debugPrint('[SettingsController] ▶ Updating fee $id to: $newValue');
+    
+    fees[index] = fees[index].copyWith(value: newValue);
+    
+    if (!_isValidSettingsId(id)) {
+      debugPrint('[SettingsController] ℹ️ Local-only update for fee $id');
+      return true;
+    }
+
+    try {
+      await SupabaseService.client
+          .from('fees')
+          .update({
+            'value': newValue,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+          
+      debugPrint('[SettingsController] ✅ Successfully updated fee $id');
+      return true;
+    } catch (e) {
+      debugPrint('[SettingsController] ❌ Error updating fee $id: $e');
+      // Revert on error
+      fees[index] = fees[index].copyWith(value: fees[index].value);
+      return false;
+    }
   }
 
   // Currencies — CRUD to Supabase
@@ -616,21 +670,37 @@ class SettingsManagementController extends GetxController {
   // Limits — update to Supabase
   Future<bool> updateLimit(String id, String newValue) async {
     int index = limits.indexWhere((e) => e.id == id);
-    if (index != -1) {
-      limits[index] = limits[index].copyWith(value: newValue);
-      if (!_isValidSettingsId(id)) return true; // Local only if not UUID
-
-      try {
-        await SupabaseService.client
-            .from('transaction_limits')
-            .update({'value': newValue})
-            .eq('id', id);
-        return true;
-      } catch (e) {
-        return false;
-      }
+    if (index == -1) {
+      debugPrint('[SettingsController] ❌ Limit with id $id not found');
+      return false;
     }
-    return false;
+    
+    debugPrint('[SettingsController] ▶ Updating limit $id to: $newValue');
+    
+    limits[index] = limits[index].copyWith(value: newValue);
+    
+    if (!_isValidSettingsId(id)) {
+      debugPrint('[SettingsController] ℹ️ Local-only update for limit $id');
+      return true;
+    }
+
+    try {
+      await SupabaseService.client
+          .from('transaction_limits')
+          .update({
+            'value': newValue,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+          
+      debugPrint('[SettingsController] ✅ Successfully updated limit $id');
+      return true;
+    } catch (e) {
+      debugPrint('[SettingsController] ❌ Error updating limit $id: $e');
+      // Revert on error
+      limits[index] = limits[index].copyWith(value: limits[index].value);
+      return false;
+    }
   }
 
   bool _isValidSettingsId(String id) {

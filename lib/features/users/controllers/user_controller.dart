@@ -58,14 +58,18 @@ class UserController extends GetxController {
 
   /// Load users from Supabase with pagination
   Future<void> loadUsers() async {
-    debugPrint('[UserController] ▶ Loading users from Supabase...');
+    debugPrint('[UserController][loadUsers] Fetching data from /profiles');
     isLoading.value = true;
     try {
       final response = await _profileRepo.getProfilesPaginated(from: 0, to: 49);
+      debugPrint('[UserController][loadUsers] Response: ${response.length} users');
       users.value = response;
       _applyFilters();
-      debugPrint('[UserController] ✓ Loaded ${users.length} users');
-    } catch (e) {
+      debugPrint('[UserController][loadUsers] Successfully loaded ${users.length} users');
+    } catch (e, stackTrace) {
+      debugPrint('[UserController][loadUsers] Error: $e');
+      debugPrint('[UserController][loadUsers] Stack trace: $stackTrace');
+      debugPrint('[UserController][loadUsers] Endpoint: /profiles');
       Get.snackbar(
         'خطأ',
         'فشل في تحميل المستخدمين',
@@ -80,7 +84,7 @@ class UserController extends GetxController {
   Future<void> loadMoreUsers() async {
     if (isLoading.value) return;
 
-    debugPrint('[UserController] ▶ Loading more users...');
+    debugPrint('[UserController][loadMoreUsers] Fetching more users from /profiles');
     try {
       final nextFrom = users.length;
       final nextTo = nextFrom + 49;
@@ -93,10 +97,14 @@ class UserController extends GetxController {
       if (response.isNotEmpty) {
         users.addAll(response);
         _applyFilters();
-        debugPrint('[UserController] ✓ Loaded ${response.length} more users');
+        debugPrint('[UserController][loadMoreUsers] Successfully loaded ${response.length} more users');
+      } else {
+        debugPrint('[UserController][loadMoreUsers] No more users to load');
       }
-    } catch (e) {
-      // Handle silently
+    } catch (e, stackTrace) {
+      debugPrint('[UserController][loadMoreUsers] Error: $e');
+      debugPrint('[UserController][loadMoreUsers] Stack trace: $stackTrace');
+      debugPrint('[UserController][loadMoreUsers] Endpoint: /profiles');
     }
   }
 
@@ -604,7 +612,7 @@ class UserController extends GetxController {
 
   /// Load extra details for a specific user (Investments, Transactions, Activities)
   Future<void> loadUserExtraDetails(String userId) async {
-    debugPrint('[UserController] ▶ Loading extra details for user: $userId');
+    debugPrint('[UserController][loadUserExtraDetails] Fetching details for user: $userId');
     isDetailsLoading.value = true;
 
     // Clear previous data
@@ -614,6 +622,7 @@ class UserController extends GetxController {
 
     try {
       // Run in parallel for speed
+      debugPrint('[UserController][loadUserExtraDetails] Fetching from multiple endpoints');
       final results = await Future.wait([
         _profileRepo.getUserInvestments(userId),
         _profileRepo.getUserTransactions(userId),
@@ -625,13 +634,15 @@ class UserController extends GetxController {
       selectedUserActivities.value = results[2] as List<UserActivity>;
 
       debugPrint(
-        '[UserController] ✓ Loaded details: '
-        '${selectedUserInvestments.length} inv, '
-        '${selectedUserTransactions.length} txns, '
-        '${selectedUserActivities.length} acts',
+        '[UserController][loadUserExtraDetails] Successfully loaded: '
+        '${selectedUserInvestments.length} investments, '
+        '${selectedUserTransactions.length} transactions, '
+        '${selectedUserActivities.length} activities',
       );
-    } catch (e) {
-      // Handle silently
+    } catch (e, stackTrace) {
+      debugPrint('[UserController][loadUserExtraDetails] Error: $e');
+      debugPrint('[UserController][loadUserExtraDetails] Stack trace: $stackTrace');
+      debugPrint('[UserController][loadUserExtraDetails] Endpoint: /user_investments, /transactions, /user_activities');
     } finally {
       isDetailsLoading.value = false;
     }

@@ -55,7 +55,7 @@ class ChatRepository extends BaseRepository {
           'p_conversation_id': conversationId,
           'p_sender_id': senderId,
           'p_sender_type': senderType,
-          'p_content': content,
+          'p_message_content': content,
           'p_message_type': messageType.name,
           'p_idempotency_key': idempotencyKey,
         });

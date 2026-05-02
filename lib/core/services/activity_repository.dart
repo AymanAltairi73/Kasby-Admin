@@ -3,10 +3,10 @@ import '../../../core/services/base_repository.dart';
 
 /// Activity Repository — handles technical and business activity logs.
 class ActivityRepository extends BaseRepository {
-  ActivityRepository(SupabaseClient client) : super('activity_logs', client);
+  ActivityRepository(SupabaseClient client) : super('system_logs', client);
 
   /// Fetch paginated activity logs.
-  /// Note: activity_logs.actor_id references auth.users (not profiles),
+  /// Note: system_logs.actor_id references auth.users (not profiles),
   /// so we cannot use FK-based JOINs. We fetch logs first, then
   /// resolve actor names separately.
   Future<List<Map<String, dynamic>>> getActivitiesPaginated({

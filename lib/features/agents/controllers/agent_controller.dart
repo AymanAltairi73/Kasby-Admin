@@ -26,7 +26,7 @@ class AgentController extends GetxController {
 
   /// Load agents from Supabase
   Future<void> loadAgents() async {
-    debugPrint('[AgentController] ▶ Loading agents from Supabase...');
+    debugPrint('[AgentController][loadAgents] Fetching data from /agents');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -34,12 +34,16 @@ class AgentController extends GetxController {
           .select('*, profiles!left(*)')
           .order('created_at', ascending: false);
 
+      debugPrint('[AgentController][loadAgents] Response: ${response.length} agents');
       agents.value = (response as List)
           .map((json) => Agent.fromSupabase(json))
           .toList();
       _applyFilters();
-      debugPrint('[AgentController] ✓ Loaded ${agents.length} agents');
+      debugPrint('[AgentController][loadAgents] Successfully loaded ${agents.length} agents');
     } catch (e, stackTrace) {
+      debugPrint('[AgentController][loadAgents] Error: $e');
+      debugPrint('[AgentController][loadAgents] Stack trace: $stackTrace');
+      debugPrint('[AgentController][loadAgents] Endpoint: /agents');
       AppLoggerService.logError(
         controller: 'AgentController',
         method: 'loadAgents',

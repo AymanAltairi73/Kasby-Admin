@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../repositories/dashboard_repository.dart';
 import '../../../core/services/supabase_service.dart';
@@ -30,9 +31,11 @@ class DashboardController extends GetxController {
   }
 
   Future<void> loadDashboardData() async {
+    debugPrint('[DashboardController][loadDashboardData] Fetching data from /dashboard');
     isLoading.value = true;
     try {
       final data = await _dashboardRepo.getDashboardStats();
+      debugPrint('[DashboardController][loadDashboardData] Response: ${data.keys.toList()}');
       stats.value = data;
       
       // Override initial active_users with current real-time count
@@ -41,8 +44,11 @@ class DashboardController extends GetxController {
 
       // Fetch urgent alerts separately
       await _fetchUrgentAlerts();
-    } catch (e) {
-      // Handle silently
+      debugPrint('[DashboardController][loadDashboardData] Dashboard data loaded successfully');
+    } catch (e, stackTrace) {
+      debugPrint('[DashboardController][loadDashboardData] Error: $e');
+      debugPrint('[DashboardController][loadDashboardData] Stack trace: $stackTrace');
+      debugPrint('[DashboardController][loadDashboardData] Endpoint: /dashboard');
     } finally {
       isLoading.value = false;
     }
@@ -57,24 +63,32 @@ class DashboardController extends GetxController {
   double get dailyVolume => (stats['daily_volume'] ?? 0.0).toDouble();
 
   Future<void> _fetchUrgentAlerts() async {
+    debugPrint('[DashboardController][_fetchUrgentAlerts] Fetching urgent alerts');
     try {
       // 1. Pending Withdrawals
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Checking pending withdrawals from /transactions');
       final withdrawalRes = await SupabaseService.client
           .from('transactions')
           .count(CountOption.exact)
           .eq('type', 'withdrawal')
           .eq('status', 'pending');
       pendingWithdrawalsCount.value = withdrawalRes;
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Pending withdrawals count: $withdrawalRes');
 
       // 2. Pending KYC
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Checking pending KYC from /profiles');
       final kycRes = await SupabaseService.client
           .from('profiles')
           .count(CountOption.exact)
           .eq('kyc_status', 'pending');
       pendingKYCCount.value = kycRes;
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Pending KYC count: $kycRes');
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Urgent alerts fetched successfully');
       
-    } catch (e) {
-      // Handle silently
+    } catch (e, stackTrace) {
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Error: $e');
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Stack trace: $stackTrace');
+      debugPrint('[DashboardController][_fetchUrgentAlerts] Endpoint: /transactions, /profiles');
     }
   }
 }

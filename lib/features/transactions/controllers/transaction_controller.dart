@@ -79,14 +79,19 @@ class TransactionController extends GetxController {
 
   /// Load transactions from Supabase with user names
   Future<void> loadTransactions() async {
-    debugPrint('[TransactionController] ▶ Loading transactions...');
+    debugPrint('[TransactionController][loadTransactions] Fetching data from /transactions');
     isLoading.value = true;
     try {
       final response = await _transactionRepo.getTransactionsPaginated();
+      debugPrint('[TransactionController][loadTransactions] Response: ${response.length} transactions');
       transactions.value = response;
       _applyFilters();
       _calculateStats();
+      debugPrint('[TransactionController][loadTransactions] Successfully loaded ${transactions.length} transactions');
     } catch (e, stackTrace) {
+      debugPrint('[TransactionController][loadTransactions] Error: $e');
+      debugPrint('[TransactionController][loadTransactions] Stack trace: $stackTrace');
+      debugPrint('[TransactionController][loadTransactions] Endpoint: /transactions');
       AppLoggerService.logError(
         controller: 'TransactionController',
         method: 'loadTransactions',

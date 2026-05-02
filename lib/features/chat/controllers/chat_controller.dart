@@ -137,10 +137,10 @@ class ChatController extends GetxController {
     try {
       isLoading.value = true;
       final currentUser = SupabaseService.client.auth.currentUser;
-      debugPrint('[ChatController] ▶ Fetching conversations for user: ${currentUser?.id}');
+      debugPrint('[ChatController][loadConversations] Fetching conversations for user: ${currentUser?.id}');
       
       final data = await _chatRepository.getConversations();
-      debugPrint('[ChatController] √ Fetched ${data.length} conversations.');
+      debugPrint('[ChatController][loadConversations] Response: ${data.length} conversations');
       
       // Update with current online status
       final updatedData = data.map((c) => c.copyWith(
@@ -149,8 +149,11 @@ class ChatController extends GetxController {
       
       conversations.assignAll(updatedData);
       _calculateUnread();
-    } catch (e) {
-      debugPrint('[ChatController] ✗ Error loading conversations: $e');
+      debugPrint('[ChatController][loadConversations] Successfully loaded ${conversations.length} conversations');
+    } catch (e, stackTrace) {
+      debugPrint('[ChatController][loadConversations] Error: $e');
+      debugPrint('[ChatController][loadConversations] Stack trace: $stackTrace');
+      debugPrint('[ChatController][loadConversations] Endpoint: /conversations');
     } finally {
       isLoading.value = false;
     }

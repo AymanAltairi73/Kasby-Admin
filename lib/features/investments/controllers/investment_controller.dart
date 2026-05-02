@@ -25,7 +25,7 @@ class InvestmentController extends GetxController {
 
   /// Load investment plans from Supabase
   Future<void> loadPlans() async {
-    debugPrint('[InvestmentController] ▶ Loading investment plans...');
+    debugPrint('[InvestmentController][loadPlans] Fetching data from /investment_plans');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -33,10 +33,17 @@ class InvestmentController extends GetxController {
           .select()
           .order('created_at', ascending: false);
 
+      debugPrint('[InvestmentController][loadPlans] Response: ${response.length} plans');
+      
       plans.assignAll(
-        (response as List).map((e) => InvestmentPlan.fromSupabase(e)).toList(),
+        (response as List?)?.map((e) => InvestmentPlan.fromSupabase(e)).toList() ?? [],
       );
+      
+      debugPrint('[InvestmentController][loadPlans] Successfully loaded ${plans.length} investment plans');
     } catch (e, stackTrace) {
+      debugPrint('[InvestmentController][loadPlans] Error: $e');
+      debugPrint('[InvestmentController][loadPlans] Stack trace: $stackTrace');
+      debugPrint('[InvestmentController][loadPlans] Endpoint: /investment_plans');
       AppLoggerService.logError(
         controller: 'InvestmentController',
         method: 'loadPlans',
@@ -45,7 +52,7 @@ class InvestmentController extends GetxController {
       );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل خطط الاستثمار',
+        'فشل في تحميل خطط الاستثمار: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -54,24 +61,42 @@ class InvestmentController extends GetxController {
 
   /// Load user investments from Supabase
   Future<void> loadUserInvestments() async {
-    debugPrint('[InvestmentController] ▶ Loading user investments...');
+    debugPrint('[InvestmentController][loadUserInvestments] Fetching data from /user_investments');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
           .from('user_investments')
-          .select(
-            '*, profiles!user_investments_user_id_fkey(full_name), investment_plans!user_investments_plan_id_fkey(name_ar)',
-          )
+          .select('''
+            *,
+            profiles!user_investments_user_id_fkey(
+              full_name,
+              email,
+              phone
+            ),
+            investment_plans!user_investments_plan_id_fkey(
+              name_ar,
+              name_en,
+              profit_percentage,
+              duration_days
+            )
+          ''')
           .order('created_at', ascending: false);
 
+      debugPrint('[InvestmentController][loadUserInvestments] Response: ${response.length} investments');
+      
       if (response != null && (response as List).isNotEmpty) {
-        debugPrint('[InvestmentController] ℹ️ Raw First Row: ${response[0]}');
+        debugPrint('[InvestmentController][loadUserInvestments] Raw First Row: ${response[0]}');
       }
 
       userInvestments.assignAll(
-        (response as List).map((e) => UserInvestment.fromSupabase(e)).toList(),
+        (response as List?)?.map((e) => UserInvestment.fromSupabase(e)).toList() ?? [],
       );
+      
+      debugPrint('[InvestmentController][loadUserInvestments] Successfully loaded ${userInvestments.length} user investments');
     } catch (e, stackTrace) {
+      debugPrint('[InvestmentController][loadUserInvestments] Error: $e');
+      debugPrint('[InvestmentController][loadUserInvestments] Stack trace: $stackTrace');
+      debugPrint('[InvestmentController][loadUserInvestments] Endpoint: /user_investments');
       AppLoggerService.logError(
         controller: 'InvestmentController',
         method: 'loadUserInvestments',
@@ -80,7 +105,7 @@ class InvestmentController extends GetxController {
       );
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل استثمارات المستخدمين',
+        'فشل في تحميل استثمارات المستخدمين: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

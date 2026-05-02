@@ -30,7 +30,7 @@ class ChatMessage {
       id: json['id'] ?? '',
       conversationId: json['conversation_id'] ?? '',
       senderId: json['sender_id'] ?? '',
-      content: json['content'] ?? '',
+      content: (json['message_content'] ?? json['content']) ?? '',
       timestamp: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),

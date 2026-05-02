@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/kyc_document_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -16,6 +17,7 @@ class KycController extends GetxController {
 
   /// Load all pending KYC documents
   Future<void> loadPendingDocuments() async {
+    debugPrint('[KycController][loadPendingDocuments] Fetching data from /kyc_documents');
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -24,10 +26,15 @@ class KycController extends GetxController {
           .eq('status', 'pending')
           .order('uploaded_at', ascending: false);
 
+      debugPrint('[KycController][loadPendingDocuments] Response: ${response.length} pending documents');
       pendingDocuments.assignAll(
         (response as List).map((e) => KycDocument.fromJson(e)).toList(),
       );
-    } catch (e) {
+      debugPrint('[KycController][loadPendingDocuments] Successfully loaded ${pendingDocuments.length} pending KYC documents');
+    } catch (e, stackTrace) {
+      debugPrint('[KycController][loadPendingDocuments] Error: $e');
+      debugPrint('[KycController][loadPendingDocuments] Stack trace: $stackTrace');
+      debugPrint('[KycController][loadPendingDocuments] Endpoint: /kyc_documents');
       // Handle silently
     } finally {
       isLoading.value = false;
