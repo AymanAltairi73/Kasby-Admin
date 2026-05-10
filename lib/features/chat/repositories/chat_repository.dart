@@ -11,7 +11,7 @@ class ChatRepository extends BaseRepository {
       () async {
         final response = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url, updated_at, role)')
+            .select('*, profiles!chat_conversations_user_id_fkey(full_name, avatar_url, updated_at, role)')
             .order('last_message_at', ascending: false);
 
         return (response as List)
@@ -43,22 +43,28 @@ class ChatRepository extends BaseRepository {
   /// Send a message
   Future<void> sendMessage({
     required String conversationId,
-    required String senderId,
     required String content,
-    String senderType = 'admin',
     MessageType messageType = MessageType.text,
     String? idempotencyKey,
+    String? replyToId,
   }) async {
     await safeQuery(
       () async {
-        await client.rpc('fn_send_chat_message', params: {
+        // Always include all parameters to match fn_send_chat_message(
+        //   p_conversation_id uuid,
+        //   p_message_content text,
+        //   p_message_type text,
+        //   p_idempotency_key text,
+        //   p_reply_to_id uuid
+        // )
+        final Map<String, dynamic> params = {
           'p_conversation_id': conversationId,
-          'p_sender_id': senderId,
-          'p_sender_type': senderType,
           'p_message_content': content,
           'p_message_type': messageType.name,
           'p_idempotency_key': idempotencyKey,
-        });
+          'p_reply_to_id': replyToId,
+        };
+        await client.rpc('fn_send_chat_message', params: params);
       },
       methodName: 'sendMessage',
     );
@@ -88,7 +94,7 @@ class ChatRepository extends BaseRepository {
         // Try to find existing
         final existing = await client
             .from('chat_conversations')
-            .select('*, profiles(full_name, avatar_url, updated_at, role)')
+            .select('*, profiles!chat_conversations_user_id_fkey(full_name, avatar_url, updated_at, role)')
             .eq('user_id', userId)
             .maybeSingle();
 
@@ -100,7 +106,7 @@ class ChatRepository extends BaseRepository {
         final created = await client
             .from('chat_conversations')
             .insert({'user_id': userId})
-            .select('*, profiles(full_name, avatar_url, updated_at, role)')
+            .select('*, profiles!chat_conversations_user_id_fkey(full_name, avatar_url, updated_at, role)')
             .single();
 
         return ChatConversation.fromSupabase(created);

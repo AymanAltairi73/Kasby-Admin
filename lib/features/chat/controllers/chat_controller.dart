@@ -423,7 +423,6 @@ class ChatController extends GetxController {
       
       await _chatRepository.sendMessage(
         conversationId: targetConvId,
-        senderId: senderId,
         content: content.trim(),
         messageType: messageType,
         idempotencyKey: idempotencyKey,

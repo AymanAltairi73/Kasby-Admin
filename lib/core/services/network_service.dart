@@ -18,6 +18,18 @@ enum ConnectionStatus {
   checking,
 }
 
+/// جودة الاتصال بالإنترنت
+enum ConnectionQuality {
+  /// جيدة - سرعة عالية
+  good,
+
+  /// ضعيفة - بطيئة
+  weak,
+
+  /// غير معروفة
+  unknown,
+}
+
 /// خدمة مركزية لإدارة حالة الاتصال - نسخة الأدمن.
 /// تتميز عن نسخة المستخدم بـ:
 ///   • تسجيل الأخطاء تلقائياً عبر AppLoggerService
@@ -31,6 +43,7 @@ class NetworkService extends GetxService {
   final networkType = 'unknown'.obs;
   final disconnectCount = 0.obs;
   final lastChecked = Rxn<DateTime>();
+  final connectionQuality = ConnectionQuality.unknown.obs;
 
   // ─────────── Internal ───────────
   final Connectivity _connectivity = Connectivity();
@@ -38,6 +51,7 @@ class NetworkService extends GetxService {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   StreamSubscription<InternetStatus>? _internetSub;
   Timer? _retryTimer;
+  Timer? _speedCheckTimer;
 
   /// Whether the device currently has internet access.
   bool get hasConnection => isConnected.value;
@@ -63,6 +77,10 @@ class NetworkService extends GetxService {
     );
 
     debugPrint('[NetworkService:Admin] ✓ Initialized. Online: ${isConnected.value}');
+
+    // 4. Start periodic speed checks
+    _startSpeedChecks();
+
     return this;
   }
 
@@ -71,7 +89,48 @@ class NetworkService extends GetxService {
     _connectivitySub?.cancel();
     _internetSub?.cancel();
     _retryTimer?.cancel();
+    _speedCheckTimer?.cancel();
     super.onClose();
+  }
+
+  /// بدء فحص دوري لجودة الاتصال
+  void _startSpeedChecks() {
+    _speedCheckTimer?.cancel();
+    _speedCheckTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (isConnected.value) {
+        _checkConnectionQuality();
+      }
+    });
+  }
+
+  /// فحص جودة الاتصال عن طريق قياس زمن الاستجابة
+  Future<void> _checkConnectionQuality() async {
+    try {
+      final stopwatch = Stopwatch()..start();
+
+      // محاولة الاتصال بـ Google DNS
+      final socket = await Socket.connect('8.8.8.8', 53,
+          timeout: const Duration(seconds: 5));
+      socket.destroy();
+
+      stopwatch.stop();
+      final latency = stopwatch.elapsedMilliseconds;
+
+      // تحديد الجودة بناءً على زمن الاستجابة
+      if (latency < 150) {
+        connectionQuality.value = ConnectionQuality.good;
+        debugPrint('[NetworkService:Admin] ✓ Connection quality: GOOD (${latency}ms)');
+      } else if (latency < 500) {
+        connectionQuality.value = ConnectionQuality.weak;
+        debugPrint('[NetworkService:Admin] ⚠ Connection quality: WEAK (${latency}ms)');
+      } else {
+        connectionQuality.value = ConnectionQuality.weak;
+        debugPrint('[NetworkService:Admin] ⚠ Connection quality: POOR (${latency}ms)');
+      }
+    } catch (e) {
+      connectionQuality.value = ConnectionQuality.unknown;
+      debugPrint('[NetworkService:Admin] ✗ Speed check failed: $e');
+    }
   }
 
   // ─────────── Core Logic ───────────
