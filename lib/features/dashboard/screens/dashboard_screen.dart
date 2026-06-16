@@ -788,6 +788,12 @@ class DashboardScreen extends StatelessWidget {
         Colors.cyanAccent,
         route: '/kyc',
       ),
+      _ActionItem(
+        'تحليلات KSP',
+        FontAwesomeIcons.coins,
+        KasbyColors.primaryGold,
+        route: '/ksp-analytics',
+      ),
     ];
 
     return GridView.builder(

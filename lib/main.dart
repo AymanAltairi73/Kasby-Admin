@@ -52,6 +52,8 @@ import 'core/localization/admin_translations.dart';
 import 'core/services/presence_service.dart';
 import 'core/services/network_service.dart';
 import 'core/widgets/connectivity_banner.dart';
+import 'features/ksp_analytics/controllers/ksp_analytics_controller.dart';
+import 'features/ksp_analytics/screens/ksp_analytics_screen.dart';
 
 
 Future<void> main() async {
@@ -123,6 +125,7 @@ Future<void> main() async {
   Get.lazyPut(() => RewardsController(), fenix: true);
   Get.lazyPut(() => SubscriptionController(), fenix: true);
   Get.lazyPut(() => NotificationController(), fenix: true);
+  Get.lazyPut(() => KspAnalyticsController(), fenix: true);
 
   runApp(const KasbyAdminApp());
 }
@@ -200,6 +203,10 @@ class KasbyAdminApp extends StatelessWidget {
         GetPage(
           name: '/kyc',
           page: () => const KycManagementScreen(),
+        ),
+        GetPage(
+          name: '/ksp-analytics',
+          page: () => const KspAnalyticsScreen(),
         ),
       ],
 

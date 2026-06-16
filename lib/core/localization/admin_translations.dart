@@ -92,7 +92,7 @@ class AdminTranslations extends Translations {
       'enum_point_spend': 'Spend',
       'enum_point_bonus': 'Bonus',
       // prize_type
-      'enum_prize_points': 'Points',
+      'enum_prize_points': 'KSP',
       'enum_prize_cash': 'Cash',
       'enum_prize_voucher': 'Voucher',
       'enum_prize_nothing': 'Nothing',
@@ -105,6 +105,22 @@ class AdminTranslations extends Translations {
       'enum_fee_withdrawal': 'Withdrawal',
       'enum_fee_transfer': 'Transfer',
       'enum_fee_investment': 'Investment',
+      // KSP Analytics
+      'ksp_analytics': 'KSP Analytics',
+      'total_ksp_supply': 'Total KSP Supply',
+      'total_ksp_distributed': 'Total KSP Distributed',
+      'daily_ksp_generated': 'Daily KSP Generated',
+      'daily_ksp_rewards': 'Daily KSP Rewards',
+      'top_holders': 'Top 10 KSP Holders',
+      'top_earners': 'Top 10 KSP Earners',
+      'top_transfers': 'Top 10 KSP Transfers',
+      'loading_ksp_data': 'Loading KSP Analytics data...',
+      'ksp_currency': 'KSP',
+      'holder_name': 'Holder Name',
+      'earner_name': 'Earner Name',
+      'sender_receiver': 'User',
+      'amount': 'Amount',
+      'ksp_stats': 'KSP Coin Statistics',
     },
     'ar_SA': {
       // ── ترجمات الأنواع (Enum Translations) ──
@@ -195,7 +211,7 @@ class AdminTranslations extends Translations {
       'enum_point_spend': 'إنفاق',
       'enum_point_bonus': 'مكافأة',
       // prize_type (نوع الجائزة)
-      'enum_prize_points': 'نقاط',
+      'enum_prize_points': 'KSP',
       'enum_prize_cash': 'نقدي',
       'enum_prize_voucher': 'قسيمة',
       'enum_prize_nothing': 'لا شيء',
@@ -208,6 +224,22 @@ class AdminTranslations extends Translations {
       'enum_fee_withdrawal': 'سحب',
       'enum_fee_transfer': 'تحويل',
       'enum_fee_investment': 'استثمار',
+      // KSP Analytics
+      'ksp_analytics': 'تحليلات KSP',
+      'total_ksp_supply': 'إجمالي المعروض من KSP',
+      'total_ksp_distributed': 'إجمالي الموزع من KSP',
+      'daily_ksp_generated': 'KSP المتولد اليوم',
+      'daily_ksp_rewards': 'مكافآت KSP اليومية',
+      'top_holders': 'أعلى 10 مالكين لـ KSP',
+      'top_earners': 'أعلى 10 كاسبين لـ KSP',
+      'top_transfers': 'أعلى 10 تحويلات لـ KSP',
+      'loading_ksp_data': 'جاري تحميل بيانات تحليلات KSP...',
+      'ksp_currency': 'KSP',
+      'holder_name': 'اسم المالك',
+      'earner_name': 'اسم الكاسب',
+      'sender_receiver': 'المستخدم',
+      'amount': 'المبلغ',
+      'ksp_stats': 'إحصائيات كاسبي كوين KSP',
     },
   };
 }

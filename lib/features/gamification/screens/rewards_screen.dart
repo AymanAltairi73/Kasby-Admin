@@ -45,11 +45,11 @@ class RewardsScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildPrizesList(controller),
                 const SizedBox(height: 24),
-                _buildSectionHeader('قواعد كسب النقاط', FontAwesomeIcons.coins),
+                _buildSectionHeader('قواعد كسب KSP', FontAwesomeIcons.coins),
                 const SizedBox(height: 12),
                 _buildRulesList(controller, controller.pointsEarnRules, 'كسب'),
                 const SizedBox(height: 24),
-                _buildSectionHeader('قواعد استبدال النقاط', FontAwesomeIcons.handHoldingHeart),
+                _buildSectionHeader('قواعد استبدال KSP', FontAwesomeIcons.handHoldingHeart),
                 const SizedBox(height: 12),
                 _buildRulesList(controller, controller.pointsRedeemRules, 'استبدال'),
                 const SizedBox(height: 40),
@@ -130,7 +130,7 @@ class RewardsScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '${reward.points} نقطة',
+                '${reward.points} KSP',
                 style: const TextStyle(
                   color: KasbyColors.primaryGold,
                   fontWeight: FontWeight.bold,
@@ -215,7 +215,7 @@ class RewardsScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '${rule.points} نقطة',
+                '${rule.points} KSP',
                 style: const TextStyle(
                   color: KasbyColors.success,
                   fontWeight: FontWeight.bold,
@@ -281,7 +281,7 @@ class RewardsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             KasbyTextField(
               controller: pointsController,
-              labelText: 'النقاط',
+              labelText: 'الـ KSP',
               keyboardType: TextInputType.number,
             ),
           ],
@@ -340,14 +340,14 @@ class RewardsScreen extends StatelessWidget {
 
     Get.dialog(
       _buildDialog(
-        title: 'تعديل قاعدة النقاط',
+        title: 'تعديل قاعدة KSP',
         content: Column(
           children: [
             Text(rule.action, style: const TextStyle(color: Colors.white70)),
             const SizedBox(height: 16),
             KasbyTextField(
               controller: pointsController,
-              labelText: 'النقاط',
+              labelText: 'الـ KSP',
               keyboardType: TextInputType.number,
             ),
           ],
