@@ -257,22 +257,19 @@ class NotificationsScreen extends StatelessWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Get.back();
                           final nController = Get.find<NotificationController>();
-                          nController.sendNotification(
-                            titleController.text,
-                            messageController.text,
-                            selectedTarget.value,
-                            specificUserId: selectedUserId.value,
-                          );
-                          Get.snackbar(
-                            'نجح',
-                            'تم إرسال الإشعار بنجاح',
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
-                          titleController.clear();
-                          messageController.clear();
+                          try {
+                            await nController.sendNotification(
+                              titleController.text,
+                              messageController.text,
+                              selectedTarget.value,
+                              specificUserId: selectedUserId.value,
+                            );
+                            titleController.clear();
+                            messageController.clear();
+                          } catch (_) {}
                         },
                         child: const Text(
                           'إرسال',

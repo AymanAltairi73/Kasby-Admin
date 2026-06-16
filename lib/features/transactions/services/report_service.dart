@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:csv/csv.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../models/transaction_model.dart';
 
 /// Report Service
@@ -13,11 +14,18 @@ import '../models/transaction_model.dart';
 class ReportService {
   /// Generate a summary report for a given period
   static Map<String, dynamic> generateSummary(List<Transaction> transactions) {
+    AppLoggerService.debugTrace(
+      className: 'ReportService',
+      method: 'generateSummary',
+      feature: 'Transactions',
+      status: 'INFO',
+      params: {'transactionCount': transactions.length},
+    );
     final deposits = transactions.where(
-      (t) => t.type == 'Deposit' && t.status == 'Approved',
+      (t) => t.type.toLowerCase() == 'deposit' && t.status.toLowerCase() == 'approved',
     );
     final withdrawals = transactions.where(
-      (t) => t.type == 'Withdrawal' && t.status == 'Approved',
+      (t) => t.type.toLowerCase() == 'withdrawal' && t.status.toLowerCase() == 'approved',
     );
 
     final totalDeposits = deposits.fold(0.0, (sum, t) => sum + t.amount);
@@ -36,6 +44,13 @@ class ReportService {
 
   /// Export transactions to CSV
   static Future<String> exportToCSV(List<Transaction> transactions) async {
+    AppLoggerService.debugTrace(
+      className: 'ReportService',
+      method: 'exportToCSV',
+      feature: 'Transactions',
+      status: 'INFO',
+      params: {'transactionCount': transactions.length},
+    );
     final List<List<dynamic>> rows = [];
 
     // Header in Arabic
@@ -45,7 +60,7 @@ class ReportService {
       rows.add([
         t.id,
         t.userName,
-        t.type == 'Deposit' ? 'إيداع' : 'سحب',
+        t.type.toLowerCase() == 'deposit' ? 'إيداع' : 'سحب',
         t.amount,
         t.status,
         DateFormat('yyyy-MM-dd HH:mm').format(t.createdAt),
@@ -64,11 +79,25 @@ class ReportService {
     );
 
     await file.writeAsString(result, encoding: utf8);
+    AppLoggerService.debugTrace(
+      className: 'ReportService',
+      method: 'exportToCSV',
+      feature: 'Transactions',
+      status: 'SUCCESS',
+      params: {'path': file.path},
+    );
     return file.path;
   }
 
   /// Export transactions to PDF with Arabic support
   static Future<String> exportToPDF(List<Transaction> transactions) async {
+    AppLoggerService.debugTrace(
+      className: 'ReportService',
+      method: 'exportToPDF',
+      feature: 'Transactions',
+      status: 'INFO',
+      params: {'transactionCount': transactions.length},
+    );
     final pdf = pw.Document();
 
     // Load the Arabic font
@@ -105,9 +134,9 @@ class ReportService {
                 .map(
                   (t) => [
                     DateFormat('yyyy-MM-dd HH:mm').format(t.createdAt),
-                    _reshape(t.status == 'Approved' ? 'موافق' : 'معلق'),
+                    _reshape(t.status.toLowerCase() == 'approved' ? 'موافق' : 'معلق'),
                     '\$${t.amount.toStringAsFixed(2)}',
-                    _reshape(t.type == 'Deposit' ? 'إيداع' : 'سحب'),
+                    _reshape(t.type.toLowerCase() == 'deposit' ? 'إيداع' : 'سحب'),
                     _reshape(t.userName),
                   ],
                 )
@@ -139,6 +168,13 @@ class ReportService {
       '${directory.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
     await file.writeAsBytes(await pdf.save());
+    AppLoggerService.debugTrace(
+      className: 'ReportService',
+      method: 'exportToPDF',
+      feature: 'Transactions',
+      status: 'SUCCESS',
+      params: {'path': file.path},
+    );
     return file.path;
   }
 

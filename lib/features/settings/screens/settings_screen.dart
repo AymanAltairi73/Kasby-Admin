@@ -71,6 +71,41 @@ class SettingsScreen extends StatelessWidget {
               subtitle: 'إدارة خطط الاشتراك (شهري / سنوي)',
               onTap: () => Get.toNamed('/subscriptions'),
             ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.comments,
+              title: 'دردش الدعم',
+              subtitle: 'محادثات المستخدمين والوكلاء',
+              onTap: () => Get.toNamed('/chat-list'),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.wallet,
+              title: 'إدارة المحافظ',
+              subtitle: 'عرض أرصدة المستخدمين وتعديلاتها',
+              onTap: () => Get.toNamed('/wallets'),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.chartColumn,
+              title: 'التقارير والإيرادات',
+              subtitle: 'ملخص مالي وتدفقات',
+              onTap: () => Get.toNamed('/reports'),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.userGroup,
+              title: 'برنامج الإحالة',
+              subtitle: 'أكواد الإحالة والعمولات',
+              onTap: () => Get.toNamed('/referrals'),
+            ),
+            const SizedBox(height: 8),
+            _buildSettingCard(
+              icon: FontAwesomeIcons.qrcode,
+              title: 'إدارة QR',
+              subtitle: 'أكواد QR للوكلاء والمستخدمين',
+              onTap: () => Get.toNamed('/qr-management'),
+            ),
             const SizedBox(height: 24),
 
             // Notifications Section

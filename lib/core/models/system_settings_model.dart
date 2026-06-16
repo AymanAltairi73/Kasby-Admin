@@ -1,5 +1,7 @@
 /// System Settings Model
 /// Manages system-wide controls and emergency statuses
+import '../services/app_logger_service.dart';
+
 class SystemSettings {
   final bool pauseDeposits;
   final bool pauseWithdrawals;
@@ -26,6 +28,7 @@ class SystemSettings {
   });
 
   factory SystemSettings.fromJson(Map<String, dynamic> json) {
+    try {
     return SystemSettings(
       pauseDeposits: json['pause_deposits'] ?? json['pauseDeposits'] ?? false,
       pauseWithdrawals:
@@ -46,6 +49,17 @@ class SystemSettings {
                 : DateTime.now()),
       updatedBy: json['updated_by'] ?? json['updatedBy'] ?? 'System',
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'SystemSettings',
+        method: 'fromJson',
+        feature: 'Core',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

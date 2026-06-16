@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -27,7 +28,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'RegisterScreen',
+      method: 'initState',
+      feature: 'Authentication',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
   void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'RegisterScreen',
+      method: 'dispose',
+      feature: 'Authentication',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();

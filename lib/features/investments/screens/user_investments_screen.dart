@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:ui' as ui;
 import '../../../core/theme/kasby_colors.dart';
-import '../../../core/widgets/kasby_card.dart';
+import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 
@@ -22,6 +22,8 @@ class UserInvestmentsScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text('user_investments'.tr),
           bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             indicatorColor: KasbyColors.primaryGold,
             labelColor: KasbyColors.primaryGold,
             unselectedLabelColor: KasbyColors.textSecondary,
@@ -97,7 +99,8 @@ class UserInvestmentsScreen extends StatelessWidget {
               investment.endDate.difference(investment.startDate).inDays)
         : 0.0;
 
-    return KasbyCard(
+    return KasbyGlassCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

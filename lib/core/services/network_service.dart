@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -76,7 +75,14 @@ class NetworkService extends GetxService {
       (status) => _onInternetStatusChanged(status),
     );
 
-    debugPrint('[NetworkService:Admin] ✓ Initialized. Online: ${isConnected.value}');
+    AppLoggerService.debugTrace(
+      className: 'NetworkService',
+      method: 'init',
+      feature: 'Core',
+      status: 'SUCCESS',
+      message: 'Network service initialized',
+      params: {'online': isConnected.value},
+    );
 
     // 4. Start periodic speed checks
     _startSpeedChecks();
@@ -86,6 +92,12 @@ class NetworkService extends GetxService {
 
   @override
   void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'NetworkService',
+      method: 'onClose',
+      feature: 'Core',
+      status: 'INFO',
+    );
     _connectivitySub?.cancel();
     _internetSub?.cancel();
     _retryTimer?.cancel();
@@ -119,17 +131,44 @@ class NetworkService extends GetxService {
       // تحديد الجودة بناءً على زمن الاستجابة
       if (latency < 150) {
         connectionQuality.value = ConnectionQuality.good;
-        debugPrint('[NetworkService:Admin] ✓ Connection quality: GOOD (${latency}ms)');
+        AppLoggerService.debugTrace(
+          className: 'NetworkService',
+          method: '_checkConnectionQuality',
+          feature: 'Core',
+          status: 'SUCCESS',
+          durationMs: latency,
+          message: 'Connection quality: GOOD',
+        );
       } else if (latency < 500) {
         connectionQuality.value = ConnectionQuality.weak;
-        debugPrint('[NetworkService:Admin] ⚠ Connection quality: WEAK (${latency}ms)');
+        AppLoggerService.debugTrace(
+          className: 'NetworkService',
+          method: '_checkConnectionQuality',
+          feature: 'Core',
+          status: 'WARNING',
+          durationMs: latency,
+          message: 'Connection quality: WEAK',
+        );
       } else {
         connectionQuality.value = ConnectionQuality.weak;
-        debugPrint('[NetworkService:Admin] ⚠ Connection quality: POOR (${latency}ms)');
+        AppLoggerService.debugTrace(
+          className: 'NetworkService',
+          method: '_checkConnectionQuality',
+          feature: 'Core',
+          status: 'WARNING',
+          durationMs: latency,
+          message: 'Connection quality: POOR',
+        );
       }
     } catch (e) {
       connectionQuality.value = ConnectionQuality.unknown;
-      debugPrint('[NetworkService:Admin] ✗ Speed check failed: $e');
+      AppLoggerService.debugTrace(
+        className: 'NetworkService',
+        method: '_checkConnectionQuality',
+        feature: 'Core',
+        status: 'FAILED',
+        error: e,
+      );
     }
   }
 
@@ -143,7 +182,13 @@ class NetworkService extends GetxService {
       _updateStatus(hasInternet);
     } catch (e) {
       _updateStatus(false);
-      debugPrint('[NetworkService:Admin] ✗ Check failed: $e');
+      AppLoggerService.debugTrace(
+        className: 'NetworkService',
+        method: '_checkConnection',
+        feature: 'Core',
+        status: 'FAILED',
+        error: e,
+      );
     }
   }
 
@@ -186,12 +231,24 @@ class NetworkService extends GetxService {
         online ? ConnectionStatus.connected : ConnectionStatus.disconnected;
 
     if (online && wasOffline) {
-      debugPrint('[NetworkService:Admin] ✓ Connection restored.');
+      AppLoggerService.debugTrace(
+        className: 'NetworkService',
+        method: '_updateStatus',
+        feature: 'Core',
+        status: 'SUCCESS',
+        message: 'Connection restored',
+      );
       _retryTimer?.cancel();
     } else if (!online && !wasOffline) {
       disconnectCount.value++;
-      debugPrint(
-          '[NetworkService:Admin] ✗ Connection lost. Total disconnects: ${disconnectCount.value}');
+      AppLoggerService.debugTrace(
+        className: 'NetworkService',
+        method: '_updateStatus',
+        feature: 'Core',
+        status: 'WARNING',
+        message: 'Connection lost',
+        params: {'disconnectCount': disconnectCount.value},
+      );
 
       // Log to server (fire-and-forget, doesn't need internet itself)
       AppLoggerService.logError(
@@ -218,7 +275,12 @@ class NetworkService extends GetxService {
 
   /// Force a manual retry.
   Future<void> retryConnection() async {
-    debugPrint('[NetworkService:Admin] ℹ Manual retry triggered.');
+    AppLoggerService.debugTrace(
+      className: 'NetworkService',
+      method: 'retryConnection',
+      feature: 'Core',
+      status: 'INFO',
+    );
     await _checkConnection();
   }
 

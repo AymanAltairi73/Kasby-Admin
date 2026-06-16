@@ -1,5 +1,7 @@
 /// User Activity Model
 /// Represents a single action performed by a user
+import '../../../core/services/app_logger_service.dart';
+
 class UserActivity {
   final String id;
   final String action; // e.g., "Login", "Transfer", "Profile Update"
@@ -21,6 +23,7 @@ class UserActivity {
   });
 
   factory UserActivity.fromJson(Map<String, dynamic> json) {
+    try {
     return UserActivity(
       id: json['id'] ?? '',
       action: json['action'] ?? '',
@@ -34,6 +37,18 @@ class UserActivity {
       ipAddress: json['ip_address'] ?? json['ipAddress'],
       device: json['device'],
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'UserActivity',
+        method: 'fromJson',
+        feature: 'Users',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'admin_notification_navigation_service.dart';
+import 'app_logger_service.dart';
 import 'supabase_service.dart';
 import 'audio_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -9,23 +13,41 @@ import '../../features/auth/controllers/auth_controller.dart';
 
 class AdminListenerService extends GetxService {
   RealtimeChannel? _adminChannel;
+  RealtimeChannel? _notificationChannel;
   Timer? _reconnectTimer;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
 
   Future<AdminListenerService> init() async {
-    // Wait for AuthController to be ready
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: 'init',
+      feature: 'Core',
+      status: 'INFO',
+    );
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(android: androidSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (details) {
+        AdminNotificationNavigationService.navigateFromLocalPayload(
+          details.payload,
+        );
+      },
+    );
+
     final authController = Get.find<AuthController>();
 
-    // Listen to login status to start/stop listeners
     ever(authController.isLoggedIn, (bool loggedIn) {
       if (loggedIn) {
         _setupListeners();
+        AdminNotificationNavigationService.processPendingNavigation();
       } else {
         _cleanupListeners();
       }
     });
 
-    // Initial setup if already logged in (e.g. after hot reload)
     if (authController.isLoggedIn.value) {
       _setupListeners();
     }
@@ -34,13 +56,18 @@ class AdminListenerService extends GetxService {
   }
 
   void _setupListeners() {
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: '_setupListeners',
+      feature: 'Core',
+      status: 'INFO',
+    );
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
-    _cleanupListeners(); // Avoid duplicate subscriptions
+    _cleanupListeners();
 
     _adminChannel = SupabaseService.client.channel('admin-global');
 
-    // 1. Listen for new pending transactions (deposits/withdrawals)
     _adminChannel!.onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
@@ -51,13 +78,16 @@ class AdminListenerService extends GetxService {
         if (status == 'pending' && (type == 'deposit' || type == 'withdrawal')) {
           _showAdminAlert(
             title: '💰 معاملة جديدة',
-            body: 'لديك طلب ${type == 'deposit' ? 'إيداع' : 'سحب'} جديد بانتظار الموافقة',
+            body:
+                'لديك طلب ${type == 'deposit' ? 'إيداع' : 'سحب'} جديد بانتظار الموافقة',
+            route: '/transactions',
+            entityId: payload.newRecord['id']?.toString(),
+            entityType: 'transaction',
           );
         }
       },
     );
 
-    // 2. Listen for new agent applications
     _adminChannel!.onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
@@ -68,12 +98,14 @@ class AdminListenerService extends GetxService {
           _showAdminAlert(
             title: '🌟 طلب وكالة',
             body: 'هناك طلب انضمام وكيل جديد بانتظار المراجعة',
+            route: '/agents',
+            entityId: payload.newRecord['id']?.toString(),
+            entityType: 'agent_application',
           );
         }
       },
     );
 
-    // 3. Listen for new KYC submissions (profiles update)
     _adminChannel!.onPostgresChanges(
       event: PostgresChangeEvent.update,
       schema: 'public',
@@ -85,12 +117,14 @@ class AdminListenerService extends GetxService {
           _showAdminAlert(
             title: '🆔 توثيق جديد',
             body: 'قام مستخدم برفع مستندات توثيق جديدة، يرجى مراجعتها',
+            route: '/kyc',
+            entityId: payload.newRecord['id']?.toString(),
+            entityType: 'profile',
           );
         }
       },
     );
 
-    // 4. Listen for new Loan applications
     _adminChannel!.onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
@@ -101,12 +135,14 @@ class AdminListenerService extends GetxService {
           _showAdminAlert(
             title: '💸 طلب قرض',
             body: 'قام مستخدم بتقديم طلب قرض جديد، تفقد قائمة القروض',
+            route: '/loans',
+            entityId: payload.newRecord['id']?.toString(),
+            entityType: 'loan',
           );
         }
       },
     );
 
-    // 5. Listen for new Investment applications
     _adminChannel!.onPostgresChanges(
       event: PostgresChangeEvent.insert,
       schema: 'public',
@@ -117,21 +153,74 @@ class AdminListenerService extends GetxService {
           _showAdminAlert(
             title: '📈 استثمار جديد',
             body: 'هناك طلب استثمار جديد بانتظار المراجعة والموافقة',
+            route: '/user-investments',
+            entityId: payload.newRecord['id']?.toString(),
+            entityType: 'investment',
           );
         }
       },
     );
 
+    _notificationChannel =
+        SupabaseService.client.channel('admin-notifications');
+    _notificationChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'notifications',
+      callback: (payload) {
+        final roleTarget = payload.newRecord['role_target'] as String?;
+        if (roleTarget != 'admin') return;
+
+        _showAdminAlert(
+          title: payload.newRecord['title']?.toString() ?? 'إشعار جديد',
+          body: payload.newRecord['message']?.toString() ?? '',
+          route: AdminNotificationNavigationService.resolveRoute(
+            type: payload.newRecord['type']?.toString(),
+            deepLink: payload.newRecord['deep_link']?.toString(),
+            entityType: payload.newRecord['entity_type']?.toString(),
+          ),
+          entityId: payload.newRecord['entity_id']?.toString(),
+          entityType: payload.newRecord['entity_type']?.toString(),
+          notificationType: payload.newRecord['type']?.toString(),
+        );
+      },
+    );
+
     _adminChannel!.subscribe((status, [error]) {
-      if (status == RealtimeSubscribeStatus.channelError || status == RealtimeSubscribeStatus.timedOut) {
-        Get.printError(info: '[AdminListener] Global stream status: $status, error: $error');
+      if (status == RealtimeSubscribeStatus.channelError ||
+          status == RealtimeSubscribeStatus.timedOut) {
+        AppLoggerService.debugTrace(
+          className: 'AdminListenerService',
+          method: 'subscribe',
+          feature: 'Core',
+          status: 'FAILED',
+          params: {'status': status.name},
+          error: error,
+        );
         _handleRetry();
+      } else if (status == RealtimeSubscribeStatus.subscribed) {
+        AppLoggerService.debugTrace(
+          className: 'AdminListenerService',
+          method: 'subscribe',
+          feature: 'Core',
+          status: 'SUCCESS',
+          message: 'Admin global channel subscribed',
+        );
       }
     });
+
+    _notificationChannel!.subscribe();
   }
 
   void _handleRetry() {
     if (_reconnectTimer != null) return;
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: '_handleRetry',
+      feature: 'Core',
+      status: 'WARNING',
+      message: 'Scheduling listener reconnect in 10s',
+    );
     _reconnectTimer = Timer(const Duration(seconds: 10), () {
       if (Get.find<AuthController>().isLoggedIn.value) {
         _setupListeners();
@@ -140,43 +229,80 @@ class AdminListenerService extends GetxService {
   }
 
   void _cleanupListeners() {
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: '_cleanupListeners',
+      feature: 'Core',
+      status: 'INFO',
+    );
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _adminChannel?.unsubscribe();
     _adminChannel = null;
+    _notificationChannel?.unsubscribe();
+    _notificationChannel = null;
   }
 
-  void _showAdminAlert({required String title, required String body}) {
-    // 1. Play sound
+  void _showAdminAlert({
+    required String title,
+    required String body,
+    required String route,
+    String? entityId,
+    String? entityType,
+    String? notificationType,
+  }) {
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: '_showAdminAlert',
+      feature: 'Core',
+      status: 'INFO',
+      params: {
+        'route': route,
+        'entityType': entityType ?? '',
+        'entityId': entityId ?? '',
+      },
+    );
     Get.find<AudioService>().playNotification();
 
-    // 2. Show Local OS Notification
-    _showLocalNotification(title: title, body: body);
+    _showLocalNotification(
+      title: title,
+      body: body,
+      route: route,
+      entityId: entityId,
+      entityType: entityType,
+      notificationType: notificationType,
+    );
 
-    // 3. Show In-App Snackbar for immediate visual feedback
     if (!Get.isSnackbarOpen) {
       Get.snackbar(
         title,
         body,
         snackPosition: SnackPosition.TOP,
         backgroundColor: const Color(0xFF16161E).withValues(alpha: 0.95),
-        colorText: const Color(0xFFC9A24D), // Kasby Gold
+        colorText: const Color(0xFFC9A24D),
         duration: const Duration(seconds: 5),
         margin: const EdgeInsets.all(12),
         borderRadius: 16,
-        boxShadows: [
-          BoxShadow(
-            color: const Color(0xFFC9A24D).withValues(alpha: 0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          )
-        ],
+        onTap: (_) {
+          AdminNotificationNavigationService.navigateFromRealtimeAlert(
+            route: route,
+            entityId: entityId,
+            entityType: entityType,
+          );
+        },
       );
     }
   }
 
-  Future<void> _showLocalNotification({required String title, required String body}) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+  Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+    required String route,
+    String? entityId,
+    String? entityType,
+    String? notificationType,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
       'high_importance_channel',
       'High Importance Notifications',
       channelDescription: 'This channel is used for important notifications.',
@@ -185,17 +311,30 @@ class AdminListenerService extends GetxService {
       sound: RawResourceAndroidNotificationSound('notification'),
       playSound: true,
     );
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    const platformDetails = NotificationDetails(android: androidDetails);
     await _localNotifications.show(
       DateTime.now().millisecond,
       title,
       body,
-      platformChannelSpecifics,
+      platformDetails,
+      payload: jsonEncode({
+        'route': route,
+        'entity_id': entityId ?? '',
+        'entity_type': entityType ?? '',
+        'type': notificationType ?? 'admin_alert',
+        'role_target': 'admin',
+      }),
     );
   }
 
   @override
   void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'AdminListenerService',
+      method: 'onClose',
+      feature: 'Core',
+      status: 'INFO',
+    );
     _cleanupListeners();
     super.onClose();
   }

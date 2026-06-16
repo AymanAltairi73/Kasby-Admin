@@ -17,6 +17,12 @@ class InvestmentController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'InvestmentController',
+      method: 'onInit',
+      feature: 'Investments',
+      status: 'INFO',
+    );
     super.onInit();
     loadPlans();
     loadUserInvestments();
@@ -25,7 +31,12 @@ class InvestmentController extends GetxController {
 
   /// Load investment plans from Supabase
   Future<void> loadPlans() async {
-    debugPrint('[InvestmentController][loadPlans] Fetching data from /investment_plans');
+    AppLoggerService.debugTrace(
+      className: 'InvestmentController',
+      method: 'loadPlans',
+      feature: 'Investments',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -33,17 +44,26 @@ class InvestmentController extends GetxController {
           .select()
           .order('created_at', ascending: false);
 
-      debugPrint('[InvestmentController][loadPlans] Response: ${response.length} plans');
-      
       plans.assignAll(
         (response as List?)?.map((e) => InvestmentPlan.fromSupabase(e)).toList() ?? [],
       );
-      
-      debugPrint('[InvestmentController][loadPlans] Successfully loaded ${plans.length} investment plans');
+
+      AppLoggerService.debugTrace(
+        className: 'InvestmentController',
+        method: 'loadPlans',
+        feature: 'Investments',
+        status: 'SUCCESS',
+        params: {'count': plans.length},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[InvestmentController][loadPlans] Error: $e');
-      debugPrint('[InvestmentController][loadPlans] Stack trace: $stackTrace');
-      debugPrint('[InvestmentController][loadPlans] Endpoint: /investment_plans');
+      AppLoggerService.debugTrace(
+        className: 'InvestmentController',
+        method: 'loadPlans',
+        feature: 'Investments',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       AppLoggerService.logError(
         controller: 'InvestmentController',
         method: 'loadPlans',
@@ -61,7 +81,12 @@ class InvestmentController extends GetxController {
 
   /// Load user investments from Supabase
   Future<void> loadUserInvestments() async {
-    debugPrint('[InvestmentController][loadUserInvestments] Fetching data from /user_investments');
+    AppLoggerService.debugTrace(
+      className: 'InvestmentController',
+      method: 'loadUserInvestments',
+      feature: 'Investments',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -82,21 +107,26 @@ class InvestmentController extends GetxController {
           ''')
           .order('created_at', ascending: false);
 
-      debugPrint('[InvestmentController][loadUserInvestments] Response: ${response.length} investments');
-      
-      if (response != null && (response as List).isNotEmpty) {
-        debugPrint('[InvestmentController][loadUserInvestments] Raw First Row: ${response[0]}');
-      }
-
       userInvestments.assignAll(
         (response as List?)?.map((e) => UserInvestment.fromSupabase(e)).toList() ?? [],
       );
-      
-      debugPrint('[InvestmentController][loadUserInvestments] Successfully loaded ${userInvestments.length} user investments');
+
+      AppLoggerService.debugTrace(
+        className: 'InvestmentController',
+        method: 'loadUserInvestments',
+        feature: 'Investments',
+        status: 'SUCCESS',
+        params: {'count': userInvestments.length},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[InvestmentController][loadUserInvestments] Error: $e');
-      debugPrint('[InvestmentController][loadUserInvestments] Stack trace: $stackTrace');
-      debugPrint('[InvestmentController][loadUserInvestments] Endpoint: /user_investments');
+      AppLoggerService.debugTrace(
+        className: 'InvestmentController',
+        method: 'loadUserInvestments',
+        feature: 'Investments',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       AppLoggerService.logError(
         controller: 'InvestmentController',
         method: 'loadUserInvestments',
@@ -122,12 +152,22 @@ class InvestmentController extends GetxController {
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
         .listen((data) async {
-          debugPrint('[InvestmentController] ℹ️ User investments updated via stream');
-          
-          // Re-fetch with joins to ensure names are present (stream doesn't support joins)
+          AppLoggerService.debugTrace(
+            className: 'InvestmentController',
+            method: '_listenToUserInvestments',
+            feature: 'Investments',
+            status: 'INFO',
+            message: 'User investments stream update',
+          );
           await loadUserInvestments();
         }, onError: (error) {
-          debugPrint('[InvestmentController] ❌ Stream error: $error');
+          AppLoggerService.debugTrace(
+            className: 'InvestmentController',
+            method: '_listenToUserInvestments',
+            feature: 'Investments',
+            status: 'FAILED',
+            error: error,
+          );
         });
   }
 
@@ -362,28 +402,50 @@ class InvestmentController extends GetxController {
     isLoading.value = false;
   }
 
-  /// Soft-delete plan (set is_active = false to preserve referential integrity)
-  Future<void> deletePlan(String planId) async {
+  /// Soft-delete or hard-delete plan depending on linked investments
+  Future<bool> deletePlan(String planId) async {
     isLoading.value = true;
     try {
-      // Actually delete if the user really wants to, but usually we just deactivate.
-      // The user requested to confirm operations, so I'll keep it as deactivation for safety 
-      // unless it's a new plan without investments.
-      
-      await SupabaseService.client
-          .from('investment_plans')
-          .update({'is_active': false})
-          .eq('id', planId);
+      final linked = await SupabaseService.client
+          .from('user_investments')
+          .select('id')
+          .eq('plan_id', planId)
+          .limit(1);
 
+      final hasInvestments = (linked as List).isNotEmpty;
+      List<dynamic> result;
+
+      if (hasInvestments) {
+        result = await SupabaseService.client
+            .from('investment_plans')
+            .update({'is_active': false})
+            .eq('id', planId)
+            .select('id');
+      } else {
+        result = await SupabaseService.client
+            .from('investment_plans')
+            .delete()
+            .eq('id', planId)
+            .select('id');
+      }
+
+      if (result.isEmpty) {
+        throw Exception('No rows affected — check permissions');
+      }
+
+      plans.removeWhere((p) => p.id == planId);
       await loadPlans();
 
       Get.snackbar(
         'نجح',
-        'تم إلغاء تفعيل الخطة',
+        hasInvestments
+            ? 'تم إيقاف الخطة (مرتبطة باستثمارات)'
+            : 'تم حذف الخطة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: KasbyColors.error.withValues(alpha: 0.1),
-        colorText: KasbyColors.error,
+        backgroundColor: KasbyColors.success.withValues(alpha: 0.15),
+        colorText: KasbyColors.success,
       );
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'InvestmentController',
@@ -393,12 +455,17 @@ class InvestmentController extends GetxController {
       );
       Get.snackbar(
         'خطأ',
-        'فشل في إلغاء تفعيل الخطة',
+        'فشل في حذف الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
+      return false;
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
+
+  List<InvestmentPlan> get activePlans =>
+      plans.where((p) => p.isActive).toList();
 
   /// Get active investments
   List<UserInvestment> get activeInvestments {
@@ -424,6 +491,12 @@ class InvestmentController extends GetxController {
 
   @override
   void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'InvestmentController',
+      method: 'onClose',
+      feature: 'Investments',
+      status: 'INFO',
+    );
     _userInvestmentsSubscription?.cancel();
     super.onClose();
   }

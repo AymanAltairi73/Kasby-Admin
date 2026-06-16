@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,7 +6,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../../users/models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../../core/theme/kasby_colors.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Authentication Controller
 /// Manages login via Supabase Auth and session state
@@ -21,21 +22,45 @@ class AuthController extends GetxController {
   final rememberMe = false.obs;
   final savedEmail = ''.obs;
   final LocalAuthentication _localAuth = LocalAuthentication();
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'onInit',
+      feature: 'Auth',
+      status: 'INFO',
+    );
     super.onInit();
     _checkLoginStatus();
-    _listenToAuthChanges(); // Start listening to auth changes
+    _listenToAuthChanges();
     _loadRememberedCredentials();
+  }
+
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'onClose',
+      feature: 'Auth',
+      status: 'INFO',
+    );
+    _authSubscription?.cancel();
+    super.onClose();
   }
 
   /// Check if user is already logged in via Supabase session
   Future<void> _checkLoginStatus() async {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: '_checkLoginStatus',
+      feature: 'Auth',
+      status: 'INFO',
+    );
     try {
       final session = SupabaseService.auth.currentSession;
       if (session != null) {
-        // Verify admin status
         final isAdmin = await _checkIsAdmin();
         if (isAdmin) {
           isLoggedIn.value = true;
@@ -43,17 +68,21 @@ class AuthController extends GetxController {
           userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
           await _fetchFullProfile(session.user.id);
         } else {
-          // Not an admin — sign out
           await SupabaseService.auth.signOut();
         }
       }
     } catch (e) {
-      // Handle silently
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: '_checkLoginStatus',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
     } finally {
       isCheckingAuth.value = false;
     }
 
-    // Check biometric availability
     try {
       isBiometricAvailable.value =
           await _localAuth.canCheckBiometrics ||
@@ -63,10 +92,16 @@ class AuthController extends GetxController {
 
   /// Listen to Supabase auth state changes for real-time session management
   void _listenToAuthChanges() {
-    SupabaseService.onAuthStateChange.listen((data) async {
+    _authSubscription = SupabaseService.onAuthStateChange.listen((data) async {
       final event = data.event;
       final session = data.session;
-      debugPrint('[AuthController] authStateChange: ${event.name}');
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: '_listenToAuthChanges',
+        feature: 'Auth',
+        status: 'INFO',
+        params: {'event': event.name},
+      );
 
       switch (event) {
         case AuthChangeEvent.signedIn:
@@ -79,7 +114,13 @@ class AuthController extends GetxController {
               userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
               await _fetchFullProfile(session.user.id);
             } else {
-              debugPrint('[AuthController] Non-admin signed in — enforcing logout');
+              AppLoggerService.debugTrace(
+                className: 'AuthController',
+                method: '_listenToAuthChanges',
+                feature: 'Auth',
+                status: 'WARNING',
+                message: 'Non-admin signed in — enforcing logout',
+              );
               await SupabaseService.auth.signOut();
             }
           }
@@ -90,7 +131,6 @@ class AuthController extends GetxController {
           userRole.value = '';
           userName.value = '';
           profile.value = null;
-          // Navigation is handled by AuthWrapper in main.dart
           break;
 
         case AuthChangeEvent.userUpdated:
@@ -106,17 +146,21 @@ class AuthController extends GetxController {
   }
 
   /// Check if current user is an admin
-  /// Uses the professional `profiles.role` column as the Single Source of Truth.
   Future<bool> _checkIsAdmin() async {
     final userId = SupabaseService.auth.currentUser?.id;
     if (userId == null) return false;
 
-    debugPrint('[AuthController] _checkIsAdmin — userId: $userId');
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: '_checkIsAdmin',
+      feature: 'Auth',
+      status: 'INFO',
+      params: {'userId': userId},
+    );
 
     int retryCount = 0;
     while (retryCount < 2) {
       try {
-        // 1. Direct query to profiles table for the 'role' column (Single Source of Truth)
         final response = await SupabaseService.client
             .from('profiles')
             .select('role')
@@ -124,25 +168,38 @@ class AuthController extends GetxController {
             .single();
 
         final role = response['role'] as String?;
-        debugPrint('[AuthController] _checkIsAdmin — DB role result: $role');
+        AppLoggerService.debugTrace(
+          className: 'AuthController',
+          method: '_checkIsAdmin',
+          feature: 'Auth',
+          status: 'SUCCESS',
+          params: {'role': role ?? 'unknown'},
+        );
 
         if (role == 'admin') return true;
-        
-        // If we got a result but it's not admin, no need to retry
-        break; 
+        break;
       } catch (e) {
         retryCount++;
-        debugPrint(
-          '[AuthController] _checkIsAdmin — DB query failed (Attempt $retryCount): $e',
+        AppLoggerService.debugTrace(
+          className: 'AuthController',
+          method: '_checkIsAdmin',
+          feature: 'Auth',
+          status: 'WARNING',
+          params: {'attempt': retryCount},
+          error: e,
         );
-        
+
         if (retryCount < 2) {
-          // Wait a bit before retrying (staggered startup)
           await Future.delayed(const Duration(milliseconds: 1500));
         } else {
-          debugPrint('[AuthController] _checkIsAdmin — All attempts failed. Using metadata fallback...');
-          
-          // 2. Last resort: Check appMetadata (Injected by database trigger)
+          AppLoggerService.debugTrace(
+            className: 'AuthController',
+            method: '_checkIsAdmin',
+            feature: 'Auth',
+            status: 'WARNING',
+            message: 'DB query failed — using metadata fallback',
+          );
+
           final user = SupabaseService.auth.currentUser;
           final appAdmin = user?.appMetadata['is_admin'];
           if (appAdmin == true || appAdmin == 'true') return true;
@@ -153,7 +210,6 @@ class AuthController extends GetxController {
     return false;
   }
 
-  /// Load remembered credentials from SharedPreferences
   Future<void> _loadRememberedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     rememberMe.value = prefs.getBool('remember_me') ?? false;
@@ -162,7 +218,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Update remember me state
   Future<void> toggleRememberMe(bool value) async {
     rememberMe.value = value;
     final prefs = await SharedPreferences.getInstance();
@@ -172,8 +227,13 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Authenticate with Biometrics
   Future<bool> authenticateWithBiometrics() async {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'authenticateWithBiometrics',
+      feature: 'Auth',
+      status: 'INFO',
+    );
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: 'يرجى المصادقة للدخول إلى لوحة التحكم',
@@ -182,56 +242,74 @@ class AuthController extends GetxController {
       if (authenticated) {
         final session = SupabaseService.auth.currentSession;
         if (session != null) {
-          isLoggedIn.value = true;
-          return true;
+          final isAdmin = await _checkIsAdmin();
+          if (isAdmin) {
+            isLoggedIn.value = true;
+            return true;
+          }
+          await SupabaseService.auth.signOut();
         }
       }
       return false;
     } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'authenticateWithBiometrics',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
       return false;
     }
   }
 
   /// Login with email and password via Supabase Auth
   Future<bool> login(String email, String password) async {
-    debugPrint('[AuthController] ▶ login() called — email: $email');
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'login',
+      feature: 'Auth',
+      status: 'INFO',
+      params: {'email': email},
+    );
     isLoading.value = true;
 
     try {
-      debugPrint('[AuthController] ℹ Step 1: signInWithPassword...');
       final response = await SupabaseService.auth.signInWithPassword(
         email: email,
         password: password,
       );
-      debugPrint('[AuthController] ✓ signInWithPassword completed');
-      debugPrint(
-        '[AuthController] ℹ Session: ${response.session != null ? "EXISTS" : "NULL"}',
-      );
-      debugPrint('[AuthController] ℹ User ID: ${response.user?.id}');
-      debugPrint(
-        '[AuthController] ℹ User metadata: ${response.user?.userMetadata}',
-      );
-      debugPrint(
-        '[AuthController] ℹ App metadata: ${response.user?.appMetadata}',
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'login',
+        feature: 'Auth',
+        status: 'INFO',
+        message: 'signInWithPassword completed',
+        params: {
+          'hasSession': response.session != null,
+          'userId': response.user?.id ?? '',
+        },
       );
 
       if (response.session == null) {
         throw AuthException('لم يتم إنشاء جلسة. حاول مرة أخرى.');
       }
 
-      // 1. Verify admin status via RPC and Metadata
-      debugPrint('[AuthController] ℹ Step 2: _checkIsAdmin()...');
       final isAdmin = await _checkIsAdmin();
-      debugPrint('[AuthController] ℹ isAdmin result: $isAdmin');
       if (!isAdmin) {
-        debugPrint('[AuthController] ✗ NOT an admin — signing out');
+        AppLoggerService.debugTrace(
+          className: 'AuthController',
+          method: 'login',
+          feature: 'Auth',
+          status: 'FAILED',
+          message: 'NOT an admin — signing out',
+        );
         await SupabaseService.auth.signOut();
         throw AuthException(
           'هذا الحساب ليس حساب مدير. لا يمكنك الوصول إلى لوحة التحكم.',
         );
       }
 
-      // 2. Clear sensitive state and set local status
       if (rememberMe.value) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('saved_email', email);
@@ -245,15 +323,23 @@ class AuthController extends GetxController {
         await _fetchFullProfile(response.user!.id);
       }
 
-      debugPrint(
-        '[AuthController] ✓ Login SUCCESS — userName: ${userName.value}',
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'login',
+        feature: 'Auth',
+        status: 'SUCCESS',
+        params: {'userName': userName.value},
       );
       isLoading.value = false;
       return true;
     } on AuthException catch (e) {
-      debugPrint('[AuthController] ✗ AuthException: ${e.message}');
-      debugPrint(
-        '[AuthController] ✗ AuthException statusCode: ${e.statusCode}',
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'login',
+        feature: 'Auth',
+        status: 'FAILED',
+        params: {'statusCode': e.statusCode ?? 0},
+        error: e.message,
       );
       isLoading.value = false;
       String message = e.message;
@@ -269,6 +355,13 @@ class AuthController extends GetxController {
       );
       return false;
     } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'login',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
       isLoading.value = false;
       Get.snackbar(
         'خطأ غير متوقع',
@@ -281,7 +374,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Fetch complete profile from Supabase
   Future<void> _fetchFullProfile(String userId) async {
     try {
       final response = await SupabaseService.client
@@ -294,14 +386,25 @@ class AuthController extends GetxController {
         profile.value = User.fromSupabase(response);
         userName.value = profile.value?.name ?? userName.value;
         userRole.value = profile.value?.role ?? userRole.value;
-        debugPrint('[AuthController] ✓ Full profile fetched: ${profile.value?.name}');
+        AppLoggerService.debugTrace(
+          className: 'AuthController',
+          method: '_fetchFullProfile',
+          feature: 'Auth',
+          status: 'SUCCESS',
+          params: {'name': profile.value?.name ?? ''},
+        );
       }
     } catch (e) {
-      debugPrint('[AuthController] ⚠ Error fetching full profile: $e');
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: '_fetchFullProfile',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
     }
   }
 
-  /// Public method to refresh profile
   Future<void> refreshProfile() async {
     final userId = SupabaseService.auth.currentUser?.id;
     if (userId != null) {
@@ -309,7 +412,6 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Update just the avatar URL in the profile
   Future<void> updateAvatar(String url) async {
     final p = profile.value;
     if (p != null) {
@@ -317,8 +419,13 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Logout
   Future<void> logout() async {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'logout',
+      feature: 'Auth',
+      status: 'INFO',
+    );
     try {
       await SupabaseService.auth.signOut();
     } catch (_) {}
@@ -328,67 +435,35 @@ class AuthController extends GetxController {
     Get.offAllNamed('/login');
   }
 
-  /// Signup with email, password, and additional metadata
   Future<bool> signUp({
     required String email,
     required String password,
     required String fullName,
     required String phone,
   }) async {
-    isLoading.value = true;
-    try {
-      // We set is_admin: true in user metadata.
-      // The database trigger 'handle_new_user' in kasby.sql will pick this up.
-      final response = await SupabaseService.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'full_name': fullName,
-          'phone': phone,
-          'is_admin': true, // This app is only for admins
-        },
-      );
-
-      if (response.user == null) {
-        throw AuthException('فشل إنشاء المستخدم');
-      }
-
-      isLoading.value = false;
-      Get.snackbar(
-        'تم بنجاح',
-        'تم إنشاء حساب المدير. يرجى تسجيل الدخول الآن.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: KasbyColors.success,
-        colorText: Colors.white,
-      );
-      return true;
-    } on AuthApiException catch (e) {
-      isLoading.value = false;
-      String message = e.message;
-      if (e.code == 'user_already_exists') {
-        message = 'هذا البريد الإلكتروني مسجل بالفعل. حاول تسجيل الدخول.';
-      }
-      Get.snackbar(
-        'خطأ في التسجيل',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.8),
-        colorText: Colors.white,
-      );
-      return false;
-    } catch (e) {
-      isLoading.value = false;
-      Get.snackbar(
-        'خطأ',
-        'حدث خطأ غير متوقع أثناء التسجيل',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'signUp',
+      feature: 'Auth',
+      status: 'WARNING',
+      message: 'Admin self-registration disabled',
+    );
+    Get.snackbar(
+      'غير متاح',
+      'إنشاء حساب المدير معطل. يرجى التواصل مع مسؤول النظام.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
+    return false;
   }
 
-  /// Forgot password — sends reset email via Supabase
   Future<void> forgotPassword(String email) async {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'forgotPassword',
+      feature: 'Auth',
+      status: 'INFO',
+      params: {'email': email},
+    );
     isLoading.value = true;
     try {
       await SupabaseService.auth.resetPasswordForEmail(email);
@@ -398,6 +473,13 @@ class AuthController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'forgotPassword',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar(
         'خطأ',
         'حدث خطأ أثناء إرسال رابط إعادة التعيين',

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:get/get.dart';
 import '../models/subscription_model.dart';
 import '../../../core/services/supabase_service.dart';
@@ -8,16 +8,54 @@ import '../../../core/services/app_logger_service.dart';
 class SubscriptionController extends GetxController {
   final plans = <SubscriptionPlan>[].obs;
   final isLoading = false.obs;
+  StreamSubscription? _plansSubscription;
+  Timer? _reloadDebounce;
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionController',
+      method: 'onInit',
+      feature: 'Subscriptions',
+      status: 'INFO',
+    );
     super.onInit();
     loadPlans();
+    _listenToPlans();
+  }
+
+  void _listenToPlans() {
+    _plansSubscription?.cancel();
+    _plansSubscription = SupabaseService.client
+        .from('subscription_plans')
+        .stream(primaryKey: ['id'])
+        .listen((_) {
+          _reloadDebounce?.cancel();
+          _reloadDebounce = Timer(const Duration(milliseconds: 750), loadPlans);
+        }, onError: (_) {});
+  }
+
+  @override
+  void onClose() {
+    _plansSubscription?.cancel();
+    _reloadDebounce?.cancel();
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionController',
+      method: 'onClose',
+      feature: 'Subscriptions',
+      status: 'INFO',
+    );
+    super.onClose();
   }
 
   /// Load plans from Supabase, fallback to defaults if no data
   Future<void> loadPlans() async {
-    debugPrint('[SubscriptionController] ▶ Loading subscription plans...');
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionController',
+      method: 'loadPlans',
+      feature: 'Subscriptions',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -30,8 +68,7 @@ class SubscriptionController extends GetxController {
           response.map((e) => SubscriptionPlan.fromSupabase(e)).toList(),
         );
       } else {
-        // Fallback to default plans if table is empty
-        plans.assignAll(SubscriptionPlan.getDefaultPlans());
+        plans.clear();
       }
     } catch (e, stackTrace) {
       AppLoggerService.logError(
@@ -40,16 +77,20 @@ class SubscriptionController extends GetxController {
         error: e,
         stackTrace: stackTrace,
       );
-      // Fallback to default plans on error
-      plans.assignAll(SubscriptionPlan.getDefaultPlans());
+      plans.clear();
+      Get.snackbar('خطأ', 'فشل تحميل خطط الاشتراك');
     }
     isLoading.value = false;
   }
 
   /// Add a new plan
-  Future<void> createPlan(SubscriptionPlan plan) async {
-    debugPrint(
-      '[SubscriptionController] ▶ Creating plan: ${plan.displayNameAr}',
+  Future<bool> createPlan(SubscriptionPlan plan) async {
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionController',
+      method: 'createPlan',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      params: {'planName': plan.displayNameAr},
     );
     isLoading.value = true;
     try {
@@ -64,6 +105,8 @@ class SubscriptionController extends GetxController {
         'تم إضافة الخطة الجديدة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
+      isLoading.value = false;
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SubscriptionController',
@@ -76,12 +119,13 @@ class SubscriptionController extends GetxController {
         'فشل في إضافة الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
+      isLoading.value = false;
+      return false;
     }
-    isLoading.value = false;
   }
 
   /// Delete a plan
-  Future<void> deletePlan(String planId) async {
+  Future<bool> deletePlan(String planId) async {
     isLoading.value = true;
     try {
       await SupabaseService.client
@@ -96,6 +140,8 @@ class SubscriptionController extends GetxController {
         'تم حذف الخطة بنجاح',
         snackPosition: SnackPosition.BOTTOM,
       );
+      isLoading.value = false;
+      return true;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SubscriptionController',
@@ -108,12 +154,13 @@ class SubscriptionController extends GetxController {
         'فشل في حذف الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
+      isLoading.value = false;
+      return false;
     }
-    isLoading.value = false;
   }
 
   /// Update an existing plan
-  Future<void> updatePlan(String planId, Map<String, dynamic> updates) async {
+  Future<bool> updatePlan(String planId, Map<String, dynamic> updates) async {
     isLoading.value = true;
     try {
       final index = plans.indexWhere((p) => p.id == planId);
@@ -147,7 +194,11 @@ class SubscriptionController extends GetxController {
           'تم تحديث بيانات الخطة بنجاح',
           snackPosition: SnackPosition.BOTTOM,
         );
+        isLoading.value = false;
+        return true;
       }
+      isLoading.value = false;
+      return false;
     } catch (e, stackTrace) {
       AppLoggerService.logError(
         controller: 'SubscriptionController',
@@ -160,7 +211,8 @@ class SubscriptionController extends GetxController {
         'فشل في تحديث الخطة',
         snackPosition: SnackPosition.BOTTOM,
       );
+      isLoading.value = false;
+      return false;
     }
-    isLoading.value = false;
   }
 }

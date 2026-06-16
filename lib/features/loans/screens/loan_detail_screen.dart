@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../models/loan_model.dart';
@@ -10,10 +11,42 @@ import '../controllers/loan_controller.dart';
 
 /// Loan Detail Screen
 /// Comprehensive view of a single loan including financial breakdown and status history
-class LoanDetailScreen extends StatelessWidget {
+class LoanDetailScreen extends StatefulWidget {
   final Loan loan;
 
   const LoanDetailScreen({super.key, required this.loan});
+
+  @override
+  State<LoanDetailScreen> createState() => _LoanDetailScreenState();
+}
+
+class _LoanDetailScreenState extends State<LoanDetailScreen> {
+  Loan get loan => widget.loan;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'LoanDetailScreen',
+      method: 'initState',
+      feature: 'Loans',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'loanId': widget.loan.id},
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'LoanDetailScreen',
+      method: 'dispose',
+      feature: 'Loans',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

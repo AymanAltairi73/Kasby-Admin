@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_confirmation_dialog.dart';
@@ -7,10 +8,43 @@ import '../models/subscription_model.dart';
 import '../controllers/subscription_controller.dart';
 import 'add_edit_subscription_screen.dart';
 
-class SubscriptionDetailScreen extends StatelessWidget {
+class SubscriptionDetailScreen extends StatefulWidget {
   final SubscriptionPlan plan;
 
   const SubscriptionDetailScreen({super.key, required this.plan});
+
+  @override
+  State<SubscriptionDetailScreen> createState() =>
+      _SubscriptionDetailScreenState();
+}
+
+class _SubscriptionDetailScreenState extends State<SubscriptionDetailScreen> {
+  SubscriptionPlan get plan => widget.plan;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionDetailScreen',
+      method: 'initState',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'planId': widget.plan.id},
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'SubscriptionDetailScreen',
+      method: 'dispose',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

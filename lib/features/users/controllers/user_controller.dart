@@ -1,14 +1,16 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/admin_proxy_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../repositories/profile_repository.dart';
 import '../../investments/models/investment_model.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../models/user_activity_model.dart';
+import '../../../core/services/app_logger_service.dart';
+import '../services/user_management_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 /// User Controller — manages user data from Supabase `profiles` + `wallets`
@@ -32,44 +34,113 @@ class UserController extends GetxController {
   final selectedUserTransactions = <Transaction>[].obs;
   final selectedUserActivities = <UserActivity>[].obs;
   final isDetailsLoading = false.obs;
+  Worker? _authWorker;
+  StreamSubscription? _profilesSubscription;
+  Timer? _reloadDebounce;
+  bool _hasMoreUsers = true;
+  bool _isLoadingMore = false;
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'UserController',
+      method: 'onInit',
+      feature: 'Users',
+      status: 'INFO',
+    );
     super.onInit();
-    // Listen to auth state — reload users when admin logs in
     try {
       final auth = Get.find<AuthController>();
-      ever(auth.isLoggedIn, (loggedIn) {
+      _authWorker = ever(auth.isLoggedIn, (loggedIn) {
         if (loggedIn) {
           loadUsers();
+          _listenToProfiles();
         } else {
+          _stopListening();
           users.clear();
           filteredUsers.clear();
         }
       });
-      // If already logged in at init time, load immediately
       if (auth.isLoggedIn.value) {
         loadUsers();
+        _listenToProfiles();
       }
     } catch (_) {
-      // AuthController not ready yet — will reload via ever()
+      loadUsers();
+      _listenToProfiles();
     }
+  }
+
+  void _listenToProfiles() {
+    _profilesSubscription?.cancel();
+    _profilesSubscription = SupabaseService.client
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .listen((_) {
+          _reloadDebounce?.cancel();
+          _reloadDebounce = Timer(const Duration(milliseconds: 750), loadUsers);
+        }, onError: (_) {});
+  }
+
+  void _stopListening() {
+    _reloadDebounce?.cancel();
+    _profilesSubscription?.cancel();
+    _profilesSubscription = null;
+  }
+
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'UserController',
+      method: 'onClose',
+      feature: 'Users',
+      status: 'INFO',
+    );
+    _stopListening();
+    _authWorker?.dispose();
+    super.onClose();
   }
 
   /// Load users from Supabase with pagination
   Future<void> loadUsers() async {
-    debugPrint('[UserController][loadUsers] Fetching data from /profiles');
+    AppLoggerService.debugTrace(
+      className: 'UserController',
+      method: 'loadUsers',
+      feature: 'Users',
+      status: 'INFO',
+    );
     isLoading.value = true;
+    _hasMoreUsers = true;
     try {
-      final response = await _profileRepo.getProfilesPaginated(from: 0, to: 49);
-      debugPrint('[UserController][loadUsers] Response: ${response.length} users');
+      final response = await _profileRepo.getProfilesPaginated(
+        from: 0,
+        to: 49,
+        search: searchQuery.value.isEmpty ? null : searchQuery.value,
+        status: selectedStatus.value.toLowerCase() == 'all'
+            ? null
+            : selectedStatus.value.toLowerCase(),
+        kycStatus: selectedKyc.value,
+        country: selectedCountry.value.isNotEmpty ? selectedCountry.value : null,
+        excludeAdmins: true,
+      );
       users.value = response;
       _applyFilters();
-      debugPrint('[UserController][loadUsers] Successfully loaded ${users.length} users');
+      AppLoggerService.debugTrace(
+        className: 'UserController',
+        method: 'loadUsers',
+        feature: 'Users',
+        status: 'SUCCESS',
+        params: {'count': users.length},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[UserController][loadUsers] Error: $e');
-      debugPrint('[UserController][loadUsers] Stack trace: $stackTrace');
-      debugPrint('[UserController][loadUsers] Endpoint: /profiles');
+      AppLoggerService.debugTrace(
+        className: 'UserController',
+        method: 'loadUsers',
+        feature: 'Users',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحميل المستخدمين',
@@ -82,9 +153,15 @@ class UserController extends GetxController {
 
   /// Load more users for pagination
   Future<void> loadMoreUsers() async {
-    if (isLoading.value) return;
+    if (isLoading.value || _isLoadingMore || !_hasMoreUsers) return;
 
-    debugPrint('[UserController][loadMoreUsers] Fetching more users from /profiles');
+    _isLoadingMore = true;
+    AppLoggerService.debugTrace(
+      className: 'UserController',
+      method: 'loadMoreUsers',
+      feature: 'Users',
+      status: 'INFO',
+    );
     try {
       final nextFrom = users.length;
       final nextTo = nextFrom + 49;
@@ -92,19 +169,49 @@ class UserController extends GetxController {
       final response = await _profileRepo.getProfilesPaginated(
         from: nextFrom,
         to: nextTo,
+        search: searchQuery.value.isEmpty ? null : searchQuery.value,
+        status: selectedStatus.value.toLowerCase() == 'all'
+            ? null
+            : selectedStatus.value.toLowerCase(),
+        kycStatus: selectedKyc.value,
+        country: selectedCountry.value.isNotEmpty ? selectedCountry.value : null,
+        excludeAdmins: true,
       );
 
       if (response.isNotEmpty) {
         users.addAll(response);
         _applyFilters();
-        debugPrint('[UserController][loadMoreUsers] Successfully loaded ${response.length} more users');
+        if (response.length < 50) {
+          _hasMoreUsers = false;
+        }
+        AppLoggerService.debugTrace(
+          className: 'UserController',
+          method: 'loadMoreUsers',
+          feature: 'Users',
+          status: 'SUCCESS',
+          params: {'count': response.length},
+        );
       } else {
-        debugPrint('[UserController][loadMoreUsers] No more users to load');
+        _hasMoreUsers = false;
+        AppLoggerService.debugTrace(
+          className: 'UserController',
+          method: 'loadMoreUsers',
+          feature: 'Users',
+          status: 'INFO',
+          message: 'No more users to load',
+        );
       }
     } catch (e, stackTrace) {
-      debugPrint('[UserController][loadMoreUsers] Error: $e');
-      debugPrint('[UserController][loadMoreUsers] Stack trace: $stackTrace');
-      debugPrint('[UserController][loadMoreUsers] Endpoint: /profiles');
+      AppLoggerService.debugTrace(
+        className: 'UserController',
+        method: 'loadMoreUsers',
+        feature: 'Users',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _isLoadingMore = false;
     }
   }
 
@@ -226,23 +333,36 @@ class UserController extends GetxController {
     filteredUsers.value = result;
   }
 
-  /// Block user
-  Future<void> blockUser(String userId) async {
+  /// Block user with mandatory reason (RPC + audit + notification via DB trigger)
+  Future<void> blockUser(String userId, {String? reason}) async {
+    final blockReason = reason?.trim();
+    if (blockReason == null || blockReason.isEmpty) {
+      Get.snackbar(
+        'خطأ',
+        'يجب إدخال سبب الحظر',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
-      await _profileRepo.updateProfile(userId, {'status': 'blocked'});
+      await UserManagementService.blockUser(userId, blockReason);
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
-        users[idx] = users[idx].copyWith(status: 'blocked');
+        users[idx] = users[idx].copyWith(
+          status: 'blocked',
+          statusReason: blockReason,
+          statusChangedAt: DateTime.now(),
+        );
         _applyFilters();
       }
 
-      // Send User Notification
-      Get.find<NotificationController>().sendNotification(
-        '⚠️ تنبيه الحساب',
-        'تم حظر حسابك مؤقتاً. يرجى التواصل مع الدعم الفني للاستفسار.',
-        'specific',
-        specificUserId: userId,
+      await AppLoggerService.logActivity(
+        action: 'admin_block_user',
+        entityType: 'user',
+        entityId: userId,
+        details: {'reason': blockReason},
       );
 
       Get.snackbar(
@@ -253,29 +373,31 @@ class UserController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'خطأ',
-        'فشل في حظر المستخدم',
+        'فشل في حظر المستخدم: ${e.toString().replaceFirst('Exception: ', '')}',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
 
-  /// Activate user
+  /// Activate / unblock user
   Future<void> activateUser(String userId) async {
     try {
-      await _profileRepo.updateProfile(userId, {'status': 'active'});
+      await UserManagementService.unblockUser(userId);
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
-        users[idx] = users[idx].copyWith(status: 'active');
+        users[idx] = users[idx].copyWith(
+          status: 'active',
+          statusReason: '',
+          statusChangedAt: DateTime.now(),
+        );
         _applyFilters();
       }
 
-      // Send User Notification
-      Get.find<NotificationController>().sendNotification(
-        '✅ تنبيه الحساب',
-        'تم تفعيل حسابك مرة أخرى! يمكنك الآن الدخول واستخدام التطبيق.',
-        'specific',
-        specificUserId: userId,
+      await AppLoggerService.logActivity(
+        action: 'admin_unblock_user',
+        entityType: 'user',
+        entityId: userId,
       );
 
       Get.snackbar(
@@ -296,7 +418,7 @@ class UserController extends GetxController {
   Future<void> toggleBlockUser(String userId) async {
     try {
       final user = users.firstWhere((u) => u.id == userId);
-      if (user.status == 'blocked') {
+      if (user.status.toLowerCase() == 'blocked') {
         await activateUser(userId);
       } else {
         await blockUser(userId);
@@ -313,19 +435,14 @@ class UserController extends GetxController {
   /// Verify KYC / documents
   Future<void> verifyKyc(String userId) async {
     try {
-      await _profileRepo.updateProfile(userId, {'kyc_status': 'Verified'});
-
-      // Send User Notification
-      Get.find<NotificationController>().sendNotification(
-        '✅ توثيق الحساب',
-        'تم توثيق حسابك بنجاح! يمكنك الآن الاستمتاع بكافة مميزات التطبيق.',
-        'specific',
-        specificUserId: userId,
+      await SupabaseService.client.rpc(
+        'fn_admin_set_kyc_status',
+        params: {'p_user_id': userId, 'p_status': 'verified'},
       );
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
-        users[idx] = users[idx].copyWith(kycStatus: 'Verified');
+        users[idx] = users[idx].copyWith(kycStatus: 'verified');
         _applyFilters();
       }
 
@@ -343,21 +460,20 @@ class UserController extends GetxController {
   Future<void> verifyDocuments(String userId) => verifyKyc(userId);
 
   /// Reject KYC
-  Future<void> rejectKyc(String userId) async {
+  Future<void> rejectKyc(String userId, [String reason = '']) async {
     try {
-      await _profileRepo.updateProfile(userId, {'kyc_status': 'Rejected'});
-
-      // Send User Notification
-      Get.find<NotificationController>().sendNotification(
-        '❌ تنبيه التوثيق',
-        'نعتذر، تم رفض طلب التوثيق الخاص بك. يرجى مراجعة البيانات والمحاولة مرة أخرى.',
-        'specific',
-        specificUserId: userId,
+      await SupabaseService.client.rpc(
+        'fn_admin_set_kyc_status',
+        params: {
+          'p_user_id': userId,
+          'p_status': 'rejected',
+          'p_reason': reason.isNotEmpty ? reason : null,
+        },
       );
 
       final idx = users.indexWhere((u) => u.id == userId);
       if (idx != -1) {
-        users[idx] = users[idx].copyWith(kycStatus: 'Rejected');
+        users[idx] = users[idx].copyWith(kycStatus: 'rejected');
         _applyFilters();
       }
     } catch (e) {
@@ -371,7 +487,7 @@ class UserController extends GetxController {
 
   /// Reject documents (alias for rejectKyc used by UI)
   Future<void> rejectDocuments(String userId, [String reason = '']) =>
-      rejectKyc(userId);
+      rejectKyc(userId, reason);
 
   /// Add balance to user wallet — MUST use RPC only (atomic)
   Future<void> addBalance(
@@ -380,10 +496,7 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await _profileRepo.callRpc('fn_admin_add_balance', {
-        'p_user_id': userId,
-        'p_amount': amount,
-      });
+      await AdminProxyService.addBalance(userId, amount);
 
       // Send User Notification
       Get.find<NotificationController>().sendNotification(
@@ -401,14 +514,13 @@ class UserController extends GetxController {
       );
     } catch (e) {
       String msg = 'فشل في إضافة الرصيد';
-      if (e is PostgrestException) {
-        if (e.message.contains('Insufficient balance')) {
-          msg = 'الرصيد غير كافٍ لإتمام هذه المعاملة';
-        } else if (e.code == '23514') {
-          msg = 'خطأ في قيود البيانات — يرجى مراجعة حالة المعاملة';
-        } else {
-          msg = e.message;
-        }
+      final err = e.toString();
+      if (err.contains('Insufficient balance')) {
+        msg = 'الرصيد غير كافٍ في المحفظة';
+      } else if (err.contains('23514')) {
+        msg = 'خطأ في قيود البيانات — يرجى مراجعة حالة المعاملة';
+      } else if (err.isNotEmpty && err != 'Exception') {
+        msg = err.replaceFirst('Exception: ', '');
       }
       Get.snackbar('خطأ', msg, snackPosition: SnackPosition.BOTTOM);
     }
@@ -421,10 +533,7 @@ class UserController extends GetxController {
     String reason = '',
   ]) async {
     try {
-      await _profileRepo.callRpc('fn_admin_deduct_balance', {
-        'p_user_id': userId,
-        'p_amount': amount,
-      });
+      await AdminProxyService.deductBalance(userId, amount);
 
       // Send User Notification
       Get.find<NotificationController>().sendNotification(
@@ -442,22 +551,21 @@ class UserController extends GetxController {
       );
     } catch (e) {
       String msg = 'فشل في خصم الرصيد';
-      if (e is PostgrestException) {
-        if (e.message.contains('Insufficient balance')) {
-          msg = 'الرصيد غير كافٍ في المحفظة';
-        } else if (e.code == '23514') {
-          msg = 'خطأ في قيود البيانات — يرجى مراجعة البيانات';
-        } else {
-          msg = e.message;
-        }
+      final err = e.toString();
+      if (err.contains('Insufficient balance')) {
+        msg = 'الرصيد غير كافٍ في المحفظة';
+      } else if (err.contains('23514')) {
+        msg = 'خطأ في قيود البيانات — يرجى مراجعة البيانات';
+      } else if (err.isNotEmpty && err != 'Exception') {
+        msg = err.replaceFirst('Exception: ', '');
       }
       Get.snackbar('خطأ', msg, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  /// Add user from named parameters (matches UI call site)
-  /// Uses adminClient (service role key) to create users without affecting
-  /// the current admin session. Falls back to signUp if no service role key.
+  /// Add user from named parameters (matches UI call site).
+  /// Uses the admin-proxy Edge Function for user creation, which
+  /// keeps the service role key server-side only.
   Future<void> addUser({
     required String name,
     required String country,
@@ -476,60 +584,24 @@ class UserController extends GetxController {
 
       final tempPassword = 'Kasby@${DateTime.now().millisecondsSinceEpoch}';
 
-      String? userId;
-
-      if (SupabaseService.hasAdminClient) {
-        // ═══ Preferred: Use admin client (service role key) ═══
-        // This does NOT affect the current admin session
-        final response = await SupabaseService.adminClient.auth.admin
-            .createUser(
-              AdminUserAttributes(
-                email: userEmail,
-                password: tempPassword,
-                emailConfirm: true,
-                userMetadata: {
-                  'full_name': name,
-                  'phone': phone,
-                  'country_code': country,
-                },
-              ),
-            );
-        userId = response.user?.id;
-      } else {
-        // ═══ Fallback: Use signUp (requires session restore) ═══
-        debugPrint(
-          '[UserController] ⚠ No service role key — using signUp fallback',
-        );
-        final adminRefreshToken =
-            SupabaseService.auth.currentSession?.refreshToken;
-
-        final response = await SupabaseService.auth.signUp(
-          email: userEmail,
-          password: tempPassword,
-          data: {'full_name': name, 'phone': phone, 'country_code': country},
-        );
-        userId = response.user?.id;
-
-        // Restore admin session
-        if (adminRefreshToken != null) {
-          await SupabaseService.auth.setSession(adminRefreshToken);
-        }
-      }
+      // Create user via admin-proxy Edge Function (service role stays server-side)
+      final userId = await AdminProxyService.createUser(
+        email: userEmail,
+        password: tempPassword,
+        userMetadata: {
+          'full_name': name,
+          'phone': phone,
+          'country_code': country,
+          'city': city,
+          if (whatsapp.isNotEmpty) 'whatsapp': whatsapp,
+          if (telegram.isNotEmpty) 'telegram': telegram,
+          if (avatarUrl.isNotEmpty) 'avatar_url': avatarUrl,
+        },
+      );
 
       if (userId == null) {
         throw Exception('فشل إنشاء حساب المستخدم');
       }
-
-      // Update profile with extra fields not handled by trigger
-      await _profileRepo.updateProfile(userId, {
-        'city': city,
-        'whatsapp': whatsapp.isNotEmpty ? whatsapp : null,
-        'telegram': telegram.isNotEmpty ? telegram : null,
-        'avatar_url': avatarUrl.isNotEmpty ? avatarUrl : null,
-        'status': 'active',
-        'kyc_status': 'unverified',
-        'account_tier': 'free',
-      });
 
       await loadUsers();
       Get.snackbar(
@@ -546,58 +618,54 @@ class UserController extends GetxController {
       } else if (errStr.contains('Database error')) {
         errorMsg =
             'خطأ في قاعدة البيانات — تأكد من عدم تكرار رقم الهاتف أو البريد';
-      } else if (!SupabaseService.hasAdminClient) {
-        errorMsg =
-            'يرجى تشغيل التطبيق مع --dart-define=SUPABASE_SERVICE_ROLE_KEY=...';
       }
       Get.snackbar('خطأ', errorMsg, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  /// Update user profile
-  Future<void> updateUser(User user) async {
+  /// Delete user — removes auth account (profile cascades via purge RPC)
+  Future<bool> deleteUser(String userId) async {
     try {
-      await _profileRepo.updateProfile(user.id, user.toSupabase());
+      await AdminProxyService.deleteUser(userId);
 
-      final idx = users.indexWhere((u) => u.id == user.id);
-      if (idx != -1) {
-        users[idx] = user;
-        _applyFilters();
-      }
-
-      Get.snackbar(
-        'تم',
-        'تم تحديث بيانات المستخدم',
-        snackPosition: SnackPosition.BOTTOM,
+      await AppLoggerService.logActivity(
+        action: 'admin_delete_user',
+        entityType: 'user',
+        entityId: userId,
       );
-    } catch (e) {
-      Get.snackbar(
-        'خطأ',
-        'فشل في تحديث البيانات',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
-  }
-
-  /// Delete user
-  Future<void> deleteUser(String userId) async {
-    try {
-      await _profileRepo.deleteProfile(userId);
 
       users.removeWhere((u) => u.id == userId);
       _applyFilters();
 
       Get.snackbar(
         'تم',
-        'تم حذف المستخدم',
+        'تم حذف المستخدم بالكامل',
         snackPosition: SnackPosition.BOTTOM,
       );
+      return true;
     } catch (e) {
+      String msg = 'فشل في حذف المستخدم';
+      final err = e.toString();
+      if (err.contains('append-only') || err.contains('Transactions are append-only')) {
+        msg = 'لا يمكن الحذف — المستخدم لديه معاملات مالية. طبّق migration 20260613000003 على Supabase.';
+      } else if (err.contains('Audit logs are immutable') ||
+          err.contains('audit_logs')) {
+        msg = 'لا يمكن الحذف — سجل التدقيق يمنع العملية. طبّق migration 20260616000002 على Supabase.';
+      } else if (err.contains('notifications_target_user_id') ||
+          err.contains('target_user_id')) {
+        msg = 'لا يمكن الحذف — المستخدم مرتبط بإشعارات. طبّق migration 20260613000003 على Supabase.';
+      } else if (err.contains('violates foreign key') ||
+          err.contains('chat_conversations')) {
+        msg = 'لا يمكن الحذف — المستخدم مرتبط بسجلات أخرى. طبّق آخر migration على Supabase.';
+      } else if (err.contains('null value in column')) {
+        msg = 'خطأ في قاعدة البيانات — يرجى تطبيق migration حذف المستخدم على Supabase';
+      }
       Get.snackbar(
         'خطأ',
-        'فشل في حذف المستخدم',
+        msg,
         snackPosition: SnackPosition.BOTTOM,
       );
+      return false;
     }
   }
 
@@ -612,17 +680,20 @@ class UserController extends GetxController {
 
   /// Load extra details for a specific user (Investments, Transactions, Activities)
   Future<void> loadUserExtraDetails(String userId) async {
-    debugPrint('[UserController][loadUserExtraDetails] Fetching details for user: $userId');
+    AppLoggerService.debugTrace(
+      className: 'UserController',
+      method: 'loadUserExtraDetails',
+      feature: 'Users',
+      status: 'INFO',
+      params: {'userId': userId},
+    );
     isDetailsLoading.value = true;
 
-    // Clear previous data
     selectedUserInvestments.clear();
     selectedUserTransactions.clear();
     selectedUserActivities.clear();
 
     try {
-      // Run in parallel for speed
-      debugPrint('[UserController][loadUserExtraDetails] Fetching from multiple endpoints');
       final results = await Future.wait([
         _profileRepo.getUserInvestments(userId),
         _profileRepo.getUserTransactions(userId),
@@ -633,16 +704,26 @@ class UserController extends GetxController {
       selectedUserTransactions.value = results[1] as List<Transaction>;
       selectedUserActivities.value = results[2] as List<UserActivity>;
 
-      debugPrint(
-        '[UserController][loadUserExtraDetails] Successfully loaded: '
-        '${selectedUserInvestments.length} investments, '
-        '${selectedUserTransactions.length} transactions, '
-        '${selectedUserActivities.length} activities',
+      AppLoggerService.debugTrace(
+        className: 'UserController',
+        method: 'loadUserExtraDetails',
+        feature: 'Users',
+        status: 'SUCCESS',
+        params: {
+          'investments': selectedUserInvestments.length,
+          'transactions': selectedUserTransactions.length,
+          'activities': selectedUserActivities.length,
+        },
       );
     } catch (e, stackTrace) {
-      debugPrint('[UserController][loadUserExtraDetails] Error: $e');
-      debugPrint('[UserController][loadUserExtraDetails] Stack trace: $stackTrace');
-      debugPrint('[UserController][loadUserExtraDetails] Endpoint: /user_investments, /transactions, /user_activities');
+      AppLoggerService.debugTrace(
+        className: 'UserController',
+        method: 'loadUserExtraDetails',
+        feature: 'Users',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       isDetailsLoading.value = false;
     }

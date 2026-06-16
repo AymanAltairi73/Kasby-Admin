@@ -4,10 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/chat_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kasby_admin/features/chat/widgets/chat_attachment_image.dart';
 import '../models/chat_model.dart';
 import 'package:flutter/services.dart';
 
@@ -26,11 +28,47 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   late ChatController chatController;
   bool _showSearch = false;
 
+  String get _activeConversationId {
+    if (conversation.id.isNotEmpty) {
+      final local = chatController.conversations.firstWhereOrNull(
+        (c) => c.id == conversation.id,
+      );
+      if (local != null && !local.isSocialChat) return conversation.id;
+    }
+    return chatController.conversations
+            .firstWhereOrNull(
+              (c) =>
+                  c.userId == conversation.userId &&
+                  !c.isSocialChat &&
+                  !c.isAgentChat,
+            )
+            ?.id ??
+        conversation.id;
+  }
+
+  void _syncConversationFromController(String conversationId) {
+    final match = chatController.conversations
+        .firstWhereOrNull((c) => c.id == conversationId);
+    if (match != null && match.id != conversation.id) {
+      setState(() => conversation = match);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     conversation = Get.arguments as ChatConversation;
     chatController = Get.find<ChatController>();
+    AppLoggerService.debugTrace(
+      className: 'ChatDetailsScreen',
+      method: 'loadConversation',
+      feature: 'Chat',
+      status: 'INFO',
+      params: {
+        'conversationId': conversation.id.isNotEmpty ? conversation.id : 'new',
+        'userId': _safeUserId(conversation.userId),
+      },
+    );
 
     if (conversation.id.isNotEmpty) {
       chatController.listenToMessages(conversation.id);
@@ -39,6 +77,9 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
       _initializeNewConversation();
     }
   }
+
+  static String _safeUserId(String id) =>
+      id.length > 8 ? '${id.substring(0, 8)}...' : id;
 
   Future<void> _initializeNewConversation() async {
     final newId = await chatController.ensureConversation(conversation.userId);
@@ -67,7 +108,8 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 // Messages Area
                 Expanded(
                   child: Obx(() {
-                    final messages = chatController.getFilteredMessages(conversation.id);
+                    final convId = _activeConversationId;
+                    final messages = chatController.getFilteredMessages(convId);
                     final isTyping =
                         chatController.isTyping[conversation.userId] ?? false;
 
@@ -272,10 +314,13 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Obx(() {
-                        final currentConv = chatController.conversations.firstWhere(
-                          (c) => c.id == conversation.id,
-                          orElse: () => conversation,
-                        );
+                        final convId = _activeConversationId;
+                        final currentConv = convId.isEmpty
+                            ? conversation
+                            : chatController.conversations.firstWhere(
+                                (c) => c.id == convId,
+                                orElse: () => conversation,
+                              );
                         final isTyping = chatController.isTyping[conversation.userId] ?? false;
                         
                         return _buildStatusBadge(
@@ -392,22 +437,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     ),
                   ),
                   child: msg.type == MessageType.image
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: msg.content,
-                            placeholder: (context, url) => Container(
-                              width: 150,
-                              height: 150,
-                              color: Colors.white.withValues(alpha: 0.05),
-                              child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                            errorWidget: (context, url, e) => const Icon(Icons.error_outline),
-                            fit: BoxFit.cover,
-                          ),
-                        )
+                      ? ChatAttachmentImage(content: msg.content)
                       : Text(
                           msg.content,
                           style: const TextStyle(color: Colors.white, fontSize: 14),
@@ -425,16 +455,24 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                     ),
                     if (msg.isMe) ...[
                       const SizedBox(width: 4),
-                      Icon(
-                        Icons.done_all_rounded,
-                        size: 13,
-                        color: msg.readAt != null
-                            ? KasbyColors.primaryGold
-                            : Colors.white.withValues(alpha: 0.3),
-                      ),
+                      _buildDeliveryStatusIcon(msg),
                     ],
                   ],
                 ),
+                if (msg.reactions.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _buildGroupedReactions(msg.reactions),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -451,6 +489,27 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: ['👍', '❤️', '😂', '😮', '😢'].map((emoji) {
+                final hasReacted = msg.reactions.contains(emoji);
+                return GestureDetector(
+                  onTap: () {
+                    Get.back();
+                    chatController.addReaction(conversation.id, msg.id, emoji);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: hasReacted ? KasbyColors.primaryGold.withValues(alpha: 0.2) : Colors.white10,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                );
+              }).toList(),
+            ),
+            Divider(color: Colors.white.withValues(alpha: 0.1), height: 32),
             if (msg.type == MessageType.text)
               ListTile(
                 leading: const Icon(Icons.copy_rounded, color: Colors.white70),
@@ -496,6 +555,51 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
     );
   }
 
+  Widget _buildDeliveryStatusIcon(ChatMessage message) {
+    IconData icon;
+    Color color;
+
+    final Color readColor = KasbyColors.primaryGold;
+    final Color unreadColor = Colors.white.withValues(alpha: 0.3);
+
+    switch (message.status) {
+      case MessageStatus.sending:
+        icon = Icons.access_time_rounded;
+        color = unreadColor;
+        break;
+      case MessageStatus.sent:
+        icon = Icons.check_rounded;
+        color = unreadColor;
+        break;
+      case MessageStatus.delivered:
+        icon = Icons.done_all_rounded;
+        color = unreadColor;
+        break;
+      case MessageStatus.read:
+        icon = Icons.done_all_rounded;
+        color = readColor;
+        break;
+    }
+
+    return Icon(icon, size: 13, color: color);
+  }
+
+  List<Widget> _buildGroupedReactions(List<String> reactions) {
+    final Map<String, int> counts = {};
+    for (var r in reactions) {
+      counts[r] = (counts[r] ?? 0) + 1;
+    }
+    return counts.entries.map((e) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          e.value > 1 ? '${e.key} ${e.value}' : e.key,
+          style: const TextStyle(fontSize: 14),
+        ),
+      );
+    }).toList();
+  }
+
   void _showImageSourceSheet() {
     Get.bottomSheet(
       KasbyGlassCard(
@@ -517,7 +621,14 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   label: 'الكاميرا',
                   onTap: () {
                     Get.back();
-                    chatController.pickAndSendImage(conversation.id, ImageSource.camera);
+                    final convId = _activeConversationId;
+                    chatController.pickAndSendImage(
+                      convId,
+                      ImageSource.camera,
+                      userId: conversation.userId,
+                    ).then((id) {
+                      if (id != null) _syncConversationFromController(id);
+                    });
                   },
                 ),
                 _buildSourceOption(
@@ -525,7 +636,14 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   label: 'المعرض',
                   onTap: () {
                     Get.back();
-                    chatController.pickAndSendImage(conversation.id, ImageSource.gallery);
+                    final convId = _activeConversationId;
+                    chatController.pickAndSendImage(
+                      convId,
+                      ImageSource.gallery,
+                      userId: conversation.userId,
+                    ).then((id) {
+                      if (id != null) _syncConversationFromController(id);
+                    });
                   },
                 ),
               ],
@@ -600,7 +718,10 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                   ),
                   onChanged: (value) {
                     if (value.isNotEmpty) {
-                      chatController.sendTypingEvent(conversation.id);
+                      final convId = _activeConversationId;
+                      if (convId.isNotEmpty) {
+                        chatController.sendTypingEvent(convId);
+                      }
                     }
                   },
                   onSubmitted: (_) => _handleSend(),
@@ -630,14 +751,24 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
     );
   }
 
-  void _handleSend() {
-    if (_messageController.text.isNotEmpty) {
-      chatController.sendMessage(
-        conversation.id,
-        _messageController.text,
-        userId: conversation.userId,
-      );
-      _messageController.clear();
+  Future<void> _handleSend() async {
+    if (_messageController.text.isEmpty) return;
+
+    final text = _messageController.text;
+    _messageController.clear();
+
+    final resolvedId = await chatController.sendMessage(
+      _activeConversationId,
+      text,
+      userId: conversation.userId,
+    );
+
+    if (resolvedId != null) {
+      _syncConversationFromController(resolvedId);
+      if (conversation.id.isEmpty) {
+        chatController.listenToMessages(resolvedId);
+        chatController.markAsRead(resolvedId);
+      }
     }
   }
 

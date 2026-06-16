@@ -258,12 +258,9 @@ class AgentsScreen extends StatelessWidget {
                   final filteredAgents = controller.filteredAgents;
 
                   if (filteredAgents.isEmpty) {
-                    return RefreshIndicator(
-                      onRefresh: () => controller.loadAgents(),
-                      color: KasbyColors.primaryGold,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
                           const SizedBox(height: 100),
                           Center(
                             child: Column(
@@ -287,24 +284,19 @@ class AgentsScreen extends StatelessWidget {
                             ),
                           ),
                         ],
-                      ),
                     );
                   }
 
-                  return RefreshIndicator(
-                    onRefresh: () => controller.loadAgents(),
-                    color: KasbyColors.primaryGold,
-                    child: ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                      itemCount: filteredAgents.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final agent = filteredAgents[index];
-                        return _buildAgentCard(agent, controller, index);
-                      },
-                    ),
+                  return ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    itemCount: filteredAgents.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final agent = filteredAgents[index];
+                      return _buildAgentCard(agent, controller, index);
+                    },
                   );
                 }),
               ),
@@ -554,17 +546,17 @@ class AgentsScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               Icon(
-                                agent.status == 'Active'
+                                agent.isActive
                                     ? Icons.pause_circle_outline_rounded
                                     : Icons.play_circle_outline_rounded,
                                 size: 22,
-                                color: agent.status == 'Active'
+                                color: agent.isActive
                                     ? KasbyColors.warning
                                     : KasbyColors.success,
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                agent.status == 'Active' ? 'تعطيل' : 'تفعيل',
+                                agent.isActive ? 'تعطيل' : 'تفعيل',
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],

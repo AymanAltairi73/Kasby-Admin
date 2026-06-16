@@ -1,4 +1,6 @@
 /// Reward Model
+import '../../../core/services/app_logger_service.dart';
+
 class Reward {
   final String id;
   final String title;
@@ -30,13 +32,28 @@ class Reward {
     );
   }
 
-  factory Reward.fromJson(Map<String, dynamic> json) => Reward(
-    id: json['id'],
-    title: json['title'],
-    description: json['description'],
-    points: json['points'],
-    icon: json['icon'],
-  );
+  factory Reward.fromJson(Map<String, dynamic> json) {
+    try {
+      return Reward(
+        id: json['id'],
+        title: json['title'],
+        description: json['description'],
+        points: json['points'],
+        icon: json['icon'],
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'Reward',
+        method: 'fromJson',
+        feature: 'Gamification',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -79,13 +96,28 @@ class Prize {
     );
   }
 
-  factory Prize.fromJson(Map<String, dynamic> json) => Prize(
-    id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-    label: json['label'],
-    value: json['value'],
-    type: json['type'],
-    probability: (json['probability'] ?? 0.0).toDouble(),
-  );
+  factory Prize.fromJson(Map<String, dynamic> json) {
+    try {
+      return Prize(
+        id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        label: json['label'],
+        value: json['value'],
+        type: json['type'],
+        probability: (json['probability'] ?? 0.0).toDouble(),
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'Prize',
+        method: 'fromJson',
+        feature: 'Gamification',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -128,15 +160,30 @@ class PointRule {
     );
   }
 
-  factory PointRule.fromJson(Map<String, dynamic> json) => PointRule(
-    id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-    action: json['action'],
-    points: json['points'] is int
-        ? json['points']
-        : int.tryParse(json['points']?.toString() ?? '0') ?? 0,
-    type: json['type'] ?? 'Earn',
-    isDefault: json['isDefault'] ?? true,
-  );
+  factory PointRule.fromJson(Map<String, dynamic> json) {
+    try {
+      return PointRule(
+        id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        action: json['action'],
+        points: json['points'] is int
+            ? json['points']
+            : int.tryParse(json['points']?.toString() ?? '0') ?? 0,
+        type: json['type'] ?? 'Earn',
+        isDefault: json['isDefault'] ?? true,
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'PointRule',
+        method: 'fromJson',
+        feature: 'Gamification',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
     'id': id,

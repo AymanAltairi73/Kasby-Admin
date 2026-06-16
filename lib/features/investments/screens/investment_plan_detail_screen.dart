@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -9,10 +10,43 @@ import '../models/investment_model.dart';
 import '../controllers/investment_controller.dart';
 import 'edit_investment_plan_screen.dart';
 
-class InvestmentPlanDetailScreen extends StatelessWidget {
+class InvestmentPlanDetailScreen extends StatefulWidget {
   final InvestmentPlan plan;
 
   const InvestmentPlanDetailScreen({super.key, required this.plan});
+
+  @override
+  State<InvestmentPlanDetailScreen> createState() =>
+      _InvestmentPlanDetailScreenState();
+}
+
+class _InvestmentPlanDetailScreenState extends State<InvestmentPlanDetailScreen> {
+  InvestmentPlan get plan => widget.plan;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'InvestmentPlanDetailScreen',
+      method: 'initState',
+      feature: 'Investments',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'planId': widget.plan.id},
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'InvestmentPlanDetailScreen',
+      method: 'dispose',
+      feature: 'Investments',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

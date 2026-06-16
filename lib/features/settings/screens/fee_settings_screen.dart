@@ -1,15 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/admin_metric_chip.dart';
 import '../controllers/settings_management_controller.dart';
 import '../models/settings_models.dart';
 
-class FeeSettingsScreen extends StatelessWidget {
+class FeeSettingsScreen extends StatefulWidget {
   const FeeSettingsScreen({super.key});
+
+  @override
+  State<FeeSettingsScreen> createState() => _FeeSettingsScreenState();
+}
+
+class _FeeSettingsScreenState extends State<FeeSettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'FeeSettingsScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'FeeSettingsScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +67,31 @@ class FeeSettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      AdminMetricChip(
+                        label: 'رسوم نشطة',
+                        value: '${controller.fees.length}',
+                        color: KasbyColors.primaryGold,
+                        icon: FontAwesomeIcons.percent,
+                      ),
+                      const SizedBox(width: 10),
+                      AdminMetricChip(
+                        label: 'إيداع / سحب / استثمار',
+                        value:
+                            '${_feesByCategory(controller, 'deposit').length}/${_feesByCategory(controller, 'withdraw').length}/${_feesByCategory(controller, 'investment').length}',
+                        color: KasbyColors.info,
+                        icon: FontAwesomeIcons.layerGroup,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   _buildFeeSection(
                     context,
                     controller,
                     title: 'رسوم الإيداع',
                     icon: FontAwesomeIcons.arrowDown,
-                    fees: controller.fees
-                        .where((e) => e.category == 'Deposit')
-                        .toList(),
+                    fees: _feesByCategory(controller, 'deposit'),
                   ),
                   const SizedBox(height: 24),
                   _buildFeeSection(
@@ -51,9 +99,7 @@ class FeeSettingsScreen extends StatelessWidget {
                     controller,
                     title: 'رسوم السحب',
                     icon: FontAwesomeIcons.arrowUp,
-                    fees: controller.fees
-                        .where((e) => e.category == 'Withdraw')
-                        .toList(),
+                    fees: _feesByCategory(controller, 'withdraw'),
                   ),
                   const SizedBox(height: 24),
                   _buildFeeSection(
@@ -61,9 +107,7 @@ class FeeSettingsScreen extends StatelessWidget {
                     controller,
                     title: 'رسوم الاستثمار',
                     icon: FontAwesomeIcons.chartPie,
-                    fees: controller.fees
-                        .where((e) => e.category == 'Investment')
-                        .toList(),
+                    fees: _feesByCategory(controller, 'investment'),
                   ),
                   const SizedBox(height: 40),
                   KasbyButton(
@@ -81,6 +125,15 @@ class FeeSettingsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<FeeItem> _feesByCategory(
+    SettingsManagementController controller,
+    String category,
+  ) {
+    return controller.fees
+        .where((e) => e.category.toLowerCase() == category)
+        .toList();
   }
 
   Widget _buildFeeSection(
@@ -108,11 +161,22 @@ class FeeSettingsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Column(
-          children: fees
-              .map((fee) => _buildFeeCard(context, controller, fee))
-              .toList(),
-        ),
+        if (fees.isEmpty)
+          const KasbyGlassCard(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'لا توجد رسوم في هذا القسم',
+                style: TextStyle(color: KasbyColors.textSecondary),
+              ),
+            ),
+          )
+        else
+          Column(
+            children: fees
+                .map((fee) => _buildFeeCard(context, controller, fee))
+                .toList(),
+          ),
       ],
     );
   }

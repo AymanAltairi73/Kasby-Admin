@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:get/get.dart';
 import '../models/loan_model.dart';
 import '../models/loan_repayment_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 /// Loan Controller — manages loans from Supabase `loans` table
@@ -13,15 +14,78 @@ class LoanController extends GetxController {
   final isLoading = false.obs;
   final searchQuery = ''.obs;
 
+  StreamSubscription? _loansSubscription;
+  Timer? _reloadDebounce;
+  Worker? _authWorker;
+
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'LoanController',
+      method: 'onInit',
+      feature: 'Loans',
+      status: 'INFO',
+    );
     super.onInit();
-    loadLoans();
+    try {
+      final auth = Get.find<AuthController>();
+      _authWorker = ever(auth.isLoggedIn, (loggedIn) {
+        if (loggedIn) {
+          loadLoans();
+          _listenToLoans();
+        } else {
+          _stopListening();
+          loans.clear();
+        }
+      });
+      if (auth.isLoggedIn.value) {
+        loadLoans();
+        _listenToLoans();
+      }
+    } catch (_) {
+      loadLoans();
+      _listenToLoans();
+    }
+  }
+
+  void _listenToLoans() {
+    _loansSubscription?.cancel();
+    _loansSubscription = SupabaseService.client
+        .from('loans')
+        .stream(primaryKey: ['id'])
+        .listen((_) {
+          _reloadDebounce?.cancel();
+          _reloadDebounce = Timer(const Duration(milliseconds: 750), loadLoans);
+        }, onError: (_) {});
+  }
+
+  void _stopListening() {
+    _reloadDebounce?.cancel();
+    _loansSubscription?.cancel();
+    _loansSubscription = null;
+  }
+
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'LoanController',
+      method: 'onClose',
+      feature: 'Loans',
+      status: 'INFO',
+    );
+    _stopListening();
+    _authWorker?.dispose();
+    super.onClose();
   }
 
   /// Load loans from Supabase with user names
   Future<void> loadLoans() async {
-    debugPrint('[LoanController][loadLoans] Fetching data from /loans');
+    AppLoggerService.debugTrace(
+      className: 'LoanController',
+      method: 'loadLoans',
+      feature: 'Loans',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -36,17 +100,26 @@ class LoanController extends GetxController {
           ''')
           .order('created_at', ascending: false);
 
-      debugPrint('[LoanController][loadLoans] Response: ${response.length} loans');
-      
       loans.assignAll(
         (response as List?)?.map((e) => Loan.fromSupabase(e)).toList() ?? [],
       );
-      
-      debugPrint('[LoanController][loadLoans] Successfully loaded ${loans.length} loans');
+
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'loadLoans',
+        feature: 'Loans',
+        status: 'SUCCESS',
+        params: {'count': loans.length},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[LoanController][loadLoans] Error: $e');
-      debugPrint('[LoanController][loadLoans] Stack trace: $stackTrace');
-      debugPrint('[LoanController][loadLoans] Endpoint: /loans');
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'loadLoans',
+        feature: 'Loans',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       AppLoggerService.logError(
         controller: 'LoanController',
         method: 'loadLoans',
@@ -93,7 +166,13 @@ class LoanController extends GetxController {
 
   /// Fetch repayment history for a specific loan
   Future<List<LoanRepayment>> fetchRepayments(String loanId) async {
-    debugPrint('[LoanController][fetchRepayments] Fetching repayments for loan: $loanId');
+    AppLoggerService.debugTrace(
+      className: 'LoanController',
+      method: 'fetchRepayments',
+      feature: 'Loans',
+      status: 'INFO',
+      params: {'loanId': loanId},
+    );
     try {
       final response = await SupabaseService.client
           .from('loan_repayments')
@@ -110,13 +189,24 @@ class LoanController extends GetxController {
       final repayments = (response as List?)
           ?.map((e) => LoanRepayment.fromSupabase(e))
           .toList() ?? [];
-          
-      debugPrint('[LoanController][fetchRepayments] Successfully loaded ${repayments.length} repayments');
+
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'fetchRepayments',
+        feature: 'Loans',
+        status: 'SUCCESS',
+        params: {'count': repayments.length},
+      );
       return repayments;
     } catch (e, stackTrace) {
-      debugPrint('[LoanController][fetchRepayments] Error: $e');
-      debugPrint('[LoanController][fetchRepayments] Stack trace: $stackTrace');
-      debugPrint('[LoanController][fetchRepayments] Endpoint: /loan_repayments');
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'fetchRepayments',
+        feature: 'Loans',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       AppLoggerService.logError(
         controller: 'LoanController',
         method: 'fetchRepayments',
@@ -128,7 +218,7 @@ class LoanController extends GetxController {
     }
   }
 
-  /// Record a manual repayment (Admin Action)
+  /// Record a manual repayment (Admin Action) — single RPC entry point
   Future<void> recordRepayment({
     required String loanId,
     required double amount,
@@ -140,28 +230,26 @@ class LoanController extends GetxController {
     try {
       isLoading.value = true;
       final adminId = SupabaseService.auth.currentUser?.id;
+      final idempotencyKey =
+          'admin_repay_${loanId}_${DateTime.now().millisecondsSinceEpoch}';
 
-      // 1. Record the repayment in DB
-      await SupabaseService.client.from('loan_repayments').insert({
-        'loan_id': loanId,
-        'amount': amount,
-        'payment_method': paymentMethod,
-        'notes': notes,
-        'receipt_id': receiptId,
-        'type': type == RepaymentType.full ? 'full' : 'partial',
-        'recorded_by': adminId,
-      });
-
-      // 2. Trigger RPC to balance the loan and update status
-      // This RPC should update loans.paid_amount, remaining_amount, and potentially final status
-      await SupabaseService.client.rpc(
-        'fn_process_loan_repayment',
+      final result = await SupabaseService.client.rpc(
+        'fn_admin_record_loan_repayment',
         params: {
           'p_loan_id': loanId,
           'p_amount': amount,
-          'p_admin_id': adminId,
+          'p_payment_method': paymentMethod,
+          'p_notes': notes,
+          'p_receipt_id': receiptId,
+          'p_type': type == RepaymentType.full ? 'full' : 'partial',
+          'p_recorded_by': adminId,
+          'p_idempotency_key': idempotencyKey,
         },
       );
+
+      if (result is Map && result['success'] != true) {
+        throw Exception(result['message'] ?? 'فشل تسجيل السداد');
+      }
 
       // 3. Send Notification to user
       final loan = loans.firstWhereOrNull((l) => l.id == loanId);
@@ -193,10 +281,14 @@ class LoanController extends GetxController {
   Future<void> approveLoan(String loanId) async {
     try {
       isLoading.value = true;
-      debugPrint('[LoanController] ▶ Approving loan: $loanId');
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'approveLoan',
+        feature: 'Loans',
+        status: 'INFO',
+        params: {'loanId': loanId},
+      );
 
-      // We will use the existing approve logic but ensure the status updates correctly
-      // In the hardened system, approval sets status to 'approved' or 'active'
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await SupabaseService.client.rpc(
@@ -265,8 +357,12 @@ class LoanController extends GetxController {
   Future<void> rejectLoan(String loanId, String reason) async {
     try {
       isLoading.value = true;
-      debugPrint(
-        '[LoanController] ▶ Rejecting loan: $loanId with reason: $reason',
+      AppLoggerService.debugTrace(
+        className: 'LoanController',
+        method: 'rejectLoan',
+        feature: 'Loans',
+        status: 'INFO',
+        params: {'loanId': loanId},
       );
 
       final adminId = SupabaseService.auth.currentUser?.id;

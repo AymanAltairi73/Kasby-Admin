@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
+import '../../../core/utils/navigation_utils.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../controllers/ad_controller.dart';
@@ -11,8 +13,37 @@ import '../models/ad_model.dart';
 import 'ad_detail_screen.dart';
 import 'add_edit_ad_screen.dart';
 
-class AdsScreen extends StatelessWidget {
+class AdsScreen extends StatefulWidget {
   const AdsScreen({super.key});
+
+  @override
+  State<AdsScreen> createState() => _AdsScreenState();
+}
+
+class _AdsScreenState extends State<AdsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'AdsScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'AdsScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +61,7 @@ class AdsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () => safePop(null, context),
         ),
       ),
       body: Stack(
@@ -310,7 +341,7 @@ class AdsScreen extends StatelessWidget {
       buttonColor: KasbyColors.error,
       onConfirm: () async {
         final success = await controller.deleteAd(ad.id, ad.titleAr, ad.imageUrl);
-        Get.back();
+        safePop();
         if (success) {
           Get.snackbar('تم', 'تم حذف الإعلان بنجاح');
         } else {

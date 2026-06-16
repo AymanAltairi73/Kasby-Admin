@@ -1,17 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/services/base_repository.dart';
 
 class KspAnalyticsRepository extends BaseRepository {
   KspAnalyticsRepository(SupabaseClient client) : super('user_points', client);
 
   Future<Map<String, dynamic>> getKspOverviewMetrics() async {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsRepository',
+      method: 'getKspOverviewMetrics',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     return safeQuery(() async {
       // 1. Fetch user points for total supply, total distributed (sum of total_earned), and top earner
       final pointsRes = await client.from('user_points').select('current_balance, total_earned, total_spent, user_id, profiles(full_name)');
       
       int totalSupply = 0;
       int totalDistributed = 0;
-      int totalSpent = 0;
+      int totalSpent = 0; // reserved for future metrics
       
       int maxEarned = -1;
       String topEarnerName = 'N/A';
@@ -68,10 +75,16 @@ class KspAnalyticsRepository extends BaseRepository {
         'topEarnerName': topEarnerName,
         'topEarnerAmount': maxEarned > 0 ? maxEarned : 0,
       };
-    }, methodName: 'getKspOverviewMetrics');
+    }, methodName: 'getKspOverviewMetrics', controllerName: 'KspAnalyticsRepository');
   }
 
   Future<List<Map<String, dynamic>>> getTopHolders() async {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsRepository',
+      method: 'getTopHolders',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     return safeQuery(() async {
       final res = await client
           .from('user_points')
@@ -88,10 +101,16 @@ class KspAnalyticsRepository extends BaseRepository {
           'totalEarned': row['total_earned'] ?? 0,
         };
       }).toList();
-    }, methodName: 'getTopHolders');
+    }, methodName: 'getTopHolders', controllerName: 'KspAnalyticsRepository');
   }
 
   Future<List<Map<String, dynamic>>> getTopEarners() async {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsRepository',
+      method: 'getTopEarners',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     return safeQuery(() async {
       final res = await client
           .from('user_points')
@@ -108,10 +127,16 @@ class KspAnalyticsRepository extends BaseRepository {
           'totalEarned': row['total_earned'] ?? 0,
         };
       }).toList();
-    }, methodName: 'getTopEarners');
+    }, methodName: 'getTopEarners', controllerName: 'KspAnalyticsRepository');
   }
 
   Future<List<Map<String, dynamic>>> getTopTransfers() async {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsRepository',
+      method: 'getTopTransfers',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     return safeQuery(() async {
       final res = await client
           .from('point_history')
@@ -131,6 +156,6 @@ class KspAnalyticsRepository extends BaseRepository {
           'createdAt': DateTime.parse(row['created_at']),
         };
       }).toList();
-    }, methodName: 'getTopTransfers');
+    }, methodName: 'getTopTransfers', controllerName: 'KspAnalyticsRepository');
   }
 }

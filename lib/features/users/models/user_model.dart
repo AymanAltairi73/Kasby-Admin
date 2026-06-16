@@ -1,9 +1,9 @@
 import 'user_activity_model.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/utils/numeric_utils.dart';
 
 /// User Model — maps to `profiles` + `wallets` tables in Supabase
 /// Updated to align with kasby_new.sql schema (no role column, country_code, referral)
-import 'package:flutter/foundation.dart';
 
 class User {
   final String id;
@@ -27,9 +27,23 @@ class User {
   final String telegram;
   final String avatarUrl;
   final String referralCode;
+  final String? referredBy;
+  final String statusReason;
+  final DateTime? statusChangedAt;
+  final String? statusChangedBy;
+  final DateTime? updatedAt;
+  final String? lastLoginIp;
+  final int storedSpins;
   final List<String> documents;
   final List<UserActivity> activityLog;
   final DateTime? lastLoginAt;
+
+  bool get isActive => status.toLowerCase() == 'active';
+  bool get isBlocked => status.toLowerCase() == 'blocked';
+  bool get isSuspended => status.toLowerCase() == 'suspended';
+  String get statusLabelAr => isActive
+      ? 'نشط'
+      : (isBlocked ? 'محظور' : (isSuspended ? 'معلق' : status));
 
   User({
     required this.id,
@@ -53,6 +67,13 @@ class User {
     this.telegram = '',
     this.avatarUrl = '',
     this.referralCode = '',
+    this.referredBy,
+    this.statusReason = '',
+    this.statusChangedAt,
+    this.statusChangedBy,
+    this.updatedAt,
+    this.lastLoginIp,
+    this.storedSpins = 0,
     this.documents = const [],
     this.activityLog = const [],
     this.lastLoginAt,
@@ -80,6 +101,13 @@ class User {
     String? telegram,
     String? avatarUrl,
     String? referralCode,
+    String? referredBy,
+    String? statusReason,
+    DateTime? statusChangedAt,
+    String? statusChangedBy,
+    DateTime? updatedAt,
+    String? lastLoginIp,
+    int? storedSpins,
     List<String>? documents,
     List<UserActivity>? activityLog,
     DateTime? lastLoginAt,
@@ -106,6 +134,13 @@ class User {
       telegram: telegram ?? this.telegram,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       referralCode: referralCode ?? this.referralCode,
+      referredBy: referredBy ?? this.referredBy,
+      statusReason: statusReason ?? this.statusReason,
+      statusChangedAt: statusChangedAt ?? this.statusChangedAt,
+      statusChangedBy: statusChangedBy ?? this.statusChangedBy,
+      updatedAt: updatedAt ?? this.updatedAt,
+      lastLoginIp: lastLoginIp ?? this.lastLoginIp,
+      storedSpins: storedSpins ?? this.storedSpins,
       documents: documents ?? this.documents,
       activityLog: activityLog ?? this.activityLog,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
@@ -114,6 +149,7 @@ class User {
 
   /// Construct from Supabase `profiles` row (with optional nested `wallets`)
   factory User.fromSupabase(Map<String, dynamic> json) {
+    try {
     // Wallet data may be nested as a list or object
     final wallet = json['wallets'];
     double availBal = 0.0;
@@ -131,7 +167,14 @@ class User {
       investBal = safeToDouble(wallet['invested_balance']);
       pendingBal = safeToDouble(wallet['pending_balance']);
     } else {
-      debugPrint('[UserModel] ⚠️ Wallet data is missing, empty, or incorrectly mapped for user ${json['id']}: $wallet');
+      AppLoggerService.debugTrace(
+        className: 'User',
+        method: 'fromSupabase',
+        feature: 'Users',
+        status: 'WARNING',
+        message: 'Wallet data missing or incorrectly mapped',
+        params: {'userId': _safeId(json['id'])},
+      );
     }
 
     return User(
@@ -158,14 +201,45 @@ class User {
       telegram: json['telegram'] ?? '',
       avatarUrl: json['avatar_url'] ?? '',
       referralCode: json['referral_code'] ?? '',
-      lastLoginAt: json['admin_profiles'] != null && json['admin_profiles']['last_login_at'] != null
-          ? DateTime.parse(json['admin_profiles']['last_login_at'])
+      referredBy: json['referred_by']?.toString() ?? json['referred_by_id']?.toString(),
+      statusReason: json['status_reason'] ?? '',
+      statusChangedAt: json['status_changed_at'] != null
+          ? DateTime.parse(json['status_changed_at'])
           : null,
+      statusChangedBy: json['status_changed_by']?.toString(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
+      lastLoginIp: json['last_login_ip']?.toString(),
+      storedSpins: (json['stored_spins'] as num?)?.toInt() ?? 0,
+      lastLoginAt: json['last_login_at'] != null
+          ? DateTime.parse(json['last_login_at'])
+          : (json['admin_profiles'] != null && json['admin_profiles']['last_login_at'] != null
+              ? DateTime.parse(json['admin_profiles']['last_login_at'])
+              : null),
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'User',
+        method: 'fromSupabase',
+        feature: 'Users',
+        status: 'FAILED',
+        params: {'userId': _safeId(json['id'])},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
+  }
+
+  static String _safeId(dynamic id) {
+    final text = id?.toString() ?? '';
+    return text.length > 8 ? '${text.substring(0, 8)}...' : text;
   }
 
   /// Legacy fromJson for backward compat with SharedPreferences cache
   factory User.fromJson(Map<String, dynamic> json) {
+    try {
     return User(
       id: json['id'] ?? '',
       name: json['name'] ?? json['full_name'] ?? '',
@@ -206,6 +280,18 @@ class User {
           ? DateTime.parse(json['lastLoginAt'])
           : null,
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'User',
+        method: 'fromJson',
+        feature: 'Users',
+        status: 'FAILED',
+        params: {'userId': _safeId(json['id'])},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

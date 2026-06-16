@@ -9,6 +9,7 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_button.dart';
+import '../../../core/utils/navigation_utils.dart';
 import '../controllers/investment_controller.dart';
 import '../models/investment_model.dart';
 import 'edit_investment_plan_screen.dart';
@@ -62,7 +63,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                 );
               }
 
-              if (controller.plans.isEmpty) {
+              if (controller.activePlans.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -134,11 +135,11 @@ class InvestmentPlansScreen extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                        itemCount: controller.plans.length,
+                        itemCount: controller.activePlans.length,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final plan = controller.plans[index];
+                          final plan = controller.activePlans[index];
                           // Determine tier color based on profit
                           Color tierColor = KasbyColors.glowGold;
                           if (plan.profitPercentage >= 15) {
@@ -649,7 +650,7 @@ class InvestmentPlansScreen extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Get.back(),
+                onPressed: () => safePop(),
                 child: const Text(
                   'إلغاء',
                   style: TextStyle(color: KasbyColors.textSecondary),
@@ -701,7 +702,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                               imagePath: imageUrl,
                             );
                             
-                            Get.back(); // Close creation dialog
+                            safePop(); // Close creation dialog
                             
                             // Show success dialog
                             Get.dialog(
@@ -721,7 +722,7 @@ class InvestmentPlansScreen extends StatelessWidget {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Get.back(),
+                                    onPressed: () => safePop(),
                                     child: const Text('حسناً', style: TextStyle(color: KasbyColors.primaryGold)),
                                   ),
                                 ],
@@ -749,23 +750,28 @@ class InvestmentPlansScreen extends StatelessWidget {
     InvestmentController controller,
     InvestmentPlan plan,
   ) {
-    Get.dialog(
-      AlertDialog(
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: KasbyColors.surface,
         title: const Text(
           'حذف الخطة',
           style: TextStyle(color: KasbyColors.error),
         ),
         content: Text(
-          'هل أنت متأكد من حذف "${plan.nameAr}"؟ سيتم إزالتها من عرض المستخدمين الجدد.',
+          'هل أنت متأكد من حذف "${plan.nameAr}"؟\n'
+          'إذا كانت مرتبطة باستثمارات سيتم إيقافها فقط.',
           style: const TextStyle(color: KasbyColors.textBody),
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           TextButton(
-            onPressed: () {
-              controller.deletePlan(plan.id);
-              Get.back();
+            onPressed: () => safePop(null, dialogContext),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () async {
+              safePop(null, dialogContext);
+              await controller.deletePlan(plan.id);
             },
             child: const Text(
               'حذف',

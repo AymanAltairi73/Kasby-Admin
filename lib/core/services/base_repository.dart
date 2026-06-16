@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'app_logger_service.dart';
 
@@ -14,15 +15,56 @@ abstract class BaseRepository {
     required String methodName,
     String? controllerName,
   }) async {
+    final stopwatch = Stopwatch()..start();
+    AppLoggerService.debugTrace(
+      className: controllerName ?? tableName,
+      method: methodName,
+      feature: tableName,
+      status: 'INFO',
+      message: 'Supabase query started',
+      params: {'table': tableName},
+    );
     try {
-      return await query();
+      final result = await query();
+      stopwatch.stop();
+      final rowCount = _estimateRowCount(result);
+      AppLoggerService.debugTrace(
+        className: controllerName ?? tableName,
+        method: methodName,
+        feature: tableName,
+        status: 'SUCCESS',
+        durationMs: stopwatch.elapsedMilliseconds,
+        params: {
+          'table': tableName,
+          if (rowCount != null) 'rows': rowCount,
+        },
+      );
+      if (stopwatch.elapsedMilliseconds > 2000) {
+        AppLoggerService.debugTrace(
+          className: controllerName ?? tableName,
+          method: methodName,
+          feature: 'Performance',
+          status: 'WARNING',
+          message: 'Slow database query detected',
+          durationMs: stopwatch.elapsedMilliseconds,
+          params: {'table': tableName},
+        );
+      }
+      return result;
     } on PostgrestException catch (e, stackTrace) {
+      stopwatch.stop();
       _logException(e, stackTrace, methodName, controllerName);
       rethrow;
     } catch (e, stackTrace) {
+      stopwatch.stop();
       _logGeneralError(e, stackTrace, methodName, controllerName);
       rethrow;
     }
+  }
+
+  static int? _estimateRowCount(dynamic result) {
+    if (result is List) return result.length;
+    return null;
   }
 
   /// Generic paginated fetcher.

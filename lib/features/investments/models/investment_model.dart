@@ -1,3 +1,4 @@
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/utils/numeric_utils.dart';
 
 /// Investment Plan Model — maps to `investment_plans` table in Supabase
@@ -93,6 +94,7 @@ class InvestmentPlan {
 
   /// Legacy fromJson
   factory InvestmentPlan.fromJson(Map<String, dynamic> json) {
+    try {
     return InvestmentPlan(
       id: json['id'] ?? '',
       nameAr: json['nameAr'] ?? json['name_ar'] ?? '',
@@ -117,6 +119,18 @@ class InvestmentPlan {
           ? _capitalize(json['riskLevel'] ?? json['risk_level'])
           : null,
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'InvestmentPlan',
+        method: 'fromJson',
+        feature: 'Investments',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -240,6 +254,7 @@ class UserInvestment {
 
   /// Legacy fromJson
   factory UserInvestment.fromJson(Map<String, dynamic> json) {
+    try {
     return UserInvestment(
       id: json['id'] ?? '',
       userId: json['userId'] ?? json['user_id'] ?? '',
@@ -264,6 +279,18 @@ class UserInvestment {
                 : DateTime.now()),
       status: json['status'] ?? 'active',
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'UserInvestment',
+        method: 'fromJson',
+        feature: 'Investments',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

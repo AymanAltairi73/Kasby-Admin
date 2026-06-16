@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/utils/numeric_utils.dart';
 
 enum LoanStatus {
@@ -185,6 +186,7 @@ class Loan {
 
   /// Legacy fromJson
   factory Loan.fromJson(Map<String, dynamic> json) {
+    try {
     return Loan(
       id: json['id'] ?? '',
       userId: json['userId'] ?? json['user_id'] ?? '',
@@ -207,6 +209,18 @@ class Loan {
       status: _parseStatus(json['status']),
       rejectionReason: json['rejectionReason'] ?? json['rejection_reason'],
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'Loan',
+        method: 'fromJson',
+        feature: 'Loans',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

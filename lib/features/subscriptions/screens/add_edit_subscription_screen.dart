@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
@@ -35,6 +36,14 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
   void initState() {
     super.initState();
     isEdit = widget.plan != null;
+    AppLoggerService.debugTrace(
+      className: 'AddEditSubscriptionScreen',
+      method: 'initState',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'mode': isEdit ? 'edit' : 'create'},
+    );
 
     nameArController = TextEditingController(text: widget.plan?.displayNameAr ?? '');
     nameEnController = TextEditingController(text: widget.plan?.displayNameEn ?? '');
@@ -53,6 +62,13 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
 
   @override
   void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'AddEditSubscriptionScreen',
+      method: 'dispose',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
     nameArController.dispose();
     nameEnController.dispose();
     priceController.dispose();
@@ -63,7 +79,7 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     final controller = Get.find<SubscriptionController>();
@@ -83,12 +99,11 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
       keywords: [],
     );
 
-    if (isEdit) {
-      controller.updatePlan(widget.plan!.id, newPlan.toJson());
-    } else {
-      controller.createPlan(newPlan);
-    }
-    Get.back();
+    final ok = isEdit
+        ? await controller.updatePlan(widget.plan!.id, newPlan.toJson())
+        : await controller.createPlan(newPlan);
+
+    if (ok && mounted) Get.back();
   }
 
   @override

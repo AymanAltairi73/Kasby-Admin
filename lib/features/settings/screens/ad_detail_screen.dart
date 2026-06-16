@@ -3,15 +3,48 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../models/ad_model.dart';
 import '../controllers/ad_controller.dart';
 import 'add_edit_ad_screen.dart';
 
-class AdDetailScreen extends StatelessWidget {
+class AdDetailScreen extends StatefulWidget {
   final Ad ad;
 
   const AdDetailScreen({super.key, required this.ad});
+
+  @override
+  State<AdDetailScreen> createState() => _AdDetailScreenState();
+}
+
+class _AdDetailScreenState extends State<AdDetailScreen> {
+  Ad get ad => widget.ad;
+
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'AdDetailScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'adId': widget.ad.id},
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'AdDetailScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

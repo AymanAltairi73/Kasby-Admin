@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/services/supabase_service.dart';
@@ -25,24 +26,31 @@ class _NotificationsListScreenState extends State<NotificationsListScreen> {
   }
 
   Future<void> _loadNotifications() async {
-    setState(() => _isLoading = true);
-    try {
-      final response = await SupabaseService.client
-          .from('notifications')
-          .select('id, title, message, status, sent_at, target')
-          .order('sent_at', ascending: false)
-          .limit(100);
+    await AppLoggerService.traceAsync(
+      className: 'NotificationsListScreen',
+      method: '_loadNotifications',
+      feature: 'Notifications',
+      operation: () async {
+        setState(() => _isLoading = true);
+        try {
+          final response = await SupabaseService.client
+              .from('notifications')
+              .select('id, title, message, status, sent_at, target')
+              .order('sent_at', ascending: false)
+              .limit(100);
 
-      setState(() {
-        _notifications
-          ..clear()
-          ..addAll((response as List).cast<Map<String, dynamic>>());
-      });
-    } catch (e) {
-      debugPrint('[NotificationsListScreen] ✗ Error: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
+          setState(() {
+            _notifications
+              ..clear()
+              ..addAll((response as List).cast<Map<String, dynamic>>());
+          });
+          return _notifications.length;
+        } finally {
+          if (mounted) setState(() => _isLoading = false);
+        }
+      },
+      onSuccessParams: (count) => {'count': count},
+    );
   }
 
   @override

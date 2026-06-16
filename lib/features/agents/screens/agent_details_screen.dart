@@ -4,17 +4,65 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/kasby_colors.dart';
+import '../../../core/utils/navigation_utils.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
+import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
 import '../../chat/screens/chat_details_screen.dart';
 import '../../chat/models/chat_model.dart';
 
-class AgentDetailsScreen extends StatelessWidget {
+class AgentDetailsScreen extends StatefulWidget {
   const AgentDetailsScreen({super.key});
 
   @override
+  State<AgentDetailsScreen> createState() => _AgentDetailsScreenState();
+}
+
+class _AgentDetailsScreenState extends State<AgentDetailsScreen> {
+  late Agent _agent;
+  bool _isLoading = true;
+  String _referralCode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _agent = Get.arguments as Agent;
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    final controller = Get.isRegistered<AgentController>()
+        ? Get.find<AgentController>()
+        : Get.put(AgentController());
+
+    final fresh = await controller.fetchAgentDetails(_agent.id);
+    String referral = '';
+    if (fresh != null) {
+      try {
+        final profile = await SupabaseService.client
+            .from('profiles')
+            .select('referral_code')
+            .eq('id', fresh.userId)
+            .maybeSingle();
+        referral = profile?['referral_code']?.toString() ?? '';
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+    setState(() {
+      if (fresh != null) _agent = fresh;
+      _referralCode = referral;
+      _isLoading = false;
+    });
+  }
+
+  bool _isActive(String status) =>
+      status.toLowerCase() == 'active' || status == 'Active';
+
+  @override
   Widget build(BuildContext context) {
-    final Agent agent = Get.arguments;
+    final agent = _agent;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -23,7 +71,7 @@ class AgentDetailsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () => safePop(null, context),
         ),
         title: const Text(
           'تفاصيل الوكيل',
@@ -40,7 +88,11 @@ class AgentDetailsScreen extends StatelessWidget {
         children: [
           _buildCelestialBackground(),
           SafeArea(
-            child: SingleChildScrollView(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: KasbyColors.primaryGold),
+                  )
+                : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,10 +140,10 @@ class AgentDetailsScreen extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
-                                    agent.status == 'Active'
+                                    _isActive(agent.status)
                                         ? Icons.check_circle_rounded
                                         : Icons.block_rounded,
-                                    color: agent.status == 'Active'
+                                    color: _isActive(agent.status)
                                         ? KasbyColors.success
                                         : KasbyColors.error,
                                     size: 24,
@@ -171,6 +223,18 @@ class AgentDetailsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _buildInfoRow('البريد الإلكتروني', agent.email, Icons.alternate_email_rounded),
+                        if (_referralCode.isNotEmpty) ...[
+                          const Divider(color: Colors.white10, height: 24),
+                          _buildInfoRow('كود الإحالة', _referralCode, Icons.qr_code_rounded),
+                        ],
+                        if (agent.supportedMethods.isNotEmpty) ...[
+                          const Divider(color: Colors.white10, height: 24),
+                          _buildInfoRow(
+                            'قنوات الدعم',
+                            agent.supportedMethods.join(' • '),
+                            Icons.headset_mic_rounded,
+                          ),
+                        ],
                         const Divider(color: Colors.white10, height: 24),
                         _buildInfoRow('رقم الهاتف', agent.phone, Icons.phone_android_rounded),
                         const Divider(color: Colors.white10, height: 24),
@@ -313,7 +377,7 @@ class AgentDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildStatusBadge(String status) {
-    final isActive = status == 'Active';
+    final isActive = _isActive(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(

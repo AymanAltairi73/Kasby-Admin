@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/reward_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 /// Rewards and Gamification Controller
 /// Manages settings for daily rewards, spin wheel prizes, and points rules
@@ -13,23 +13,79 @@ class RewardsController extends GetxController {
   final pointsEarnRules = <PointRule>[].obs;
   final pointsRedeemRules = <PointRule>[].obs;
   final isLoading = false.obs;
+  final hasError = false.obs;
+  final totalKspBalance = 0.0.obs;
+  final totalKspEarned = 0.0.obs;
+  final usersWithPoints = 0.obs;
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'RewardsController',
+      method: 'onInit',
+      feature: 'Gamification',
+      status: 'INFO',
+    );
     super.onInit();
     loadSettings();
   }
 
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'RewardsController',
+      method: 'onClose',
+      feature: 'Gamification',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   /// Load settings from Supabase
   Future<void> loadSettings() async {
-    debugPrint('[RewardsController] ▶ Loading gamification settings...');
+    AppLoggerService.debugTrace(
+      className: 'RewardsController',
+      method: 'loadSettings',
+      feature: 'Gamification',
+      status: 'INFO',
+    );
     isLoading.value = true;
+    hasError.value = false;
     try {
-      await Future.wait([_loadRewards(), _loadPrizes(), _loadPointRules()]);
+      await Future.wait([
+        _loadRewards(),
+        _loadPrizes(),
+        _loadPointRules(),
+        _loadLoyaltyStats(),
+      ]);
     } catch (e) {
-      _loadDefaultSettings();
+      hasError.value = true;
+      Get.snackbar('خطأ', 'فشل تحميل إعدادات المكافآت');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadLoyaltyStats() async {
+    try {
+      final response = await SupabaseService.client
+          .from('user_points')
+          .select('current_balance, total_earned');
+
+      double balance = 0;
+      double earned = 0;
+      for (final row in response as List) {
+        balance += (row['current_balance'] as num? ?? 0).toDouble();
+        earned += (row['total_earned'] as num? ?? 0).toDouble();
+      }
+
+      totalKspBalance.value = balance;
+      totalKspEarned.value = earned;
+      usersWithPoints.value = (response as List).length;
+    } catch (_) {
+      totalKspBalance.value = 0;
+      totalKspEarned.value = 0;
+      usersWithPoints.value = 0;
     }
   }
 
@@ -52,10 +108,11 @@ class RewardsController extends GetxController {
           ),
         );
       } else {
-        _loadDefaultRewards();
+        rewards.clear();
       }
     } catch (e) {
-      _loadDefaultRewards();
+      rewards.clear();
+      Get.snackbar('خطأ', 'فشل تحميل المكافآت');
     }
   }
 
@@ -78,10 +135,11 @@ class RewardsController extends GetxController {
           ),
         );
       } else {
-        _loadDefaultPrizes();
+        prizes.clear();
       }
     } catch (e) {
-      _loadDefaultPrizes();
+      prizes.clear();
+      Get.snackbar('خطأ', 'فشل تحميل الجوائز');
     }
   }
 
@@ -107,102 +165,19 @@ class RewardsController extends GetxController {
         pointsEarnRules.assignAll(allRules.where((r) => r.type == 'Earn'));
         pointsRedeemRules.assignAll(allRules.where((r) => r.type == 'Redeem'));
       } else {
-        _loadDefaultPointRules();
+        pointsEarnRules.clear();
+        pointsRedeemRules.clear();
       }
     } catch (e) {
-      _loadDefaultPointRules();
+      pointsEarnRules.clear();
+      pointsRedeemRules.clear();
+      Get.snackbar('خطأ', 'فشل تحميل قواعد النقاط');
     }
   }
 
   /// Save settings to Supabase (batch update)
   Future<void> saveSettings() async {
     // Individual updates are handled through CRUD methods
-    // This method is kept for backward compatibility with batch operations
-  }
-
-  // ─────────── Defaults (fallback) ───────────
-
-  void _loadDefaultSettings() {
-    _loadDefaultRewards();
-    _loadDefaultPrizes();
-    _loadDefaultPointRules();
-  }
-
-  void _loadDefaultRewards() {
-    rewards.value = [
-      Reward(
-        id: 'daily_checkin',
-        title: 'مكافأة يومية',
-        description: '50 نقطة لكل يوم متتالي',
-        points: 50,
-        icon: 'calendar-check',
-      ),
-    ];
-  }
-
-  void _loadDefaultPrizes() {
-    prizes.value = [
-      Prize(
-        id: '1',
-        label: '10 نقاط',
-        value: '10',
-        type: 'Points',
-        probability: 0.4,
-      ),
-      Prize(
-        id: '2',
-        label: '25 نقطة',
-        value: '25',
-        type: 'Points',
-        probability: 0.3,
-      ),
-      Prize(
-        id: '3',
-        label: '50 نقطة',
-        value: '50',
-        type: 'Points',
-        probability: 0.2,
-      ),
-      Prize(
-        id: '4',
-        label: '100 نقطة',
-        value: '100',
-        type: 'Points',
-        probability: 0.08,
-      ),
-      Prize(
-        id: '5',
-        label: '\$5 رصيد',
-        value: '5',
-        type: 'Cash',
-        probability: 0.02,
-      ),
-    ];
-  }
-
-  void _loadDefaultPointRules() {
-    pointsEarnRules.value = [
-      PointRule(
-        id: 'e1',
-        action: 'تسجيل الدخول اليومي',
-        points: 10,
-        type: 'Earn',
-      ),
-      PointRule(id: 'e2', action: 'إحالة صديق', points: 100, type: 'Earn'),
-      PointRule(id: 'e3', action: 'أول استثمار', points: 200, type: 'Earn'),
-      PointRule(
-        id: 'e4',
-        action: 'إكمال الملف الشخصي',
-        points: 50,
-        type: 'Earn',
-      ),
-    ];
-
-    pointsRedeemRules.value = [
-      PointRule(id: 'r1', action: '1000 نقطة', points: 10, type: 'Redeem'),
-      PointRule(id: 'r2', action: '2500 نقطة', points: 30, type: 'Redeem'),
-      PointRule(id: 'r3', action: '5000 نقطة', points: 75, type: 'Redeem'),
-    ];
   }
 
   // ─────────── CRUD → Supabase ───────────
@@ -221,9 +196,12 @@ class RewardsController extends GetxController {
       await SupabaseService.client
           .from('point_rules')
           .update({'action': updatedRule.action, 'points': updatedRule.points})
-          .eq('id', updatedRule.id);
+          .eq('id', updatedRule.id)
+          .select('id');
+
+      Get.snackbar('تم', 'تم تحديث قاعدة KSP');
     } catch (e) {
-      // Continue
+      Get.snackbar('خطأ', 'فشل تحديث قاعدة KSP');
     }
   }
 
@@ -240,9 +218,11 @@ class RewardsController extends GetxController {
               'description': updatedReward.description,
               'points_cost': updatedReward.points,
             })
-            .eq('id', updatedReward.id);
+            .eq('id', updatedReward.id)
+            .select('id');
+        Get.snackbar('تم', 'تم تحديث المكافأة');
       } catch (e) {
-        // Continue
+        Get.snackbar('خطأ', 'فشل تحديث المكافأة');
       }
     }
   }
@@ -261,9 +241,11 @@ class RewardsController extends GetxController {
               'type': updatedPrize.type,
               'probability': updatedPrize.probability,
             })
-            .eq('id', updatedPrize.id);
+            .eq('id', updatedPrize.id)
+            .select('id');
+        Get.snackbar('تم', 'تم تحديث الجائزة');
       } catch (e) {
-        // Continue
+        Get.snackbar('خطأ', 'فشل تحديث الجائزة');
       }
     }
   }

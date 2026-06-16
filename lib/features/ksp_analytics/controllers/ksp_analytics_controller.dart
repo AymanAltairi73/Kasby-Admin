@@ -1,14 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../repositories/ksp_analytics_repository.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_logger_service.dart';
 
 class KspAnalyticsController extends GetxController {
   final KspAnalyticsRepository _repository = KspAnalyticsRepository(SupabaseService.client);
 
   final isLoading = false.obs;
 
-  // Metrics
   final totalSupply = 0.obs;
   final totalDistributed = 0.obs;
   final dailyKspGenerated = 0.obs;
@@ -16,7 +15,6 @@ class KspAnalyticsController extends GetxController {
   final topEarnerName = 'N/A'.obs;
   final topEarnerAmount = 0.obs;
 
-  // Tables
   final topHolders = <Map<String, dynamic>>[].obs;
   final topEarners = <Map<String, dynamic>>[].obs;
   final topTransfers = <Map<String, dynamic>>[].obs;
@@ -25,12 +23,34 @@ class KspAnalyticsController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsController',
+      method: 'onInit',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     super.onInit();
     loadAllData();
   }
 
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsController',
+      method: 'onClose',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   Future<void> loadAllData() async {
-    debugPrint('[KspAnalyticsController] Loading KSP analytics data...');
+    AppLoggerService.debugTrace(
+      className: 'KspAnalyticsController',
+      method: 'loadAllData',
+      feature: 'KspAnalytics',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final metrics = await _repository.getKspOverviewMetrics();
@@ -41,18 +61,25 @@ class KspAnalyticsController extends GetxController {
       topEarnerName.value = metrics['topEarnerName'] ?? 'N/A';
       topEarnerAmount.value = metrics['topEarnerAmount'] ?? 0;
 
-      final holders = await _repository.getTopHolders();
-      topHolders.assignAll(holders);
+      topHolders.assignAll(await _repository.getTopHolders());
+      topEarners.assignAll(await _repository.getTopEarners());
+      topTransfers.assignAll(await _repository.getTopTransfers());
 
-      final earners = await _repository.getTopEarners();
-      topEarners.assignAll(earners);
-
-      final transfers = await _repository.getTopTransfers();
-      topTransfers.assignAll(transfers);
-      
-      debugPrint('[KspAnalyticsController] Data loaded successfully.');
+      AppLoggerService.debugTrace(
+        className: 'KspAnalyticsController',
+        method: 'loadAllData',
+        feature: 'KspAnalytics',
+        status: 'SUCCESS',
+      );
     } catch (e, stackTrace) {
-      debugPrint('[KspAnalyticsController] Error loading data: $e\n$stackTrace');
+      AppLoggerService.debugTrace(
+        className: 'KspAnalyticsController',
+        method: 'loadAllData',
+        feature: 'KspAnalytics',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       isLoading.value = false;
     }

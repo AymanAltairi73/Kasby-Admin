@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -51,6 +52,14 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
   @override
   void initState() {
     super.initState();
+    AppLoggerService.debugTrace(
+      className: 'EditInvestmentPlanScreen',
+      method: 'initState',
+      feature: 'Investments',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'planId': widget.plan.id},
+    );
     nameArController = TextEditingController(text: widget.plan.nameAr);
     nameEnController = TextEditingController(text: widget.plan.nameEn ?? '');
     descriptionArController = TextEditingController(
@@ -75,6 +84,13 @@ class _EditInvestmentPlanScreenState extends State<EditInvestmentPlanScreen> {
 
   @override
   void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'EditInvestmentPlanScreen',
+      method: 'dispose',
+      feature: 'Investments',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
     nameArController.dispose();
     nameEnController.dispose();
     descriptionArController.dispose();

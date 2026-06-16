@@ -21,6 +21,7 @@ class ChatController extends GetxController {
   final isTyping = <String, bool>{}.obs; // userId -> isTyping
   final isLoading = false.obs;
   final RxString searchQuery = ''.obs;
+  final RxString conversationSearchQuery = ''.obs;
   final RxBool isUploading = false.obs;
   final ImagePicker _picker = ImagePicker();
 
@@ -46,21 +47,23 @@ class ChatController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'ChatController',
+      method: 'onInit',
+      feature: 'Chat',
+      status: 'INFO',
+    );
     super.onInit();
     _audioService = Get.find<AudioService>();
     _presenceService = Get.find<PresenceService>();
     _chatRepository = ChatRepository(SupabaseService.client);
-    
-    debugPrint('[ChatController] ▶ Initializing ChatController...');
 
-    // Listen to presence changes to update online status
     ever(_presenceService.onlineUsers, (_) {
       _updateOnlineStatuses();
     });
 
-    // Wait for authentication before starting real-time features
     final auth = Get.find<AuthController>();
-    
+
     ever(auth.isLoggedIn, (bool loggedIn) {
       if (loggedIn) {
         _initializeChatSystem();
@@ -69,7 +72,6 @@ class ChatController extends GetxController {
       }
     });
 
-    // Initial check (prevent redundant double-init by ensuring we don't call it if the listener just did)
     if (auth.isLoggedIn.value) {
       _initializeChatSystem();
     }
@@ -79,8 +81,13 @@ class ChatController extends GetxController {
   void _initializeChatSystem() {
     if (_isInitialized) return;
     _isInitialized = true;
-    
-    debugPrint('[ChatController] ▶ Initializing chat system components...');
+
+    AppLoggerService.debugTrace(
+      className: 'ChatController',
+      method: '_initializeChatSystem',
+      feature: 'Chat',
+      status: 'INFO',
+    );
     loadConversations();
     _startConversationsStream();
   }
@@ -109,6 +116,12 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'ChatController',
+      method: 'onClose',
+      feature: 'Chat',
+      status: 'INFO',
+    );
     _stopAllStreams();
     super.onClose();
   }
@@ -128,32 +141,52 @@ class ChatController extends GetxController {
     }
   }
 
-  List<ChatConversation> get agentConversations =>
-      conversations.where((c) => c.isAgent).toList();
-  List<ChatConversation> get userConversations =>
-      conversations.where((c) => !c.isAgent).toList();
+  List<ChatConversation> get _supportCenterConversations =>
+      conversations.where((c) => !c.isSocialChat).toList();
+
+  List<ChatConversation> get agentConversations => _supportCenterConversations
+      .where((c) => c.isAgent || c.isAgentChat)
+      .toList();
+
+  List<ChatConversation> get userConversations => _supportCenterConversations
+      .where((c) => !c.isAgent && !c.isAgentChat)
+      .toList();
 
   Future<void> loadConversations() async {
+    AppLoggerService.debugTrace(
+      className: 'ChatController',
+      method: 'loadConversations',
+      feature: 'Chat',
+      status: 'INFO',
+    );
     try {
       isLoading.value = true;
       final currentUser = SupabaseService.client.auth.currentUser;
-      debugPrint('[ChatController][loadConversations] Fetching conversations for user: ${currentUser?.id}');
-      
+
       final data = await _chatRepository.getConversations();
-      debugPrint('[ChatController][loadConversations] Response: ${data.length} conversations');
-      
-      // Update with current online status
+
       final updatedData = data.map((c) => c.copyWith(
         isOnline: _presenceService.isUserOnline(c.userId)
       )).toList();
-      
+
       conversations.assignAll(updatedData);
       _calculateUnread();
-      debugPrint('[ChatController][loadConversations] Successfully loaded ${conversations.length} conversations');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'loadConversations',
+        feature: 'Chat',
+        status: 'SUCCESS',
+        params: {'count': conversations.length, 'userId': currentUser?.id ?? ''},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[ChatController][loadConversations] Error: $e');
-      debugPrint('[ChatController][loadConversations] Stack trace: $stackTrace');
-      debugPrint('[ChatController][loadConversations] Endpoint: /conversations');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'loadConversations',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -175,8 +208,14 @@ class ChatController extends GetxController {
       Get.toNamed('/chat-details', arguments: conv);
       
     } catch (e) {
-      Get.back(); // close loading dialog
-      debugPrint('[ChatController] ✗ Error starting chat: $e');
+      Get.back();
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'startChatWithUser',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar(
         'خطأ في الاتصال',
         'لم نتمكن من بدء المحادثة، الرجاء المحاولة لاحقاً',
@@ -193,7 +232,13 @@ class ChatController extends GetxController {
     
     _conversationsSubscription = _chatRepository.streamConversations().listen(
       (event) {
-        debugPrint('[ChatController] ℹ Conversation stream event received (${event.length} items)');
+        AppLoggerService.debugTrace(
+          className: 'ChatController',
+          method: '_startConversationsStream',
+          feature: 'Chat',
+          status: 'INFO',
+          params: {'eventCount': event.length},
+        );
         
         // Strategy: Instead of re-fetching EVERYTHING, we update our local list
         // with the new data from the stream, while preserving joined profile data.
@@ -228,10 +273,22 @@ class ChatController extends GetxController {
         _updateOnlineStatuses();
       },
       onError: (e) {
-        debugPrint('[ChatController] ✗ Conversations stream error: $e');
+        AppLoggerService.debugTrace(
+          className: 'ChatController',
+          method: '_startConversationsStream',
+          feature: 'Chat',
+          status: 'FAILED',
+          error: e,
+        );
         
         if (_reconnectTimer == null) {
-          debugPrint('[ChatController] ℹ Connection issue. Scheduling retry in 5s...');
+          AppLoggerService.debugTrace(
+            className: 'ChatController',
+            method: '_startConversationsStream',
+            feature: 'Chat',
+            status: 'WARNING',
+            message: 'Connection issue — scheduling retry in 5s',
+          );
           _reconnectTimer = Timer(const Duration(seconds: 5), () {
             _reconnectTimer = null;
             if (Get.find<AuthController>().isLoggedIn.value) {
@@ -324,7 +381,13 @@ class ChatController extends GetxController {
         messages[conversationId] = initialMessages;
         messages.refresh();
       } catch (e) {
-        debugPrint('[ChatController] ✗ Error fetching initial messages: $e');
+        AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'fetchInitialMessages',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       }
     }
 
@@ -350,9 +413,17 @@ class ChatController extends GetxController {
 
             messages[conversationId] = newMessages;
             messages.refresh();
+            _markMessagesDelivered(conversationId);
           },
           onError: (e) {
-            debugPrint('[ChatController] ✗ Messages stream error ($conversationId): $e');
+            AppLoggerService.debugTrace(
+              className: 'ChatController',
+              method: 'subscribeToMessages',
+              feature: 'Chat',
+              status: 'FAILED',
+              params: {'conversationId': conversationId},
+              error: e,
+            );
           },
         );
     
@@ -370,38 +441,78 @@ class ChatController extends GetxController {
   Future<String?> ensureConversation(String userId) async {
     try {
       final conv = await _chatRepository.getOrCreateConversation(userId);
-      // Update local list if not present
-      if (!conversations.any((c) => c.id == conv.id)) {
-        conversations.insert(0, conv);
+      final index = conversations.indexWhere((c) => c.id == conv.id);
+      if (index == -1) {
+        conversations.insert(0, conv.copyWith(
+          isOnline: _presenceService.isUserOnline(conv.userId),
+        ));
+      } else {
+        conversations[index] = conv.copyWith(
+          isOnline: _presenceService.isUserOnline(conv.userId),
+        );
       }
+      conversations.refresh();
+      _calculateUnread();
       return conv.id;
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error ensuring conversation: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'ensureConversation',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       return null;
     }
   }
 
-  Future<void> sendMessage(String conversationId, String content, {String? userId, MessageType messageType = MessageType.text}) async {
-    if (content.trim().isEmpty) return;
+  /// Routes admin replies to the correct support channel (not social P2P).
+  Future<String?> _resolveSupportConversationId(
+    String conversationId,
+    String? userId,
+  ) async {
+    if (userId == null || userId.isEmpty) return conversationId;
+
+    if (conversationId.isEmpty) {
+      return ensureConversation(userId);
+    }
+
+    ChatConversation? conv = conversations.firstWhereOrNull(
+      (c) => c.id == conversationId,
+    );
+
+    conv ??= await _chatRepository.fetchConversation(conversationId);
+    if (conv == null) return ensureConversation(userId);
+
+    if (conv.isSocialChat) {
+      return ensureConversation(userId);
+    }
+
+    return conversationId;
+  }
+
+  Future<String?> sendMessage(String conversationId, String content, {String? userId, MessageType messageType = MessageType.text}) async {
+    if (content.trim().isEmpty) return null;
     
     final senderId = SupabaseService.auth.currentUser?.id;
-    if (senderId == null) return;
+    if (senderId == null) return null;
 
     String targetConvId = conversationId;
 
     try {
-      // 1. If conversationId is empty, we must have a userId to find/create it
-      if (targetConvId.isEmpty && userId != null) {
-        final newId = await ensureConversation(userId);
-        if (newId == null) throw Exception('Could not create conversation');
-        targetConvId = newId;
-        // Start listening to the new conversation
+      final resolvedId = await _resolveSupportConversationId(
+        targetConvId,
+        userId,
+      );
+      if (resolvedId == null) throw Exception('Could not resolve support conversation');
+      targetConvId = resolvedId;
+
+      if (!messages.containsKey(targetConvId)) {
         listenToMessages(targetConvId);
       }
 
-      if (targetConvId.isEmpty) return;
+      if (targetConvId.isEmpty) return null;
 
-      // 2. Optimistic Update
       final optimisticMessage = ChatMessage(
         id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
         conversationId: targetConvId,
@@ -412,10 +523,15 @@ class ChatController extends GetxController {
         isMe: true,
       );
       
-      if (messages.containsKey(targetConvId)) {
-        messages[targetConvId]!.insert(0, optimisticMessage);
-        messages.refresh();
-      }
+      messages.putIfAbsent(targetConvId, () => []);
+      messages[targetConvId]!.insert(0, optimisticMessage);
+      messages.refresh();
+
+      _updateLocalConversationPreview(
+        targetConvId,
+        content.trim(),
+        messageType,
+      );
 
       _audioService.playMessageSent();
 
@@ -427,8 +543,16 @@ class ChatController extends GetxController {
         messageType: messageType,
         idempotencyKey: idempotencyKey,
       );
+
+      return targetConvId;
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error sending message: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'sendMessage',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       
       AppLoggerService.logChatPerformance(
         conversationId: targetConvId,
@@ -443,10 +567,34 @@ class ChatController extends GetxController {
         messages.refresh();
       }
       Get.snackbar('خطأ', 'فشل إرسال الرسالة، يرجى المحاولة مرة أخرى.');
+      return null;
     }
   }
 
-  Future<void> pickAndSendImage(String conversationId, ImageSource source) async {
+  void _updateLocalConversationPreview(
+    String conversationId,
+    String content,
+    MessageType messageType,
+  ) {
+    final preview = messageType == MessageType.image
+        ? '📷 صورة'
+        : (messageType == MessageType.file ? '📎 ملف' : content);
+    final index = conversations.indexWhere((c) => c.id == conversationId);
+    if (index == -1) return;
+
+    conversations[index] = conversations[index].copyWith(
+      lastMessage: preview.length > 100 ? preview.substring(0, 100) : preview,
+      lastMessageTime: DateTime.now(),
+    );
+    conversations.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+    conversations.refresh();
+  }
+
+  Future<String?> pickAndSendImage(
+    String conversationId,
+    ImageSource source, {
+    String? userId,
+  }) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -454,19 +602,44 @@ class ChatController extends GetxController {
         maxWidth: 1200,
       );
 
-      if (image == null) return;
+      if (image == null) return null;
 
       isUploading.value = true;
-      final File file = File(image.path);
-      
-      final String? imageUrl = await _uploadImage(file, conversationId);
-      
-      if (imageUrl != null) {
-        await sendMessage(conversationId, imageUrl, messageType: MessageType.image);
+
+      final targetConvId = await _resolveSupportConversationId(
+        conversationId,
+        userId,
+      );
+      if (targetConvId == null || targetConvId.isEmpty) {
+        throw Exception('Could not resolve support conversation');
       }
+
+      if (!messages.containsKey(targetConvId)) {
+        listenToMessages(targetConvId);
+      }
+
+      final File file = File(image.path);
+      final String? imagePath = await _uploadImage(file, targetConvId);
+
+      if (imagePath != null) {
+        return sendMessage(
+          targetConvId,
+          imagePath,
+          userId: userId,
+          messageType: MessageType.image,
+        );
+      }
+      return null;
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error picking image: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'pickImage',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar('خطأ', 'تعذر اختيار الصورة');
+      return null;
     } finally {
       isUploading.value = false;
     }
@@ -476,17 +649,23 @@ class ChatController extends GetxController {
     try {
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
       final currentUser = SupabaseService.auth.currentUser;
-      final String path = 'support/${currentUser?.id}/$fileName';
+      final conv = conversations.firstWhereOrNull((c) => c.id == conversationId);
+      final folder = conv?.isAgent == true ? 'agents' : 'support';
+      final String path = '${currentUser?.id}/$folder/$fileName';
 
       await SupabaseService.client.storage
           .from('chat_attachments')
           .upload(path, file);
       
-      return SupabaseService.client.storage
-          .from('chat_attachments')
-          .getPublicUrl(path);
+      return path;
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error uploading image: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'uploadImage',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar('خطأ الرفع', 'تعذر رفع الصورة للسيرفر');
       return null;
     }
@@ -497,9 +676,20 @@ class ChatController extends GetxController {
       await _chatRepository.update(conversationId, {
         'unread_admin_count': 0,
       });
+      final index = conversations.indexWhere((c) => c.id == conversationId);
+      if (index != -1) {
+        conversations[index] = conversations[index].copyWith(unreadCount: 0);
+        conversations.refresh();
+      }
       _calculateUnread();
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error marking as read: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'markAsRead',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
     }
   }
 
@@ -513,10 +703,64 @@ class ChatController extends GetxController {
 
       await _chatRepository.deleteMessage(messageId);
     } catch (e) {
-      debugPrint('[ChatController] ✗ Error deleting message: $e');
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'deleteMessage',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar('خطأ', 'فشل حذف الرسالة');
       // Re-fetch messages to restore local state
       listenToMessages(conversationId);
+    }
+  }
+
+  Future<void> _markMessagesDelivered(String conversationId) async {
+    try {
+      await SupabaseService.client.rpc(
+        'fn_mark_messages_delivered',
+        params: {'p_conversation_id': conversationId},
+      );
+    } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'markMessagesAsDelivered',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
+    }
+  }
+
+  Future<void> addReaction(String conversationId, String messageId, String emoji) async {
+    try {
+      final messageList = messages[conversationId] ?? [];
+      final index = messageList.indexWhere((m) => m.id == messageId);
+      if (index == -1) return;
+      
+      final message = messageList[index];
+      final newReactions = List<String>.from(message.reactions);
+
+      if (newReactions.contains(emoji)) {
+        newReactions.remove(emoji);
+      } else {
+        newReactions.add(emoji);
+      }
+
+      await SupabaseService.client
+          .from('chat_messages')
+          .update({'reactions': newReactions})
+          .eq('id', messageId);
+    } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'ChatController',
+        method: 'addReaction',
+        feature: 'Chat',
+        status: 'FAILED',
+        error: e,
+      );
+      Get.snackbar('خطأ', 'تعذر إضافة التفاعل');
     }
   }
 }

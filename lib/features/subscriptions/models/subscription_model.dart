@@ -1,4 +1,6 @@
 /// Subscription Plan Model — maps to `subscription_plans` table in Supabase
+import '../../../core/services/app_logger_service.dart';
+
 class SubscriptionPlan {
   final String id;
   final String tier; // 'free', 'premium' (inferred from price)
@@ -119,6 +121,7 @@ class SubscriptionPlan {
 
   /// Legacy fromJson (Standard JSON)
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
+    try {
     return SubscriptionPlan(
       id: json['id']?.toString() ?? '',
       tier: json['tier'] ?? 'free',
@@ -135,6 +138,18 @@ class SubscriptionPlan {
       features: List<String>.from(json['features'] ?? []),
       keywords: List<String>.from(json['keywords'] ?? []),
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'SubscriptionPlan',
+        method: 'fromJson',
+        feature: 'Subscriptions',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -158,12 +173,15 @@ class SubscriptionPlan {
 
   /// Supabase-compatible map for insert/update
   Map<String, dynamic> toSupabase() {
+    final durationLower = duration.toLowerCase();
     return {
-      'name': displayNameEn.isNotEmpty ? displayNameEn : displayNameAr,
-      'price_monthly': duration.contains('Month') ? price : 0,
-      'price_yearly': duration.contains('Year') ? price : 0,
-      'features': features,
-      'is_active': status == 'Active',
+      'name': technicalName.isNotEmpty
+          ? technicalName
+          : (displayNameEn.isNotEmpty ? displayNameEn : displayNameAr),
+      'price_monthly': durationLower.contains('month') ? price : 0,
+      'price_yearly': durationLower.contains('year') ? price : 0,
+      'features': {'items': features},
+      'is_active': status.toLowerCase() == 'active',
     };
   }
 

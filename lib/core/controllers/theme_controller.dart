@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/app_logger_service.dart';
 
 class ThemeController extends GetxController {
   final isDarkMode = true.obs;
@@ -8,11 +9,47 @@ class ThemeController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'ThemeController',
+      method: 'onInit',
+      feature: 'Core',
+      status: 'INFO',
+    );
     super.onInit();
     _loadThemeFromPrefs();
   }
 
+  @override
+  void onReady() {
+    AppLoggerService.debugTrace(
+      className: 'ThemeController',
+      method: 'onReady',
+      feature: 'Core',
+      status: 'INFO',
+      params: {'isDarkMode': isDarkMode.value},
+    );
+    super.onReady();
+  }
+
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'ThemeController',
+      method: 'onClose',
+      feature: 'Core',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   void toggleTheme() async {
+    AppLoggerService.debugTrace(
+      className: 'ThemeController',
+      method: 'toggleTheme',
+      feature: 'Core',
+      status: 'INFO',
+      params: {'toDarkMode': !isDarkMode.value},
+    );
     isDarkMode.value = !isDarkMode.value;
     Get.changeThemeMode(isDarkMode.value ? ThemeMode.dark : ThemeMode.light);
 

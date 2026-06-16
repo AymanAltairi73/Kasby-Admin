@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui' as ui;
 import '../theme/kasby_colors.dart';
+import '../utils/navigation_utils.dart';
 
 /// Kasby Dialog
 /// A professional, high-end dialog/bottom sheet for Kasby Admin App
@@ -106,7 +107,7 @@ class KasbyDialog extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => Get.back(),
+                  onPressed: () => safePop(null, context),
                   icon: const Icon(Icons.close_rounded, color: Colors.white54),
                 ),
               ],

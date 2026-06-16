@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_confirmation_dialog.dart';
 import '../controllers/agent_applications_controller.dart';
 
-class AgentApplicationsScreen extends StatelessWidget {
+class AgentApplicationsScreen extends StatefulWidget {
   const AgentApplicationsScreen({super.key});
+
+  @override
+  State<AgentApplicationsScreen> createState() =>
+      _AgentApplicationsScreenState();
+}
+
+class _AgentApplicationsScreenState extends State<AgentApplicationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'AgentApplicationsScreen',
+      method: 'initState',
+      feature: 'Agents',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'AgentApplicationsScreen',
+      method: 'dispose',
+      feature: 'Agents',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

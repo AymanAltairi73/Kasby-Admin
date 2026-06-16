@@ -6,6 +6,7 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../../../core/widgets/kasby_confirmation_dialog.dart';
 import '../../../core/utils/validation_utils.dart';
+import '../../../core/utils/navigation_utils.dart';
 import '../controllers/agent_controller.dart';
 import '../models/agent_model.dart';
 
@@ -148,7 +149,7 @@ class _EditAgentScreenState extends State<EditAgentScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: () => safePop(null, context),
         ),
         title: Text(
           isEdit ? 'تعديل بيانات الوكيل' : 'إضافة وكيل جديد',

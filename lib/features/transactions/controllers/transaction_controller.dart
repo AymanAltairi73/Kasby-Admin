@@ -5,6 +5,7 @@ import '../models/transaction_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';
 import '../repositories/transaction_repository.dart';
 
@@ -25,15 +26,41 @@ class TransactionController extends GetxController {
   final totalWithdrawals = 0.0.obs;
   final pendingCount = 0.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadTransactions();
-    _listenToTransactions();
-  }
-
   // ─── TRANSACTIONS LISTENER ────────────────────────────
   StreamSubscription? _transactionSubscription;
+  Timer? _reloadDebounce;
+  Worker? _authWorker;
+
+  @override
+  void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'TransactionController',
+      method: 'onInit',
+      feature: 'Transactions',
+      status: 'INFO',
+    );
+    super.onInit();
+    try {
+      final auth = Get.find<AuthController>();
+      _authWorker = ever(auth.isLoggedIn, (loggedIn) {
+        if (loggedIn) {
+          loadTransactions();
+          _listenToTransactions();
+        } else {
+          _transactionSubscription?.cancel();
+          transactions.clear();
+          filteredTransactions.clear();
+        }
+      });
+      if (auth.isLoggedIn.value) {
+        loadTransactions();
+        _listenToTransactions();
+      }
+    } catch (_) {
+      loadTransactions();
+      _listenToTransactions();
+    }
+  }
 
   void _listenToTransactions() {
     _transactionSubscription?.cancel();
@@ -41,14 +68,34 @@ class TransactionController extends GetxController {
         .from('transactions')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
-        .listen((data) async {
-          debugPrint('[TransactionController] ℹ️ Transactions updated via stream');
-          
-          // Re-fetch with joins to ensure user names are present (stream doesn't support joins)
-          await loadTransactions();
+        .listen((_) {
+          _reloadDebounce?.cancel();
+          _reloadDebounce = Timer(const Duration(milliseconds: 750), () async {
+            await loadTransactions();
+          });
         }, onError: (error) {
-          debugPrint('[TransactionController] ❌ Stream error: $error');
+          AppLoggerService.debugTrace(
+            className: 'TransactionController',
+            method: '_listenToTransactions',
+            feature: 'Transactions',
+            status: 'FAILED',
+            error: error,
+          );
         });
+  }
+
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'TransactionController',
+      method: 'onClose',
+      feature: 'Transactions',
+      status: 'INFO',
+    );
+    _reloadDebounce?.cancel();
+    _transactionSubscription?.cancel();
+    _authWorker?.dispose();
+    super.onClose();
   }
 
   /// Pending deposits getter
@@ -79,19 +126,34 @@ class TransactionController extends GetxController {
 
   /// Load transactions from Supabase with user names
   Future<void> loadTransactions() async {
-    debugPrint('[TransactionController][loadTransactions] Fetching data from /transactions');
+    AppLoggerService.debugTrace(
+      className: 'TransactionController',
+      method: 'loadTransactions',
+      feature: 'Transactions',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await _transactionRepo.getTransactionsPaginated();
-      debugPrint('[TransactionController][loadTransactions] Response: ${response.length} transactions');
       transactions.value = response;
       _applyFilters();
       _calculateStats();
-      debugPrint('[TransactionController][loadTransactions] Successfully loaded ${transactions.length} transactions');
+      AppLoggerService.debugTrace(
+        className: 'TransactionController',
+        method: 'loadTransactions',
+        feature: 'Transactions',
+        status: 'SUCCESS',
+        params: {'count': transactions.length},
+      );
     } catch (e, stackTrace) {
-      debugPrint('[TransactionController][loadTransactions] Error: $e');
-      debugPrint('[TransactionController][loadTransactions] Stack trace: $stackTrace');
-      debugPrint('[TransactionController][loadTransactions] Endpoint: /transactions');
+      AppLoggerService.debugTrace(
+        className: 'TransactionController',
+        method: 'loadTransactions',
+        feature: 'Transactions',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       AppLoggerService.logError(
         controller: 'TransactionController',
         method: 'loadTransactions',
@@ -214,7 +276,13 @@ class TransactionController extends GetxController {
     _calculateStats();
 
     try {
-      debugPrint('[TransactionController] ▶ Approving deposit: $txnId (Optimistic)');
+      AppLoggerService.debugTrace(
+        className: 'TransactionController',
+        method: 'approveDeposit',
+        feature: 'Transactions',
+        status: 'INFO',
+        params: {'txnId': txnId},
+      );
       final adminId = SupabaseService.auth.currentUser?.id;
 
       await _transactionRepo.processTransaction(
@@ -334,7 +402,13 @@ class TransactionController extends GetxController {
     _calculateStats();
 
     try {
-      debugPrint('[TransactionController] ▶ Rejecting transaction: $txnId (Optimistic)');
+      AppLoggerService.debugTrace(
+        className: 'TransactionController',
+        method: 'rejectTransaction',
+        feature: 'Transactions',
+        status: 'INFO',
+        params: {'txnId': txnId},
+      );
       final adminId = SupabaseService.auth.currentUser?.id;
       final fnName = (txn.type == 'withdrawal') ? 'reject_withdrawal' : 'fn_reject_transaction';
 
@@ -380,11 +454,5 @@ class TransactionController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
-  }
-
-  @override
-  void onClose() {
-    _transactionSubscription?.cancel();
-    super.onClose();
   }
 }

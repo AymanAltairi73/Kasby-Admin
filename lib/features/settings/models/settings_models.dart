@@ -1,4 +1,6 @@
 /// Settings Data Models
+import '../../../core/services/app_logger_service.dart';
+
 class FAQItem {
   final String id;
   final String question;
@@ -15,11 +17,24 @@ class FAQItem {
   }
 
   factory FAQItem.fromJson(Map<String, dynamic> json) {
-    return FAQItem(
-      id: json['id'] ?? '',
-      question: json['question'] ?? '',
-      answer: json['answer'] ?? '',
-    );
+    try {
+      return FAQItem(
+        id: json['id'] ?? '',
+        question: json['question'] ?? '',
+        answer: json['answer'] ?? '',
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'FAQItem',
+        method: 'fromJson',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -50,12 +65,25 @@ class TermSection {
   }
 
   factory TermSection.fromJson(Map<String, dynamic> json) {
-    return TermSection(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      content: json['content'] ?? '',
-      order: json['order'] ?? 0,
-    );
+    try {
+      return TermSection(
+        id: json['id'] ?? '',
+        title: json['title'] ?? '',
+        content: json['content'] ?? '',
+        order: json['order'] ?? 0,
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'TermSection',
+        method: 'fromJson',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -102,15 +130,28 @@ class FeeItem {
   }
 
   factory FeeItem.fromJson(Map<String, dynamic> json) {
-    return FeeItem(
-      id: json['id']?.toString() ?? '',
-      label: json['label'] ?? '',
-      value: json['value'] ?? '',
-      category: json['category'] ?? '',
-      percentage: json['percentage'] is num ? (json['percentage'] as num).toDouble() : null,
-      fixedAmount: json['fixed_amount'] is num ? (json['fixed_amount'] as num).toDouble() : null,
-      isActive: json['is_active'] ?? true,
-    );
+    try {
+      return FeeItem(
+        id: json['id']?.toString() ?? '',
+        label: json['label'] ?? '',
+        value: json['value'] ?? '',
+        category: json['category'] ?? '',
+        percentage: json['percentage'] is num ? (json['percentage'] as num).toDouble() : null,
+        fixedAmount: json['fixed_amount'] is num ? (json['fixed_amount'] as num).toDouble() : null,
+        isActive: json['is_active'] ?? true,
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'FeeItem',
+        method: 'fromJson',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -169,20 +210,33 @@ class CurrencyItem {
   }
 
   factory CurrencyItem.fromJson(Map<String, dynamic> json) {
-    return CurrencyItem(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      code: json['code'] ?? '',
-      rate: json['rate'] ?? '',
-      isBase: json['isBase'] ?? false,
-      iconCode: json['icon_code'] is int
-          ? json['icon_code']
-          : (json['icon_code'] != null
-                ? int.tryParse(json['icon_code'].toString())
-                : null),
-      iconFamily: json['icon_family'],
-      iconPackage: json['icon_package'],
-    );
+    try {
+      return CurrencyItem(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        code: json['code'] ?? '',
+        rate: json['rate'] ?? '',
+        isBase: json['isBase'] ?? false,
+        iconCode: json['icon_code'] is int
+            ? json['icon_code']
+            : (json['icon_code'] != null
+                  ? int.tryParse(json['icon_code'].toString())
+                  : null),
+        iconFamily: json['icon_family'],
+        iconPackage: json['icon_package'],
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'CurrencyItem',
+        method: 'fromJson',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -234,14 +288,27 @@ class LimitItem {
   }
 
   factory LimitItem.fromJson(Map<String, dynamic> json) {
-    return LimitItem(
-      id: json['id']?.toString() ?? '',
-      label: json['label'] ?? '',
-      value: json['value']?.toString() ?? '0',
-      tier: json['tier'] ?? '',
-      isUnlimited: json['is_unlimited'] ?? false,
-      category: json['category'],
-    );
+    try {
+      return LimitItem(
+        id: json['id']?.toString() ?? '',
+        label: json['label'] ?? '',
+        value: json['value']?.toString() ?? '0',
+        tier: json['tier'] ?? '',
+        isUnlimited: json['is_unlimited'] ?? false,
+        category: json['category'],
+      );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'LimitItem',
+        method: 'fromJson',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

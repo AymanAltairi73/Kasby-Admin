@@ -49,6 +49,10 @@ class LoansScreen extends StatelessWidget {
                   ),
                 ),
                 const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   indicatorColor: KasbyColors.primaryGold,
                   labelColor: KasbyColors.primaryGold,
                   unselectedLabelColor: Colors.white60,
@@ -100,15 +104,10 @@ class LoansScreen extends StatelessWidget {
   }
 
   Widget _buildLoansList(List<Loan> loans) {
-    final controller = Get.find<LoanController>();
-
     if (loans.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () => controller.loadLoans(),
-        color: KasbyColors.primaryGold,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
             SizedBox(height: Get.height * 0.2),
             Center(
               child: Column(
@@ -139,27 +138,22 @@ class LoansScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      );
+        );
     }
 
-    return RefreshIndicator(
-      onRefresh: () => controller.loadLoans(),
-      color: KasbyColors.primaryGold,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          8,
-          0,
-          8,
-          40,
-        ), // More horizontal space for cards
-        itemCount: loans.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          return _buildLoanCard(loans[index], index);
-        },
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(
+        8,
+        0,
+        8,
+        40,
       ),
+      itemCount: loans.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        return _buildLoanCard(loans[index], index);
+      },
     );
   }
 

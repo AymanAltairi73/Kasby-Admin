@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../theme/kasby_colors.dart';
+import '../utils/navigation_utils.dart';
 import 'kasby_dialog.dart';
 
 /// Kasby Confirmation Dialog
@@ -46,7 +47,7 @@ class KasbyConfirmationDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Get.back(),
+          onPressed: () => safePop(),
           child: Text(
             cancelText,
             style: const TextStyle(color: KasbyColors.textSecondary),
@@ -55,7 +56,7 @@ class KasbyConfirmationDialog extends StatelessWidget {
         const SizedBox(width: 16),
         ElevatedButton(
           onPressed: () {
-            Get.back();
+            safePop();
             onConfirm();
           },
           style: ElevatedButton.styleFrom(

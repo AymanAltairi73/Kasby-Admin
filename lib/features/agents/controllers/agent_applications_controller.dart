@@ -44,11 +44,34 @@ class AgentApplicationsController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'AgentApplicationsController',
+      method: 'onInit',
+      feature: 'Agents',
+      status: 'INFO',
+    );
     super.onInit();
     loadApplications();
   }
 
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'AgentApplicationsController',
+      method: 'onClose',
+      feature: 'Agents',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   Future<void> loadApplications() async {
+    AppLoggerService.debugTrace(
+      className: 'AgentApplicationsController',
+      method: 'loadApplications',
+      feature: 'Agents',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -120,7 +143,11 @@ class AgentApplicationsController extends GetxController {
   Future<void> rejectApplication(String applicationId) async {
     isLoading.value = true;
     try {
-      // Send User Notification
+      await SupabaseService.client
+          .from('agent_applications')
+          .update({'status': 'rejected'})
+          .eq('id', applicationId);
+
       final app = applications.firstWhereOrNull((a) => a.id == applicationId);
       if (app != null) {
         Get.find<NotificationController>().sendNotification(

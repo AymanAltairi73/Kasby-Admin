@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/settings_models.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/kasby_colors.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 /// Settings Management Controller
@@ -29,13 +30,35 @@ class SettingsManagementController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: 'onInit',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     super.onInit();
     loadSettings();
   }
 
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: 'onClose',
+      feature: 'Settings',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   /// Load all settings from Supabase
   Future<void> loadSettings() async {
-    debugPrint('[SettingsController][loadSettings] Fetching data from multiple endpoints');
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: 'loadSettings',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       await Future.wait([
@@ -46,11 +69,21 @@ class SettingsManagementController extends GetxController {
         _loadLimits(),
         _loadMaintenance(),
       ]);
-      debugPrint('[SettingsController][loadSettings] All settings loaded successfully');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'loadSettings',
+        feature: 'Settings',
+        status: 'SUCCESS',
+      );
     } catch (e, stackTrace) {
-      debugPrint('[SettingsController][loadSettings] Error: $e');
-      debugPrint('[SettingsController][loadSettings] Stack trace: $stackTrace');
-      debugPrint('[SettingsController][loadSettings] Endpoint: /faqs, /terms_sections, /fees, /currencies, /transaction_limits, /system_settings');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'loadSettings',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -59,13 +92,17 @@ class SettingsManagementController extends GetxController {
   // ─────────── Loaders ───────────
 
   Future<void> _loadFAQs() async {
-    debugPrint('[SettingsController][_loadFAQs] Fetching from /faqs');
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: '_loadFAQs',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     try {
       final response = await SupabaseService.client
           .from('faqs')
           .select()
           .order('created_at', ascending: true);
-      debugPrint('[SettingsController][_loadFAQs] Response: ${response.length} FAQs');
       if ((response as List).isNotEmpty) {
         faqs.assignAll(
           response.map(
@@ -76,27 +113,34 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
-        debugPrint('[SettingsController][_loadFAQs] Successfully loaded ${faqs.length} FAQs');
       } else {
-        debugPrint('[SettingsController][_loadFAQs] No FAQs found, loading defaults');
         _loadDefaultFAQs();
       }
     } catch (e, stackTrace) {
-      debugPrint('[SettingsController][_loadFAQs] Error: $e');
-      debugPrint('[SettingsController][_loadFAQs] Stack trace: $stackTrace');
-      debugPrint('[SettingsController][_loadFAQs] Endpoint: /faqs');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: '_loadFAQs',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultFAQs();
     }
   }
 
   Future<void> _loadTerms() async {
-    debugPrint('[SettingsController][_loadTerms] Fetching from /terms_sections');
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: '_loadTerms',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     try {
       final response = await SupabaseService.client
           .from('terms_sections')
           .select()
           .order('sort_order', ascending: true);
-      debugPrint('[SettingsController][_loadTerms] Response: ${response.length} term sections');
       if ((response as List).isNotEmpty) {
         terms.assignAll(
           response.map(
@@ -108,29 +152,34 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
-        debugPrint('[SettingsController][_loadTerms] Successfully loaded ${terms.length} term sections');
       } else {
-        debugPrint('[SettingsController][_loadTerms] No terms found, loading defaults');
         _loadDefaultTerms();
       }
     } catch (e, stackTrace) {
-      debugPrint('[SettingsController][_loadTerms] Error: $e');
-      debugPrint('[SettingsController][_loadTerms] Stack trace: $stackTrace');
-      debugPrint('[SettingsController][_loadTerms] Endpoint: /terms_sections');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: '_loadTerms',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultTerms();
     }
   }
 
   Future<void> _loadFees() async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: '_loadFees',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     try {
-      debugPrint('[SettingsController] ▶ Loading fees from Supabase...');
-      
       final response = await SupabaseService.client
           .from('fees')
           .select()
           .order('created_at', ascending: true);
-          
-      debugPrint('[SettingsController] ℹ️ Fees response length: ${response.length}');
       
       if ((response as List).isNotEmpty) {
         fees.assignAll(
@@ -146,18 +195,29 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
-        debugPrint('[SettingsController] ✅ Loaded ${fees.length} fees');
       } else {
-        debugPrint('[SettingsController] ⚠️ No fees found, loading defaults');
         _loadDefaultFees();
       }
-    } catch (e) {
-      debugPrint('[SettingsController] ❌ Error loading fees: $e');
+    } catch (e, stackTrace) {
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: '_loadFees',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultFees();
     }
   }
 
   Future<void> _loadCurrencies() async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: '_loadCurrencies',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     try {
       final response = await SupabaseService.client
           .from('currencies')
@@ -187,16 +247,18 @@ class SettingsManagementController extends GetxController {
   }
 
   Future<void> _loadLimits() async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: '_loadLimits',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     try {
-      debugPrint('[SettingsController] ▶ Loading transaction limits from Supabase...');
-      
       final response = await SupabaseService.client
           .from('transaction_limits')
           .select()
           .order('created_at', ascending: true);
-          
-      debugPrint('[SettingsController] ℹ️ Limits response length: ${response.length}');
-      
+
       if ((response as List).isNotEmpty) {
         limits.assignAll(
           response.map(
@@ -210,13 +272,18 @@ class SettingsManagementController extends GetxController {
             ),
           ),
         );
-        debugPrint('[SettingsController] ✅ Loaded ${limits.length} limits');
       } else {
-        debugPrint('[SettingsController] ⚠️ No limits found, loading defaults');
         _loadDefaultLimits();
       }
-    } catch (e) {
-      debugPrint('[SettingsController] ❌ Error loading limits: $e');
+    } catch (e, stackTrace) {
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: '_loadLimits',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+        stackTrace: stackTrace,
+      );
       _loadDefaultLimits();
     }
   }
@@ -564,18 +631,29 @@ class SettingsManagementController extends GetxController {
 
   // Fees — update to Supabase
   Future<bool> updateFee(String id, String newValue) async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: 'updateFee',
+      feature: 'Settings',
+      status: 'INFO',
+      params: {'feeId': id},
+    );
     int index = fees.indexWhere((e) => e.id == id);
     if (index == -1) {
-      debugPrint('[SettingsController] ❌ Fee with id $id not found');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'updateFee',
+        feature: 'Settings',
+        status: 'FAILED',
+        message: 'Fee not found',
+        params: {'feeId': id},
+      );
       return false;
     }
-    
-    debugPrint('[SettingsController] ▶ Updating fee $id to: $newValue');
-    
+
     fees[index] = fees[index].copyWith(value: newValue);
-    
+
     if (!_isValidSettingsId(id)) {
-      debugPrint('[SettingsController] ℹ️ Local-only update for fee $id');
       return true;
     }
 
@@ -587,12 +665,17 @@ class SettingsManagementController extends GetxController {
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', id);
-          
-      debugPrint('[SettingsController] ✅ Successfully updated fee $id');
+
       return true;
     } catch (e) {
-      debugPrint('[SettingsController] ❌ Error updating fee $id: $e');
-      // Revert on error
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'updateFee',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'feeId': id},
+        error: e,
+      );
       fees[index] = fees[index].copyWith(value: fees[index].value);
       return false;
     }
@@ -669,18 +752,37 @@ class SettingsManagementController extends GetxController {
 
   // Limits — update to Supabase
   Future<bool> updateLimit(String id, String newValue) async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsManagementController',
+      method: 'updateLimit',
+      feature: 'Settings',
+      status: 'INFO',
+      params: {'limitId': id},
+    );
     int index = limits.indexWhere((e) => e.id == id);
     if (index == -1) {
-      debugPrint('[SettingsController] ❌ Limit with id $id not found');
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'updateLimit',
+        feature: 'Settings',
+        status: 'FAILED',
+        message: 'Limit not found',
+        params: {'limitId': id},
+      );
       return false;
     }
-    
-    debugPrint('[SettingsController] ▶ Updating limit $id to: $newValue');
-    
-    limits[index] = limits[index].copyWith(value: newValue);
-    
+
+    final normalized = newValue.trim();
+    final isUnlimited = normalized.toLowerCase() == 'unlimited' ||
+        normalized == 'غير محدود' ||
+        normalized == '0';
+
+    limits[index] = limits[index].copyWith(
+      value: isUnlimited ? '0' : normalized,
+      isUnlimited: isUnlimited,
+    );
+
     if (!_isValidSettingsId(id)) {
-      debugPrint('[SettingsController] ℹ️ Local-only update for limit $id');
       return true;
     }
 
@@ -688,17 +790,23 @@ class SettingsManagementController extends GetxController {
       await SupabaseService.client
           .from('transaction_limits')
           .update({
-            'value': newValue,
+            'value': isUnlimited ? '0' : normalized,
+            'is_unlimited': isUnlimited,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', id);
-          
-      debugPrint('[SettingsController] ✅ Successfully updated limit $id');
+
       return true;
     } catch (e) {
-      debugPrint('[SettingsController] ❌ Error updating limit $id: $e');
-      // Revert on error
-      limits[index] = limits[index].copyWith(value: limits[index].value);
+      AppLoggerService.debugTrace(
+        className: 'SettingsManagementController',
+        method: 'updateLimit',
+        feature: 'Settings',
+        status: 'FAILED',
+        params: {'limitId': id},
+        error: e,
+      );
+      await _loadLimits();
       return false;
     }
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -34,6 +35,14 @@ class _AddEditAdScreenState extends State<AddEditAdScreen> {
   @override
   void initState() {
     super.initState();
+    AppLoggerService.debugTrace(
+      className: 'AddEditAdScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'mode': widget.ad == null ? 'create' : 'edit'},
+    );
     titleArController = TextEditingController(text: widget.ad?.titleAr);
     titleEnController = TextEditingController(text: widget.ad?.titleEn);
     descArController = TextEditingController(text: widget.ad?.descriptionAr);
@@ -44,6 +53,13 @@ class _AddEditAdScreenState extends State<AddEditAdScreen> {
 
   @override
   void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'AddEditAdScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
     titleArController.dispose();
     titleEnController.dispose();
     descArController.dispose();

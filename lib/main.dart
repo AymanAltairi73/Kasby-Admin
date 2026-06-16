@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -48,28 +48,65 @@ import 'features/subscriptions/screens/subscriptions_screen.dart';
 import 'features/kyc/screens/kyc_management_screen.dart';
 import 'features/notifications/controllers/notification_controller.dart';
 import 'core/services/admin_listener_service.dart';
+import 'core/services/admin_notification_navigation_service.dart';
 import 'core/localization/admin_translations.dart';
 import 'core/services/presence_service.dart';
 import 'core/services/network_service.dart';
 import 'core/widgets/connectivity_banner.dart';
 import 'features/ksp_analytics/controllers/ksp_analytics_controller.dart';
 import 'features/ksp_analytics/screens/ksp_analytics_screen.dart';
+import 'features/referrals/screens/referral_management_screen.dart';
+import 'features/wallets/screens/wallet_management_screen.dart';
+import 'features/reports/screens/revenue_dashboard_screen.dart';
+import 'features/staff/screens/role_management_screen.dart';
+import 'features/qr/screens/qr_management_screen.dart';
+import 'core/services/permission_service.dart';
+import 'core/services/app_logger_service.dart';
 
 
 Future<void> main() async {
+  final startupStopwatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
-  HttpOverrides.global = MyHttpOverrides();
+
+  AppLoggerService.debugTrace(
+    className: 'main',
+    method: 'startup',
+    feature: 'Startup',
+    status: 'INFO',
+    message: 'Admin app startup initiated',
+  );
+
+  await dotenv.load(fileName: '.env');
+  AppLoggerService.debugTrace(
+    className: 'main',
+    method: 'loadEnv',
+    feature: 'Startup',
+    status: 'SUCCESS',
+  );
 
   // Initialize Services
   await SupabaseService.init();
 
   // Initialize Date Formatting
   await initializeDateFormatting('ar', null);
+  AppLoggerService.debugTrace(
+    className: 'main',
+    method: 'initDateFormatting',
+    feature: 'Startup',
+    status: 'SUCCESS',
+  );
 
   // --- BEGIN GENIUS NOTIFICATION SYSTEM ---
   try {
     // Initialize Firebase
     await Firebase.initializeApp();
+    AppLoggerService.debugTrace(
+      className: 'main',
+      method: 'initFirebase',
+      feature: 'Startup',
+      status: 'SUCCESS',
+      durationMs: startupStopwatch.elapsedMilliseconds,
+    );
 
     // Request high importance for Firebase (active state)
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -77,8 +114,31 @@ Future<void> main() async {
       badge: true,
       sound: true,
     );
-  } catch (e) {
-    debugPrint('[GENIUS] Firebase not initialized or configured: $e');
+
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      await AdminNotificationNavigationService.navigateFromPayload(
+        initialMessage.data,
+        fromUserTap: true,
+      );
+    }
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      AdminNotificationNavigationService.navigateFromPayload(
+        message.data,
+        fromUserTap: true,
+      );
+    });
+  } catch (e, st) {
+    AppLoggerService.debugTrace(
+      className: 'main',
+      method: 'initFirebase',
+      feature: 'Startup',
+      status: 'FAILED',
+      error: e,
+      stackTrace: st,
+      message: 'App will still function using Supabase Realtime listeners',
+    );
     // App will still function using Supabase Realtime listeners
   }
 
@@ -97,10 +157,16 @@ Future<void> main() async {
       .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
-  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const InitializationSettings initializationSettings = InitializationSettings(android: initializationSettingsAndroid);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  // Local notification tap routing is initialized in AdminListenerService.
   // --- END GENIUS NOTIFICATION SYSTEM ---
+
+  AppLoggerService.debugTrace(
+    className: 'main',
+    method: 'initDependencyInjection',
+    feature: 'Startup',
+    status: 'INFO',
+    message: 'Registering GetX services and controllers',
+  );
 
   // 1. Core Services & Auth (Dependencies for most things)
   Get.put(AuthController());
@@ -112,6 +178,7 @@ Future<void> main() async {
   await Get.putAsync(() => NetworkService().init());
   await Get.putAsync(() => PresenceService().init());
   await Get.putAsync(() => AdminListenerService().init());
+  await Get.putAsync(() => PermissionService().init());
 
   // 3. Subject-Matter Controllers (Lazy Load on Demand)
   Get.lazyPut(() => SettingsManagementController(), fenix: true);
@@ -127,7 +194,32 @@ Future<void> main() async {
   Get.lazyPut(() => NotificationController(), fenix: true);
   Get.lazyPut(() => KspAnalyticsController(), fenix: true);
 
+  AppLoggerService.debugTrace(
+    className: 'main',
+    method: 'runApp',
+    feature: 'Startup',
+    status: 'SUCCESS',
+    durationMs: startupStopwatch.elapsedMilliseconds,
+  );
+
   runApp(const KasbyAdminApp());
+}
+
+Widget _loggedAdminScreen(String screenName, Widget child) {
+  return AdminTrackedScreen(screenName: screenName, child: child);
+}
+
+GetPage _adminRoute(
+  String name,
+  String screen,
+  Widget Function() builder, {
+  Bindings? binding,
+}) {
+  return GetPage(
+    name: name,
+    page: () => _loggedAdminScreen(screen, builder()),
+    binding: binding,
+  );
 }
 
 class KasbyAdminApp extends StatelessWidget {
@@ -143,6 +235,7 @@ class KasbyAdminApp extends StatelessWidget {
       themeMode: Get.find<ThemeController>().isDarkMode.value
           ? ThemeMode.dark
           : ThemeMode.light,
+      routingCallback: AppLoggerService.logRoute,
 
       // Smooth Navigation
       defaultTransition: Transition.fadeIn,
@@ -156,63 +249,114 @@ class KasbyAdminApp extends StatelessWidget {
       // Routes (Home handles entry logic)
       home: const AuthWrapper(),
       getPages: [
-        GetPage(name: '/login', page: () => const LoginScreen()),
-        GetPage(name: '/otp', page: () => const OtpScreen()),
-        GetPage(
-          name: '/forgot-password',
-          page: () => const ForgotPasswordScreen(),
+        _adminRoute('/login', 'LoginScreen', () => const LoginScreen()),
+        _adminRoute('/otp', 'OtpScreen', () => const OtpScreen()),
+        _adminRoute(
+          '/forgot-password',
+          'ForgotPasswordScreen',
+          () => const ForgotPasswordScreen(),
         ),
-        GetPage(name: '/main', page: () => const MainWrapper()),
-        GetPage(name: '/users', page: () => const UserListScreen()),
-        GetPage(
-          name: '/investment-plans',
-          page: () => const InvestmentPlansScreen(),
+        _adminRoute('/main', 'MainWrapper', () => const MainWrapper()),
+        _adminRoute('/users', 'UserListScreen', () => const UserListScreen()),
+        _adminRoute(
+          '/investment-plans',
+          'InvestmentPlansScreen',
+          () => const InvestmentPlansScreen(),
         ),
-        GetPage(
-          name: '/user-investments',
-          page: () => const UserInvestmentsScreen(),
+        _adminRoute(
+          '/user-investments',
+          'UserInvestmentsScreen',
+          () => const UserInvestmentsScreen(),
         ),
-        GetPage(name: '/transactions', page: () => const TransactionsScreen()),
-        GetPage(name: '/agents', page: () => const AgentsScreen()),
-        GetPage(name: '/loans', page: () => const LoansScreen()),
-        GetPage(
-          name: '/add-notification',
-          page: () => const NotificationsScreen(),
+        _adminRoute(
+          '/transactions',
+          'TransactionsScreen',
+          () => const TransactionsScreen(),
+        ),
+        _adminRoute('/agents', 'AgentsScreen', () => const AgentsScreen()),
+        _adminRoute('/loans', 'LoansScreen', () => const LoansScreen()),
+        _adminRoute(
+          '/add-notification',
+          'NotificationsScreen',
+          () => const NotificationsScreen(),
           binding: BindingsBuilder(() {
             Get.lazyPut(() => NotificationController());
           }),
         ),
-        GetPage(
-          name: '/notifications-list',
-          page: () => const NotificationsListScreen(),
+        _adminRoute(
+          '/notifications-list',
+          'NotificationsListScreen',
+          () => const NotificationsListScreen(),
         ),
-        GetPage(name: '/rewards', page: () => const RewardsScreen()),
-        GetPage(name: '/settings', page: () => const SettingsScreen()),
-        GetPage(name: '/profile', page: () => const ProfileScreen()),
-        GetPage(name: '/terms', page: () => const TermsScreen()),
-        GetPage(name: '/faq', page: () => const FaqScreen()),
-        GetPage(name: '/maintenance', page: () => const MaintenanceScreen()),
-        GetPage(name: '/chat-list', page: () => const ChatListScreen()),
-        GetPage(name: '/chat-details', page: () => const ChatDetailsScreen()),
-        GetPage(name: '/agent-details', page: () => const AgentDetailsScreen()),
-        GetPage(name: '/edit-agent', page: () => const EditAgentScreen()),
-        GetPage(
-          name: '/subscriptions',
-          page: () => const SubscriptionsScreen(),
+        _adminRoute('/rewards', 'RewardsScreen', () => const RewardsScreen()),
+        _adminRoute('/settings', 'SettingsScreen', () => const SettingsScreen()),
+        _adminRoute('/profile', 'ProfileScreen', () => const ProfileScreen()),
+        _adminRoute('/terms', 'TermsScreen', () => const TermsScreen()),
+        _adminRoute('/faq', 'FaqScreen', () => const FaqScreen()),
+        _adminRoute(
+          '/maintenance',
+          'MaintenanceScreen',
+          () => const MaintenanceScreen(),
         ),
-        GetPage(
-          name: '/kyc',
-          page: () => const KycManagementScreen(),
+        _adminRoute('/chat-list', 'ChatListScreen', () => const ChatListScreen()),
+        _adminRoute(
+          '/chat-details',
+          'ChatDetailsScreen',
+          () => const ChatDetailsScreen(),
         ),
-        GetPage(
-          name: '/ksp-analytics',
-          page: () => const KspAnalyticsScreen(),
+        _adminRoute(
+          '/agent-details',
+          'AgentDetailsScreen',
+          () => const AgentDetailsScreen(),
+        ),
+        _adminRoute(
+          '/edit-agent',
+          'EditAgentScreen',
+          () => const EditAgentScreen(),
+        ),
+        _adminRoute(
+          '/subscriptions',
+          'SubscriptionsScreen',
+          () => const SubscriptionsScreen(),
+        ),
+        _adminRoute(
+          '/kyc',
+          'KycManagementScreen',
+          () => const KycManagementScreen(),
+        ),
+        _adminRoute(
+          '/ksp-analytics',
+          'KspAnalyticsScreen',
+          () => const KspAnalyticsScreen(),
+        ),
+        _adminRoute(
+          '/referrals',
+          'ReferralManagementScreen',
+          () => const ReferralManagementScreen(),
+        ),
+        _adminRoute(
+          '/wallets',
+          'WalletManagementScreen',
+          () => const WalletManagementScreen(),
+        ),
+        _adminRoute(
+          '/reports',
+          'RevenueDashboardScreen',
+          () => const RevenueDashboardScreen(),
+        ),
+        _adminRoute(
+          '/qr-management',
+          'QrManagementScreen',
+          () => const QrManagementScreen(),
         ),
       ],
 
       // Check if user is already logged in
       builder: (context, child) {
-        return ConnectivityBanner(child: child ?? const SizedBox.shrink());
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: ConnectivityBanner(child: child ?? const SizedBox.shrink()),
+        );
       },
     );
   }
@@ -228,6 +372,13 @@ class AuthWrapper extends StatelessWidget {
 
     return Obx(() {
       if (authController.isCheckingAuth.value) {
+        AppLoggerService.debugTrace(
+          className: 'AuthWrapper',
+          method: 'build',
+          feature: 'Authentication',
+          status: 'INFO',
+          message: 'Checking auth session',
+        );
         return const Scaffold(
           body: Center(
             child: CircularProgressIndicator(color: KasbyColors.primaryGold),
@@ -236,19 +387,24 @@ class AuthWrapper extends StatelessWidget {
       }
 
       if (authController.isLoggedIn.value) {
+        AppLoggerService.debugTrace(
+          className: 'AuthWrapper',
+          method: 'build',
+          feature: 'Authentication',
+          status: 'SUCCESS',
+          message: 'Session restored — navigating to MainWrapper',
+        );
         return const MainWrapper(); // Use MainWrapper for proper navigation setup
       } else {
+        AppLoggerService.debugTrace(
+          className: 'AuthWrapper',
+          method: 'build',
+          feature: 'Authentication',
+          status: 'INFO',
+          message: 'No session — showing LoginScreen',
+        );
         return const LoginScreen();
       }
     });
-  }
-}
-
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
   }
 }

@@ -1,14 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/admin_metric_chip.dart';
 import '../controllers/settings_management_controller.dart';
 import '../models/settings_models.dart';
 
-class TransactionLimitsScreen extends StatelessWidget {
+class TransactionLimitsScreen extends StatefulWidget {
   const TransactionLimitsScreen({super.key});
+
+  @override
+  State<TransactionLimitsScreen> createState() =>
+      _TransactionLimitsScreenState();
+}
+
+class _TransactionLimitsScreenState extends State<TransactionLimitsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'TransactionLimitsScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'TransactionLimitsScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,20 +65,36 @@ class TransactionLimitsScreen extends StatelessWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
+                Row(
+                  children: [
+                    AdminMetricChip(
+                      label: 'حدود عادية',
+                      value: '${_limitsByTier(controller, 'normal').length}',
+                      color: KasbyColors.info,
+                      icon: Icons.person_outline_rounded,
+                    ),
+                    const SizedBox(width: 10),
+                    AdminMetricChip(
+                      label: 'حدود VIP',
+                      value: '${_limitsByTier(controller, 'vip').length}',
+                      color: KasbyColors.primaryGold,
+                      icon: Icons.workspace_premium_outlined,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
                 _buildLimitSection(
                   context,
                   controller,
                   title: 'المستخدم العادي',
-                  limits: controller.limits
-                      .where((e) => e.tier == 'normal')
-                      .toList(),
+                  limits: _limitsByTier(controller, 'normal'),
                 ),
                 const SizedBox(height: 24),
                 _buildLimitSection(
                   context,
                   controller,
                   title: 'المستخدم الموثق / VIP',
-                  limits: controller.limits.where((e) => e.tier == 'vip').toList(),
+                  limits: _limitsByTier(controller, 'vip'),
                 ),
                 const SizedBox(height: 40),
                 KasbyButton(
@@ -63,6 +111,15 @@ class TransactionLimitsScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<LimitItem> _limitsByTier(
+    SettingsManagementController controller,
+    String tier,
+  ) {
+    return controller.limits
+        .where((e) => e.tier.toLowerCase() == tier)
+        .toList();
   }
 
   Widget _buildLimitSection(
@@ -83,8 +140,19 @@ class TransactionLimitsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...limits.map(
-          (limit) => KasbyGlassCard(
+        if (limits.isEmpty)
+          const KasbyGlassCard(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'لا توجد حدود مسجلة لهذا المستوى',
+                style: TextStyle(color: KasbyColors.textSecondary),
+              ),
+            ),
+          )
+        else
+          ...limits.map(
+            (limit) => KasbyGlassCard(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -111,7 +179,7 @@ class TransactionLimitsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        limit.value,
+                        limit.isUnlimited ? 'غير محدود' : limit.value,
                         style: const TextStyle(
                           color: KasbyColors.primaryGold,
                           fontWeight: FontWeight.bold,

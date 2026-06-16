@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/services/base_repository.dart';
 import '../models/transaction_model.dart';
 
@@ -9,10 +10,17 @@ class TransactionRepository extends BaseRepository {
   /// Fetch paginated transactions with user names.
   Future<List<Transaction>> getTransactionsPaginated({
     int from = 0,
-    int to = 19,
+    int to = 499,
     String? type,
     String? status,
   }) async {
+    AppLoggerService.debugTrace(
+      className: 'TransactionRepository',
+      method: 'getTransactionsPaginated',
+      feature: 'Transactions',
+      status: 'INFO',
+      params: {'from': from, 'to': to, 'type': type ?? 'all', 'status': status ?? 'all'},
+    );
     return safeQuery<List<Transaction>>(
       () async {
         var query = client
@@ -35,14 +43,23 @@ class TransactionRepository extends BaseRepository {
             .toList();
       },
       methodName: 'getTransactionsPaginated',
+      controllerName: 'TransactionRepository',
     );
   }
 
   /// Call a transaction processing RPC.
   Future<void> processTransaction(String fnName, Map<String, dynamic> params) async {
+    AppLoggerService.debugTrace(
+      className: 'TransactionRepository',
+      method: 'processTransaction',
+      feature: 'Transactions',
+      status: 'INFO',
+      params: {'rpc': fnName},
+    );
     await safeQuery(
       () => client.rpc(fnName, params: params),
       methodName: 'rpc:$fnName',
+      controllerName: 'TransactionRepository',
     );
   }
 }

@@ -5,24 +5,52 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 import 'dart:ui' as ui;
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/main_controller.dart';
-import '../../transactions/controllers/transaction_controller.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../controllers/dashboard_controller.dart';
 
 /// Dashboard Home Screen — Restructured Edition
 /// Clean sections: Stats → Financial → Actions → Activity
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'DashboardScreen',
+      method: 'initState',
+      feature: 'Dashboard',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'DashboardScreen',
+      method: 'dispose',
+      feature: 'Dashboard',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final dashboardController = Get.put(DashboardController());
-    final transactionController = Get.find<TransactionController>();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -33,17 +61,9 @@ class DashboardScreen extends StatelessWidget {
           _buildBackground(),
 
           // Content
-          RefreshIndicator(
-            onRefresh: () async {
-              await Future.wait([
-                dashboardController.loadDashboardData(),
-                transactionController.loadTransactions(),
-              ]);
-            },
-            color: KasbyColors.primaryGold,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
+          SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 100),
@@ -81,7 +101,7 @@ class DashboardScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         _buildFinancialCards(dashboardController),
                         const SizedBox(height: 16),
-                        _buildChart(),
+                        _buildChart(dashboardController),
                         const SizedBox(height: 28),
 
                         // ═══════════════════════════════════════
@@ -102,7 +122,6 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
           ),
         ],
       ),
@@ -361,7 +380,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildHorizontalStats(DashboardController dc) {
     return SizedBox(
-      height: 100,
+      height: 108,
       child: Obx(
         () => ListView(
           scrollDirection: Axis.horizontal,
@@ -379,18 +398,30 @@ class DashboardScreen extends StatelessWidget {
               icon: FontAwesomeIcons.userCheck,
               color: KasbyColors.glowGreen,
             ),
-            // _buildStatChip(
-            //   title: 'معاملات معلقة',
-            //   value: NumberFormat('#,###').format(dc.pendingTransactions),
-            //   icon: FontAwesomeIcons.clockRotateLeft,
-            //   color: KasbyColors.glowOrange,
-            // ),
-            // _buildStatChip(
-            //   title: 'حجم التداول',
-            //   value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
-            //   icon: FontAwesomeIcons.arrowTrendUp,
-            //   color: KasbyColors.glowBlue,
-            // ),
+            _buildStatChip(
+              title: 'معاملات معلقة',
+              value: NumberFormat('#,###').format(dc.pendingTransactions),
+              icon: FontAwesomeIcons.clockRotateLeft,
+              color: KasbyColors.glowOrange,
+            ),
+            _buildStatChip(
+              title: 'سحوبات معلقة',
+              value: NumberFormat('#,###').format(dc.pendingWithdrawalsCount.value),
+              icon: FontAwesomeIcons.wallet,
+              color: KasbyColors.error,
+            ),
+            _buildStatChip(
+              title: 'توثيق معلق',
+              value: NumberFormat('#,###').format(dc.pendingKYCCount.value),
+              icon: FontAwesomeIcons.idCard,
+              color: KasbyColors.info,
+            ),
+            _buildStatChip(
+              title: 'حجم اليوم',
+              value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
+              icon: FontAwesomeIcons.arrowTrendUp,
+              color: KasbyColors.glowBlue,
+            ),
           ],
         ),
       ),
@@ -404,10 +435,10 @@ class DashboardScreen extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      width: 145,
+      width: 132,
       margin: const EdgeInsets.only(left: 10),
       child: KasbyGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         opacity: 0.08,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,7 +447,14 @@ class DashboardScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, size: 16, color: color),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 14, color: color),
+                ),
                 Container(
                   width: 6,
                   height: 6,
@@ -433,7 +471,7 @@ class DashboardScreen extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: -0.5,
@@ -441,8 +479,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
@@ -630,8 +670,18 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChart() {
-    return KasbyGlassCard(
+  Widget _buildChart(DashboardController dc) {
+    return Obx(() {
+      final yValues = dc.chartYValues;
+      final spots = List.generate(
+        yValues.length,
+        (i) => FlSpot(i.toDouble(), yValues[i]),
+      );
+      if (spots.isEmpty) {
+        spots.addAll(List.generate(7, (i) => FlSpot(i.toDouble(), 0)));
+      }
+
+      return KasbyGlassCard(
       padding: const EdgeInsets.all(16),
       opacity: 0.06,
       child: Column(
@@ -683,15 +733,7 @@ class DashboardScreen extends StatelessWidget {
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: const [
-                        FlSpot(0, 3),
-                        FlSpot(1, 4),
-                        FlSpot(2, 3.5),
-                        FlSpot(3, 5),
-                        FlSpot(4, 4.5),
-                        FlSpot(5, 6),
-                        FlSpot(6, 5.8),
-                      ],
+                      spots: spots,
                       isCurved: true,
                       color: KasbyColors.primaryGold,
                       barWidth: 3,
@@ -731,6 +773,7 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
     );
+    });
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -761,7 +804,7 @@ class DashboardScreen extends StatelessWidget {
         'الوكلاء',
         FontAwesomeIcons.networkWired,
         KasbyColors.glowOrange,
-        page: 1,
+        route: '/agents',
       ),
       _ActionItem(
         'الإعدادات',

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/services/system_repository.dart';
 import '../models/system_settings_model.dart';
+import '../services/app_logger_service.dart';
 
 /// Settings Controller
 /// Manages system-wide emergency controls from Supabase `system_settings` table
@@ -26,23 +27,58 @@ class SettingsController extends GetxController {
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'SettingsController',
+      method: 'onInit',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     super.onInit();
     loadSettings();
   }
 
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'SettingsController',
+      method: 'onClose',
+      feature: 'Settings',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   /// Load settings from Supabase `system_settings` table
   Future<void> loadSettings() async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsController',
+      method: 'loadSettings',
+      feature: 'Settings',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await _systemRepo.getSettings();
 
       if (response != null) {
         settings.value = SystemSettings.fromJson(response);
+        AppLoggerService.debugTrace(
+          className: 'SettingsController',
+          method: 'loadSettings',
+          feature: 'Settings',
+          status: 'SUCCESS',
+        );
       } else {
-        // Create initial row if not exists
         await _createInitialSettings();
       }
     } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'SettingsController',
+        method: 'loadSettings',
+        feature: 'Settings',
+        status: 'FAILED',
+        error: e,
+      );
       Get.snackbar(
         'خطأ',
         'فشل في تحميل إعدادات النظام',
@@ -108,6 +144,13 @@ class SettingsController extends GetxController {
 
   /// Toggle emergency control
   Future<void> toggleControl(String controlKey) async {
+    AppLoggerService.debugTrace(
+      className: 'SettingsController',
+      method: 'toggleControl',
+      feature: 'Settings',
+      status: 'INFO',
+      params: {'controlKey': controlKey},
+    );
     isLoading.value = true;
 
     String action = '';

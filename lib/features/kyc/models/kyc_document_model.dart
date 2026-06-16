@@ -1,4 +1,6 @@
 /// KycDocument Model
+import '../../../core/services/app_logger_service.dart';
+
 class KycDocument {
   final String id;
   final String userId;
@@ -29,6 +31,7 @@ class KycDocument {
   });
 
   factory KycDocument.fromJson(Map<String, dynamic> json) {
+    try {
     return KycDocument(
       id: json['id'] ?? '',
       userId: json['user_id'] ?? '',
@@ -57,6 +60,18 @@ class KycDocument {
               ? json['profiles!kyc_documents_user_id_fkey']['email'] 
               : null),
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'KycDocument',
+        method: 'fromJson',
+        feature: 'KYC',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

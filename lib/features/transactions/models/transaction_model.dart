@@ -1,4 +1,5 @@
 /// Transaction Model — maps to `transactions` table in Supabase
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/utils/numeric_utils.dart';
 
 class Transaction {
@@ -110,6 +111,7 @@ class Transaction {
 
   /// Legacy fromJson for backward compat
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    try {
     return Transaction(
       id: json['id'] ?? '',
       userId: json['userId'] ?? json['user_id'] ?? '',
@@ -139,6 +141,18 @@ class Transaction {
                 : null),
       referenceId: json['referenceId'] ?? json['reference_id'],
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'Transaction',
+        method: 'fromJson',
+        feature: 'Transactions',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

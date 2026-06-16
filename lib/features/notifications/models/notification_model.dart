@@ -1,4 +1,6 @@
 /// Notification Model
+import '../../../core/services/app_logger_service.dart';
+
 class NotificationModel {
   final String id;
   final String title;
@@ -21,6 +23,7 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    try {
     return NotificationModel(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
@@ -35,6 +38,18 @@ class NotificationModel {
                 : DateTime.now()),
       status: json['status'] ?? 'Sent',
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'NotificationModel',
+        method: 'fromJson',
+        feature: 'Notifications',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

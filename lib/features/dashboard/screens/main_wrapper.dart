@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../controllers/main_controller.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../../users/screens/user_list_screen.dart';
@@ -21,6 +22,12 @@ class _MainWrapperState extends State<MainWrapper> {
   @override
   void initState() {
     super.initState();
+    AppLoggerService.debugTrace(
+      className: 'MainWrapper',
+      method: 'initState',
+      feature: 'Dashboard',
+      status: 'INFO',
+    );
     _pageController = PageController(
       initialPage: controller.currentIndex.value,
     );
@@ -40,6 +47,12 @@ class _MainWrapperState extends State<MainWrapper> {
 
   @override
   void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'MainWrapper',
+      method: 'dispose',
+      feature: 'Dashboard',
+      status: 'INFO',
+    );
     _pageController.dispose();
     super.dispose();
   }

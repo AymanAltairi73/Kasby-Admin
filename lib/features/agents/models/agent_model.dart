@@ -1,4 +1,6 @@
 /// Agent Model — maps to `agents` table in Supabase
+import '../../../core/services/app_logger_service.dart';
+
 class Agent {
   final String id;
   final String userId; // Added for profiles reference
@@ -17,6 +19,9 @@ class Agent {
   final List<String> supportedMethods; // WhatsApp, Telegram, Call
   final int totalTransactions;
   final DateTime createdAt;
+
+  bool get isActive => status.toLowerCase() == 'active';
+  String get statusLabelAr => isActive ? 'نشط' : 'معطل';
 
   Agent({
     required this.id,
@@ -125,6 +130,7 @@ class Agent {
 
   /// Legacy fromJson for backward compat
   factory Agent.fromJson(Map<String, dynamic> json) {
+    try {
     return Agent(
       id: json['id'] ?? '',
       userId: json['user_id'] ?? json['id'] ?? '',
@@ -152,6 +158,18 @@ class Agent {
                 ? DateTime.parse(json['created_at'])
                 : DateTime.now()),
     );
+    } catch (e, stack) {
+      AppLoggerService.debugTrace(
+        className: 'Agent',
+        method: 'fromJson',
+        feature: 'Agents',
+        status: 'FAILED',
+        params: {'id': json['id']?.toString()},
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

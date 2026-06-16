@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../controllers/subscription_controller.dart';
@@ -69,13 +70,19 @@ class SubscriptionsScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'إدارة خطط الاشتراكات والمميزات الحصرية لعملاء كسب',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withValues(alpha: 0.5),
-                          ),
-                        ),
+                        Obx(() {
+                          final total = controller.plans.length;
+                          final active = controller.plans
+                              .where((p) => p.status.toLowerCase() == 'active')
+                              .length;
+                          return Text(
+                            '$total خطة · $active فعّالة',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -229,8 +236,37 @@ class SubscriptionsScreen extends StatelessWidget {
 }
 
 /// Detailed View for Premium Plans
-class PremiumDetailsScreen extends StatelessWidget {
+class PremiumDetailsScreen extends StatefulWidget {
   const PremiumDetailsScreen({super.key});
+
+  @override
+  State<PremiumDetailsScreen> createState() => _PremiumDetailsScreenState();
+}
+
+class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'PremiumDetailsScreen',
+      method: 'initState',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'PremiumDetailsScreen',
+      method: 'dispose',
+      feature: 'Subscriptions',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,19 +315,15 @@ class PremiumDetailsScreen extends StatelessWidget {
               );
             }
 
-            return RefreshIndicator(
-              onRefresh: () => controller.loadPlans(),
-              color: KasbyColors.primaryGold,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 120, 20, 100),
-                itemCount: premiumPlans.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final plan = premiumPlans[index];
-                  return _buildPlanItem(context, plan, controller);
-                },
-              ),
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 120, 20, 100),
+              itemCount: premiumPlans.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                final plan = premiumPlans[index];
+                return _buildPlanItem(context, plan, controller);
+              },
             );
           }),
         ],

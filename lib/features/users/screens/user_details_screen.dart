@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui' as ui;
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
 import '../../../core/widgets/kasby_text_field.dart';
@@ -15,7 +16,6 @@ import '../models/user_model.dart';
 import '../controllers/user_controller.dart';
 import '../../chat/models/chat_model.dart';
 import '../../chat/screens/chat_details_screen.dart';
-import 'edit_user_screen.dart';
 
 /// User Details Screen
 /// Show detailed user information and admin actions
@@ -30,20 +30,59 @@ class UserDetailsScreen extends StatefulWidget {
 
 class _UserDetailsScreenState extends State<UserDetailsScreen> {
   late final UserController userController;
+  late final String _userId;
 
   @override
   void initState() {
     super.initState();
+    _userId = widget.user.id;
+    AppLoggerService.debugTrace(
+      className: 'UserDetailsScreen',
+      method: 'initState',
+      feature: 'Users',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {'userId': _safeUserId(_userId)},
+    );
     userController = Get.find<UserController>();
     // Load extra details (Investments, Transactions, Activities)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      userController.loadUserExtraDetails(widget.user.id);
+      AppLoggerService.debugTrace(
+        className: 'UserDetailsScreen',
+        method: 'loadUserExtraDetails',
+        feature: 'Users',
+        status: 'INFO',
+        params: {'userId': _safeUserId(_userId)},
+      );
+      userController.loadUserExtraDetails(_userId);
     });
   }
 
   @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'UserDetailsScreen',
+      method: 'dispose',
+      feature: 'Users',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
+
+  static String _safeUserId(String id) =>
+      id.length > 8 ? '${id.substring(0, 8)}...' : id;
+
+  User _currentUser([UserController? controller]) {
+    final c = controller ?? userController;
+    return c.getUserById(_userId) ?? widget.user;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() {
+      final user = userController.getUserById(_userId) ?? widget.user;
+      return Scaffold(
       appBar: AppBar(
         title: const Text('تفاصيل المستخدم'),
         actions: [
@@ -81,59 +120,30 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               ),
               PopupMenuItem(
                 child: Text(
-                  widget.user.status == 'Active'
+                  user.isActive
                       ? 'حظر المستخدم'
                       : 'تفعيل المستخدم',
                   style: TextStyle(
-                    color: widget.user.status == 'Active'
+                    color: user.isActive
                         ? KasbyColors.error
                         : KasbyColors.success,
                   ),
                 ),
                 onTap: () {
-                  KasbyConfirmationDialog.show(
-                    title: widget.user.status == 'Active'
-                        ? 'حظر المستخدم'
-                        : 'تفعيل المستخدم',
-                    message: widget.user.status == 'Active'
-                        ? 'هل أنت متأكد من حظر المستخدم "${widget.user.name}"؟'
-                        : 'هل أنت متأكد من تفعيل المستخدم "${widget.user.name}"؟',
-                    isDangerous: widget.user.status == 'Active',
-                    onConfirm: () {
-                      if (widget.user.status == 'Active') {
-                        userController.blockUser(widget.user.id);
-                      } else {
-                        userController.activateUser(widget.user.id);
-                      }
-                    },
-                  );
+                  if (user.isActive) {
+                    _showBlockReasonDialog(userController);
+                  } else {
+                    KasbyConfirmationDialog.show(
+                      title: 'تفعيل المستخدم',
+                      message:
+                          'هل أنت متأكد من تفعيل المستخدم "${user.name}"؟',
+                      onConfirm: () =>
+                          userController.activateUser(user.id),
+                    );
+                  }
                 },
               ),
               const PopupMenuDivider(),
-              PopupMenuItem(
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.edit_outlined,
-                      size: 18,
-                      color: KasbyColors.textPrimary,
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'تحديث بيانات المستخدم',
-                      style: TextStyle(color: KasbyColors.textPrimary),
-                    ),
-                  ],
-                ),
-                onTap: () {
-                  final ctx = context;
-                  Future.delayed(Duration.zero, () {
-                    if (ctx.mounted) {
-                      Get.to(() => EditUserScreen(user: widget.user));
-                    }
-                  });
-                },
-              ),
               PopupMenuItem(
                 child: const Row(
                   children: [
@@ -162,7 +172,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       body: RefreshIndicator(
         onRefresh: () async {
           await userController.loadUsers();
-          await userController.loadUserExtraDetails(widget.user.id);
+          await userController.loadUserExtraDetails(user.id);
         },
         color: KasbyColors.primaryGold,
         child: SingleChildScrollView(
@@ -184,9 +194,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: ClipOval(
-                        child: widget.user.avatarUrl.isNotEmpty
+                        child: user.avatarUrl.isNotEmpty
                             ? Image.network(
-                                widget.user.avatarUrl,
+                                user.avatarUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     const Icon(
@@ -219,14 +229,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          widget.user.name,
+                          user.name,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: KasbyColors.textPrimary,
                           ),
                         ),
-                        if (widget.user.accountType == 'VIP')
+                        if (user.accountType == 'VIP')
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Icon(
@@ -235,7 +245,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               size: 24,
                             ),
                           )
-                        else if (widget.user.accountType == 'Verified')
+                        else if (user.accountType == 'Verified')
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: Icon(
@@ -259,7 +269,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.user.email,
+                          user.email,
                           style: const TextStyle(
                             fontSize: 14,
                             color: KasbyColors.textSecondary,
@@ -278,7 +288,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.user.phone,
+                          user.phone,
                           textDirection: ui.TextDirection.ltr,
                           style: const TextStyle(
                             fontSize: 14,
@@ -288,7 +298,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    if (widget.user.address.isNotEmpty)
+                    if (user.address.isNotEmpty)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -300,7 +310,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              widget.user.address,
+                              user.address,
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: KasbyColors.textSecondary,
@@ -315,39 +325,39 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (widget.user.whatsapp.isNotEmpty)
+                        if (user.whatsapp.isNotEmpty)
                           _buildCommunicationButton(
                             icon: FontAwesomeIcons.whatsapp,
                             color: const Color(0xFF25D366),
                             label: 'واتساب',
                             onTap: () => _launchUrl(
-                              'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
+                              'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
                               fallbackMessage:
                                   'يرجى التأكد من تثبيت واتساب على جهازك',
                             ),
                           ),
-                        if (widget.user.whatsapp.isNotEmpty)
+                        if (user.whatsapp.isNotEmpty)
                           const SizedBox(width: 20),
-                        if (widget.user.telegram.isNotEmpty)
+                        if (user.telegram.isNotEmpty)
                           _buildCommunicationButton(
                             icon: FontAwesomeIcons.telegram,
                             color: const Color(0xFF24A1DE),
                             label: 'تيليجرام',
                             onTap: () => _launchUrl(
-                              widget.user.telegram.startsWith('http')
-                                  ? widget.user.telegram
-                                  : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
+                              user.telegram.startsWith('http')
+                                  ? user.telegram
+                                  : 'https://t.me/${user.telegram.replaceAll('@', '')}',
                               fallbackMessage:
                                   'يرجى التأكد من تثبيت تليجرام على جهازك',
                             ),
                           ),
-                        if (widget.user.telegram.isNotEmpty)
+                        if (user.telegram.isNotEmpty)
                           const SizedBox(width: 20),
                         _buildCommunicationButton(
                           icon: Icons.phone_forwarded_rounded,
                           color: KasbyColors.info,
                           label: 'اتصال',
-                          onTap: () => _launchUrl('tel:${widget.user.phone}'),
+                          onTap: () => _launchUrl('tel:${user.phone}'),
                         ),
                       ],
                     ),
@@ -360,26 +370,24 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       children: [
                         Obx(() {
                           final currUser =
-                              userController.getUserById(widget.user.id) ??
-                              widget.user;
+                              userController.getUserById(user.id) ??
+                              user;
                           return _buildStatusBadge(
-                            label: currUser.status == 'Active'
-                                ? 'نشط'
-                                : 'محظور',
-                            color: currUser.status == 'Active'
+                            label: currUser.statusLabelAr,
+                            color: currUser.isActive
                                 ? KasbyColors.success
                                 : KasbyColors.error,
                           );
                         }),
                         _buildStatusBadge(
-                          label: widget.user.country,
+                          label: user.country,
                           color: KasbyColors.info,
                           icon: Icons.public,
                         ),
                         Obx(() {
                           final currUser =
-                              userController.getUserById(widget.user.id) ??
-                              widget.user;
+                              userController.getUserById(user.id) ??
+                              user;
                           return _buildStatusBadge(
                             label: 'KYC: ${currUser.kycStatus}',
                             color: currUser.kycStatus == 'Verified'
@@ -399,7 +407,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     Directionality(
                       textDirection: ui.TextDirection.ltr,
                       child: Text(
-                        'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(widget.user.createdAt)}',
+                        'عضو منذ ${DateFormat('dd/MM/yyyy', 'en').format(user.createdAt)}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: KasbyColors.textSecondary,
@@ -408,7 +416,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     ),
 
                     // KYC Actions (If Pending)
-                    if (widget.user.kycStatus == 'Pending')
+                    if (user.kycStatus == 'Pending')
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
                         child: Row(
@@ -421,10 +429,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 backgroundColor: KasbyColors.error,
                                 foregroundColor: Colors.white,
                               ),
-                              onPressed: () {
-                                // Mock Action
-                                Get.snackbar('تم', 'تم رفض وثائق التوثيق');
-                              },
+                              onPressed: () =>
+                                  _showRejectDialog(context, userController),
                             ),
                             const SizedBox(width: 12),
                             ElevatedButton.icon(
@@ -434,14 +440,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 backgroundColor: KasbyColors.success,
                                 foregroundColor: Colors.white,
                               ),
-                              onPressed: () {
-                                // Mock Action
-                                final updated = widget.user.copyWith(
-                                  kycStatus: 'Verified',
-                                  accountType: 'Verified',
-                                );
-                                userController.updateUser(updated);
-                              },
+                              onPressed: () => _showVerifyConfirmation(
+                                context,
+                                userController,
+                              ),
                             ),
                           ],
                         ),
@@ -474,7 +476,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           color: const Color(0xFF25D366),
                           label: 'واتساب',
                           onTap: () => _launchUrl(
-                            'https://wa.me/${widget.user.whatsapp.replaceAll('+', '')}',
+                            'https://wa.me/${user.whatsapp.replaceAll('+', '')}',
                             fallbackMessage:
                                 'يرجى التأكد من تثبيت واتساب على جهازك',
                           ),
@@ -484,9 +486,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           color: const Color(0xFF24A1DE),
                           label: 'تليجرام',
                           onTap: () => _launchUrl(
-                            widget.user.telegram.startsWith('http')
-                                ? widget.user.telegram
-                                : 'https://t.me/${widget.user.telegram.replaceAll('@', '')}',
+                            user.telegram.startsWith('http')
+                                ? user.telegram
+                                : 'https://t.me/${user.telegram.replaceAll('@', '')}',
                             fallbackMessage:
                                 'يرجى التأكد من تثبيت تليجرام على جهازك',
                           ),
@@ -537,8 +539,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               () => const ChatDetailsScreen(),
                               arguments: ChatConversation(
                                 id: '', // Empty ID signifies a potentially new conversation
-                                userId: widget.user.id,
-                                userName: widget.user.name,
+                                userId: user.id,
+                                userName: user.name,
                                 lastMessage: 'بدء محادثة جديدة',
                                 lastMessageTime: DateTime.now(),
                                 isOnline: true,
@@ -571,6 +573,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               _buildQuickActions(context, userController),
               const SizedBox(height: 24),
 
+              _buildFullProfileDataSection(userController),
+              const SizedBox(height: 24),
+
               // Wallet Section
               const Text(
                 'المحفظة',
@@ -583,7 +588,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               const SizedBox(height: 12),
               Obx(() {
                 final currUser =
-                    userController.getUserById(widget.user.id) ?? widget.user;
+                    userController.getUserById(user.id) ?? user;
                 return Row(
                   children: [
                     Expanded(
@@ -609,7 +614,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               const SizedBox(height: 12),
               Obx(() {
                 final currUser =
-                    userController.getUserById(widget.user.id) ?? widget.user;
+                    userController.getUserById(user.id) ?? user;
                 return _buildWalletCard(
                   title: 'المعلق',
                   amount: currUser.pendingAmount,
@@ -732,7 +737,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               const SizedBox(height: 24),
 
               // Documents Section
-              if (widget.user.documents.isNotEmpty) ...[
+              if (user.documents.isNotEmpty) ...[
                 const Text(
                   'الوثائق المقدمة',
                   style: TextStyle(
@@ -746,7 +751,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   height: 200,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: widget.user.documents.length,
+                    itemCount: user.documents.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(width: 12),
                     itemBuilder: (context, index) {
@@ -758,9 +763,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                             fit: StackFit.expand,
                             children: [
                               Image.asset(
-                                widget
-                                    .user
-                                    .documents[index], // Assuming local assets for mock
+                                user.documents[index],
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return const Center(
@@ -804,7 +807,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 ),
 
                 // Verify/Reject Actions for Pending KYC
-                if (widget.user.kycStatus == 'Pending')
+                if (user.kycStatus == 'Pending')
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: Row(
@@ -1079,6 +1082,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         ),
       ),
     );
+    });
   }
 
   Widget _buildStatusBadge({
@@ -1154,15 +1158,17 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   }
 
   void _showDeleteConfirmation(UserController controller) {
+    final user = _currentUser(controller);
     KasbyConfirmationDialog.show(
       title: 'حذف المستخدم',
       message:
-          'هل أنت متأكد من حذف المستخدم "${widget.user.name}" نهائياً؟ لا يمكن التراجع عن هذه العملية.',
+          'هل أنت متأكد من حذف المستخدم "${user.name}" نهائياً؟ لا يمكن التراجع عن هذه العملية.',
       isDangerous: true,
       confirmText: 'حذف',
       onConfirm: () {
-        controller.deleteUser(widget.user.id);
-        Get.back(); // Back to list
+        controller.deleteUser(user.id).then((ok) {
+          if (ok) Get.back();
+        });
       },
     );
   }
@@ -1171,18 +1177,20 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     BuildContext context,
     UserController controller,
   ) {
+    final user = _currentUser(controller);
     KasbyConfirmationDialog.show(
       title: 'توثيق الحساب',
       message:
-          'هل أنت متأكد من قبول وثائق "${widget.user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
+          'هل أنت متأكد من قبول وثائق "${user.name}" وتوثيق حسابه؟ سيتم ترقية الحساب إلى "Verification".',
       confirmText: 'توثيق',
       onConfirm: () {
-        controller.verifyDocuments(widget.user.id);
+        controller.verifyDocuments(user.id);
       },
     );
   }
 
   void _showRejectDialog(BuildContext context, UserController controller) {
+    final user = _currentUser(controller);
     final reasonController = TextEditingController();
 
     KasbyDialog.show(
@@ -1212,7 +1220,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 confirmText: 'رفض',
                 onConfirm: () {
                   controller.rejectDocuments(
-                    widget.user.id,
+                    user.id,
                     reasonController.text,
                   );
                 },
@@ -1238,6 +1246,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   }
 
   void _showAddBalanceDialog(BuildContext context, UserController controller) {
+    final user = _currentUser(controller);
     final amountController = TextEditingController();
     KasbyDialog.show(
       title: 'إضافة رصيد',
@@ -1255,7 +1264,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               KasbyConfirmationDialog.show(
                 message: 'إضافة \$${amountController.text} للمحفظة؟',
                 onConfirm: () => controller.addBalance(
-                  widget.user.id,
+                  user.id,
                   double.parse(amountController.text),
                   'إضافة رصيد من قبل الإدارة',
                 ),
@@ -1279,6 +1288,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     BuildContext context,
     UserController controller,
   ) {
+    final user = _currentUser(controller);
     final amountController = TextEditingController();
     KasbyDialog.show(
       title: 'خصم رصيد',
@@ -1297,7 +1307,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 message: 'خصم \$${amountController.text} من المحفظة؟',
                 isDangerous: true,
                 onConfirm: () => controller.deductBalance(
-                  widget.user.id,
+                  user.id,
                   double.parse(amountController.text),
                   'خصم رصيد من قبل الإدارة',
                 ),
@@ -1352,6 +1362,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   }
 
   Widget _buildQuickActions(BuildContext context, UserController controller) {
+    final user = _currentUser(controller);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1384,49 +1395,30 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               const SizedBox(width: 12),
               Obx(() {
                 final currUser =
-                    controller.getUserById(widget.user.id) ?? widget.user;
+                    controller.getUserById(user.id) ?? user;
                 return _buildActionItem(
-                  label: currUser.status == 'Active' ? 'حظر' : 'تفعيل',
-                  icon: currUser.status == 'Active'
+                  label: currUser.isActive ? 'حظر' : 'تفعيل',
+                  icon: currUser.isActive
                       ? Icons.block
                       : Icons.check_circle_outline,
-                  color: currUser.status == 'Active'
+                  color: currUser.isActive
                       ? KasbyColors.error
                       : KasbyColors.success,
                   onTap: () {
-                    KasbyConfirmationDialog.show(
-                      title: currUser.status == 'Active'
-                          ? 'حظر المستخدم'
-                          : 'تفعيل المستخدم',
-                      message: currUser.status == 'Active'
-                          ? 'هل أنت متأكد من حظر المستخدم "${currUser.name}"؟'
-                          : 'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
-                      isDangerous: currUser.status == 'Active',
-                      onConfirm: () {
-                        if (currUser.status == 'Active') {
-                          controller.blockUser(widget.user.id);
-                        } else {
-                          controller.activateUser(widget.user.id);
-                        }
-                      },
-                    );
+                    if (currUser.isActive) {
+                      _showBlockReasonDialog(controller);
+                    } else {
+                      KasbyConfirmationDialog.show(
+                        title: 'تفعيل المستخدم',
+                        message:
+                            'هل أنت متأكد من تفعيل المستخدم "${currUser.name}"؟',
+                        onConfirm: () =>
+                            controller.activateUser(user.id),
+                      );
+                    }
                   },
                 );
               }),
-              const SizedBox(width: 12),
-              _buildActionItem(
-                label: 'تعديل',
-                icon: Icons.edit_outlined,
-                color: KasbyColors.info,
-                onTap: () => Get.to(() => EditUserScreen(user: widget.user)),
-              ),
-              const SizedBox(width: 12),
-              _buildActionItem(
-                label: 'حظر / تفعيل',
-                icon: Icons.security_rounded,
-                color: KasbyColors.warning,
-                onTap: () => controller.toggleBlockUser(widget.user.id),
-              ),
               const SizedBox(width: 12),
               _buildActionItem(
                 label: 'حذف',
@@ -1472,6 +1464,143 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFullProfileDataSection(UserController controller) {
+    return Obx(() {
+      final user = _currentUser(controller);
+      final dateFormat = DateFormat('dd/MM/yyyy HH:mm', 'en');
+
+      return KasbyGlassCard(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'بيانات الحساب الكاملة',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.primaryGold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildDataRow('المعرّف', user.id),
+            _buildDataRow('الاسم الكامل', user.name),
+            _buildDataRow('البريد الإلكتروني', user.email),
+            _buildDataRow('الهاتف', user.phone),
+            _buildDataRow('الدور', user.role),
+            _buildDataRow('الحالة', user.statusLabelAr),
+            if (user.statusReason.isNotEmpty)
+              _buildDataRow('سبب التقييد', user.statusReason),
+            _buildDataRow('مستوى الحساب', user.accountType),
+            _buildDataRow('حالة KYC', user.kycStatus),
+            _buildDataRow('كود الإحالة', user.referralCode),
+            if (user.referredBy != null && user.referredBy!.isNotEmpty)
+              _buildDataRow('أُحيل بواسطة', user.referredBy!),
+            _buildDataRow('الدولة', user.country),
+            _buildDataRow('المحافظة', user.province),
+            _buildDataRow('المدينة', user.city),
+            _buildDataRow('العنوان', user.address),
+            _buildDataRow('واتساب', user.whatsapp),
+            _buildDataRow('تيليجرام', user.telegram),
+            _buildDataRow('رصيد الأرباح', user.profitBalance.toStringAsFixed(2)),
+            _buildDataRow('الدورات المخزنة', user.storedSpins.toString()),
+            if (user.lastLoginAt != null)
+              _buildDataRow(
+                'آخر تسجيل دخول',
+                dateFormat.format(user.lastLoginAt!),
+              ),
+            if (user.lastLoginIp != null && user.lastLoginIp!.isNotEmpty)
+              _buildDataRow('آخر IP', user.lastLoginIp!),
+            _buildDataRow(
+              'تاريخ الإنشاء',
+              dateFormat.format(user.createdAt),
+            ),
+            if (user.updatedAt != null)
+              _buildDataRow(
+                'آخر تحديث',
+                dateFormat.format(user.updatedAt!),
+              ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildDataRow(String label, String value) {
+    if (value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: KasbyColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: KasbyColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlockReasonDialog(UserController controller) {
+    final user = _currentUser(controller);
+    final reasonController = TextEditingController();
+    KasbyDialog.show(
+      title: 'حظر المستخدم',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'أدخل سبب حظر المستخدم "${user.name}". سيظهر هذا السبب للمستخدم.',
+            style: const TextStyle(color: KasbyColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          KasbyTextField(
+            controller: reasonController,
+            hintText: 'سبب الحظر (مطلوب)',
+            prefixIcon: Icons.report_gmailerrorred_outlined,
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: KasbyColors.error),
+          onPressed: () {
+            final reason = reasonController.text.trim();
+            if (reason.isEmpty) {
+              Get.snackbar('خطأ', 'يجب إدخال سبب الحظر');
+              return;
+            }
+            Get.back();
+            controller.blockUser(user.id, reason: reason);
+          },
+          child: const Text('تأكيد الحظر'),
+        ),
+      ],
     );
   }
 

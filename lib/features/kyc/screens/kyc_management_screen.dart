@@ -4,15 +4,45 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/services.dart';
 import '../controllers/kyc_controller.dart';
 import '../models/kyc_document_model.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 
 /// Simple full-screen image viewer with Zoom
-class ImageViewerScreen extends StatelessWidget {
+class ImageViewerScreen extends StatefulWidget {
   final String imageUrl;
   final String title;
 
   const ImageViewerScreen({super.key, required this.imageUrl, required this.title});
+
+  @override
+  State<ImageViewerScreen> createState() => _ImageViewerScreenState();
+}
+
+class _ImageViewerScreenState extends State<ImageViewerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'ImageViewerScreen',
+      method: 'initState',
+      feature: 'KYC',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'ImageViewerScreen',
+      method: 'dispose',
+      feature: 'KYC',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +51,14 @@ class ImageViewerScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(title, style: const TextStyle(color: Colors.white)),
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       ),
       body: Center(
         child: InteractiveViewer(
           minScale: 0.5,
           maxScale: 4.0,
           child: Image.network(
-            imageUrl,
+            widget.imageUrl,
             fit: BoxFit.contain,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
@@ -134,7 +164,7 @@ class KycManagementScreen extends StatelessWidget {
   }
 }
 
-class KycDetailsScreen extends StatelessWidget {
+class KycDetailsScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final List<KycDocument> documents;
@@ -147,7 +177,45 @@ class KycDetailsScreen extends StatelessWidget {
   });
 
   @override
+  State<KycDetailsScreen> createState() => _KycDetailsScreenState();
+}
+
+class _KycDetailsScreenState extends State<KycDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'KycDetailsScreen',
+      method: 'initState',
+      feature: 'KYC',
+      status: 'INFO',
+      message: 'Screen mounted',
+      params: {
+        'userId': widget.userId.length > 8
+            ? '${widget.userId.substring(0, 8)}...'
+            : widget.userId,
+        'documentCount': widget.documents.length,
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'KycDetailsScreen',
+      method: 'dispose',
+      feature: 'KYC',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final userId = widget.userId;
+    final userName = widget.userName;
+    final documents = widget.documents;
     final controller = Get.find<KycController>();
     final firstDoc = documents.first;
 

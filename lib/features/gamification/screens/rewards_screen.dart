@@ -5,6 +5,7 @@ import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
+import '../../../core/widgets/admin_metric_chip.dart';
 import '../controllers/rewards_controller.dart';
 import '../models/reward_model.dart';
 
@@ -37,6 +38,42 @@ class RewardsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    AdminMetricChip(
+                      label: 'KSP متداول',
+                      value: controller.totalKspBalance.value.toStringAsFixed(0),
+                      color: KasbyColors.primaryGold,
+                      icon: FontAwesomeIcons.coins,
+                    ),
+                    const SizedBox(width: 10),
+                    AdminMetricChip(
+                      label: 'KSP مكتسب',
+                      value: controller.totalKspEarned.value.toStringAsFixed(0),
+                      color: KasbyColors.success,
+                      icon: FontAwesomeIcons.arrowTrendUp,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    AdminMetricChip(
+                      label: 'مستخدمون',
+                      value: '${controller.usersWithPoints.value}',
+                      color: KasbyColors.info,
+                      icon: FontAwesomeIcons.users,
+                    ),
+                    const SizedBox(width: 10),
+                    AdminMetricChip(
+                      label: 'مكافآت / جوائز',
+                      value: '${controller.rewards.length}/${controller.prizes.length}',
+                      color: KasbyColors.warning,
+                      icon: FontAwesomeIcons.gift,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 _buildSectionHeader('المكافآت اليومية', FontAwesomeIcons.gift),
                 const SizedBox(height: 12),
                 _buildRewardsList(controller),

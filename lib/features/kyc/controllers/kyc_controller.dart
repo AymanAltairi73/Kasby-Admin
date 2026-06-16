@@ -1,23 +1,43 @@
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../models/kyc_document_model.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
-/// KYC Controller — manages user identity verification
 class KycController extends GetxController {
   final pendingDocuments = <KycDocument>[].obs;
   final isLoading = false.obs;
 
   @override
   void onInit() {
+    AppLoggerService.debugTrace(
+      className: 'KycController',
+      method: 'onInit',
+      feature: 'Kyc',
+      status: 'INFO',
+    );
     super.onInit();
     loadPendingDocuments();
   }
 
-  /// Load all pending KYC documents
+  @override
+  void onClose() {
+    AppLoggerService.debugTrace(
+      className: 'KycController',
+      method: 'onClose',
+      feature: 'Kyc',
+      status: 'INFO',
+    );
+    super.onClose();
+  }
+
   Future<void> loadPendingDocuments() async {
-    debugPrint('[KycController][loadPendingDocuments] Fetching data from /kyc_documents');
+    AppLoggerService.debugTrace(
+      className: 'KycController',
+      method: 'loadPendingDocuments',
+      feature: 'Kyc',
+      status: 'INFO',
+    );
     isLoading.value = true;
     try {
       final response = await SupabaseService.client
@@ -26,22 +46,38 @@ class KycController extends GetxController {
           .eq('status', 'pending')
           .order('uploaded_at', ascending: false);
 
-      debugPrint('[KycController][loadPendingDocuments] Response: ${response.length} pending documents');
       pendingDocuments.assignAll(
         (response as List).map((e) => KycDocument.fromJson(e)).toList(),
       );
-      debugPrint('[KycController][loadPendingDocuments] Successfully loaded ${pendingDocuments.length} pending KYC documents');
-    } catch (e, stackTrace) {
-      debugPrint('[KycController][loadPendingDocuments] Error: $e');
-      debugPrint('[KycController][loadPendingDocuments] Stack trace: $stackTrace');
-      debugPrint('[KycController][loadPendingDocuments] Endpoint: /kyc_documents');
-      // Handle silently
+    } catch (e) {
+      Get.snackbar('خطأ', 'فشل تحميل طلبات التوثيق');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Update KYC document status + profile status + notification
+  Future<void> _syncProfileKycStatus(String userId) async {
+    final docs = await SupabaseService.client
+        .from('kyc_documents')
+        .select('status')
+        .eq('user_id', userId);
+
+    final statuses = (docs as List).map((d) => d['status'] as String).toList();
+    String profileStatus = 'pending';
+    if (statuses.any((s) => s == 'rejected')) {
+      profileStatus = 'rejected';
+    } else if (statuses.isNotEmpty && statuses.every((s) => s == 'verified')) {
+      profileStatus = 'verified';
+    } else if (statuses.any((s) => s == 'pending')) {
+      profileStatus = 'pending';
+    }
+
+    await SupabaseService.client
+        .from('profiles')
+        .update({'kyc_status': profileStatus})
+        .eq('id', userId);
+  }
+
   Future<bool> updateStatus({
     required String id,
     required String status,
@@ -50,8 +86,7 @@ class KycController extends GetxController {
   }) async {
     try {
       final adminId = SupabaseService.auth.currentUser?.id;
-      
-      // 1. Update the document status
+
       await SupabaseService.client.from('kyc_documents').update({
         'status': status,
         'reviewed_by': adminId,
@@ -59,27 +94,25 @@ class KycController extends GetxController {
         'rejection_reason': rejectionReason,
       }).eq('id', id);
 
-      // 2. Update profile status (Verified/Rejected)
-      // Note: In a real system, you might wait until ALL docs are verified
-      // but for this implementation we update when any doc is reviewed.
-      final profileKycStatus = status == 'verified' ? 'verified' : 'rejected';
-      await SupabaseService.client.from('profiles').update({
-        'kyc_status': profileKycStatus,
-      }).eq('id', userId);
+      await _syncProfileKycStatus(userId);
 
-      // 3. Send Notification to user (Genius Unified Text)
       final notifController = Get.find<NotificationController>();
       final title = status == 'verified' ? '✅ توثيق الحساب' : '❌ تنبيه التوثيق';
       final message = status == 'verified'
           ? 'تم توثيق حسابك بنجاح! يمكنك الآن الاستمتاع بكافة مميزات التطبيق.'
           : 'نعتذر، تم رفض طلب التوثيق الخاص بك. السبب: ${rejectionReason ?? "غير محدد"}. يرجى المحاولة مرة أخرى.';
 
-      await notifController.sendNotification(title, message, 'specific', specificUserId: userId);
+      await notifController.sendNotification(
+        title,
+        message,
+        'specific',
+        specificUserId: userId,
+      );
 
-      // Refresh list
       await loadPendingDocuments();
       return true;
     } catch (e) {
+      Get.snackbar('خطأ', 'فشل تحديث حالة التوثيق');
       return false;
     }
   }

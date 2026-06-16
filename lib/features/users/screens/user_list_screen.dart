@@ -124,13 +124,13 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: {'type': 'status', 'value': 'Active'},
+                value: {'type': 'status', 'value': 'active'},
                 child: Row(
                   children: [
                     Icon(
                       Icons.check_circle_outline,
                       size: 18,
-                      color: userController.selectedStatus.value == 'Active'
+                      color: userController.selectedStatus.value == 'active'
                           ? KasbyColors.success
                           : Colors.white60,
                     ),
@@ -140,13 +140,13 @@ class UserListScreen extends StatelessWidget {
                 ),
               ),
               PopupMenuItem(
-                value: {'type': 'status', 'value': 'Blocked'},
+                value: {'type': 'status', 'value': 'blocked'},
                 child: Row(
                   children: [
                     Icon(
                       Icons.block,
                       size: 18,
-                      color: userController.selectedStatus.value == 'Blocked'
+                      color: userController.selectedStatus.value == 'blocked'
                           ? KasbyColors.error
                           : Colors.white60,
                     ),
@@ -267,15 +267,62 @@ class UserListScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Obx(
-                      () => Text(
-                        'إجمالي المسجلين: ${userController.filteredUsers.length} مستخدم',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: KasbyColors.textSecondary,
-                        ),
+                    const Text(
+                      'قائمة المستخدمين',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      final nonAdmin = userController.users
+                          .where((u) => u.role != 'admin')
+                          .toList();
+                      final activeCount =
+                          nonAdmin.where((u) => u.isActive).length;
+                      final blockedCount =
+                          nonAdmin.where((u) => u.isBlocked).length;
+                      final showing = userController.filteredUsers.length;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildStatChip(
+                                'الكل',
+                                nonAdmin.length,
+                                KasbyColors.info,
+                              ),
+                              _buildStatChip(
+                                'نشط',
+                                activeCount,
+                                KasbyColors.success,
+                              ),
+                              _buildStatChip(
+                                'محظور',
+                                blockedCount,
+                                KasbyColors.error,
+                              ),
+                            ],
+                          ),
+                          if (showing != nonAdmin.length) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'عرض $showing من ${nonAdmin.length} مستخدم',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: KasbyColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -314,9 +361,14 @@ class UserListScreen extends StatelessWidget {
                     );
                   }
 
-                  return RefreshIndicator(
-                    onRefresh: () => userController.loadUsers(),
-                    color: KasbyColors.primaryGold,
+                  return NotificationListener<ScrollNotification>(
+                    onNotification: (scrollInfo) {
+                      if (scrollInfo.metrics.pixels >=
+                          scrollInfo.metrics.maxScrollExtent - 200) {
+                        userController.loadMoreUsers();
+                      }
+                      return false;
+                    },
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
                       itemCount: userController.filteredUsers.length,
@@ -351,10 +403,42 @@ class UserListScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildStatChip(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            count.toString(),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDazzlingUserCard(User user) {
-    final statusColor = user.status == 'Active'
-        ? KasbyColors.success
-        : KasbyColors.error;
+    final statusColor =
+        user.isActive ? KasbyColors.success : KasbyColors.error;
 
     Color accountColor = Colors.white;
     IconData accountIcon = Icons.person_outline;
@@ -455,6 +539,29 @@ class UserListScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.4),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        user.statusLabelAr,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,

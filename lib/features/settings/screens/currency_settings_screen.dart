@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import '../../../core/services/app_logger_service.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/kasby_button.dart';
@@ -8,8 +9,37 @@ import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/settings_management_controller.dart';
 import '../models/settings_models.dart';
 
-class CurrencySettingsScreen extends StatelessWidget {
+class CurrencySettingsScreen extends StatefulWidget {
   const CurrencySettingsScreen({super.key});
+
+  @override
+  State<CurrencySettingsScreen> createState() => _CurrencySettingsScreenState();
+}
+
+class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    AppLoggerService.debugTrace(
+      className: 'CurrencySettingsScreen',
+      method: 'initState',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen mounted',
+    );
+  }
+
+  @override
+  void dispose() {
+    AppLoggerService.debugTrace(
+      className: 'CurrencySettingsScreen',
+      method: 'dispose',
+      feature: 'Settings',
+      status: 'INFO',
+      message: 'Screen unmounted',
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
