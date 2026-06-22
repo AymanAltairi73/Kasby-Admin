@@ -1,6 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'crash_reporting/crash_breadcrumb.dart';
+import 'crash_reporting_service.dart';
 import 'supabase_service.dart';
 
 /// App Logger Service — writes admin actions to the system_logs table
@@ -42,18 +49,24 @@ class AppLoggerService {
 
   /// Logs GetX route transitions.
   static void logRoute(Routing? routing) {
-    if (!kDebugMode || routing == null) return;
-    debugTrace(
-      className: 'Navigation',
-      method: 'routeChange',
-      feature: 'Navigation',
-      status: 'INFO',
-      params: {
-        'current': routing.current,
-        'previous': routing.previous,
-        'args': _safeArgs(routing.args),
-      },
-    );
+    if (routing == null) return;
+    if (kDebugMode) {
+      debugTrace(
+        className: 'Navigation',
+        method: 'routeChange',
+        feature: 'Navigation',
+        status: 'INFO',
+        params: {
+          'current': routing.current,
+          'previous': routing.previous,
+          'args': _safeArgs(routing.args),
+        },
+      );
+    }
+    unawaited(CrashReportingService.updateRouteContext(
+      routing.current,
+      screenName: routing.current,
+    ));
   }
 
   static String _safeArgs(dynamic args) {
@@ -71,61 +84,122 @@ class AppLoggerService {
     Map<String, Object?>? params,
     Map<String, Object?>? Function(T result)? onSuccessParams,
   }) async {
-    if (!kDebugMode) return operation();
     final stopwatch = Stopwatch()..start();
-    debugTrace(
-      className: className,
-      method: method,
-      feature: feature ?? className,
-      status: 'INFO',
-      message: 'Operation started',
-      params: params,
-    );
-    try {
-      final result = await operation();
-      stopwatch.stop();
-      final successParams = <String, Object?>{
-        ...?params,
-        ...?onSuccessParams?.call(result),
-      };
+    if (kDebugMode) {
       debugTrace(
         className: className,
         method: method,
         feature: feature ?? className,
-        status: 'SUCCESS',
-        durationMs: stopwatch.elapsedMilliseconds,
-        params: successParams.isEmpty ? null : successParams,
+        status: 'INFO',
+        message: 'Operation started',
+        params: params,
       );
-      if (stopwatch.elapsedMilliseconds > 2000) {
+    }
+    try {
+      final result = await operation();
+      stopwatch.stop();
+      if (kDebugMode) {
+        final successParams = <String, Object?>{
+          ...?params,
+          ...?onSuccessParams?.call(result),
+        };
         debugTrace(
           className: className,
           method: method,
-          feature: 'Performance',
-          status: 'WARNING',
-          message: 'Slow operation detected',
+          feature: feature ?? className,
+          status: 'SUCCESS',
           durationMs: stopwatch.elapsedMilliseconds,
-          params: params,
+          params: successParams.isEmpty ? null : successParams,
         );
+        if (stopwatch.elapsedMilliseconds > 2000) {
+          debugTrace(
+            className: className,
+            method: method,
+            feature: 'Performance',
+            status: 'WARNING',
+            message: 'Slow operation detected',
+            durationMs: stopwatch.elapsedMilliseconds,
+            params: params,
+          );
+        }
       }
       return result;
     } catch (e, st) {
       stopwatch.stop();
-      debugTrace(
-        className: className,
-        method: method,
-        feature: feature ?? className,
-        status: 'FAILED',
-        durationMs: stopwatch.elapsedMilliseconds,
-        params: params,
-        error: e,
-        stackTrace: st,
-      );
+      if (kDebugMode) {
+        debugTrace(
+          className: className,
+          method: method,
+          feature: feature ?? className,
+          status: 'FAILED',
+          durationMs: stopwatch.elapsedMilliseconds,
+          params: params,
+          error: e,
+          stackTrace: st,
+        );
+      } else {
+        await logError(
+          controller: className,
+          method: method,
+          error: e,
+          stackTrace: st,
+        );
+      }
       rethrow;
     }
   }
 
   static Future<void> init() async {
-    // Version is set from pubspec during app startup
+    try {
+      final info = await PackageInfo.fromPlatform();
+      appVersion = '${info.version}+${info.buildNumber}';
+
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      if (kIsWeb) {
+        final web = await deviceInfoPlugin.webBrowserInfo;
+        deviceInfo = {
+          'platform': 'web',
+          'browser': web.browserName.name,
+          'user_agent': web.userAgent,
+        };
+      } else {
+        switch (defaultTargetPlatform) {
+          case TargetPlatform.android:
+            final android = await deviceInfoPlugin.androidInfo;
+            deviceInfo = {
+              'platform': 'android',
+              'model': android.model,
+              'brand': android.brand,
+              'os_version': android.version.release,
+              'sdk_int': android.version.sdkInt,
+            };
+            break;
+          case TargetPlatform.iOS:
+            final ios = await deviceInfoPlugin.iosInfo;
+            deviceInfo = {
+              'platform': 'ios',
+              'model': ios.utsname.machine,
+              'os_version': ios.systemVersion,
+            };
+            break;
+          case TargetPlatform.windows:
+            final windows = await deviceInfoPlugin.windowsInfo;
+            deviceInfo = {
+              'platform': 'windows',
+              'device_id': windows.deviceId,
+              'os_version':
+                  '${windows.majorVersion}.${windows.minorVersion}.${windows.buildNumber}',
+            };
+            break;
+          default:
+            deviceInfo = {'platform': defaultTargetPlatform.name};
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AppLogger] init metadata failed: $e');
+      }
+    }
   }
 
   static Future<void> logError({
@@ -141,6 +215,28 @@ class AppLoggerService {
       error: error,
       stackTrace: stackTrace,
     );
+
+    if (!kDebugMode) {
+      if (error is PostgrestException ||
+          error is AuthException ||
+          error is FunctionException) {
+        await CrashReportingService.recordSupabaseError(
+          error,
+          stack: stackTrace,
+          operation: '$controller.$method',
+          tableName: controller,
+        );
+      } else {
+        await CrashReportingService.recordException(
+          error,
+          stackTrace,
+          reason: '$controller.$method',
+          category: CrashReportingService.categoryFromFeature(controller),
+          context: {'controller': controller, 'method': method},
+        );
+      }
+    }
+
     await _writeLog(
       action: 'error',
       severity: 'error',
@@ -228,6 +324,7 @@ class AppLoggerService {
         'details': {
           ...?details,
           'app_version': appVersion,
+          'device_info': deviceInfo,
           'source': 'admin_app',
         },
       });
@@ -269,6 +366,13 @@ class _AdminTrackedScreenState extends State<AdminTrackedScreen> {
         'hasArgs': Get.arguments != null,
       },
     );
+    unawaited(CrashReportingService.updateRouteContext(
+      Get.currentRoute,
+      screenName: widget.screenName,
+    ));
+    unawaited(CrashReportingService.log(
+      '${CrashBreadcrumb.screenOpened}: ${widget.screenName}',
+    ));
   }
 
   @override

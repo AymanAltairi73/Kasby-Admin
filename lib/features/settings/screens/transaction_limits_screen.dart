@@ -83,19 +83,11 @@ class _TransactionLimitsScreenState extends State<TransactionLimitsScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _buildLimitSection(
-                  context,
-                  controller,
-                  title: 'المستخدم العادي',
-                  limits: _limitsByTier(controller, 'normal'),
-                ),
-                const SizedBox(height: 24),
-                _buildLimitSection(
-                  context,
-                  controller,
-                  title: 'المستخدم الموثق / VIP',
-                  limits: _limitsByTier(controller, 'vip'),
-                ),
+                _buildTierGroup(context, controller, 'normal',
+                    'المستخدم العادي', Icons.person_outline_rounded),
+                const SizedBox(height: 32),
+                _buildTierGroup(context, controller, 'vip',
+                    'المستخدم الموثق / VIP', Icons.workspace_premium_outlined),
                 const SizedBox(height: 40),
                 KasbyButton(
                   text: 'إضافة حد جديد',
@@ -202,6 +194,82 @@ class _TransactionLimitsScreenState extends State<TransactionLimitsScreen> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  List<LimitItem> _limitsByTierAndCategory(
+    SettingsManagementController controller,
+    String tier,
+    String category,
+  ) {
+    return controller.limits
+        .where((e) =>
+            e.tier.toLowerCase() == tier &&
+            (e.category?.toLowerCase() ?? '') == category)
+        .toList();
+  }
+
+  Widget _buildTierGroup(
+    BuildContext context,
+    SettingsManagementController controller,
+    String tier,
+    String title,
+    IconData headerIcon,
+  ) {
+    final categories = <String, String>{
+      'deposit': 'الإيداع',
+      'withdraw': 'السحب',
+      'transfer': 'التحويل',
+      'qr_receive': 'استلام QR',
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(headerIcon, color: KasbyColors.primaryGold, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: KasbyColors.primaryGold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ...categories.entries.map((entry) {
+          final items = _limitsByTierAndCategory(controller, tier, entry.key);
+          if (items.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildLimitSection(
+              context,
+              controller,
+              title: entry.value,
+              limits: items,
+            ),
+          );
+        }),
+        // Uncategorized limits
+        ...[
+          _limitsByTier(controller, tier)
+              .where((l) =>
+                  l.category == null ||
+                  !categories.containsKey(l.category!.toLowerCase()))
+              .toList(),
+        ].where((list) => list.isNotEmpty).map(
+              (remaining) => _buildLimitSection(
+                context,
+                controller,
+                title: 'أخرى',
+                limits: remaining,
+              ),
+            ),
       ],
     );
   }

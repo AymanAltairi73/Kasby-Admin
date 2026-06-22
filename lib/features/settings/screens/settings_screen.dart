@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/widgets/kasby_card.dart';
+import '../../../core/services/permission_service.dart';
 import 'fee_settings_screen.dart';
 import 'currency_settings_screen.dart';
 import 'transaction_limits_screen.dart';
@@ -19,212 +20,269 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final themeController = Get.find<ThemeController>();
+    final permService = Get.find<PermissionService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
+      appBar: AppBar(title: Text('settings_title'.tr)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Header Section
-            Obx(() => _buildProfileHeader(context, authController)),
-            const SizedBox(height: 32),
+        child: Obx(() {
+          final canManage = permService.canManageSettings;
+          final isSuperAdmin = permService.isSuperAdmin;
 
-            // Management Section
-            const Text(
-              'الإدارة المركزية والامتثال',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.chartLine,
-              title: 'خطط الاستثمار',
-              subtitle: 'إدارة خطط الاستثمار',
-              onTap: () => Get.toNamed('/investment-plans'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.moneyBillTrendUp,
-              title: 'استثمارات المستخدمين',
-              subtitle: 'عرض جميع الاستثمارات',
-              onTap: () => Get.toNamed('/user-investments'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.userTie,
-              title: 'الوكلاء المعتمدون',
-              subtitle: 'إدارة شبكة الموزعين والامتثال',
-              onTap: () => Get.toNamed('/agents'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.handHoldingDollar,
-              title: 'سلفات كاسبي',
-              subtitle: 'إدارة السلف والقروض',
-              onTap: () => Get.toNamed('/loans'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: Icons.subscriptions_rounded,
-              title: 'اشتراكات المستخدمين',
-              subtitle: 'إدارة خطط الاشتراك (شهري / سنوي)',
-              onTap: () => Get.toNamed('/subscriptions'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.comments,
-              title: 'دردش الدعم',
-              subtitle: 'محادثات المستخدمين والوكلاء',
-              onTap: () => Get.toNamed('/chat-list'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.wallet,
-              title: 'إدارة المحافظ',
-              subtitle: 'عرض أرصدة المستخدمين وتعديلاتها',
-              onTap: () => Get.toNamed('/wallets'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.chartColumn,
-              title: 'التقارير والإيرادات',
-              subtitle: 'ملخص مالي وتدفقات',
-              onTap: () => Get.toNamed('/reports'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.userGroup,
-              title: 'برنامج الإحالة',
-              subtitle: 'أكواد الإحالة والعمولات',
-              onTap: () => Get.toNamed('/referrals'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.qrcode,
-              title: 'إدارة QR',
-              subtitle: 'أكواد QR للوكلاء والمستخدمين',
-              onTap: () => Get.toNamed('/qr-management'),
-            ),
-            const SizedBox(height: 24),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Header Section
+              _buildProfileHeader(context, authController),
+              const SizedBox(height: 32),
 
-            // Notifications Section
-            const Text(
-              'الإشعارات',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.bellConcierge,
-              title: 'إرسال إشعار',
-              subtitle: 'إرسال إشعار لجميع المستخدمين',
-              onTap: () => Get.toNamed('/add-notification'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.gift,
-              title: 'المكافآت والنقاط',
-              subtitle: 'إدارة نظام المكافآت',
-              onTap: () => Get.toNamed('/rewards'),
-            ),
-            const SizedBox(height: 24),
+              // Management Section
+              Text(
+                'management_section'.tr,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.chartLine,
+                title: 'investment_plans'.tr,
+                subtitle: 'manage_investment_plans'.tr,
+                onTap: () => Get.toNamed('/investment-plans'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.moneyBillTrendUp,
+                title: 'user_investments_title'.tr,
+                subtitle: 'view_all_investments'.tr,
+                onTap: () => Get.toNamed('/user-investments'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.userTie,
+                title: 'authorized_agents'.tr,
+                subtitle: 'manage_agents_network'.tr,
+                onTap: () => Get.toNamed('/agents'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.handHoldingDollar,
+                title: 'kasby_loans'.tr,
+                subtitle: 'manage_loans'.tr,
+                onTap: () => Get.toNamed('/loans'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: Icons.subscriptions_rounded,
+                title: 'user_subscriptions'.tr,
+                subtitle: 'manage_subscriptions'.tr,
+                onTap: () => Get.toNamed('/subscriptions'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: Icons.storefront_rounded,
+                title: 'marketplace_management'.tr,
+                subtitle: 'manage_marketplace'.tr,
+                onTap: () => Get.toNamed('/marketplace'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.comments,
+                title: 'support_chat'.tr,
+                subtitle: 'user_agent_chats'.tr,
+                onTap: () => Get.toNamed('/chat-list'),
+              ),
+              const SizedBox(height: 8),
+              if (isSuperAdmin) ...[
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.wallet,
+                  title: 'wallet_management'.tr,
+                  subtitle: 'view_user_balances'.tr,
+                  onTap: () => Get.toNamed('/wallets'),
+                ),
+                const SizedBox(height: 8),
+              ],
+              _buildSettingCard(
+                icon: FontAwesomeIcons.chartColumn,
+                title: 'reports_revenue'.tr,
+                subtitle: 'financial_summary'.tr,
+                onTap: () => Get.toNamed('/reports'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.userGroup,
+                title: 'referral_program'.tr,
+                subtitle: 'referral_codes_commissions'.tr,
+                onTap: () => Get.toNamed('/referrals'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.qrcode,
+                title: 'qr_management'.tr,
+                subtitle: 'qr_codes_description'.tr,
+                onTap: () => Get.toNamed('/qr-management'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.clipboardList,
+                title: 'audit_log'.tr,
+                subtitle: 'audit_log_subtitle'.tr,
+                onTap: () => Get.toNamed('/audit-logs'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.heartPulse,
+                title: 'صحة النظام',
+                subtitle: 'مراقبة حالة الخدمات والعمليات المعلقة',
+                onTap: () => Get.toNamed('/system-health'),
+              ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.idCard,
+                title: 'إدارة KYC',
+                subtitle: 'التحقق من هوية المستخدمين',
+                onTap: () => Get.toNamed('/kyc'),
+              ),
+              const SizedBox(height: 8),
+              if (isSuperAdmin) ...[
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.userGear,
+                  title: 'إدارة الموظفين',
+                  subtitle: 'إدارة صلاحيات المسؤولين والأدوار',
+                  onTap: () => Get.toNamed('/staff'),
+                ),
+                const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 24),
 
-            // App Configuration Section
-            const Text(
-              'إعدادات التطبيق',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.rectangleAd,
-              title: 'إدارة الإعلانات',
-              subtitle: 'إدارة الإعلانات المعروضة في تطبيق المستخدم',
-              onTap: () => Get.to(() => const AdsScreen()),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.fileContract,
-              title: 'الشروط والأحكام',
-              subtitle: 'تحديث الشروط والأحكام',
-              onTap: () => Get.toNamed('/terms'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.circleQuestion,
-              title: 'الأسئلة الشائعة',
-              subtitle: 'إدارة الأسئلة الشائعة',
-              onTap: () => Get.toNamed('/faq'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.wrench,
-              title: 'وضع الصيانة',
-              subtitle: 'تفعيل/تعطيل وضع الصيانة',
-              onTap: () => Get.toNamed('/maintenance'),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.percent,
-              title: 'الرسوم والعمولات',
-              subtitle: 'إدارة رسوم السحب والإيداع والاستثمار',
-              onTap: () => Get.to(() => const FeeSettingsScreen()),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.coins,
-              title: 'العملات',
-              subtitle: 'إدارة العملات المدعومة وأسعار الصرف',
-              onTap: () => Get.to(() => const CurrencySettingsScreen()),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.sliders,
-              title: 'حدود المعاملات',
-              subtitle: 'ضبط الحدود الدنيا والقصوى للعمليات',
-              onTap: () => Get.to(() => const TransactionLimitsScreen()),
-            ),
-            const SizedBox(height: 24),
+              // Notifications Section (admin-only)
+              if (canManage) ...[
+                Text(
+                  'notifications_section'.tr,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.bellConcierge,
+                  title: 'send_notification'.tr,
+                  subtitle: 'send_notification_all'.tr,
+                  onTap: () => Get.toNamed('/add-notification'),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.gift,
+                  title: 'rewards_points'.tr,
+                  subtitle: 'manage_rewards'.tr,
+                  onTap: () => Get.toNamed('/rewards'),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.fileLines,
+                  title: 'قوالب الإشعارات',
+                  subtitle: 'إنشاء وإدارة قوالب الإشعارات المحفوظة',
+                  onTap: () => Get.toNamed('/notification-templates'),
+                ),
+                const SizedBox(height: 24),
+              ],
 
-            // Account Section
-            const Text(
-              'الحساب',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.userPen,
-              title: 'الملف الشخصي',
-              subtitle: 'تعديل البيانات الشخصية وكلمة المرور',
-              onTap: () => Get.toNamed('/profile'),
-            ),
-            const SizedBox(height: 8),
-            Obx(
-              () => _buildSettingCard(
-                icon: themeController.isDarkMode.value
-                    ? FontAwesomeIcons.moon
-                    : FontAwesomeIcons.sun,
-                title: 'المظهر',
-                subtitle: themeController.isDarkMode.value
-                    ? 'الوضع الليلي'
-                    : 'الوضع النهاري',
-                onTap: () => themeController.toggleTheme(),
-                trailing: Switch(
-                  value: themeController.isDarkMode.value,
-                  onChanged: (_) => themeController.toggleTheme(),
-                  activeThumbColor: KasbyColors.primaryGold,
+              // App Configuration Section (admin-only)
+              if (canManage) ...[
+                Text(
+                  'app_settings_section'.tr,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.rectangleAd,
+                  title: 'ads_management'.tr,
+                  subtitle: 'manage_ads'.tr,
+                  onTap: () => Get.to(() => const AdsScreen()),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.fileContract,
+                  title: 'terms_conditions'.tr,
+                  subtitle: 'update_terms'.tr,
+                  onTap: () => Get.toNamed('/terms'),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.circleQuestion,
+                  title: 'faq_title'.tr,
+                  subtitle: 'manage_faq'.tr,
+                  onTap: () => Get.toNamed('/faq'),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.wrench,
+                  title: 'maintenance_mode'.tr,
+                  subtitle: 'toggle_maintenance'.tr,
+                  onTap: () => Get.toNamed('/maintenance'),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.percent,
+                  title: 'fees_commissions'.tr,
+                  subtitle: 'manage_fees'.tr,
+                  onTap: () => Get.to(() => const FeeSettingsScreen()),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.coins,
+                  title: 'currencies'.tr,
+                  subtitle: 'manage_currencies'.tr,
+                  onTap: () => Get.to(() => const CurrencySettingsScreen()),
+                ),
+                const SizedBox(height: 8),
+                _buildSettingCard(
+                  icon: FontAwesomeIcons.sliders,
+                  title: 'transaction_limits'.tr,
+                  subtitle: 'set_limits'.tr,
+                  onTap: () => Get.to(() => const TransactionLimitsScreen()),
+                ),
+                const SizedBox(height: 24),
+              ],
+
+              // Account Section
+              Text(
+                'account_section'.tr,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.userPen,
+                title: 'profile'.tr,
+                subtitle: 'edit_profile'.tr,
+                onTap: () => Get.toNamed('/profile'),
+              ),
+              const SizedBox(height: 8),
+              Obx(
+                () => _buildSettingCard(
+                  icon: themeController.isDarkMode.value
+                      ? FontAwesomeIcons.moon
+                      : FontAwesomeIcons.sun,
+                  title: 'appearance'.tr,
+                  subtitle: themeController.isDarkMode.value
+                      ? 'dark_mode'.tr
+                      : 'light_mode'.tr,
+                  onTap: () => themeController.toggleTheme(),
+                  trailing: Switch(
+                    value: themeController.isDarkMode.value,
+                    onChanged: (_) => themeController.toggleTheme(),
+                    activeThumbColor: KasbyColors.primaryGold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            _buildSettingCard(
-              icon: FontAwesomeIcons.rightFromBracket,
-              title: 'تسجيل الخروج',
-              subtitle: 'الخروج من الحساب',
-              onTap: () => _showLogoutDialog(context, authController),
-              iconColor: KasbyColors.error,
-            ),
-          ],
-        ),
+              const SizedBox(height: 8),
+              _buildSettingCard(
+                icon: FontAwesomeIcons.rightFromBracket,
+                title: 'logout'.tr,
+                subtitle: 'logout_from_account'.tr,
+                onTap: () => _showLogoutDialog(context, authController),
+                iconColor: KasbyColors.error,
+              ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -333,7 +391,7 @@ class SettingsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      authController.userRole.value == 'Admin' ? 'مدير النظام' : authController.userRole.value,
+                      authController.userRole.value == 'Admin' ? 'system_admin'.tr : authController.userRole.value,
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -414,17 +472,17 @@ class SettingsScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context, AuthController authController) {
     Get.dialog(
       AlertDialog(
-        title: const Text('تسجيل الخروج'),
-        content: const Text('هل أنت متأكد من تسجيل الخروج؟'),
+        title: Text('logout'.tr),
+        content: Text('logout_confirm'.tr),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
+          TextButton(onPressed: () => Get.back(), child: Text('cancel'.tr)),
           TextButton(
             onPressed: () {
               Get.back();
               authController.logout();
             },
-            child: const Text(
-              'تسجيل الخروج',
+            child: Text(
+              'logout'.tr,
               style: TextStyle(color: KasbyColors.error),
             ),
           ),

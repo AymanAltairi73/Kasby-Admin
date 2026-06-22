@@ -7,6 +7,7 @@ import '../../../core/services/app_logger_service.dart';
 import '../../../core/models/time_filter.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';
+import '../../../core/services/permission_service.dart';
 import '../repositories/transaction_repository.dart';
 
 /// Transaction Controller — manages financial transactions from Supabase
@@ -266,6 +267,13 @@ class TransactionController extends GetxController {
 
   /// Approve a deposit transaction via RPC
   Future<void> approveDeposit(String txnId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية الموافقة على المعاملات',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     final txnIndex = transactions.indexWhere((t) => t.id == txnId);
     if (txnIndex == -1) return;
     final originalStatus = transactions[txnIndex].status;
@@ -325,6 +333,13 @@ class TransactionController extends GetxController {
 
   /// Approve a withdrawal transaction via RPC
   Future<void> approveWithdrawal(String txnId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية الموافقة على المعاملات',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     final txnIndex = transactions.indexWhere((t) => t.id == txnId);
     if (txnIndex == -1) return;
     final originalStatus = transactions[txnIndex].status;
@@ -391,6 +406,13 @@ class TransactionController extends GetxController {
 
   /// Reject a transaction via RPC
   Future<void> rejectTransaction(String txnId, [String reason = '']) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية رفض المعاملات',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     final txnIndex = transactions.indexWhere((t) => t.id == txnId);
     if (txnIndex == -1) return;
     final txn = transactions[txnIndex];

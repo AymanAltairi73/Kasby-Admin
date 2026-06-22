@@ -10,6 +10,7 @@ import '../../investments/models/investment_model.dart';
 import '../../transactions/models/transaction_model.dart';
 import '../models/user_activity_model.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/permission_service.dart';
 import '../services/user_management_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
@@ -335,6 +336,13 @@ class UserController extends GetxController {
 
   /// Block user with mandatory reason (RPC + audit + notification via DB trigger)
   Future<void> blockUser(String userId, {String? reason}) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canManageUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية حظر المستخدمين',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     final blockReason = reason?.trim();
     if (blockReason == null || blockReason.isEmpty) {
       Get.snackbar(
@@ -495,6 +503,13 @@ class UserController extends GetxController {
     double amount, [
     String reason = '',
   ]) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canAdjustBalance) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية تعديل الأرصدة',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       await AdminProxyService.addBalance(userId, amount);
 
@@ -532,6 +547,13 @@ class UserController extends GetxController {
     double amount, [
     String reason = '',
   ]) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canAdjustBalance) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية تعديل الأرصدة',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       await AdminProxyService.deductBalance(userId, amount);
 
@@ -623,8 +645,17 @@ class UserController extends GetxController {
     }
   }
 
-  /// Delete user — removes auth account (profile cascades via purge RPC)
+  /// Hard-delete a user and all related data via the admin-proxy Edge Function.
+  /// The backend calls fn_admin_purge_user_data (RPC) followed by
+  /// auth.admin.deleteUser — both execute in a single transactional flow.
   Future<bool> deleteUser(String userId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canDeleteUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية حذف المستخدمين',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+
     try {
       await AdminProxyService.deleteUser(userId);
 
@@ -644,25 +675,12 @@ class UserController extends GetxController {
       );
       return true;
     } catch (e) {
-      String msg = 'فشل في حذف المستخدم';
       final err = e.toString();
-      if (err.contains('append-only') || err.contains('Transactions are append-only')) {
-        msg = 'لا يمكن الحذف — المستخدم لديه معاملات مالية. طبّق migration 20260613000003 على Supabase.';
-      } else if (err.contains('Audit logs are immutable') ||
-          err.contains('audit_logs')) {
-        msg = 'لا يمكن الحذف — سجل التدقيق يمنع العملية. طبّق migration 20260616000002 على Supabase.';
-      } else if (err.contains('notifications_target_user_id') ||
-          err.contains('target_user_id')) {
-        msg = 'لا يمكن الحذف — المستخدم مرتبط بإشعارات. طبّق migration 20260613000003 على Supabase.';
-      } else if (err.contains('violates foreign key') ||
-          err.contains('chat_conversations')) {
-        msg = 'لا يمكن الحذف — المستخدم مرتبط بسجلات أخرى. طبّق آخر migration على Supabase.';
-      } else if (err.contains('null value in column')) {
-        msg = 'خطأ في قاعدة البيانات — يرجى تطبيق migration حذف المستخدم على Supabase';
-      }
+      String msg = err.replaceFirst('Exception: ', '');
+      if (msg.length > 120) msg = msg.substring(0, 120);
       Get.snackbar(
         'خطأ',
-        msg,
+        'فشل في حذف المستخدم: $msg',
         snackPosition: SnackPosition.BOTTOM,
       );
       return false;

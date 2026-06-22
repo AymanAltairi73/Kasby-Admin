@@ -7,7 +7,7 @@ import '../../../core/widgets/kasby_glass_card.dart';
 import '../../../core/widgets/admin_metric_chip.dart';
 import '../controllers/wallet_controller.dart';
 import '../../users/screens/user_details_screen.dart';
-import '../../users/models/user_model.dart';
+import '../../users/controllers/user_controller.dart';
 
 class WalletManagementScreen extends StatelessWidget {
   const WalletManagementScreen({super.key});
@@ -126,26 +126,19 @@ class WalletManagementScreen extends StatelessWidget {
                       ...list.map((w) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
                             child: KasbyGlassCard(
-                              onTap: () => Get.to(
-                                () => UserDetailsScreen(
-                                  user: User(
-                                    id: w.userId,
-                                    name: w.userName,
-                                    email: w.email,
-                                    phone: '',
-                                    role: 'user',
-                                    status: 'active',
-                                    country: '',
-                                    accountType: 'free',
-                                    kycStatus: 'unverified',
-                                    walletBalance: w.available,
-                                    profitBalance: w.profit,
-                                    investedAmount: w.invested,
-                                    pendingAmount: w.pending,
-                                    createdAt: DateTime.now(),
-                                  ),
-                                ),
-                              ),
+                              onTap: () {
+                                final userController = Get.find<UserController>();
+                                final user = userController.getUserById(w.userId);
+                                if (user != null) {
+                                  Get.to(() => UserDetailsScreen(user: user));
+                                } else {
+                                  Get.snackbar(
+                                    'خطأ',
+                                    'لم يتم العثور على بيانات المستخدم',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                  );
+                                }
+                              },
                               padding: const EdgeInsets.all(16),
                               child: Row(
                                 children: [

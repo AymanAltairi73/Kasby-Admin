@@ -58,13 +58,27 @@ import 'features/ksp_analytics/screens/ksp_analytics_screen.dart';
 import 'features/referrals/screens/referral_management_screen.dart';
 import 'features/wallets/screens/wallet_management_screen.dart';
 import 'features/reports/screens/revenue_dashboard_screen.dart';
-import 'features/staff/screens/role_management_screen.dart';
+// import 'features/staff/screens/role_management_screen.dart';
+import 'features/staff/controllers/staff_controller.dart';
+import 'features/notifications/controllers/notification_template_controller.dart';
+// import 'features/notifications/screens/notification_templates_screen.dart';
 import 'features/qr/screens/qr_management_screen.dart';
+import 'features/monitoring/screens/system_health_screen.dart';
+import 'features/search/screens/admin_search_screen.dart';
+import 'features/approvals/screens/approval_queue_screen.dart';
 import 'core/services/permission_service.dart';
 import 'core/services/app_logger_service.dart';
+import 'core/services/crash_reporting_service.dart';
+import 'features/audit/screens/audit_log_screen.dart';
+import 'features/marketplace/screens/marketplace_dashboard_screen.dart';
+import 'features/marketplace/controllers/marketplace_admin_controller.dart';
 
 
 Future<void> main() async {
+  CrashReportingService.runAppWithCrashGuards(_bootstrap);
+}
+
+Future<void> _bootstrap() async {
   final startupStopwatch = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -77,6 +91,7 @@ Future<void> main() async {
   );
 
   await dotenv.load(fileName: '.env');
+  await AppLoggerService.init();
   AppLoggerService.debugTrace(
     className: 'main',
     method: 'loadEnv',
@@ -100,6 +115,7 @@ Future<void> main() async {
   try {
     // Initialize Firebase
     await Firebase.initializeApp();
+    await CrashReportingService.initialize(firebaseReady: true);
     AppLoggerService.debugTrace(
       className: 'main',
       method: 'initFirebase',
@@ -193,6 +209,9 @@ Future<void> main() async {
   Get.lazyPut(() => SubscriptionController(), fenix: true);
   Get.lazyPut(() => NotificationController(), fenix: true);
   Get.lazyPut(() => KspAnalyticsController(), fenix: true);
+  Get.lazyPut(() => StaffController(), fenix: true);
+  Get.lazyPut(() => NotificationTemplateController(), fenix: true);
+  Get.lazyPut(() => MarketplaceAdminController(), fenix: true);
 
   AppLoggerService.debugTrace(
     className: 'main',
@@ -271,7 +290,9 @@ class KasbyAdminApp extends StatelessWidget {
         _adminRoute(
           '/transactions',
           'TransactionsScreen',
-          () => const TransactionsScreen(),
+          () => TransactionsScreen(
+            initialIndex: Get.arguments is int ? Get.arguments as int : 0,
+          ),
         ),
         _adminRoute('/agents', 'AgentsScreen', () => const AgentsScreen()),
         _adminRoute('/loans', 'LoansScreen', () => const LoansScreen()),
@@ -349,6 +370,41 @@ class KasbyAdminApp extends StatelessWidget {
           'QrManagementScreen',
           () => const QrManagementScreen(),
         ),
+        _adminRoute(
+          '/audit-logs',
+          'AuditLogScreen',
+          () => const AuditLogScreen(),
+        ),
+        _adminRoute(
+          '/marketplace',
+          'MarketplaceDashboardScreen',
+          () => const MarketplaceDashboardScreen(),
+        ),
+        _adminRoute(
+          '/admin-search',
+          'AdminSearchScreen',
+          () => const AdminSearchScreen(),
+        ),
+        _adminRoute(
+          '/approvals',
+          'ApprovalQueueScreen',
+          () => const ApprovalQueueScreen(),
+        ),
+        _adminRoute(
+          '/system-health',
+          'SystemHealthScreen',
+          () => const SystemHealthScreen(),
+        ),
+        // _adminRoute(
+        //   '/staff',
+        //   'RoleManagementScreen',
+        //   () => const RoleManagementScreen(),
+        // ),
+        // _adminRoute(
+        //   '/notification-templates',
+        //   'NotificationTemplatesScreen',
+        //   () => const NotificationTemplatesScreen(),
+        // ),
       ],
 
       // Check if user is already logged in

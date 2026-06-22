@@ -354,30 +354,14 @@ class SettingsManagementController extends GetxController {
 
   void _loadDefaultFees() {
     fees.assignAll([
-      FeeItem(
-        id: '1',
-        label: 'الإيداع البنكي',
-        value: '1.5%',
-        category: 'deposit',
-      ),
-      FeeItem(
-        id: '2',
-        label: 'بطاقة الائتمان',
-        value: '2.5%',
-        category: 'deposit',
-      ),
-      FeeItem(
-        id: '3',
-        label: 'السحب البنكي',
-        value: '\$10.00',
-        category: 'withdraw',
-      ),
-      FeeItem(
-        id: '4',
-        label: 'رسوم الإدارة سنوية',
-        value: '2.0%',
-        category: 'investment',
-      ),
+      FeeItem(id: '1', label: 'الإيداع البنكي', value: '1.5%', category: 'deposit'),
+      FeeItem(id: '2', label: 'بطاقة الائتمان', value: '2.5%', category: 'deposit'),
+      FeeItem(id: '3', label: 'السحب البنكي', value: '\$10.00', category: 'withdraw'),
+      FeeItem(id: '4', label: 'رسوم سحب عبر الوكيل', value: '1.0%', category: 'withdraw'),
+      FeeItem(id: '5', label: 'رسوم التحويل بين المستخدمين', value: '0.5%', category: 'transfer'),
+      FeeItem(id: '6', label: 'رسوم استلام QR', value: '0.25%', category: 'qr_receive'),
+      FeeItem(id: '7', label: 'رسوم الإدارة سنوية', value: '2.0%', category: 'investment'),
+      FeeItem(id: '8', label: 'عمولة الوكيل', value: '1.0%', category: 'agent'),
     ]);
   }
 
@@ -408,35 +392,22 @@ class SettingsManagementController extends GetxController {
 
   void _loadDefaultLimits() {
     limits.assignAll([
-      LimitItem(
-        id: '1',
-        label: 'الحد الأدنى للإيداع',
-        value: '50',
-        tier: 'normal',
-        category: 'deposit',
-      ),
-      LimitItem(
-        id: '2',
-        label: 'الحد الأقصى للإيداع (يومي)',
-        value: '5000',
-        tier: 'normal',
-        category: 'deposit',
-      ),
-      LimitItem(
-        id: '3',
-        label: 'الحد الأدنى للإيداع',
-        value: '10',
-        tier: 'vip',
-        category: 'deposit',
-      ),
-      LimitItem(
-        id: '4',
-        label: 'الحد الأقصى للسحب (شهري)',
-        value: '0',
-        tier: 'vip',
-        isUnlimited: true,
-        category: 'withdraw',
-      ),
+      LimitItem(id: '1', label: 'الحد الأدنى للإيداع', value: '50', tier: 'normal', category: 'deposit'),
+      LimitItem(id: '2', label: 'الحد الأقصى للإيداع (يومي)', value: '5000', tier: 'normal', category: 'deposit'),
+      LimitItem(id: '3', label: 'الحد الأدنى للسحب', value: '20', tier: 'normal', category: 'withdraw'),
+      LimitItem(id: '4', label: 'الحد الأقصى للسحب (يومي)', value: '10000', tier: 'normal', category: 'withdraw'),
+      LimitItem(id: '5', label: 'الحد الأدنى للتحويل', value: '1', tier: 'normal', category: 'transfer'),
+      LimitItem(id: '6', label: 'الحد الأقصى للتحويل (يومي)', value: '5000', tier: 'normal', category: 'transfer'),
+      LimitItem(id: '7', label: 'الحد الأدنى لاستلام QR', value: '1', tier: 'normal', category: 'qr_receive'),
+      LimitItem(id: '8', label: 'الحد الأقصى لاستلام QR (يومي)', value: '3000', tier: 'normal', category: 'qr_receive'),
+      LimitItem(id: '9', label: 'الحد الأدنى للإيداع', value: '10', tier: 'vip', category: 'deposit'),
+      LimitItem(id: '10', label: 'الحد الأقصى للإيداع (يومي)', value: '0', tier: 'vip', isUnlimited: true, category: 'deposit'),
+      LimitItem(id: '11', label: 'الحد الأدنى للسحب', value: '10', tier: 'vip', category: 'withdraw'),
+      LimitItem(id: '12', label: 'الحد الأقصى للسحب (شهري)', value: '0', tier: 'vip', isUnlimited: true, category: 'withdraw'),
+      LimitItem(id: '13', label: 'الحد الأدنى للتحويل', value: '1', tier: 'vip', category: 'transfer'),
+      LimitItem(id: '14', label: 'الحد الأقصى للتحويل (يومي)', value: '0', tier: 'vip', isUnlimited: true, category: 'transfer'),
+      LimitItem(id: '15', label: 'الحد الأدنى لاستلام QR', value: '1', tier: 'vip', category: 'qr_receive'),
+      LimitItem(id: '16', label: 'الحد الأقصى لاستلام QR (يومي)', value: '0', tier: 'vip', isUnlimited: true, category: 'qr_receive'),
     ]);
   }
 

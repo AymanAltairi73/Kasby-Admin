@@ -2,9 +2,10 @@ import 'package:get/get.dart';
 import '../services/app_logger_service.dart';
 import '../services/supabase_service.dart';
 
-/// RBAC helper — reads `admin_profiles.role` for granular admin permissions.
+/// RBAC helper — determines admin privilege level from `admin_profiles.role`
+/// with fallback to `profiles.role` for admins without an admin_profiles row.
 class PermissionService extends GetxService {
-  final adminPrivilege = 'superadmin'.obs;
+  final adminPrivilege = 'viewer'.obs;
 
   static PermissionService get to => Get.find<PermissionService>();
 
@@ -20,12 +21,6 @@ class PermissionService extends GetxService {
   }
 
   Future<void> refreshPrivileges() async {
-    AppLoggerService.debugTrace(
-      className: 'PermissionService',
-      method: 'refreshPrivileges',
-      feature: 'Core',
-      status: 'INFO',
-    );
     final userId = SupabaseService.auth.currentUser?.id;
     if (userId == null) {
       adminPrivilege.value = 'viewer';
@@ -46,15 +41,45 @@ class PermissionService extends GetxService {
           .eq('id', userId)
           .maybeSingle();
 
-      final role = row?['role'] as String?;
-      adminPrivilege.value = role ?? 'admin';
-      AppLoggerService.debugTrace(
-        className: 'PermissionService',
-        method: 'refreshPrivileges',
-        feature: 'Core',
-        status: 'SUCCESS',
-        params: {'role': adminPrivilege.value},
-      );
+      if (row != null && row['role'] != null) {
+        adminPrivilege.value = row['role'] as String;
+        AppLoggerService.debugTrace(
+          className: 'PermissionService',
+          method: 'refreshPrivileges',
+          feature: 'Core',
+          status: 'SUCCESS',
+          params: {'source': 'admin_profiles', 'role': adminPrivilege.value},
+        );
+        return;
+      }
+
+      final profileRow = await SupabaseService.client
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final profileRole = profileRow?['role'] as String?;
+      if (profileRole == 'admin') {
+        adminPrivilege.value = 'admin';
+        AppLoggerService.debugTrace(
+          className: 'PermissionService',
+          method: 'refreshPrivileges',
+          feature: 'Core',
+          status: 'SUCCESS',
+          params: {'source': 'profiles', 'role': 'admin'},
+        );
+      } else {
+        adminPrivilege.value = 'viewer';
+        AppLoggerService.debugTrace(
+          className: 'PermissionService',
+          method: 'refreshPrivileges',
+          feature: 'Core',
+          status: 'WARNING',
+          params: {'profileRole': profileRole ?? 'null'},
+          message: 'User is not an admin — viewer',
+        );
+      }
     } catch (e) {
       adminPrivilege.value = 'admin';
       AppLoggerService.debugTrace(

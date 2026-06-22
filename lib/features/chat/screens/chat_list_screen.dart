@@ -84,28 +84,7 @@ class ChatListScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Obx(() => _buildStatsRow(chatController)),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: KasbyGlassCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      opacity: 0.1,
-                      child: TextField(
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'البحث بالاسم أو آخر رسالة...',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.4),
-                          ),
-                          border: InputBorder.none,
-                          icon: const Icon(
-                            Icons.search,
-                            color: KasbyColors.primaryGold,
-                          ),
-                        ),
-                        onChanged: chatController.conversationSearchQuery.call,
-                      ),
-                    ),
-                  ),
+                  _buildSearchField(chatController),
                   Expanded(
                     child: TabBarView(
                       children: [
@@ -210,6 +189,17 @@ class ChatListScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField(ChatController chatController) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: KasbyGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        opacity: 0.1,
+        child: _ChatSearchField(chatController: chatController),
       ),
     );
   }
@@ -498,5 +488,71 @@ class ChatListScreen extends StatelessWidget {
     if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes}د';
     if (diff.inHours < 24) return 'منذ ${diff.inHours}س';
     return DateFormat('d/M', 'ar').format(lastSeen);
+  }
+}
+
+class _ChatSearchField extends StatefulWidget {
+  final ChatController chatController;
+
+  const _ChatSearchField({required this.chatController});
+
+  @override
+  State<_ChatSearchField> createState() => _ChatSearchFieldState();
+}
+
+class _ChatSearchFieldState extends State<_ChatSearchField> {
+  late final TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(
+      text: widget.chatController.conversationSearchQuery.value,
+    );
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final hasQuery =
+          widget.chatController.conversationSearchQuery.value.isNotEmpty;
+      return TextField(
+        controller: _textController,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: 'البحث بالاسم أو آخر رسالة...',
+          hintStyle: TextStyle(
+            color: Colors.white.withValues(alpha: 0.4),
+          ),
+          border: InputBorder.none,
+          icon: const Icon(
+            Icons.search,
+            color: KasbyColors.primaryGold,
+          ),
+          suffixIcon: hasQuery
+              ? GestureDetector(
+                  onTap: () {
+                    _textController.clear();
+                    widget.chatController.conversationSearchQuery.value = '';
+                  },
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    size: 20,
+                  ),
+                )
+              : null,
+        ),
+        onChanged: (value) {
+          widget.chatController.conversationSearchQuery.value = value;
+        },
+      );
+    });
   }
 }

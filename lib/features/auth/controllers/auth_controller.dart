@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +9,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../../users/models/user_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/permission_service.dart';
+import '../../../core/services/crash_reporting/crash_breadcrumb.dart';
+import '../../../core/services/crash_reporting_service.dart';
 
 /// Authentication Controller
 /// Manages login via Supabase Auth and session state
@@ -67,6 +72,8 @@ class AuthController extends GetxController {
           userRole.value = 'Admin';
           userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
           await _fetchFullProfile(session.user.id);
+          await _refreshAdminPermissions();
+          await CrashReportingService.syncAdminContextFromSession();
         } else {
           await SupabaseService.auth.signOut();
         }
@@ -113,6 +120,9 @@ class AuthController extends GetxController {
               userRole.value = 'Admin';
               userName.value = session.user.userMetadata?['full_name'] ?? 'المدير';
               await _fetchFullProfile(session.user.id);
+              await _refreshAdminPermissions();
+              await CrashReportingService.log(CrashBreadcrumb.loginCompleted);
+              await CrashReportingService.syncAdminContextFromSession();
             } else {
               AppLoggerService.debugTrace(
                 className: 'AuthController',
@@ -131,6 +141,8 @@ class AuthController extends GetxController {
           userRole.value = '';
           userName.value = '';
           profile.value = null;
+          unawaited(CrashReportingService.log(CrashBreadcrumb.logout));
+          unawaited(CrashReportingService.clearUser());
           break;
 
         case AuthChangeEvent.userUpdated:
@@ -245,6 +257,7 @@ class AuthController extends GetxController {
           final isAdmin = await _checkIsAdmin();
           if (isAdmin) {
             isLoggedIn.value = true;
+            await _refreshAdminPermissions();
             return true;
           }
           await SupabaseService.auth.signOut();
@@ -322,6 +335,8 @@ class AuthController extends GetxController {
       if (response.user != null) {
         await _fetchFullProfile(response.user!.id);
       }
+
+      await _refreshAdminPermissions();
 
       AppLoggerService.debugTrace(
         className: 'AuthController',
@@ -419,6 +434,22 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> _refreshAdminPermissions() async {
+    try {
+      if (Get.isRegistered<PermissionService>()) {
+        await PermissionService.to.refreshPrivileges();
+      }
+    } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: '_refreshAdminPermissions',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
+    }
+  }
+
   Future<void> logout() async {
     AppLoggerService.debugTrace(
       className: 'AuthController',
@@ -454,6 +485,92 @@ class AuthController extends GetxController {
       snackPosition: SnackPosition.BOTTOM,
     );
     return false;
+  }
+
+  /// Verify OTP code against Supabase Auth
+  Future<bool> verifyOtp(String otpCode, {String? email}) async {
+    AppLoggerService.debugTrace(
+      className: 'AuthController',
+      method: 'verifyOtp',
+      feature: 'Auth',
+      status: 'INFO',
+    );
+    isLoading.value = true;
+
+    try {
+      final userEmail = email ?? SupabaseService.auth.currentUser?.email;
+      if (userEmail == null || userEmail.isEmpty) {
+        throw AuthException('لا يوجد بريد إلكتروني مرتبط بالجلسة.');
+      }
+
+      final response = await SupabaseService.auth.verifyOTP(
+        email: userEmail,
+        token: otpCode,
+        type: OtpType.email,
+      );
+
+      if (response.session != null) {
+        final isAdmin = await _checkIsAdmin();
+        if (!isAdmin) {
+          await SupabaseService.auth.signOut();
+          throw AuthException('هذا الحساب ليس حساب مدير.');
+        }
+
+        isLoggedIn.value = true;
+        userRole.value = 'Admin';
+        userName.value =
+            response.user?.userMetadata?['full_name'] ?? 'المدير';
+        if (response.user != null) {
+          await _fetchFullProfile(response.user!.id);
+        }
+        await _refreshAdminPermissions();
+
+        AppLoggerService.debugTrace(
+          className: 'AuthController',
+          method: 'verifyOtp',
+          feature: 'Auth',
+          status: 'SUCCESS',
+        );
+        isLoading.value = false;
+        return true;
+      }
+
+      throw AuthException('رمز التحقق غير صالح أو منتهي الصلاحية.');
+    } on AuthException catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'verifyOtp',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e.message,
+      );
+      isLoading.value = false;
+      Get.snackbar(
+        'خطأ في التحقق',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return false;
+    } catch (e) {
+      AppLoggerService.debugTrace(
+        className: 'AuthController',
+        method: 'verifyOtp',
+        feature: 'Auth',
+        status: 'FAILED',
+        error: e,
+      );
+      isLoading.value = false;
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ أثناء التحقق من الرمز',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        colorText: Colors.white,
+      );
+      return false;
+    }
   }
 
   Future<void> forgotPassword(String email) async {

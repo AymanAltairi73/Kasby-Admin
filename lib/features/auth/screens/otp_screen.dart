@@ -26,19 +26,19 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   Future<void> _handleVerifyOtp() async {
-    debugPrint(
-      '[AUTH:OtpScreen] ▶ Verify OTP pressed — code length: ${_currentOtp.length}',
-    );
-    if (_currentOtp.length == 6) {
-      debugPrint('[AUTH:OtpScreen] ✓ OTP complete — navigating to /main');
-      Get.offAllNamed('/main');
-    } else {
-      debugPrint('[AUTH:OtpScreen] ✗ OTP incomplete — showing error');
+    if (_currentOtp.length != 6) {
       Get.snackbar(
         'خطأ',
         'الرجاء إدخال رمز التحقق المكون من 6 أرقام',
         snackPosition: SnackPosition.BOTTOM,
       );
+      return;
+    }
+
+    final email = Get.arguments is String ? Get.arguments as String : null;
+    final success = await _authController.verifyOtp(_currentOtp, email: email);
+    if (success) {
+      Get.offAllNamed('/main');
     }
   }
 
@@ -150,17 +150,17 @@ class _OtpScreenState extends State<OtpScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 fieldHeight: 50,
                                 fieldWidth: 42,
-                                activeFillColor: Colors.white.withValues(
+                                activeFillColor: Theme.of(context).colorScheme.onSurface.withValues(
                                   alpha: 0.05,
                                 ),
-                                inactiveFillColor: Colors.white.withValues(
+                                inactiveFillColor: Theme.of(context).colorScheme.onSurface.withValues(
                                   alpha: 0.05,
                                 ),
-                                selectedFillColor: Colors.white.withValues(
+                                selectedFillColor: Theme.of(context).colorScheme.onSurface.withValues(
                                   alpha: 0.1,
                                 ),
                                 activeColor: KasbyColors.primaryGold,
-                                inactiveColor: Colors.white.withValues(
+                                inactiveColor: Theme.of(context).colorScheme.onSurface.withValues(
                                   alpha: 0.1,
                                 ),
                                 selectedColor: KasbyColors.primaryGold,
@@ -236,7 +236,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget _buildCelestialBackground() {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F172A)),
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
         _buildOrb(
           top: -100,
           right: -100,

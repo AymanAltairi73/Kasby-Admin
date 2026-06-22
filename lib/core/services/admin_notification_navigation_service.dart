@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/chat/models/chat_model.dart';
+import '../../features/dashboard/controllers/main_controller.dart';
 import 'app_logger_service.dart';
 import 'supabase_service.dart';
 
@@ -213,7 +214,13 @@ class AdminNotificationNavigationService {
     }
 
     if (Get.currentRoute != route) {
-      await Get.toNamed(route);
+      const tabRoutes = {'/users': 1, '/transactions': 2, '/settings': 3};
+      final tabIndex = tabRoutes[route];
+      if (tabIndex != null && Get.isRegistered<MainController>()) {
+        Get.find<MainController>().changePage(tabIndex);
+      } else {
+        await Get.toNamed(route);
+      }
     }
   }
 

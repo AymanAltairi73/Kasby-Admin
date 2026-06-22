@@ -11,19 +11,38 @@ import '../../users/controllers/user_controller.dart';
 
 /// Notifications Screen
 /// Send push notifications to users
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final titleController = TextEditingController();
-    final messageController = TextEditingController();
-    final selectedTarget = 'all'.obs;
-    final selectedUserId = Rxn<String>();
-    final selectedUserName = ''.obs;
-    final notificationTitle = ''.obs;
-    final notificationMessage = ''.obs;
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
 
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late final TextEditingController titleController;
+  late final TextEditingController messageController;
+  final selectedTarget = 'all'.obs;
+  final selectedUserId = Rxn<String>();
+  final selectedUserName = ''.obs;
+  final notificationTitle = ''.obs;
+  final notificationMessage = ''.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController();
+    messageController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('إضافة إشعار')),
       body: SingleChildScrollView(

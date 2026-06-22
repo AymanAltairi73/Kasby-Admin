@@ -77,9 +77,9 @@ class _FeeSettingsScreenState extends State<FeeSettingsScreen> {
                       ),
                       const SizedBox(width: 10),
                       AdminMetricChip(
-                        label: 'إيداع / سحب / استثمار',
+                        label: 'إيداع / سحب / تحويل / QR',
                         value:
-                            '${_feesByCategory(controller, 'deposit').length}/${_feesByCategory(controller, 'withdraw').length}/${_feesByCategory(controller, 'investment').length}',
+                            '${_feesByCategory(controller, 'deposit').length}/${_feesByCategory(controller, 'withdraw').length}/${_feesByCategory(controller, 'transfer').length}/${_feesByCategory(controller, 'qr_receive').length}',
                         color: KasbyColors.info,
                         icon: FontAwesomeIcons.layerGroup,
                       ),
@@ -105,9 +105,33 @@ class _FeeSettingsScreenState extends State<FeeSettingsScreen> {
                   _buildFeeSection(
                     context,
                     controller,
+                    title: 'رسوم التحويل',
+                    icon: FontAwesomeIcons.arrowRightArrowLeft,
+                    fees: _feesByCategory(controller, 'transfer'),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFeeSection(
+                    context,
+                    controller,
+                    title: 'رسوم استلام QR',
+                    icon: FontAwesomeIcons.qrcode,
+                    fees: _feesByCategory(controller, 'qr_receive'),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFeeSection(
+                    context,
+                    controller,
                     title: 'رسوم الاستثمار',
                     icon: FontAwesomeIcons.chartPie,
                     fees: _feesByCategory(controller, 'investment'),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildFeeSection(
+                    context,
+                    controller,
+                    title: 'عمولة الوكيل',
+                    icon: FontAwesomeIcons.userTie,
+                    fees: _feesByCategory(controller, 'agent'),
                   ),
                   const SizedBox(height: 40),
                   KasbyButton(

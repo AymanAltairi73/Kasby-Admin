@@ -27,6 +27,14 @@ class ReferralController extends GetxController {
   final searchQuery = ''.obs;
   final isFromBackend = true.obs;
 
+  // Analytics
+  final selectedRange = 'all'.obs;
+  final customStart = Rxn<DateTime>();
+  final customEnd = Rxn<DateTime>();
+  final dailyReferrals = <Map<String, dynamic>>[].obs;
+  final conversionRate = 0.0.obs;
+  final totalUsersWithCode = 0.obs;
+
   @override
   void onInit() {
     AppLoggerService.debugTrace(
@@ -59,7 +67,7 @@ class ReferralController extends GetxController {
 
       final referred = await SupabaseService.client
           .from('profiles')
-          .select('referred_by_id')
+          .select('referred_by_id, created_at')
           .not('referred_by_id', 'is', null);
 
       final counts = <String, int>{};
@@ -98,12 +106,23 @@ class ReferralController extends GetxController {
       );
 
       isFromBackend.value = true;
+
+      // Analytics computations
+      totalUsersWithCode.value = (profiles as List).length;
+      final totalReferred = (referred as List).length;
+      conversionRate.value = totalUsersWithCode.value > 0
+          ? (activeReferrers / totalUsersWithCode.value) * 100
+          : 0;
+
+      // Build daily referrals trend from referred profiles
+      _buildDailyReferralsTrend(referred as List);
+
       AppLoggerService.debugTrace(
         className: 'ReferralController',
         method: 'loadReferrals',
         feature: 'Referrals',
         status: 'SUCCESS',
-        params: {'count': entries.length},
+        params: {'count': entries.length, 'totalReferred': totalReferred},
       );
     } catch (e, stackTrace) {
       hasError.value = true;
@@ -120,6 +139,50 @@ class ReferralController extends GetxController {
     }
   }
 
+  void _buildDailyReferralsTrend(List<dynamic> referredProfiles) {
+    final now = DateTime.now();
+    final daysBack = _analyticsRangeDays;
+    final cutoff = now.subtract(Duration(days: daysBack));
+
+    final dayMap = <String, int>{};
+
+    for (final row in referredProfiles) {
+      final createdStr = row['created_at'] as String?;
+      if (createdStr == null) continue;
+      try {
+        final dt = DateTime.parse(createdStr);
+        if (dt.isBefore(cutoff)) continue;
+        final key = createdStr.substring(0, 10);
+        dayMap[key] = (dayMap[key] ?? 0) + 1;
+      } catch (_) {
+        continue;
+      }
+    }
+
+    final sorted = dayMap.keys.toList()..sort();
+    dailyReferrals.assignAll(
+      sorted.map((d) => {'date': d, 'count': dayMap[d] ?? 0}),
+    );
+  }
+
+  int get _analyticsRangeDays {
+    switch (selectedRange.value) {
+      case 'last_7':
+        return 7;
+      case 'last_30':
+        return 30;
+      case 'last_90':
+        return 90;
+      default:
+        return 365;
+    }
+  }
+
+  void changeAnalyticsRange(String range) {
+    selectedRange.value = range;
+    loadReferrals();
+  }
+
   List<ReferralEntry> get filteredEntries {
     final q = searchQuery.value.toLowerCase();
     if (q.isEmpty) return entries;
@@ -131,6 +194,18 @@ class ReferralController extends GetxController {
               e.email.toLowerCase().contains(q),
         )
         .toList();
+  }
+
+  List<ReferralEntry> get topReferrersByCount {
+    final sorted = List<ReferralEntry>.from(entries);
+    sorted.sort((a, b) => b.referralCount.compareTo(a.referralCount));
+    return sorted.take(10).where((e) => e.referralCount > 0).toList();
+  }
+
+  List<ReferralEntry> get topReferrersByEarnings {
+    final sorted = List<ReferralEntry>.from(entries);
+    sorted.sort((a, b) => b.totalCommissions.compareTo(a.totalCommissions));
+    return sorted.take(10).where((e) => e.totalCommissions > 0).toList();
   }
 
   int get totalReferrals =>

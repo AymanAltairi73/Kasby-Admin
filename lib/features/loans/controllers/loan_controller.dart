@@ -6,6 +6,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../notifications/controllers/notification_controller.dart';
+import '../../../core/services/permission_service.dart';
 
 /// Loan Controller — manages loans from Supabase `loans` table
 /// All status changes use RPCs for atomicity and ledger integrity
@@ -279,6 +280,13 @@ class LoanController extends GetxController {
 
   /// Approve a pending loan via RPC (atomic: credits wallet + logs transaction)
   Future<void> approveLoan(String loanId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية الموافقة على القروض',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       isLoading.value = true;
       AppLoggerService.debugTrace(
@@ -355,6 +363,13 @@ class LoanController extends GetxController {
 
   /// Reject a loan with a reason
   Future<void> rejectLoan(String loanId, String reason) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية رفض القروض',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       isLoading.value = true;
       AppLoggerService.debugTrace(

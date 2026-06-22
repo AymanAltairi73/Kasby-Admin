@@ -6,16 +6,34 @@ import '../../../core/widgets/kasby_button.dart';
 import '../../../core/widgets/kasby_text_field.dart';
 import '../controllers/settings_management_controller.dart';
 
-class MaintenanceScreen extends StatelessWidget {
+class MaintenanceScreen extends StatefulWidget {
   const MaintenanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<SettingsManagementController>();
-    final messageController = TextEditingController(
+  State<MaintenanceScreen> createState() => _MaintenanceScreenState();
+}
+
+class _MaintenanceScreenState extends State<MaintenanceScreen> {
+  late final SettingsManagementController controller;
+  late final TextEditingController messageController;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<SettingsManagementController>();
+    messageController = TextEditingController(
       text: controller.maintenanceMessage.value,
     );
+  }
 
+  @override
+  void dispose() {
+    messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -134,10 +152,10 @@ class MaintenanceScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                               ),
                             ),
                             child: Obx(
@@ -168,8 +186,8 @@ class MaintenanceScreen extends StatelessWidget {
                           Get.snackbar(
                             'تم الحفظ',
                             'تم تحديث إعدادات وضع الصيانة بنجاح',
-                            backgroundColor: KasbyColors.success.withOpacity(
-                              0.8,
+                            backgroundColor: KasbyColors.success.withValues(
+                              alpha: 0.8,
                             ),
                             colorText: Colors.white,
                             snackPosition: SnackPosition.BOTTOM,
@@ -237,7 +255,7 @@ class MaintenanceScreen extends StatelessWidget {
   Widget _buildCelestialBackground() {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F172A)),
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
         _buildOrb(
           top: -50,
           right: -100,

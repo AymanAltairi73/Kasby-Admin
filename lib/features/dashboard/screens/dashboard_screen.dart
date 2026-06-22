@@ -12,6 +12,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../controllers/main_controller.dart';
 import '../../chat/controllers/chat_controller.dart';
 import '../controllers/dashboard_controller.dart';
+import '../../../core/services/permission_service.dart';
 
 /// Dashboard Home Screen — Restructured Edition
 /// Clean sections: Stats → Financial → Actions → Activity
@@ -95,8 +96,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         // ═══════════════════════════════════════
                         _buildSectionTitle(
                           icon: FontAwesomeIcons.chartLine,
-                          title: 'النظرة المالية',
-                          subtitle: 'ملخص الاستثمارات والأرباح',
+                          title: 'financial_overview'.tr,
+                          subtitle: 'financial_overview_subtitle'.tr,
                         ),
                         const SizedBox(height: 12),
                         _buildFinancialCards(dashboardController),
@@ -109,8 +110,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         // ═══════════════════════════════════════
                         _buildSectionTitle(
                           icon: FontAwesomeIcons.grip,
-                          title: 'مركز التحكم',
-                          subtitle: 'وصول سريع لكافة الأقسام',
+                          title: 'control_center'.tr,
+                          subtitle: 'control_center_subtitle'.tr,
                         ),
                         const SizedBox(height: 12),
                         _buildActionHub(),
@@ -135,7 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildBackground() {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F172A)),
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
         Positioned(
           top: -100,
           right: -100,
@@ -190,16 +191,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: AppBar(
-            backgroundColor: Colors.white.withValues(alpha: 0.02),
+            backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.02),
             elevation: 0,
             centerTitle: true,
-            title: const Text(
-              'لوحة التحكم',
+            title: Text(
+              'dashboard_title'.tr,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             leadingWidth: 70,
@@ -242,9 +243,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(
+                icon: Icon(
+                  Icons.search_rounded,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                onPressed: () => Get.toNamed('/admin-search'),
+              ),
+              IconButton(
+                icon: Icon(
                   Icons.notifications_none_rounded,
-                  color: Colors.white70,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 onPressed: () => Get.toNamed('/notifications-list'),
               ),
@@ -324,14 +332,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   text: '$greeting، ',
                   style: TextStyle(
                     fontSize: 22,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w300,
                   ),
                 ),
                 TextSpan(
                   text: authController.userName.value.isNotEmpty
                       ? authController.userName.value
-                      : 'المدير',
+                      : 'admin_default'.tr,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -357,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 dateStr,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -369,9 +377,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getGreeting(int hour) {
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 17) return 'مساء الخير';
-    return 'مساء الخير';
+    if (hour < 12) return 'good_morning'.tr;
+    return 'good_evening'.tr;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -387,37 +394,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
             _buildStatChip(
-              title: 'المستخدمين',
+              title: 'users'.tr,
               value: NumberFormat('#,###').format(dc.totalUsers),
               icon: FontAwesomeIcons.users,
               color: KasbyColors.glowGold,
             ),
             _buildStatChip(
-              title: 'النشطون',
+              title: 'active_users'.tr,
               value: NumberFormat('#,###').format(dc.activeUsers),
               icon: FontAwesomeIcons.userCheck,
               color: KasbyColors.glowGreen,
             ),
             _buildStatChip(
-              title: 'معاملات معلقة',
+              title: 'pending_transactions'.tr,
               value: NumberFormat('#,###').format(dc.pendingTransactions),
               icon: FontAwesomeIcons.clockRotateLeft,
               color: KasbyColors.glowOrange,
             ),
             _buildStatChip(
-              title: 'سحوبات معلقة',
+              title: 'pending_withdrawals'.tr,
               value: NumberFormat('#,###').format(dc.pendingWithdrawalsCount.value),
               icon: FontAwesomeIcons.wallet,
               color: KasbyColors.error,
             ),
             _buildStatChip(
-              title: 'توثيق معلق',
+              title: 'pending_kyc'.tr,
               value: NumberFormat('#,###').format(dc.pendingKYCCount.value),
               icon: FontAwesomeIcons.idCard,
               color: KasbyColors.info,
             ),
             _buildStatChip(
-              title: 'حجم اليوم',
+              title: 'daily_volume'.tr,
               value: '\$${NumberFormat.compact().format(dc.dailyVolume)}',
               icon: FontAwesomeIcons.arrowTrendUp,
               color: KasbyColors.glowBlue,
@@ -468,24 +475,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                Builder(builder: (context) => Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.5,
                   ),
-                ),
-                Text(
+                )),
+                Builder(builder: (context) => Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
-                ),
+                )),
               ],
             ),
           ],
@@ -502,8 +509,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Obx(() {
       final wCount = dc.pendingWithdrawalsCount.value;
       final kCount = dc.pendingKYCCount.value;
-
-      if (wCount == 0 && kCount == 0) return const SizedBox.shrink();
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 24),
@@ -526,6 +531,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: KasbyColors.info,
                 onTap: () => Get.toNamed('/kyc'),
               ),
+            if (wCount > 0 || kCount > 0) const SizedBox(height: 12),
+            _buildAlertCard(
+              title: 'طابور الموافقات الموحد',
+              subtitle: 'عرض كل الطلبات المعلقة',
+              icon: Icons.approval_rounded,
+              color: KasbyColors.primaryGold,
+              onTap: () => Get.toNamed('/approvals'),
+            ),
           ],
         ),
       );
@@ -559,21 +572,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                Builder(builder: (context) => Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                Text(
+                )),
+                Builder(builder: (context) => Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontSize: 12,
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -597,7 +610,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Expanded(
             child: _buildFinancialTile(
-              title: 'إجمالي الاستثمار',
+              title: 'total_investment'.tr,
               value: '\$${NumberFormat('#,##0').format(dc.totalInvested)}',
               icon: FontAwesomeIcons.chartPie,
               color: KasbyColors.glowBlue,
@@ -606,7 +619,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildFinancialTile(
-              title: 'الأرباح المحققة',
+              title: 'realized_profits'.tr,
               value: '\$${NumberFormat('#,##0').format(dc.totalProfits)}',
               icon: FontAwesomeIcons.moneyBillTrendUp,
               color: KasbyColors.glowGreen,
@@ -648,23 +661,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
+          Builder(builder: (context) => Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: -0.5,
             ),
-          ),
+          )),
           const SizedBox(height: 4),
-          Text(
+          Builder(builder: (context) => Text(
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.4),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -690,23 +703,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'تدفقات الأسبوع',
+              Builder(builder: (context) => Text(
+                'weekly_flows'.tr,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-              ),
+              )),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: KasbyColors.primaryGold.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  '7 أيام',
-                  style: TextStyle(
+                child: Text(
+                  'seven_days'.tr,
+                  style: const TextStyle(
                     fontSize: 10,
                     color: KasbyColors.primaryGold,
                     fontWeight: FontWeight.bold,
@@ -721,11 +734,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 160,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(
+                    gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.white.withValues(alpha: 0.03),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
                       strokeWidth: 1,
                     ),
                   ),
@@ -781,12 +794,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // ═══════════════════════════════════════════════════════════
 
   Widget _buildActionHub() {
+    final permService = Get.find<PermissionService>();
+    final isAdmin = permService.isSuperAdmin;
+
     final actions = [
       _ActionItem(
         'المستخدمين',
         FontAwesomeIcons.usersGear,
         KasbyColors.primaryGold,
-        route: '/users',
+        page: 1,
       ),
       _ActionItem(
         'المعاملات',
@@ -800,17 +816,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
         KasbyColors.info,
         route: '/investment-plans',
       ),
-      _ActionItem(
-        'الوكلاء',
-        FontAwesomeIcons.networkWired,
-        KasbyColors.glowOrange,
-        route: '/agents',
-      ),
+      if (isAdmin)
+        _ActionItem(
+          'الوكلاء',
+          FontAwesomeIcons.networkWired,
+          KasbyColors.glowOrange,
+          route: '/agents',
+        ),
       _ActionItem(
         'الإعدادات',
         FontAwesomeIcons.gears,
         Colors.purpleAccent,
-        route: '/settings',
+        page: 3,
       ),
       _ActionItem(
         'السلفات',
@@ -818,25 +835,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         KasbyColors.success,
         route: '/loans',
       ),
-      // _ActionItem('الإشعارات', FontAwesomeIcons.bullhorn, KasbyColors.warning, route: '/notifications'),
-      _ActionItem(
-        'الاشتراكات',
-        FontAwesomeIcons.crown,
-        KasbyColors.primaryGold,
-        route: '/subscriptions',
-      ),
+      if (isAdmin)
+        _ActionItem(
+          'الاشتراكات',
+          FontAwesomeIcons.crown,
+          KasbyColors.primaryGold,
+          route: '/subscriptions',
+        ),
       _ActionItem(
         'توثيق الهوية',
         FontAwesomeIcons.idCard,
         Colors.cyanAccent,
         route: '/kyc',
       ),
-      _ActionItem(
-        'تحليلات KSP',
-        FontAwesomeIcons.coins,
-        KasbyColors.primaryGold,
-        route: '/ksp-analytics',
-      ),
+      if (isAdmin)
+        _ActionItem(
+          'تحليلات KSP',
+          FontAwesomeIcons.coins,
+          KasbyColors.primaryGold,
+          route: '/ksp-analytics',
+        ),
     ];
 
     return GridView.builder(
@@ -878,10 +896,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
@@ -907,28 +925,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Icon(icon, size: 14, color: KasbyColors.primaryGold),
             const SizedBox(width: 8),
-            Text(
+            Builder(builder: (context) => Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 letterSpacing: -0.3,
               ),
-            ),
+            )),
           ],
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.only(right: 22),
-            child: Text(
+            child: Builder(builder: (context) => Text(
               subtitle,
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.white.withValues(alpha: 0.35),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
               ),
-            ),
+            )),
           ),
         ],
       ],
