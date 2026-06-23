@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/permission_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 class AgentApplicationModel {
@@ -100,6 +101,13 @@ class AgentApplicationsController extends GetxController {
   }
 
   Future<void> approveApplication(String applicationId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية الموافقة على طلبات الوكلاء',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     isLoading.value = true;
     try {
       final response = await SupabaseService.client.rpc(
@@ -108,6 +116,12 @@ class AgentApplicationsController extends GetxController {
       );
 
       if (response['success'] == true) {
+        await AppLoggerService.logActivity(
+          action: 'admin_approve_agent',
+          entityType: 'agent_application',
+          entityId: applicationId,
+        );
+
         // Send User Notification
         final app = applications.firstWhereOrNull((a) => a.id == applicationId);
         if (app != null) {
@@ -141,12 +155,25 @@ class AgentApplicationsController extends GetxController {
   }
 
   Future<void> rejectApplication(String applicationId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية رفض طلبات الوكلاء',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     isLoading.value = true;
     try {
       await SupabaseService.client
           .from('agent_applications')
           .update({'status': 'rejected'})
           .eq('id', applicationId);
+
+      await AppLoggerService.logActivity(
+        action: 'admin_reject_agent',
+        entityType: 'agent_application',
+        entityId: applicationId,
+      );
 
       final app = applications.firstWhereOrNull((a) => a.id == applicationId);
       if (app != null) {

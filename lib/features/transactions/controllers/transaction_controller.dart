@@ -298,6 +298,16 @@ class TransactionController extends GetxController {
         {'p_txn_id': txnId, 'p_admin_id': adminId},
       );
 
+      await AppLoggerService.logActivity(
+        action: 'admin_approve_deposit',
+        entityType: 'transaction',
+        entityId: txnId,
+        details: {
+          'user_id': transactions[txnIndex].userId,
+          'amount': transactions[txnIndex].amount,
+        },
+      );
+
       // Send User Notification
       Get.find<NotificationController>().sendNotification(
         '📥 إيداع ناجح',
@@ -355,6 +365,16 @@ class TransactionController extends GetxController {
       await _transactionRepo.processTransaction(
         'approve_withdrawal',
         {'p_txn_id': txnId, 'p_admin_id': adminId},
+      );
+
+      await AppLoggerService.logActivity(
+        action: 'admin_approve_withdrawal',
+        entityType: 'transaction',
+        entityId: txnId,
+        details: {
+          'user_id': transactions[txnIndex].userId,
+          'amount': transactions[txnIndex].amount,
+        },
       );
 
       // Send User Notification
@@ -440,6 +460,17 @@ class TransactionController extends GetxController {
           'p_txn_id': txnId,
           'p_admin_id': adminId,
           'p_reason': reason.isNotEmpty ? reason : 'رفض بواسطة المدير',
+        },
+      );
+
+      await AppLoggerService.logActivity(
+        action: 'admin_reject_transaction',
+        entityType: 'transaction',
+        entityId: txnId,
+        details: {
+          'user_id': txn.userId,
+          'type': txn.type,
+          'reason': reason.isNotEmpty ? reason : 'رفض بواسطة المدير',
         },
       );
 

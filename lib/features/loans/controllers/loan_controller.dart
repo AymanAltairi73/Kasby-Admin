@@ -252,6 +252,17 @@ class LoanController extends GetxController {
         throw Exception(result['message'] ?? 'فشل تسجيل السداد');
       }
 
+      await AppLoggerService.logActivity(
+        action: 'admin_record_loan_repayment',
+        entityType: 'loan',
+        entityId: loanId,
+        details: {
+          'amount': amount,
+          'payment_method': paymentMethod,
+          'type': type == RepaymentType.full ? 'full' : 'partial',
+        },
+      );
+
       // 3. Send Notification to user
       final loan = loans.firstWhereOrNull((l) => l.id == loanId);
       if (loan != null) {
@@ -298,14 +309,23 @@ class LoanController extends GetxController {
       );
 
       final adminId = SupabaseService.auth.currentUser?.id;
+      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
 
       await SupabaseService.client.rpc(
         'fn_approve_loan',
         params: {'p_loan_id': loanId, 'p_admin_id': adminId},
       );
 
+      await AppLoggerService.logActivity(
+        action: 'admin_approve_loan',
+        entityType: 'loan',
+        entityId: loanId,
+        details: loan != null
+            ? {'user_id': loan.userId, 'amount': loan.amount}
+            : null,
+      );
+
       // Send User Notification
-      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
       if (loan != null) {
         Get.find<NotificationController>().sendNotification(
           '💰 مبروك!',
@@ -381,6 +401,7 @@ class LoanController extends GetxController {
       );
 
       final adminId = SupabaseService.auth.currentUser?.id;
+      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
 
       await SupabaseService.client.rpc(
         'fn_reject_loan',
@@ -391,8 +412,17 @@ class LoanController extends GetxController {
         },
       );
 
+      await AppLoggerService.logActivity(
+        action: 'admin_reject_loan',
+        entityType: 'loan',
+        entityId: loanId,
+        details: {
+          if (loan != null) 'user_id': loan.userId,
+          'reason': reason,
+        },
+      );
+
       // Send User Notification
-      final loan = loans.firstWhereOrNull((l) => l.id == loanId);
       if (loan != null) {
         Get.find<NotificationController>().sendNotification(
           '⚠️ طلب القرض',

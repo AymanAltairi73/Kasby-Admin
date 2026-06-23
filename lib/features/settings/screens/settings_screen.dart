@@ -143,15 +143,6 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () => Get.toNamed('/kyc'),
               ),
               const SizedBox(height: 8),
-              if (isSuperAdmin) ...[
-                _buildSettingCard(
-                  icon: FontAwesomeIcons.userGear,
-                  title: 'إدارة الموظفين',
-                  subtitle: 'إدارة صلاحيات المسؤولين والأدوار',
-                  onTap: () => Get.toNamed('/staff'),
-                ),
-                const SizedBox(height: 8),
-              ],
               const SizedBox(height: 24),
 
               // Notifications Section (admin-only)

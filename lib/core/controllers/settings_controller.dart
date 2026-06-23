@@ -222,6 +222,12 @@ class SettingsController extends GetxController {
 
     await _saveSettings();
 
+    await AppLoggerService.logActivity(
+      action: 'admin_toggle_system_control',
+      entityType: 'system_settings',
+      details: {'control': controlKey, 'action': action},
+    );
+
     isLoading.value = false;
     Get.snackbar(
       'تنبيه النظام',

@@ -389,6 +389,13 @@ class UserController extends GetxController {
 
   /// Activate / unblock user
   Future<void> activateUser(String userId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canManageUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية تفعيل المستخدمين',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       await UserManagementService.unblockUser(userId);
 
@@ -442,6 +449,13 @@ class UserController extends GetxController {
 
   /// Verify KYC / documents
   Future<void> verifyKyc(String userId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canManageUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية التحقق من KYC',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       await SupabaseService.client.rpc(
         'fn_admin_set_kyc_status',
@@ -453,6 +467,12 @@ class UserController extends GetxController {
         users[idx] = users[idx].copyWith(kycStatus: 'verified');
         _applyFilters();
       }
+
+      await AppLoggerService.logActivity(
+        action: 'admin_verify_kyc',
+        entityType: 'user',
+        entityId: userId,
+      );
 
       Get.snackbar(
         'تم',
@@ -469,6 +489,13 @@ class UserController extends GetxController {
 
   /// Reject KYC
   Future<void> rejectKyc(String userId, [String reason = '']) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canManageUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية رفض KYC',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     try {
       await SupabaseService.client.rpc(
         'fn_admin_set_kyc_status',
@@ -484,6 +511,13 @@ class UserController extends GetxController {
         users[idx] = users[idx].copyWith(kycStatus: 'rejected');
         _applyFilters();
       }
+
+      await AppLoggerService.logActivity(
+        action: 'admin_reject_kyc',
+        entityType: 'user',
+        entityId: userId,
+        details: reason.isNotEmpty ? {'reason': reason} : null,
+      );
     } catch (e) {
       Get.snackbar(
         'خطأ',
@@ -512,6 +546,16 @@ class UserController extends GetxController {
 
     try {
       await AdminProxyService.addBalance(userId, amount);
+
+      await AppLoggerService.logActivity(
+        action: 'admin_add_balance',
+        entityType: 'user',
+        entityId: userId,
+        details: {
+          'amount': amount,
+          if (reason.isNotEmpty) 'reason': reason,
+        },
+      );
 
       // Send User Notification
       Get.find<NotificationController>().sendNotification(
@@ -556,6 +600,16 @@ class UserController extends GetxController {
 
     try {
       await AdminProxyService.deductBalance(userId, amount);
+
+      await AppLoggerService.logActivity(
+        action: 'admin_deduct_balance',
+        entityType: 'user',
+        entityId: userId,
+        details: {
+          'amount': amount,
+          if (reason.isNotEmpty) 'reason': reason,
+        },
+      );
 
       // Send User Notification
       Get.find<NotificationController>().sendNotification(

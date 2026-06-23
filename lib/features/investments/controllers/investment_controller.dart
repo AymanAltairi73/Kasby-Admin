@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/theme/kasby_colors.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/app_logger_service.dart';
+import '../../../core/services/permission_service.dart';
 import '../models/investment_model.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
@@ -173,6 +174,13 @@ class InvestmentController extends GetxController {
 
   /// Approve a pending investment
   Future<void> approveUserInvestment(String investmentId) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية الموافقة على الاستثمارات',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     isLoading.value = true;
     try {
       final response = await SupabaseService.client.rpc(
@@ -185,6 +193,12 @@ class InvestmentController extends GetxController {
 
       final result = response;
       if (result is Map && result['success'] == true) {
+        await AppLoggerService.logActivity(
+          action: 'admin_approve_investment',
+          entityType: 'user_investment',
+          entityId: investmentId,
+        );
+
         // Find investment to get userId
         final inv = userInvestments.firstWhereOrNull((i) => i.id == investmentId);
         if (inv != null) {
@@ -219,6 +233,13 @@ class InvestmentController extends GetxController {
 
   /// Reject a pending investment
   Future<void> rejectUserInvestment(String investmentId, String reason) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canApproveFinancials) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية رفض الاستثمارات',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+
     isLoading.value = true;
     try {
       final response = await SupabaseService.client.rpc(
@@ -232,6 +253,13 @@ class InvestmentController extends GetxController {
 
       final result = response;
       if (result is Map && result['success'] == true) {
+        await AppLoggerService.logActivity(
+          action: 'admin_reject_investment',
+          entityType: 'user_investment',
+          entityId: investmentId,
+          details: {'reason': reason},
+        );
+
         // Find investment to get userId
         final inv = userInvestments.firstWhereOrNull((i) => i.id == investmentId);
         if (inv != null) {

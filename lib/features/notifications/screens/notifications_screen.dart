@@ -356,10 +356,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    // Mock scheduling for UI demonstration
-    if (date != null) {
-      Get.snackbar('تمت الجدولة', 'سيتم إرسال الإشعار في التاريخ المحدد');
+    if (date == null) return;
+
+    if (!context.mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (time == null) return;
+
+    if (titleController.text.isEmpty || messageController.text.isEmpty) {
+      Get.snackbar('خطأ', 'الرجاء ملء عنوان ونص الإشعار قبل الجدولة');
+      return;
     }
+
+    final scheduledAt = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+
+    final nController = Get.find<NotificationController>();
+    final target = selectedTarget.value;
+    if (target == 'specific' && selectedUserId.value == null) {
+      Get.snackbar('خطأ', 'الرجاء اختيار مستخدم محدد');
+      return;
+    }
+
+    await nController.scheduleNotification(
+      titleController.text,
+      messageController.text,
+      target,
+      scheduledAt,
+    );
   }
 
   Widget _buildNotificationHistory() {

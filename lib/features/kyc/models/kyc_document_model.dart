@@ -6,7 +6,7 @@ class KycDocument {
   final String userId;
   final String documentType; // selfie, id_card_front, id_card_back
   final String documentUrl;
-  final String status; // pending, approved, rejected
+  final String status; // pending, verified, rejected
   final String? reviewedBy;
   final DateTime? reviewedAt;
   final String? rejectionReason;

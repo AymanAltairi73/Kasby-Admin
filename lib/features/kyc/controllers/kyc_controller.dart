@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../models/kyc_document_model.dart';
 import '../../../core/services/app_logger_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/services/permission_service.dart';
 import '../../notifications/controllers/notification_controller.dart';
 
 class KycController extends GetxController {
@@ -84,6 +85,13 @@ class KycController extends GetxController {
     required String userId,
     String? rejectionReason,
   }) async {
+    final permService = Get.find<PermissionService>();
+    if (!permService.canManageUsers) {
+      Get.snackbar('صلاحيات غير كافية', 'لا تملك صلاحية مراجعة KYC',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+
     try {
       final adminId = SupabaseService.auth.currentUser?.id;
 
@@ -95,6 +103,17 @@ class KycController extends GetxController {
       }).eq('id', id);
 
       await _syncProfileKycStatus(userId);
+
+      await AppLoggerService.logActivity(
+        action: status == 'verified' ? 'admin_verify_kyc' : 'admin_reject_kyc',
+        entityType: 'kyc_document',
+        entityId: id,
+        details: {
+          'user_id': userId,
+          if (rejectionReason != null && rejectionReason.isNotEmpty)
+            'reason': rejectionReason,
+        },
+      );
 
       final notifController = Get.find<NotificationController>();
       final title = status == 'verified' ? '✅ توثيق الحساب' : '❌ تنبيه التوثيق';

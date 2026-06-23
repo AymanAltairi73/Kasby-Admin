@@ -81,14 +81,12 @@ class PermissionService extends GetxService {
         );
       }
     } catch (e) {
-      adminPrivilege.value = 'admin';
-      AppLoggerService.debugTrace(
-        className: 'PermissionService',
+      // Fail-closed: never grant elevated privileges when privilege lookup fails.
+      adminPrivilege.value = 'viewer';
+      AppLoggerService.logError(
+        controller: 'PermissionService',
         method: 'refreshPrivileges',
-        feature: 'Core',
-        status: 'FAILED',
         error: e,
-        message: 'Fallback to admin role',
       );
     }
   }

@@ -61,7 +61,7 @@ import 'features/reports/screens/revenue_dashboard_screen.dart';
 // import 'features/staff/screens/role_management_screen.dart';
 import 'features/staff/controllers/staff_controller.dart';
 import 'features/notifications/controllers/notification_template_controller.dart';
-// import 'features/notifications/screens/notification_templates_screen.dart';
+import 'features/notifications/screens/notification_templates_screen.dart';
 import 'features/qr/screens/qr_management_screen.dart';
 import 'features/monitoring/screens/system_health_screen.dart';
 import 'features/search/screens/admin_search_screen.dart';
@@ -400,11 +400,11 @@ class KasbyAdminApp extends StatelessWidget {
         //   'RoleManagementScreen',
         //   () => const RoleManagementScreen(),
         // ),
-        // _adminRoute(
-        //   '/notification-templates',
-        //   'NotificationTemplatesScreen',
-        //   () => const NotificationTemplatesScreen(),
-        // ),
+        _adminRoute(
+          '/notification-templates',
+          'NotificationTemplatesScreen',
+          () => const NotificationTemplatesScreen(),
+        ),
       ],
 
       // Check if user is already logged in
